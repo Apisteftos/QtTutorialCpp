@@ -144,6 +144,61 @@ target_compile_options(MyTarget PRIVATE
 
 ---
 
+## Step 8 — Set C++23 as default for all new projects
+
+By default Qt Creator generates new projects with `CMAKE_CXX_STANDARD 17`.
+Two changes are needed to make C++23 the permanent default.
+
+### 8a — Kit CMake configuration
+
+Go to **Tools → Preferences → Kits → Desktop (default) → CMake Configuration → Change**
+
+Add these two lines at the bottom of the existing entries:
+
+```
+-DCMAKE_CXX_STANDARD:STRING=23
+-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON
+```
+
+The full configuration should look like:
+```
+-DQT_QMAKE_EXECUTABLE:FILEPATH=%{Qt:qmakeExecutable}
+-DCMAKE_PREFIX_PATH:PATH=%{Qt:QT_INSTALL_PREFIX}
+-DCMAKE_C_COMPILER:FILEPATH=%{Compiler:Executable:C}
+-DCMAKE_CXX_COMPILER:FILEPATH=%{Compiler:Executable:Cxx}
+-DCMAKE_CXX_STANDARD:STRING=23
+-DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON
+```
+
+Click **Apply → OK** on both dialogs.
+
+### 8b — Patch the project wizard templates
+
+The Kit setting alone is not enough — Qt Creator's project wizard writes `17`
+directly into the generated `CMakeLists.txt`. Patch all templates at once:
+
+```bash
+sudo sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 23/g' \
+  /usr/share/qtcreator/templates/wizards/projects/consoleapp/CMakeLists.txt \
+  /usr/share/qtcreator/templates/wizards/projects/plaincpp/CMakeLists.txt \
+  /usr/share/qtcreator/templates/wizards/projects/qtwidgetsapplication/CMakeLists.txt \
+  /usr/share/qtcreator/templates/wizards/projects/cpplibrary/CMakeLists.txt \
+  /usr/share/qtcreator/templates/wizards/projects/qtquickapplication/CMakeLists.txt \
+  /usr/share/qtcreator/templates/wizards/projects/qtquickapplication_compat/CMakeLists.txt
+```
+
+Verify all templates are updated:
+```bash
+grep -r "CXX_STANDARD" /usr/share/qtcreator/templates/wizards/projects/
+```
+
+Every line should now show `CMAKE_CXX_STANDARD 23`.
+
+> **Note:** This change survives reboots but may be overwritten by a Qt Creator
+> update. Re-run the `sed` command after any Qt Creator upgrade.
+
+---
+
 ## C++23 header availability by GCC version
 
 | Header | GCC 12 | GCC 13 | GCC 14 |
@@ -166,3 +221,10 @@ target_compile_options(MyTarget PRIVATE
 # Or from terminal:
 /usr/local/gcc-14.1.0/bin/g++-14.1.0 --version
 ```
+
+New projects should now generate with:
+```cmake
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+automatically — no manual editing needed.
