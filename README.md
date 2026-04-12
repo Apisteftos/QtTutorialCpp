@@ -90,27 +90,62 @@ Click **Apply → OK**.
 
 ---
 
-## Step 5 — Force GCC 14 in CMakeLists.txt
+## Step 5 — CMakeLists.txt template (standard)
 
-Add these lines **before** `project()` — CMake ignores them if placed after:
+The standard Qt Creator Console Application template works as-is once GCC 14
+is assigned to the Kit. No need to hardcode compiler paths in CMakeLists.txt.
+
+### For non-Qt examples (pure C++23)
 
 ```cmake
-set(CMAKE_C_COMPILER   /usr/local/gcc-14.1.0/bin/gcc-14.1.0)
-set(CMAKE_CXX_COMPILER /usr/local/gcc-14.1.0/bin/g++-14.1.0)
-
 cmake_minimum_required(VERSION 3.14)
 project(MyProject LANGUAGES CXX)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+
+add_executable(MyProject main.cpp)
+
+target_link_libraries(MyProject Qt${QT_VERSION_MAJOR}::Core)
+
+include(GNUInstallDirs)
+install(TARGETS MyProject
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 ```
 
-> This is required because Qt Creator sometimes falls back to the system GCC
-> despite the Kit setting, especially after the build folder is regenerated.
+### For Qt examples that use QThread / QtConcurrent
+
+Add `Concurrent` to both `find_package` lines and `target_link_libraries`:
+
+```cmake
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Concurrent)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Concurrent)
+
+target_link_libraries(MyProject
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    stdc++exp
+)
+```
+
+> **Always add `stdc++exp`** when using `<print>`, `<format>`, `<stacktrace>` etc.
+> Without it you get linker errors even though the headers compile fine.
 
 ---
 
 ## Step 6 — Link stdc++exp
 
-C++23 headers like `<print>`, `<stacktrace>` on GCC 13/14 live in the experimental library.
-Add it to every target that uses C++23:
+C++23 headers like `<print>`, `<stacktrace>` on GCC 14 live in the experimental library.
+Add it to every target that uses C++23 standard library features:
 
 ```cmake
 target_link_libraries(MyTarget
@@ -199,6 +234,23 @@ Every line should now show `CMAKE_CXX_STANDARD 23`.
 
 ---
 
+## Step 9 — Moving projects to new subdirectories
+
+When you move an existing project to a new subdirectory or create a new one:
+
+1. Create the project normally in Qt Creator (Console Application)
+2. The Kit already has GCC 14 — no compiler paths needed in CMakeLists.txt
+3. If the build directory ends up outside the project folder, fix it:
+   - **Projects** → **Build & Run** → **Build** tab → change **Build directory**
+   - Or: delete the stale `build` folder and let Qt Creator reconfigure
+4. After changing build directory: **Build → Clear CMake Configuration → Run CMake**
+5. Then build normally with **Ctrl+B**
+
+> If you see `[Makefile:283: cmake_check_build_system] Error 1` after moving —
+> the Makefile is stale. Delete the build folder and reconfigure from scratch.
+
+---
+
 ## C++23 header availability by GCC version
 
 | Header | GCC 12 | GCC 13 | GCC 14 |
@@ -208,6 +260,19 @@ Every line should now show `CMAKE_CXX_STANDARD 23`.
 | `<print>` | ❌ | ❌ | ✅ |
 | `<flat_map>` | ❌ | ❌ | ✅ |
 | `<mdspan>` | ❌ | ✅ | ✅ |
+
+---
+
+## Common issues and fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `<print>` not found | GCC 13 used instead of 14 | Check Kit compiler assignment |
+| `stdc++exp` linker error | Missing library link | Add `stdc++exp` to `target_link_libraries` |
+| False red errors in editor | clangd using wrong headers | Disable clangd or add `--gcc-toolchain` |
+| `cmake_check_build_system Error 1` | Stale Makefile after moving project | Delete build folder, reconfigure |
+| `CMAKE_CXX_STANDARD 17` in new projects | Wizard template not patched | Run `sed` patch from Step 8b |
+| `#include "main.moc"` errors | Placed before Q_OBJECT classes | Move to very last line of file |
 
 ---
 
