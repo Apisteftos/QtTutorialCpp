@@ -24,123 +24,224 @@ Analysis of program execution to identify:
 
 ---
 
-## Prerequisites — Installing Google Benchmark
+## Step 1 — Install Google Benchmark
 
-This file requires the **Google Benchmark** library (`#include <benchmark/benchmark.h>`).
-
-### Ubuntu / Debian (easiest)
+This file requires `#include <benchmark/benchmark.h>`.
 
 ```bash
 sudo apt-get install libbenchmark-dev
 ```
 
-### From source (if package not available)
-
+Verify:
 ```bash
-git clone https://github.com/google/benchmark.git
-cd benchmark
-cmake -E make_directory "build"
-cmake -E chdir "build" cmake \
-    -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on \
-    -DCMAKE_BUILD_TYPE=Release ../
-cmake --build "build" --config Release
-sudo cmake --build "build" --config Release --target install
-```
-
-### Verify installation
-
-```bash
-dpkg -l | grep benchmark          # Ubuntu package
-ls /usr/include/benchmark/        # should show benchmark.h
+ls /usr/include/benchmark/benchmark.h   # should exist
 ls /usr/lib/x86_64-linux-gnu/libbenchmark*
 ```
 
 ---
 
-## CMakeLists.txt
+## Step 2 — Compile and Run
+
+### Terminal (simplest)
+
+```bash
+# Navigate to the file
+cd /path/to/BenchmarkingAndProfiling
+
+# Compile — MUST include -lbenchmark -lpthread
+g++ -std=c++23 -O2 benchmarking_and_profiling.cpp -lbenchmark -lpthread -o benchmarking_and_profiling
+
+# Run
+./benchmarking_and_profiling
+```
+
+For maximum accuracy use `-O3 -march=native`:
+```bash
+g++ -std=c++23 -O3 -march=native benchmarking_and_profiling.cpp -lbenchmark -lpthread -o benchmarking_and_profiling && ./benchmarking_and_profiling
+```
+
+> **Common mistake:** forgetting `-lbenchmark -lpthread` causes:
+> `undefined reference to benchmark::State::StartKeepRunning()`
+> Always put the flags **after** the source file.
+
+---
+
+## Step 3 — Compile in VS Code
+
+### Option A — Integrated Terminal (easiest)
+
+1. Open the folder in VS Code
+2. Open terminal: **Ctrl + `** (backtick)
+3. Run the compile command directly:
+
+```bash
+g++ -std=c++23 -O3 -march=native benchmarking_and_profiling.cpp \
+    -lbenchmark -lpthread \
+    -o benchmarking_and_profiling && \
+./benchmarking_and_profiling
+```
+
+---
+
+### Option B — tasks.json (Build Task)
+
+Create `.vscode/tasks.json` in your project folder:
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Benchmark",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-std=c++23",
+                "-O3",
+                "-march=native",
+                "${file}",
+                "-lbenchmark",
+                "-lpthread",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Compile with Google Benchmark"
+        },
+        {
+            "label": "Build and Run Benchmark",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "g++ -std=c++23 -O3 -march=native ${file} -lbenchmark -lpthread -o ${fileDirname}/${fileBasenameNoExtension} && ${fileDirname}/${fileBasenameNoExtension}"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "Compile and run benchmark"
+        }
+    ]
+}
+```
+
+**How to use:**
+- Build only: **Ctrl + Shift + B**
+- Build and run: **Ctrl + Shift + P** → `Tasks: Run Task` → `Build and Run Benchmark`
+
+---
+
+### Option C — launch.json (Debug/Run with F5)
+
+Create `.vscode/launch.json`:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Benchmark",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/${fileBasenameNoExtension}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build Benchmark",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
+```
+
+**How to use:** Press **F5** — it compiles then runs automatically.
+
+---
+
+### Option D — CMakeLists.txt (Qt Creator or VS Code with CMake Tools)
 
 ```cmake
 cmake_minimum_required(VERSION 3.14)
-project(BenchmarkingAndProfiling LANGUAGES CXX)
+project(04_BenchmarkingAndProfiling LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Release build for accurate benchmarks
-set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-
-# Find Google Benchmark
+# Google Benchmark — install first: sudo apt-get install libbenchmark-dev
 find_package(benchmark REQUIRED)
 
-add_executable(BenchmarkingAndProfiling main.cpp)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
-target_link_libraries(BenchmarkingAndProfiling
+add_executable(04_BenchmarkingAndProfiling
+    main.cpp
+)
+
+target_link_libraries(04_BenchmarkingAndProfiling
+    Qt${QT_VERSION_MAJOR}::Core
     benchmark::benchmark
     pthread
+    stdc++exp
+)
+
+include(GNUInstallDirs)
+install(TARGETS 04_BenchmarkingAndProfiling
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 ```
 
-> **Important:** Always build in **Release** mode for benchmarks.
-> Debug builds have no optimizations — numbers will be meaningless.
+In VS Code with CMake Tools extension:
+1. **Ctrl + Shift + P** → `CMake: Configure`
+2. Select **Release** kit (not Debug!)
+3. **Ctrl + Shift + P** → `CMake: Build`
+4. **Ctrl + Shift + P** → `CMake: Run Without Debugging`
+
+> **Important in Qt Creator:** Projects → Build & Run → Build Configuration → **Release**
 
 ---
 
-## Compilation (terminal alternative)
-
-```bash
-# Basic
-g++ -std=c++17 -O2 main.cpp -lbenchmark -lpthread -o benchmark_demo
-
-# With full optimization
-g++ -std=c++17 -O3 -march=native main.cpp -lbenchmark -lpthread -o benchmark_demo
-```
-
----
-
-## Running the benchmarks
+## Running with options
 
 ```bash
 # Run all benchmarks
-./benchmark_demo
+./benchmarking_and_profiling
 
-# Run only benchmarks matching a filter
-./benchmark_demo --benchmark_filter=VectorPushBack
+# Filter — run only vector benchmarks
+./benchmarking_and_profiling --benchmark_filter=Vector
 
-# More detailed statistics (10 repetitions)
-./benchmark_demo --benchmark_repetitions=10
+# Filter — run only sort benchmarks
+./benchmarking_and_profiling --benchmark_filter=Sort
 
-# Output to JSON
-./benchmark_demo --benchmark_out=results.json --benchmark_out_format=json
+# 10 repetitions for statistical confidence
+./benchmarking_and_profiling --benchmark_repetitions=10
 
-# Output to CSV
-./benchmark_demo --benchmark_out=results.csv --benchmark_out_format=csv
+# Save results to JSON
+./benchmarking_and_profiling --benchmark_out=results.json --benchmark_out_format=json
 
-# Show CPU info
-./benchmark_demo --benchmark_report_aggregates_only=true
+# Save results to CSV
+./benchmarking_and_profiling --benchmark_out=results.csv --benchmark_out_format=csv
 ```
 
 ---
 
-## Example output
-
-```
--------------------------------------------------------------------------
-Benchmark                               Time             CPU   Iterations
--------------------------------------------------------------------------
-BM_VectorPushBack_NoReserve/1024     1547 ns         1546 ns       452174
-BM_VectorPushBack_NoReserve/4096     6789 ns         6787 ns       103085
-BM_VectorPushBack_WithReserve/1024    892 ns          891 ns       785234
-BM_VectorPushBack_WithReserve/4096   3456 ns         3455 ns       202341
-BM_BubbleSort/64                     8923 ns         8921 ns        78432
-BM_STLSort/64                         456 ns          455 ns      1534231
-BM_SequentialAccess/1024              234 ns          233 ns      2987654
-BM_RandomAccess/1024                 1823 ns         1822 ns       384521
-```
-
----
-
-## Examples covered in this file
+## Examples covered
 
 | # | Example | What it measures |
 |---|---------|-----------------|
@@ -151,159 +252,75 @@ BM_RandomAccess/1024                 1823 ns         1822 ns       384521
 | 5 | Cache effects | Sequential vs random memory access |
 | 6 | Function call overhead | Regular vs inline vs lambda |
 | 7 | Memory allocation | Heap (`new`) vs stack |
-| 8 | Custom arguments | Matrix multiplication with different sizes |
-| 9 | Fixtures | Reusable setup/teardown with `benchmark::Fixture` |
+| 8 | Custom arguments | Matrix multiplication at different sizes |
+| 9 | Fixtures | Reusable setup/teardown |
 | 10 | Real-world | JSON-like string parsing |
 
 ---
 
 ## Google Benchmark API reference
 
-### Basic structure
-
-```cpp
-static void BM_MyFunction(benchmark::State& state) {
-    for (auto _ : state) {
-        // code to benchmark goes here
-        benchmark::DoNotOptimize(result);
-    }
-}
-BENCHMARK(BM_MyFunction);
-```
-
-### Key functions
-
 ```cpp
 // Prevent compiler from optimizing away a value
 benchmark::DoNotOptimize(value);
 
-// Flush all pending memory writes (prevents reordering)
+// Flush pending memory writes
 benchmark::ClobberMemory();
 
-// Pause timing during setup inside the loop
+// Pause/resume timing inside the loop (for setup code)
 state.PauseTiming();
 doSetup();
 state.ResumeTiming();
 
-// Set input size for Big-O complexity analysis
+// Set input size for automatic Big-O analysis
 state.SetComplexityN(state.range(0));
 
-// Report bytes processed (shows MB/s)
+// Report throughput (shows MB/s or GB/s in output)
 state.SetBytesProcessed(state.iterations() * bytes);
 ```
 
-### Parameterization
+---
 
-```cpp
-// Single range (powers of 2 from 1024 to 262144)
-BENCHMARK(BM_Func)->Range(1<<10, 1<<18);
+## Profiling tools
 
-// Range with custom multiplier
-BENCHMARK(BM_Func)->RangeMultiplier(2)->Range(64, 2048);
-
-// Multiple custom arguments
-BENCHMARK(BM_Func)->Args({64, 64})->Args({128, 128});
-
-// Automatic Big-O complexity analysis
-BENCHMARK(BM_Func)->Range(1<<10, 1<<18)->Complexity();
-BENCHMARK(BM_Func)->Complexity(benchmark::oN);       // O(n)
-BENCHMARK(BM_Func)->Complexity(benchmark::oNLogN);   // O(n log n)
-BENCHMARK(BM_Func)->Complexity(benchmark::oN2);      // O(n²)
-```
+| Tool | Install | Use |
+|------|---------|-----|
+| `perf` | `sudo apt install linux-tools-generic` | `perf stat ./app` |
+| `valgrind` | `sudo apt install valgrind` | `valgrind --tool=cachegrind ./app` |
+| `gprof` | built into GCC | `g++ -pg ... && ./app && gprof app gmon.out` |
+| `heaptrack` | `sudo apt install heaptrack` | `heaptrack ./app` |
 
 ---
 
-## Profiling tools (used separately from the benchmark binary)
-
-| Tool | Purpose | Command |
-|------|---------|---------|
-| `gprof` | Function-level call profiling | `g++ -pg ... && ./app && gprof app gmon.out` |
-| `perf` | CPU performance counters | `perf stat ./app` / `perf record ./app` |
-| `valgrind/cachegrind` | Cache miss analysis | `valgrind --tool=cachegrind ./app` |
-| `callgrind` | Call graph profiling | `valgrind --tool=callgrind ./app` |
-| `heaptrack` | Memory allocation profiling | `heaptrack ./app` |
-| `perf annotate` | Source-level hotspot view | `perf annotate` |
-
-### Quick perf usage
-
-```bash
-# Install
-sudo apt-get install linux-tools-common linux-tools-generic
-
-# Count CPU events
-perf stat ./benchmark_demo
-
-# Record call graph
-perf record -g ./benchmark_demo
-perf report
-```
-
-### Quick valgrind/cachegrind
-
-```bash
-valgrind --tool=cachegrind ./benchmark_demo
-cg_annotate cachegrind.out.*
-```
-
----
-
-## Measurement best practices
+## Best practices
 
 ```
-✅ Always build in Release mode (-O2 or -O3)
-✅ Use benchmark::DoNotOptimize() — prevents compiler from removing your code
+✅ Always compile with -O2 or -O3 (Release mode)
+✅ Use benchmark::DoNotOptimize() — prevents dead code elimination
 ✅ Use PauseTiming()/ResumeTiming() for setup inside the loop
-✅ Run with --benchmark_repetitions=10 for statistical significance
-✅ Close background applications — CPU contention affects results
-✅ Disable CPU frequency scaling for stable results:
+✅ Run --benchmark_repetitions=10 for statistical confidence
+✅ Close other applications — reduces CPU noise
+✅ Disable CPU frequency scaling:
       sudo cpupower frequency-set --governor performance
-✅ Run on the actual target hardware
 ✅ Compare relative results — absolute ns vary per machine
-```
-
-### Disable CPU frequency scaling
-
-```bash
-# Set performance governor (prevents CPU throttling)
-sudo cpupower frequency-set --governor performance
-
-# Restore after benchmarking
-sudo cpupower frequency-set --governor powersave
 ```
 
 ---
 
 ## Common mistakes
 
-```cpp
-// MISTAKE 1: Not using DoNotOptimize — compiler removes "dead" code
-for (auto _ : state) {
-    int result = computeHeavy();
-    // result never used → compiler eliminates computeHeavy()!
-}
+```bash
+# WRONG — missing -lbenchmark -lpthread
+g++ -std=c++23 main.cpp -o app
+# Error: undefined reference to benchmark::State::StartKeepRunning()
 
-// FIX:
-for (auto _ : state) {
-    int result = computeHeavy();
-    benchmark::DoNotOptimize(result);   // forces computation
-}
+# CORRECT
+g++ -std=c++23 -O2 main.cpp -lbenchmark -lpthread -o app
 
-// MISTAKE 2: Including setup inside the timed loop
-for (auto _ : state) {
-    vector<int> data(1000000);          // setup inside — times allocation too!
-    sort(data.begin(), data.end());
-}
+# WRONG — Debug build (no optimizations)
+g++ -g main.cpp -lbenchmark -lpthread -o app
+# Results are meaningless — 5-10x slower than real code
 
-// FIX: setup outside, or use PauseTiming
-vector<int> data(1000000);              // setup outside loop
-for (auto _ : state) {
-    state.PauseTiming();
-    iota(data.begin(), data.end(), 0);  // reset data — not timed
-    state.ResumeTiming();
-    sort(data.begin(), data.end());     // only this is timed
-}
-
-// MISTAKE 3: Benchmarking in Debug mode
-// g++ -g main.cpp -lbenchmark  ← no -O2! results are useless
-// Always add: -O2 or -O3
+# CORRECT — Release build
+g++ -O3 -march=native main.cpp -lbenchmark -lpthread -o app
 ```
