@@ -8,6 +8,126 @@ return type — never stored as a member of A.
 
 ---
 
+## Class diagram
+
+```mermaid
+classDiagram
+    class ReportGenerator {
+        -string m_title
+        -vector~string~ m_lines
+        +addLine(string line)
+        +printReport(Printer& printer)
+        +printSummary(Printer& printer)
+    }
+
+    class Printer {
+        -string m_name
+        +print(string content)
+        +printLine()
+    }
+
+    ReportGenerator ..> Printer : depends on (uses temporarily)
+    note for ReportGenerator "Printer is NOT stored\nas a member — only used\nduring method calls"
+```
+
+---
+
+## Sequence diagram — temporary use only
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant Report as ReportGenerator
+    participant OfficePrinter
+    participant PdfPrinter
+
+    Main->>Report: create ReportGenerator("Q1 Report")
+    Note over Report: No Printer stored inside
+
+    Main->>OfficePrinter: create Printer("Office")
+    Main->>PdfPrinter: create Printer("PDF")
+
+    Main->>Report: printReport(officePrinter)
+    activate Report
+    Report->>OfficePrinter: print("=== Q1 Report ===")
+    Report->>OfficePrinter: printLine()
+    deactivate Report
+    Note over Report: Printer reference gone after call
+
+    Main->>Report: printReport(pdfPrinter)
+    activate Report
+    Report->>PdfPrinter: print("=== Q1 Report ===")
+    Report->>PdfPrinter: printLine()
+    deactivate Report
+    Note over Report: Different printer — same report
+```
+
+---
+
+## OrderProcessor dependency injection
+
+```mermaid
+classDiagram
+    class OrderProcessor {
+        -string m_orderId
+        -double m_total
+        +process(PaymentService& p, EmailService& e, card, email) bool
+    }
+
+    class PaymentService {
+        +processPayment(string card, double amount) bool
+    }
+
+    class EmailService {
+        +sendConfirmation(string email, string msg)
+    }
+
+    OrderProcessor ..> PaymentService : uses in process()
+    OrderProcessor ..> EmailService : uses in process()
+    note for OrderProcessor "Neither service stored\nas member — injected\nper call"
+```
+
+---
+
+## Why dependency enables testability
+
+```mermaid
+flowchart TD
+    subgraph Production
+        FC1[FloorController] -. "real call" .-> AL1[AuditLogger\nwrites to disk]
+    end
+
+    subgraph Testing
+        FC2[FloorController] -. "inject mock" .-> AL2[MockAuditLogger\nchecks calls in memory]
+    end
+
+    note["Same FloorController code\nDifferent logger injected\nNo code changes needed for testing!"]
+    style note fill:#2a2a2a,color:#aaa
+```
+
+---
+
+## Dependency vs Association
+
+```mermaid
+flowchart LR
+    subgraph Dependency ["Dependency — temporary"]
+        A1[ReportGenerator] -. "parameter only\nlasts ONE method call" .-> B1[Printer]
+    end
+
+    subgraph Association ["Association — persistent"]
+        A2[McxSession] -- "stored m_group pointer\nlasts until changed" --> B2[McxGroup]
+    end
+```
+
+| | Dependency | Association |
+|--|-----------|------------|
+| Duration | Method call only | Longer term |
+| Storage | Parameter/local | Member pointer/reference |
+| Connection | Temporary | Persistent |
+
+---
+
 ## Key characteristics
 
 - No persistent connection — relationship lasts only during a method call
@@ -27,84 +147,16 @@ class ReportGenerator {
 public:
     // Printer appears ONLY as a parameter — not stored
     void printReport(Printer& printer) const {
-        printer.print("=== Report ===");
+        printer.print("=== " + m_title + " ===");
         for (const auto& line : m_lines)
             printer.print(line);
     }
 };
 
-// Different printer each time — generator doesn't care
-Printer office("Office Printer");
-Printer pdf("PDF Printer");
-
-report.printReport(office);   // use office printer
-report.printReport(pdf);      // use pdf printer — no changes to ReportGenerator
+// Different printer each time
+report.printReport(officePrinter);   // use office printer
+report.printReport(pdfPrinter);      // use pdf printer
 ```
-
----
-
-## Examples in this file
-
-| # | Dependent | Dependency | Used as |
-|---|-----------|-----------|---------|
-| 1 | ReportGenerator | Printer | method parameter |
-| 2 | OrderProcessor | PaymentService, EmailService | method parameters |
-| 3 | DataSerializer | FileWriter | method parameter |
-| 4 | FloorController | AuditLogger | method parameter |
-
----
-
-## Dependency vs Association
-
-Both are "uses-a" but differ in how long the connection lasts:
-
-```cpp
-// DEPENDENCY — B only in method signature, not stored
-class ReportGenerator {
-    // no Printer member
-    void print(Printer& p) { p.print(...); }   // temporary
-};
-
-// ASSOCIATION — B stored as pointer/reference (longer lasting)
-class McxSession {
-    McxGroup* m_group;          // stored — association
-    void joinGroup(McxGroup* g) { m_group = g; }
-};
-```
-
-| | Dependency | Association |
-|--|-----------|------------|
-| Duration | Method call only | Longer term |
-| Storage | Parameter/local | Member pointer/reference |
-| Connection | Temporary | Persistent |
-
----
-
-## Why Dependency enables testability
-
-```cpp
-// Production code
-FloorController floor("GRP-ALPHA");
-AuditLogger     realLogger;
-floor.requestFloor("SES-001", realLogger);
-
-// Test code — inject a mock logger instead
-class MockLogger : public AuditLogger {
-    std::vector<std::string> m_logged;
-public:
-    void log(const std::string& e, const std::string& d) override {
-        m_logged.push_back(e + ": " + d);
-    }
-    bool wasLogged(const std::string& event) { /* check m_logged */ }
-};
-
-MockLogger mock;
-floor.requestFloor("SES-001", mock);   // inject mock — no real logging
-assert(mock.wasLogged("FLOOR_GRANTED"));
-```
-
-This is **Dependency Injection** — one of the most important patterns in
-testable code design, and it starts here at the simplest level.
 
 ---
 

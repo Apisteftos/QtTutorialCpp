@@ -8,20 +8,208 @@ overridden in the concrete class.
 
 ---
 
+## Class diagram — Printable interface
+
+```mermaid
+classDiagram
+    class Printable {
+        <<interface>>
+        +print()* void
+        +toText()* string
+    }
+
+    class Document {
+        -string m_title
+        -string m_content
+        +print() void
+        +toText() string
+    }
+
+    class Image {
+        -string m_filename
+        -int m_width
+        -int m_height
+        +print() void
+        +toText() string
+    }
+
+    class Spreadsheet {
+        -string m_name
+        -int m_rows
+        -int m_cols
+        +print() void
+        +toText() string
+    }
+
+    Printable <|.. Document : realizes
+    Printable <|.. Image : realizes
+    Printable <|.. Spreadsheet : realizes
+    note for Printable "Pure abstract interface\nAll methods = 0\nNo data members"
+```
+
+---
+
+## MCX Codec interface
+
+```mermaid
+classDiagram
+    class McxCodec {
+        <<interface>>
+        +getName()* string
+        +getBitrate()* int
+        +encode(audio)* string
+        +decode(data)* string
+    }
+
+    class AmrNbCodec {
+        +getName() string
+        +getBitrate() int
+        +encode(audio) string
+        +decode(data) string
+    }
+
+    class AmrWbCodec {
+        +getName() string
+        +getBitrate() int
+        +encode(audio) string
+        +decode(data) string
+    }
+
+    class OpusCodec {
+        +getName() string
+        +getBitrate() int
+        +encode(audio) string
+        +decode(data) string
+    }
+
+    McxCodec <|.. AmrNbCodec : realizes
+    McxCodec <|.. AmrWbCodec : realizes
+    McxCodec <|.. OpusCodec : realizes
+
+    note for McxCodec "processAudio(McxCodec&)\nworks with ANY codec\nno code changes needed"
+```
+
+---
+
+## Multiple interfaces — Button
+
+```mermaid
+classDiagram
+    class Drawable {
+        <<interface>>
+        +draw()* void
+        +resize(w, h)* void
+    }
+
+    class Clickable {
+        <<interface>>
+        +onClick()* void
+        +contains(x, y)* bool
+    }
+
+    class Button {
+        -string m_label
+        -int m_x
+        -int m_y
+        -int m_w
+        -int m_h
+        +draw() void
+        +resize(w, h) void
+        +onClick() void
+        +contains(x, y) bool
+    }
+
+    Drawable <|.. Button : realizes
+    Clickable <|.. Button : realizes
+    note for Button "One class\ntwo interfaces\nfully implemented"
+```
+
+---
+
+## Sequence — polymorphic dispatch through interface
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant items as vector~Printable*~
+    participant Doc as Document
+    participant Img as Image
+    participant Sheet as Spreadsheet
+
+    Main->>Doc: make_unique<Document>(...)
+    Main->>Img: make_unique<Image>(...)
+    Main->>Sheet: make_unique<Spreadsheet>(...)
+
+    Main->>items: push all three
+
+    loop for each item in items
+        Main->>items: item->print()
+        alt item is Document
+            items->>Doc: print()
+            Doc-->>Main: "[Document] C++23 Guide..."
+        else item is Image
+            items->>Img: print()
+            Img-->>Main: "[Image] diagram.png (1920x1080)"
+        else item is Spreadsheet
+            items->>Sheet: print()
+            Sheet-->>Main: "[Spreadsheet] Results.xlsx..."
+        end
+    end
+
+    Note over Main: Same call — different behaviour
+    Note over Main: Runtime polymorphism via interface
+```
+
+---
+
+## Realization vs Inheritance
+
+```mermaid
+classDiagram
+    class Printable {
+        <<interface>>
+        +print()* void
+        +toText()* string
+    }
+
+    class Animal {
+        #string m_name
+        +breathe() void
+        +makeSound()* void
+    }
+
+    class Document {
+        +print() void
+        +toText() string
+    }
+
+    class Dog {
+        +makeSound() void
+    }
+
+    Printable <|.. Document : realization\n(pure interface)
+    Animal <|-- Dog : inheritance\n(extends concrete class)
+
+    note for Printable "No data\nNo implementation\nOnly contract"
+    note for Animal "Has data m_name\nHas implementation breathe()\nCan have some pure virtuals"
+```
+
+---
+
 ## Key characteristics
 
 - The base class is **purely abstract** — no data members, all methods `= 0`
 - The concrete class must implement **all** pure virtual methods
 - A class can realize multiple interfaces simultaneously
 - Client code works through the interface — independent of concrete type
-- Makes implementations interchangeable (Strategy, Dependency Injection)
+- Makes implementations interchangeable
 
 ---
 
 ## Code pattern
 
 ```cpp
-// Interface — pure abstract class, defines the CONTRACT
+// Interface — pure abstract, defines the CONTRACT
 class McxCodec {
 public:
     virtual std::string encode(const std::string& audio) const = 0;
@@ -32,100 +220,24 @@ public:
 // Realization — concrete class fulfills the contract
 class AmrWbCodec : public McxCodec {
 public:
-    std::string encode(const std::string& audio) const override {
-        return "[AMR-WB] " + audio;
-    }
-    std::string decode(const std::string& data) const override {
-        return "[decoded] " + data;
-    }
-};
-
-class OpusCodec : public McxCodec {
-public:
     std::string encode(const std::string& audio) const override { ... }
     std::string decode(const std::string& data)  const override { ... }
 };
 
-// Client uses the interface — works with ANY codec
+// Client uses the interface — works with ANY realization
 void processAudio(const McxCodec& codec, const std::string& audio) {
-    auto encoded = codec.encode(audio);   // which codec? doesn't matter!
+    auto encoded = codec.encode(audio);
 }
-
-AmrWbCodec amrWb;
-OpusCodec  opus;
-processAudio(amrWb, "audio");   // works
-processAudio(opus,  "audio");   // works — same call
-```
-
----
-
-## Examples in this file
-
-| # | Interface | Realizations | Key point |
-|---|-----------|-------------|-----------|
-| 1 | `Printable` | Document, Image, Spreadsheet | All print through same interface |
-| 2 | `Serializable` | UserProfile, SessionData | Any object can be serialized |
-| 3 | `Drawable` + `Clickable` | Button | One class, two interfaces |
-| 4 | `McxCodec` | AMR-NB, AMR-WB, OPUS | Codec is swappable |
-
----
-
-## Realization vs Inheritance
-
-```cpp
-// REALIZATION — pure interface, no data, no implementation
-class Printable {
-public:
-    virtual void print() const = 0;   // pure virtual — no body
-    virtual ~Printable() = default;
-    // no data members
-};
-
-// INHERITANCE — concrete base class with data and implementation
-class Animal {
-protected:
-    std::string m_name;              // data member
-public:
-    void breathe() { ... }           // concrete method — has implementation
-    virtual void makeSound() = 0;   // can still have some pure virtuals
-};
-```
-
-| | Realization | Inheritance |
-|--|-------------|------------|
-| Base has data | ❌ No | ✅ Yes |
-| Base has implementation | ❌ No | ✅ Yes |
-| All methods pure virtual | ✅ Yes | Not necessarily |
-| Multiple at once | ✅ Easy | Risky (diamond) |
-| Purpose | Define contract | Reuse and extend |
-
----
-
-## Realizing multiple interfaces
-
-```cpp
-class Button : public Drawable, public Clickable {
-public:
-    // Must implement all pure virtuals from BOTH interfaces
-    void draw()    const override { ... }   // from Drawable
-    void resize(int w, int h) override { ... }   // from Drawable
-    void onClick() override { ... }         // from Clickable
-    bool contains(int x, int y) const override { ... }  // from Clickable
-};
-
-// Button can be used as Drawable OR Clickable
-Drawable&  d = button;   // use as Drawable
-Clickable& c = button;   // use as Clickable
 ```
 
 ---
 
 ## When to use Realization
 
-✅ You want to define a contract that multiple classes must fulfill
-✅ You want interchangeable implementations (codecs, serializers, printers)
-✅ You want to depend on abstractions not concretions (Dependency Inversion)
-✅ You need multiple inheritance without the diamond problem
+✅ Define a contract that multiple classes must fulfill
+✅ Interchangeable implementations (codecs, serializers, printers)
+✅ Depend on abstractions not concretions (Dependency Inversion)
+✅ Multiple inheritance without the diamond problem
 
 ❌ If you want to share code between classes → use **Inheritance**
 ❌ If the relationship is not "is-a" → use Association/Aggregation/Composition

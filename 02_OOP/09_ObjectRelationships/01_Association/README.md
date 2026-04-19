@@ -8,6 +8,105 @@ their own lifetimes.
 
 ---
 
+## Class diagram
+
+```mermaid
+classDiagram
+    class Teacher {
+        -string m_name
+        -string m_subject
+        +teach(Student& student)
+        +gradeStudent(const Student& student)
+    }
+
+    class Student {
+        -string m_name
+        -double m_grade
+        +learn(string topic)
+        +getName() string
+        +getGrade() double
+    }
+
+    Teacher --> Student : teaches / grades
+```
+
+---
+
+## Bidirectional association
+
+```mermaid
+classDiagram
+    class Doctor {
+        -string m_name
+        -vector~Patient*~ m_patients
+        +addPatient(Patient* p)
+        +treatPatient(Patient& p)
+    }
+
+    class Patient {
+        -string m_name
+        -Doctor* m_doctor
+        +setDoctor(Doctor* d)
+        +describeCondition()
+    }
+
+    Doctor "1" --> "*" Patient : treats
+    Patient "*" --> "1" Doctor : assigned to
+```
+
+---
+
+## Many-to-many association
+
+```mermaid
+classDiagram
+    class Driver {
+        -string m_name
+        -vector~Vehicle*~ m_vehicles
+        +assignVehicle(Vehicle* v)
+        +listVehicles()
+    }
+
+    class Vehicle {
+        -string m_plate
+        -string m_model
+        +getPlate() string
+        +getModel() string
+    }
+
+    Driver "*" --> "*" Vehicle : can drive
+```
+
+---
+
+## Lifetime diagram
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant Teacher
+    participant Alice
+    participant Bob
+
+    Main->>Teacher: create Teacher("Schmidt", "C++23")
+    Main->>Alice: create Student("Alice", 9.5)
+    Main->>Bob: create Student("Bob", 8.0)
+
+    Main->>Teacher: teach(alice)
+    Teacher->>Alice: learn("C++23")
+
+    Main->>Teacher: teach(bob)
+    Teacher->>Bob: learn("C++23")
+
+    Note over Teacher,Bob: Teacher uses Students temporarily
+    Note over Teacher,Bob: Neither owns the other
+
+    Main->>Teacher: destroy Teacher
+    Note over Alice,Bob: Alice and Bob still alive!
+```
+
+---
+
 ## Key characteristics
 
 - No ownership — neither object creates or destroys the other
@@ -54,20 +153,14 @@ teacher.teach(alice);   // Teacher uses Student temporarily
 
 Both are "uses-a" but differ in duration:
 
-```cpp
-// Dependency — A uses B only during a method call (temporary)
-class ReportGenerator {
-    void generate(Printer& printer) {   // printer exists only here
-        printer.print();
-    }
-};
-
-// Association — A stores a reference/pointer to B (longer-term)
-class Session {
-    Group* m_group;    // stored — longer relationship
-public:
-    void joinGroup(Group* g) { m_group = g; }
-};
+```mermaid
+flowchart LR
+    subgraph Dependency
+        A1[ReportGenerator] -. "parameter only\ntemporary" .-> B1[Printer]
+    end
+    subgraph Association
+        A2[McxSession] -- "stored pointer\nlonger lasting" --> B2[McxGroup]
+    end
 ```
 
 ---

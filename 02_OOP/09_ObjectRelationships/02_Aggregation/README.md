@@ -8,6 +8,107 @@ lifetime of the parts.
 
 ---
 
+## Class diagram
+
+```mermaid
+classDiagram
+    class Department {
+        -string m_name
+        -vector~Employee*~ m_employees
+        +addEmployee(Employee* e)
+        +removeEmployee(Employee* e)
+        +listEmployees()
+        +allWork()
+    }
+
+    class Employee {
+        -string m_name
+        -string m_role
+        -double m_salary
+        +work()
+        +getName() string
+        +getRole() string
+    }
+
+    Department "1" o-- "*" Employee : has (weak)
+    note for Department "Hollow diamond = aggregation\nDoes NOT own Employee"
+```
+
+---
+
+## Lifetime diagram — parts outlive the whole
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant emp1 as Employee Kostas
+    participant emp2 as Employee Anna
+    participant dept as Department Dev
+
+    Main->>emp1: create Employee("Kostas")
+    Main->>emp2: create Employee("Anna")
+
+    Main->>dept: create Department("Dev")
+    Main->>dept: addEmployee(&emp1)
+    Main->>dept: addEmployee(&emp2)
+
+    dept->>emp1: work()
+    dept->>emp2: work()
+
+    Main->>dept: destroy Department
+    Note over dept: Department destroyed
+    Note over emp1,emp2: emp1 and emp2 STILL ALIVE!
+
+    Main->>emp1: work()
+    Note over emp1: Employee works fine without department
+```
+
+---
+
+## Part sharing diagram — same part in multiple wholes
+
+```mermaid
+flowchart TD
+    Anna[Employee: Anna]
+
+    DevDept[Department: Development]
+    OpsDept[Department: Operations]
+
+    DevDept -- "m_employees[]" --> Kostas[Employee: Kostas]
+    DevDept -- "m_employees[]" --> Anna
+    OpsDept -- "m_employees[]" --> Anna
+    OpsDept -- "m_employees[]" --> Marco[Employee: Marco]
+
+    note1["Anna belongs to BOTH departments\nThis is possible only in Aggregation"]
+    style note1 fill:#2a2a2a,color:#aaa
+```
+
+---
+
+## Playlist example
+
+```mermaid
+classDiagram
+    class Playlist {
+        -string m_name
+        -vector~Song*~ m_songs
+        +addSong(Song* s)
+        +play()
+    }
+
+    class Song {
+        -string m_title
+        -string m_artist
+        +play()
+    }
+
+    Playlist "1" o-- "*" Song : contains
+
+    note for Playlist "Song can be in\nmultiple Playlists"
+```
+
+---
+
 ## Key characteristics
 
 - Whole contains parts — but does NOT create or destroy them
@@ -43,33 +144,19 @@ dev.addEmployee(&emp);    // emp passed in from outside
 
 ---
 
-## Examples in this file
-
-| # | Whole | Parts | Key point |
-|---|-------|-------|-----------|
-| 1 | Department | Employee | Employee can be in multiple departments |
-| 2 | University | Course | Courses survive if university closes |
-| 3 | Playlist | Song | Song can be in multiple playlists |
-| 4 | CallGroup | McxSession | Sessions join/leave groups freely |
-
----
-
 ## Aggregation vs Composition
 
-This is the most important distinction:
+```mermaid
+flowchart LR
+    subgraph Aggregation ["Aggregation — weak has-a"]
+        D[Department] -. "pointer\ndoes NOT own" .-> E[Employee]
+        note1["Employee can exist\nwithout Department"]
+    end
 
-```cpp
-// AGGREGATION — part exists independently, stored as pointer
-class Department {
-    std::vector<Employee*> m_employees;   // pointer — does NOT own
-    ~Department() { /* do NOT delete */ }
-};
-
-// COMPOSITION — part cannot exist without whole, stored by value
-class Car {
-    Engine m_engine;   // member object — owned, destroyed with Car
-    ~Car() { /* engine automatically destroyed */ }
-};
+    subgraph Composition ["Composition — strong has-a"]
+        C[Car] -- "member object\nFULL ownership" --> Eng[Engine]
+        note2["Engine CANNOT exist\nwithout Car"]
+    end
 ```
 
 | | Aggregation | Composition |
@@ -98,14 +185,11 @@ class Car {
 
 ```cpp
 // WRONG — deleting parts in destructor = double-delete crash!
-class Department {
-    std::vector<Employee*> m_employees;
-    ~Department() {
-        for (auto* e : m_employees) delete e;   // WRONG for aggregation!
-    }
-};
+~Department() {
+    for (auto* e : m_employees) delete e;   // WRONG for aggregation!
+}
 
-// CORRECT for aggregation — do not delete
+// CORRECT — do not delete
 ~Department() { }   // parts managed elsewhere
 ```
 
