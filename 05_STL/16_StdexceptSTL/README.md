@@ -16,20 +16,92 @@ with error-code checks. RAII ensures resources are always cleaned up.
 
 ## Exception hierarchy
 
-```
-std::exception
-  ├── std::logic_error       — programming errors (detectable before runtime)
-  │     ├── std::invalid_argument
-  │     ├── std::domain_error
-  │     ├── std::length_error
-  │     └── std::out_of_range
-  └── std::runtime_error     — errors detected only at runtime
-        ├── std::range_error
-        ├── std::overflow_error
-        └── std::underflow_error
+```mermaid
+classDiagram
+    class `std::exception` {
+        <<abstract>>
+        +what() const char*
+    }
+    class `std::logic_error` {
+        programming errors
+    }
+    class `std::runtime_error` {
+        runtime errors
+    }
+    class `std::invalid_argument`
+    class `std::domain_error`
+    class `std::length_error`
+    class `std::out_of_range`
+    class `std::range_error`
+    class `std::overflow_error`
+    class `std::underflow_error`
+    class `std::bad_alloc`
+    class `std::bad_cast`
+
+    `std::exception` <|-- `std::logic_error`
+    `std::exception` <|-- `std::runtime_error`
+    `std::exception` <|-- `std::bad_alloc`
+    `std::exception` <|-- `std::bad_cast`
+
+    `std::logic_error` <|-- `std::invalid_argument`
+    `std::logic_error` <|-- `std::domain_error`
+    `std::logic_error` <|-- `std::length_error`
+    `std::logic_error` <|-- `std::out_of_range`
+
+    `std::runtime_error` <|-- `std::range_error`
+    `std::runtime_error` <|-- `std::overflow_error`
+    `std::runtime_error` <|-- `std::underflow_error`
 ```
 
-Plus: `std::bad_alloc`, `std::bad_cast`, `std::bad_typeid`
+---
+
+## Custom exception hierarchy (from this file)
+
+```mermaid
+classDiagram
+    class `std::runtime_error` {
+        +what() const char*
+    }
+    class AppException {
+        +AppException(msg)
+    }
+    class NetworkException {
+        -int m_errorCode
+        +errorCode() int
+    }
+    class DatabaseException {
+        +DatabaseException(msg)
+    }
+
+    `std::runtime_error` <|-- AppException
+    AppException <|-- NetworkException
+    AppException <|-- DatabaseException
+```
+
+---
+
+## try / catch flow
+
+```mermaid
+flowchart TD
+    A["Code in try block runs"]
+    B{Exception thrown?}
+    C["Match catch blocks\nin order (most derived first)"]
+    D["Matching catch found?"]
+    E["Execute catch block\nstack unwinding begins\ndestructors called"]
+    F["catch(...)\ncatch everything"]
+    G["Exception propagates\nup call stack"]
+    H["Normal execution continues\nafter try-catch block"]
+
+    A --> B
+    B -->|No| H
+    B -->|Yes| C
+    C --> D
+    D -->|Yes| E
+    E --> H
+    D -->|No catch matches| F
+    F -->|No catch(...)| G
+```
 
 ---
 
@@ -57,11 +129,11 @@ catch (...) {
 ## Standard exception types
 
 ```cpp
-throw std::invalid_argument("negative size");    // logic error
+throw std::invalid_argument("negative size");       // logic error
 throw std::out_of_range("index 100 out of [0,10)"); // logic error
-throw std::runtime_error("disk full");           // runtime error
-throw std::overflow_error("integer overflow");   // runtime error
-throw std::bad_alloc();                          // heap allocation failed
+throw std::runtime_error("disk full");              // runtime error
+throw std::overflow_error("integer overflow");      // runtime error
+throw std::bad_alloc();                             // heap allocation failed
 ```
 
 ---
@@ -91,11 +163,26 @@ Always derive from `std::exception` or its children so callers can use
 
 ## Catch order — most derived first
 
+```mermaid
+flowchart TD
+    throw["throw NetworkError(timeout, 408)"]
+    c1{"catch NetworkError?"}
+    c2{"catch MyException?"}
+    c3{"catch std::exception?"}
+
+    throw --> c1
+    c1 -->|✅ match| h1["handle NetworkError\nmost specific"]
+    c1 -->|❌ no match| c2
+    c2 -->|✅ match| h2["handle MyException"]
+    c2 -->|❌ no match| c3
+    c3 -->|✅ match| h3["handle std::exception\ncatch-all"]
+```
+
 ```cpp
 try { throw NetworkError("timeout", 408); }
-catch (const NetworkError& e)  { /* most specific */ }
-catch (const MyException& e)   { /* less specific */ }
-catch (const std::exception& e){ /* catch-all     */ }
+catch (const NetworkError& e)   { /* most specific */ }
+catch (const MyException& e)    { /* less specific */ }
+catch (const std::exception& e) { /* catch-all     */ }
 ```
 
 ---
@@ -116,20 +203,50 @@ try {
 
 ## noexcept
 
+```mermaid
+flowchart LR
+    subgraph noexcept ["noexcept function"]
+        F["safeSwap() noexcept"]
+        F --> ok["Returns normally ✅"]
+        F --> throws["Throws internally ❌"]
+        throws --> term["std::terminate() called\nprogram ends"]
+    end
+
+    subgraph normal ["regular function"]
+        G["riskyDiv()"]
+        G --> ok2["Returns normally ✅"]
+        G --> throws2["Throws → propagates up ✅"]
+    end
+```
+
 ```cpp
-int safeSwap(int& a, int& b) noexcept {
-    std::swap(a, b);
-}
+int safeSwap(int& a, int& b) noexcept { std::swap(a, b); }
 ```
 
 - Tells compiler and callers the function never throws
 - Enables move optimization (move constructors should be `noexcept`)
-- If a `noexcept` function throws, `std::terminate()` is called
+- If a `noexcept` function throws → `std::terminate()` is called
 - Check: `noexcept(expr)` returns `true`/`false`
 
 ---
 
 ## RAII — exception-safe resources
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant File as FileResource
+    participant Exception
+
+    Main->>File: FileResource f("output.txt") — opens
+    Main->>File: f.write("data") — OK
+    Main->>File: f.write("") — throws!
+    File->>Exception: throw invalid_argument
+    Note over File: Stack unwinding begins
+    File->>File: ~FileResource() called automatically
+    Note over File: File closed — no leak ✅
+    Exception->>Main: caught in catch block
+```
 
 ```cpp
 class FileHandle {
@@ -137,17 +254,24 @@ public:
     FileHandle(const std::string& path) { open(path); }
     ~FileHandle() { close(); }  // always runs — even on exception
 };
-
-void processFile() {
-    FileHandle f("data.txt");   // opens
-    doRiskyWork();               // may throw
-    // f destructor always called — file always closed
-}
 ```
 
 ---
 
 ## std::exception_ptr — transfer across threads
+
+```mermaid
+sequenceDiagram
+    participant Main
+    participant Worker
+
+    Main->>Worker: start thread
+    Worker->>Worker: try { throw runtime_error }
+    Worker->>Worker: catch(...) { eptr = current_exception() }
+    Worker-->>Main: thread joins
+    Main->>Main: if (eptr) rethrow_exception(eptr)
+    Main->>Main: catch and handle in main thread
+```
 
 ```cpp
 std::exception_ptr eptr;
@@ -167,6 +291,18 @@ if (eptr) {
 ---
 
 ## Exception safety levels
+
+```mermaid
+flowchart LR
+    subgraph Levels ["Exception Safety — strongest to weakest"]
+        NT["No-throw\nnoexcept\nNever throws\nDestructors, swap, move"]
+        ST["Strong\nCommit or rollback\nState unchanged on throw\nCopy-then-swap idiom"]
+        BT["Basic\nValid state guaranteed\nNo resource leaks\nState may differ"]
+        NO["None\nMay corrupt state\nAvoid at all costs"]
+    end
+
+    NT --> ST --> BT --> NO
+```
 
 | Level | Guarantee |
 |-------|-----------|
