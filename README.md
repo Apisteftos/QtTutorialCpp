@@ -555,3 +555,21 @@ Intermediate: 04_Templates → 05_STL → 06_ModernCpp
 Advanced:     07_DesignPatterns → 08_ModernCppDesignPatterns
 Professional: 09_SoftwareArchitecture → 10_SystemProgramming → 11_CodeQualityPractices
 ```
+
+
+
+---
+
+## License
+
+Copyright © 2024–2026 **Konstantinos Angeloulis**
+
+This tutorial series is licensed under the
+**[Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/)**.
+
+[![CC BY-NC-ND 4.0](https://licensebuttons.net/l/by-nc-nd/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+
+You may read and share this material with attribution, but you may **not** use it
+commercially or publish modified versions of it.
+
+See [LICENSE.md](LICENSE.md) for full terms.
