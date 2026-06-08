@@ -1,57 +1,67 @@
 #include <iostream>
 #include <mutex>
-
-
-// https://refactoring.guru/design-patterns/singleton/cpp/example#example-1
-
+#include <thread>
+#include <vector>
 
 /**
- * Thread-Safe Singleton using Meyers' Singleton pattern
- * This implementation is thread-safe in C++11 and later due to guaranteed thread-safe initialization of function-local static variables.
- * The instance is created on first use and destroyed automatically when the program ends.
+ * Thread-Safe Singleton using lock_guard
+ * Instance is created on first use (lazy initialization)
+ * Protected by a mutex on every getInstance() call
+ * Thread-safe but slower than Double-Checked Locking
+ * NOTE: This is the stepping stone to understanding
+ *       why Meyers' Singleton is preferred
  */
 class Singleton {
 private:
-    // Private constructor
+    static Singleton* instance;
+    static std::mutex mtx;
+
     Singleton() {
-        std::cout << "Singleton instance created" << std::endl;
+        std::cout << "Singleton instance created\n";
     }
 
-    // Delete copy constructor and assignment operator
     Singleton(const Singleton&) = delete;
     Singleton& operator=(const Singleton&) = delete;
 
-
 public:
-    // Static method to access the singleton instance
-    static Singleton& getInstance() {
-        // Using Scott Meyers' Singleton pattern
-        static Singleton instance;
+    static Singleton* getInstance() {
+        std::lock_guard<std::mutex> lock(mtx); // locks on EVERY call
+        if (instance == nullptr) {
+            instance = new Singleton();
+        }
         return instance;
     }
 
     void doSomething() {
-        std::cout << "Singleton is doing something" << std::endl;
+        std::cout << "Singleton is doing something, thread: "
+                  << std::this_thread::get_id() << "\n";
     }
 
     ~Singleton() {
-        std::cout << "Singleton instance destroyed" << std::endl;
+        std::cout << "Singleton instance destroyed\n";
     }
 };
 
+Singleton* Singleton::instance = nullptr;
+std::mutex Singleton::mtx;
 
 int main() {
-    // Get the singleton instance
-    Singleton& s1 = Singleton::getInstance();
-    s1.doSomething();
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 3; i++) {
+        threads.emplace_back([]() {
+            Singleton* s = Singleton::getInstance();
+            s->doSomething();
+        });
+    }
 
-    // Get another reference to the same instance
-    Singleton& s2 = Singleton::getInstance();
-    s2.doSomething();
+    for (auto& t : threads) {
+        t.join();
+    }
 
-    // Both references refer to the same instance
-    std::cout << "Are s1 and s2 at the same address? "
-              << (&s1 == &s2 ? "Yes" : "No") << std::endl;
+    // Verify same instance
+    Singleton* s1 = Singleton::getInstance();
+    Singleton* s2 = Singleton::getInstance();
+    std::cout << "Same instance? " << (s1 == s2 ? "Yes" : "No") << "\n";
 
     return 0;
 }
