@@ -21,8 +21,6 @@ private:
     Singleton(const Singleton&) = delete;
     Singleton& operator=(const Singleton&) = delete;
 
-    // For thread safety
-    static std::mutex mutex;
 
 public:
     // Static method to access the singleton instance
@@ -41,7 +39,6 @@ public:
     }
 };
 
-std::mutex Singleton::mutex;
 
 int main() {
     // Get the singleton instance
