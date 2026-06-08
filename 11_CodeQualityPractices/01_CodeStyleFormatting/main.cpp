@@ -718,7 +718,6 @@ void example8_comment_style() {
     cout << "\n╔══════════════════════════════════════════════════╗\n";
     cout << "║   EXAMPLE 8: COMMENT STYLE                       ║\n";
     cout << "╚══════════════════════════════════════════════════╝\n";
-
     // ❌ BAD CODE: Poor comments
     cout << "\n❌ BAD CODE (Poor Comments):\n";
     cout << "```cpp\n";
@@ -783,6 +782,79 @@ void example8_comment_style() {
     cout << "    // Temporary fix\n";
     cout << "}\n";
     cout << "```\n";
+
+
+    cout << "\n📌 SECTION MARKERS — for large file organization\n";
+    cout << "   Use when a file has multiple logical sections\n";
+    cout << "   that benefit from clear visual separation.\n";
+    cout << "   Common in:\n";
+    cout << "   - Files with 200+ lines\n";
+    cout << "   - Multiple class definitions\n";
+    cout << "   - Mixed concerns (types, helpers, main logic)\n";
+
+    cout << "\n❌ BAD - no visual separation in a large file:\n";
+    cout << "```cpp\n";
+    cout << "void connectDatabase() { }\n";
+    cout << "int calculatePrice() { }\n";
+    cout << "void sendEmail() { }\n";
+    cout << "void validateInput() { }\n";
+    cout << "class UserManager { };\n";
+    cout << "class OrderManager { };\n";
+    cout << "```\n";
+
+    cout << "\n🚨 PROBLEMS:\n";
+    cout << "   • No visual separation between unrelated functions\n";
+    cout << "   • Hard to navigate in large files\n";
+    cout << "   • Mixed concerns with no grouping\n";
+
+    cout << "\n✅ GOOD - clear sections make navigation easy:\n";
+    cout << "```cpp\n";
+    cout << "// ============================================\n";
+    cout << "// DATABASE\n";
+    cout << "// ============================================\n";
+    cout << "void connectDatabase() { }\n";
+    cout << "void disconnectDatabase() { }\n";
+    cout << "\n";
+    cout << "// ============================================\n";
+    cout << "// BUSINESS LOGIC\n";
+    cout << "// ============================================\n";
+    cout << "int calculatePrice() { }\n";
+    cout << "void validateInput() { }\n";
+    cout << "\n";
+    cout << "// ============================================\n";
+    cout << "// COMMUNICATION\n";
+    cout << "// ============================================\n";
+    cout << "void sendEmail() { }\n";
+    cout << "void sendNotification() { }\n";
+    cout << "\n";
+    cout << "// ============================================\n";
+    cout << "// MANAGERS\n";
+    cout << "// ============================================\n";
+    cout << "class UserManager { };\n";
+    cout << "class OrderManager { };\n";
+    cout << "```\n";
+
+    cout << "\n✨ IMPROVEMENTS:\n";
+    cout << "   ✅ Clear visual separation between sections\n";
+    cout << "   ✅ Related functions grouped together\n";
+    cout << "   ✅ Easy to navigate in large files\n";
+    cout << "   ✅ Immediately clear what each section contains\n";
+
+    cout << "\n💡 RULE OF THUMB:\n";
+    cout << "   File under ~100 lines  → no section markers needed\n";
+    cout << "   File over  ~200 lines  → section markers help navigation\n";
+    cout << "   File with mixed topics → section markers are essential\n";
+
+    cout << "\n⚠️  BAD USE (overkill for small files):\n";
+    cout << "```cpp\n";
+    cout << "// ============================================\n";
+    cout << "// ADD FUNCTION\n";
+    cout << "// ============================================\n";
+    cout << "int add(int a, int b) { return a + b; }  // no section needed!\n";
+    cout << "```\n";
+
+
+
 
     cout << "\n✨ IMPROVEMENTS:\n";
     cout << "   ✅ Doxygen-style documentation\n";
