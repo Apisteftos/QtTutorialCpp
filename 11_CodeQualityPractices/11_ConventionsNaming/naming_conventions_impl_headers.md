@@ -17,16 +17,100 @@ combined with a matching filename. This is not a language feature — it is a so
 
 > **"If you use anything from `detail::`, you are on your own."**
 
+---
+
+## What Actually Lives Inside `namespace detail`
+
+This is the part nobody explains. The contents are **overwhelmingly templates** — not plain
+functions. Here is the breakdown from real codebases (Boost, fmtlib, libstdc++):
+
+| Category | Example | Why it's here |
+|---|---|---|
+| **Type traits / metafunctions** | `is_string<T>`, `has_trivial_assign<T>` | Answer questions about types at compile time |
+| **Policy structs with static methods** | `struct copier<bool>`, `struct filler<bool>` | Selected by compiler, not at runtime |
+| **Template specializations** | `struct copier<true>` (memcpy fast path) | Can't partially specialize functions — use structs |
+| **Tag types** | `struct output_iterator_tag {}` | Carry information with zero runtime cost |
+| **Internal implementation classes** | `class buffer<T>`, `class error_handler` | Full classes not meant for users |
+| **Plain inline helpers** | `throw_format_error(const char*)` | Rare — only when no type variation needed |
+
+### Why structs instead of plain functions?
+
+Plain template functions **cannot be partially specialized** in C++. So `detail` uses the
+classic workaround: wrap the logic in a **struct template**, then specialize the struct.
+This is the dominant pattern in Boost, fmtlib, and the STL:
+
 ```cpp
 namespace mylib {
 namespace detail {
 
-    // Not part of the public API. May change without notice.
-    inline void helperImpl(...) { ... }
+// Primary template — general case (slow path)
+template <bool canOptimize>
+struct copier {
+    template<typename I1, typename I2>
+    static I2 do_copy(I1 first, I1 last, I2 out) {
+        while (first != last) { *out++ = *first++; }
+        return out;
+    }
+};
+
+// Full specialization — fast path using memcpy
+template <>
+struct copier<true> {
+    template<typename I1, typename I2>
+    static I2* do_copy(I1* first, I1* last, I2* out) {
+        std::memcpy(out, first, (last - first) * sizeof(I2));
+        return out + (last - first);
+    }
+};
+
+} // namespace detail
+
+// Public API — compiler selects the right copier at compile time
+template<typename I1, typename I2>
+inline I2 copy(I1 first, I1 last, I2 out) {
+    constexpr bool canOpt = std::is_pointer_v<I1> &&
+                            std::is_pointer_v<I2> &&
+                            std::is_trivially_copyable_v<
+                                std::remove_pointer_t<I1>>;
+    return detail::copier<canOpt>::do_copy(first, last, out);
+}
+} // namespace mylib
+```
+
+### Typical `detail` structure in a real library
+
+```cpp
+namespace mylib {
+namespace detail {
+
+    // 1. Type traits — answer questions about types at compile time
+    template<typename T> struct is_string             : std::false_type {};
+    template<>           struct is_string<std::string>: std::true_type  {};
+
+    // 2. Policy structs — compiler picks the right one
+    template<bool Fast> struct copier { ... };
+    template<>          struct copier<true> { ... };  // fast-path specialization
+
+    // 3. Tag types — zero-cost compile-time markers
+    struct output_iterator_tag {};
+    struct contiguous_iterator_tag {};
+
+    // 4. Internal implementation classes
+    template<typename Char> class buffer { ... };
+    class error_handler { ... };
+
+    // 5. Plain helper functions — the minority
+    inline void throw_format_error(const char* msg) {
+        throw std::format_error(msg);
+    }
 
 } // namespace detail
 } // namespace mylib
 ```
+
+**The rule:** if logic needs to vary by type → struct template + specialization inside
+`detail`. If it's a simple utility with no type variation → plain `inline` function inside
+`detail`.
 
 ---
 
@@ -191,10 +275,11 @@ Large project, slow compile times        fwd.h  (forward declarations only)
 Build config / platform detection        config.h, export.h, platform.h
 ```
 
-**The single rule to remember:**
+**The rules to remember:**
 
 > Anything not meant for the user goes in `namespace detail` (or `namespace internal`).  
 > The filename signals this with `_impl`, `detail`, or `internal`.  
-> If it's a whole class's private data, use PIMPL.
+> If it's a whole class's private data, use PIMPL.  
+> Inside `detail`: logic that varies by type → struct template + specialization. Simple utility with no type variation → plain `inline` function.
 
 This is what Boost, abseil, fmtlib, range-v3, Qt, protobuf, and gRPC all do.
