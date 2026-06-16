@@ -112,6 +112,34 @@ namespace detail {
 `detail`. If it's a simple utility with no type variation → plain `inline` function inside
 `detail`.
 
+
+### Is `namespace detail` compile-time or runtime?
+
+**Both — but it leans heavily toward compile time.** The distinction is important:
+
+| Content | When | Example |
+|---|---|---|
+| Type traits, metafunctions | Compile time | `is_string<T>`, `has_trivial_assign<T>` |
+| Policy structs + specializations | Compile time | `copier<true>` — compiler picks the right one |
+| Tag types | Compile time | Zero-size structs for overload resolution only |
+| `constexpr` / `consteval` helpers | Compile time | Evaluated before the binary exists |
+| Internal implementation classes | Runtime | `class buffer`, `class error_handler` — real objects |
+| Plain `inline` helper functions | Runtime | `throw_format_error()` — called at runtime |
+| Classes with virtual functions | Runtime | Runtime dispatch, vtable |
+
+`namespace detail` is **not about when** — it is purely about **visibility**:
+
+```
+namespace detail  =  "not for users"
+                       ↳ happens to be mostly compile-time in template libraries
+                       ↳ can be runtime too — no rule against it
+```
+
+The compile-time dominance comes from the fact that template-heavy libraries (Boost,
+fmtlib, STL) put most of their metaprogramming machinery in `detail` because it is
+internal. A `detail` namespace in a non-template library would be mostly runtime code.
+The visibility contract and the compile/runtime distinction are completely orthogonal.
+
 ---
 
 ## What the Industry Actually Uses
