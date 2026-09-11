@@ -372,6 +372,42 @@ classDiagram
 | **Composition** | solid | filled diamond ◆ | sits at the **whole** (owner side), not the part |
 | **Realization** | dashed | hollow triangle ▷ | sits at the **interface**, line runs from implementer |
 | **Inheritance** | solid | hollow triangle ▷ | sits at the **base class**, line runs from derived class |
+| **Enum** *(not one of the 6)* | solid | open arrow → | same as Association — points from the class holding it, to the enum |
+
+### Enum notation
+
+An enum isn't one of the 6 object relationships (it's a type, not an
+object), but it comes up constantly in practice, so it's worth pinning down
+here too: **it uses Association notation** — solid line, open arrow, no
+diamond, no triangle.
+
+```mermaid
+classDiagram
+    class Developer {
+        - seniorityLevel: Level
+    }
+    class Level {
+        <<enumeration>>
+        INTERN
+        JUNIOR
+        MIDLEVEL
+        SENIOR
+    }
+    Developer --> Level
+```
+
+The deciding factor is the same **stored vs. temporary** question used to
+tell Association apart from Dependency:
+
+| Case | Notation | Why |
+|---|---|---|
+| Enum stored as an attribute (`- seniorityLevel: Level`) | solid, **Association** | Part of the object's persistent state |
+| Enum only used as a method parameter (`promoteTo(newLevel: Level)`) | dashed, **Dependency** | Used briefly, not stored |
+
+Other enum-specific rules (covered in full in `06_Multiplicity/README.md`):
+- `<<enumeration>>` stereotype above the enum's name, values listed with no visibility marker
+- **No multiplicity** if the attribute holds a single value (the typical case — implicit `1`)
+- `[1..*]` inside the attribute bracket if a class can hold multiple values of that enum at once
 
 ### Why Realization and Inheritance are the easy ones to get wrong
 
