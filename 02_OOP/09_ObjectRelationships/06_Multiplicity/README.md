@@ -185,6 +185,102 @@ meaningful design decision. Dependency, Realization, and Inheritance describe
 
 ---
 
+## Multiplicity for Enums
+
+Enums are a special case because they're **types**, not object instances —
+so "how many" depends on *what* you're modeling.
+
+### 1. An attribute typed as an enum (most common case)
+
+An object normally holds **exactly one** enum value at a time, so
+multiplicity is **implicit `1`** and usually **not written at all**:
+
+```mermaid
+classDiagram
+    class TrafficLight {
+        - currentColor: Color
+    }
+    class Color {
+        <<enumeration>>
+        RED
+        GREEN
+        BLUE
+    }
+    TrafficLight --> Color
+```
+
+*A `TrafficLight` has exactly one `Color` at a time — multiplicity `1` is
+the default assumption, so it's omitted.*
+
+### 2. An attribute holding multiple enum values
+
+If a class can hold **more than one** value of the same enum (e.g. a set
+of allowed states, tags, or flags), show it with **attribute-level
+multiplicity** — square brackets right after the type, inside the
+attribute list itself (not on a connecting line):
+
+```mermaid
+classDiagram
+    class Shirt {
+        - availableColors: Color [1..*]
+    }
+    class Color {
+        <<enumeration>>
+        RED
+        GREEN
+        BLUE
+    }
+    Shirt --> Color
+```
+
+*A `Shirt` has 1 or more available `Color`s → maps to `std::vector<Color>`.*
+
+```cpp
+class Shirt {
+private:
+    std::vector<Color> availableColors; // [1..*]
+};
+```
+
+### 3. Explicit multiplicity on the association line
+
+You can also put it on the connecting arrow itself, same as any other
+class relationship — more common when the enum is drawn as a separate box
+rather than just listed as an attribute:
+
+```mermaid
+classDiagram
+    class Employee {
+        - name: string
+    }
+    class SeniorityLevel {
+        <<enumeration>>
+        Junior
+        MidLevel
+        Senior
+    }
+    Employee "1" --> "1" SeniorityLevel : has
+```
+
+*One `Employee` has exactly one `SeniorityLevel` — shown explicitly here
+for clarity, though in practice `1..1` is usually left off since it's the
+default.*
+
+### Summary
+
+| Scenario | Multiplicity shown? | Notation | C++ mapping |
+|---|---|---|---|
+| Single enum value per object (typical) | No — implicit `1` | *(nothing)* | `Color currentColor;` |
+| Multiple enum values allowed | Yes — attribute bracket | `[0..*]`, `[1..*]`, etc. | `std::vector<Color>` |
+| Enum shown as separate class, being explicit | Yes — on the arrow | `"1" --> "1"` | same as single value |
+
+The key question is the same one used for object relationships:
+*"can this object have more than one of this enum value at once?"* If no
+(a traffic light is only ever one color), write nothing. If yes (a shirt
+comes in several colors), show it as `[1..*]` on the attribute.
+
+---
+
 ## Why this matters for your C++ code
 
 Multiplicity tells you which **container/storage type** to use:
