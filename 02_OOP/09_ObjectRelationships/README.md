@@ -45,6 +45,17 @@ Student student;
 teacher.teach(student);
 ```
 
+```mermaid
+classDiagram
+    class Teacher {
+        + teach(student: Student) void
+    }
+    class Student {
+        + learn() void
+    }
+    Teacher --> Student : teaches
+```
+
 **Real world:** A teacher teaches students. When the teacher leaves, students
 still exist. When a student graduates, the teacher still exists.
 
@@ -68,6 +79,17 @@ class Printer {
 public:
     void print(const std::string& text) { }
 };
+```
+
+```mermaid
+classDiagram
+    class ReportGenerator {
+        + generate(printer: Printer) void
+    }
+    class Printer {
+        + print(text: string) void
+    }
+    ReportGenerator ..> Printer : uses
 ```
 
 **Difference from Association:** Dependency is temporary (method parameter),
@@ -98,6 +120,18 @@ dept.addEmployee(emp);
 
 // Department destroyed — Employee still exists
 // Employee can belong to multiple departments
+```
+
+```mermaid
+classDiagram
+    class Department {
+        - m_employees: vector~Employee*~
+        + addEmployee(e: Employee*) void
+    }
+    class Employee {
+        + name: string
+    }
+    Department "1" o-- "0..*" Employee : contains
 ```
 
 **Real world:** A department has employees. If the department is dissolved,
@@ -134,6 +168,18 @@ public:
 Car car;
 car.start();
 // When car is destroyed, engine is destroyed too
+```
+
+```mermaid
+classDiagram
+    class Car {
+        - m_engine: Engine
+        + start() void
+    }
+    class Engine {
+        + start() void
+    }
+    Car "1" *-- "1" Engine : owns
 ```
 
 **Real world:** A car has an engine. If the car is destroyed (scrapped),
@@ -175,11 +221,32 @@ Printable* p = new Document();
 p->print();
 ```
 
+```mermaid
+classDiagram
+    class Printable {
+        <<interface>>
+        + print() void
+    }
+    class Document {
+        + print() void
+    }
+    class Image {
+        + print() void
+    }
+    Printable <|.. Document
+    Printable <|.. Image
+```
+
 **Real world:** A Document and an Image both implement the Printable
 interface — they "realize" the printing contract in their own way.
 
 **Difference from Inheritance:** Realization implements a pure interface
 (no data, no implementation). Inheritance extends a concrete class.
+
+> **Arrow direction:** the hollow triangle always sits at the **interface**
+> (the general contract), and the dashed line runs from the **implementing
+> class** toward it — `Printable <|.. Document` reads as "Document realizes
+> Printable," same direction logic as Inheritance below.
 
 ---
 
@@ -212,6 +279,30 @@ public:
 Animal* a = new Dog();
 a->makeSound();   // Woof! — runtime polymorphism
 ```
+
+```mermaid
+classDiagram
+    class Animal {
+        <<abstract>>
+        + makeSound() void*
+        + breathe() void
+    }
+    class Dog {
+        + makeSound() void
+    }
+    class Cat {
+        + makeSound() void
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat
+```
+
+> **Arrow direction:** the hollow triangle sits at the **base class**
+> (`Animal`), and the solid line runs from the **derived class** toward it —
+> `Animal <|-- Dog` reads as "Dog inherits from Animal." The triangle always
+> points toward the more general class, no matter which side of the line you
+> write it on. **No multiplicity** is written on inheritance/realization
+> arrows — "how many" doesn't apply to an is-a relationship.
 
 > **Full coverage in `../04_Inheritance/`** which includes:
 > - `01_Inheritance` — single inheritance, access specifiers, overriding
@@ -259,14 +350,52 @@ Inheritance  →  full ownership of base sub-object
 
 ## UML notation (for reference)
 
+All six relationships, side by side, using consistent placeholder classes
+`A` and `B`. Pay attention to **which end the arrowhead/diamond sits on** —
+that's the part that's easiest to get backwards.
+
+```mermaid
+classDiagram
+    A_Assoc --> B_Assoc : Association
+    A_Dep ..> B_Dep : Dependency
+    A_Agg o-- B_Agg : Aggregation
+    A_Comp *-- B_Comp : Composition
+    B_Real <|.. A_Real : Realization
+    B_Inh <|-- A_Inh : Inheritance
 ```
-Association:   A ————————> B        solid line, open arrow
-Dependency:    A - - - - -> B       dashed line, open arrow
-Aggregation:   A <>————————B        solid line, hollow diamond at A
-Composition:   A <♦>———————B        solid line, filled diamond at A
-Realization:   A <— — — — —B        dashed line, hollow triangle at A
-Inheritance:   A <—————————B        solid line, hollow triangle at A
+
+| Relationship | Line style | Arrowhead / symbol | Which end it's on |
+|---|---|---|---|
+| **Association** | solid | open arrow → | points at the class being used/known |
+| **Dependency** | dashed | open arrow → | points at the class being temporarily used |
+| **Aggregation** | solid | hollow diamond ◇ | sits at the **whole** (owner side), not the part |
+| **Composition** | solid | filled diamond ◆ | sits at the **whole** (owner side), not the part |
+| **Realization** | dashed | hollow triangle ▷ | sits at the **interface**, line runs from implementer |
+| **Inheritance** | solid | hollow triangle ▷ | sits at the **base class**, line runs from derived class |
+
+### Why Realization and Inheritance are the easy ones to get wrong
+
+For Association, Dependency, Aggregation, and Composition, the arrow/diamond
+points **from the user toward the used, or from the whole toward the part**
+— i.e., roughly "in the direction you'd read the sentence" (`Car *-- Engine`
+— *Car* has an *Engine*).
+
+Realization and Inheritance flip that intuition: the triangle points
+**backwards**, from the specific class toward the general one — child to
+parent, implementer to interface — **regardless of which class you consider
+the "main" one** in the relationship:
+
+```mermaid
+classDiagram
+    class Animal { <<abstract>> }
+    class Dog
+    Animal <|-- Dog
 ```
+
+*Read as: "Dog inherits from Animal" — but the triangle sits at `Animal`
+(the parent), not at `Dog` (the one actually "doing" the inheriting).* This
+is the opposite of Composition, where the diamond sits at the class doing
+the "owning" (`Car`), not the thing being owned (`Engine`).
 
 ---
 
@@ -279,6 +408,7 @@ Inheritance:   A <—————————B        solid line, hollow triangl
 ├── 03_Composition
 ├── 04_Dependency
 ├── 05_Realization
+├── 06_Multiplicity        ← degree/cardinality of each relationship
 └── README.md               ← this file
 
 Note: Inheritance examples → ../04_Inheritance/
