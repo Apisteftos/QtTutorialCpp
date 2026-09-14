@@ -253,6 +253,119 @@ the engine is destroyed with it. The engine has no meaning without the car.
 **Key signal:** The "part" is stored as a **member object** (not pointer) —
 created in the constructor, destroyed in the destructor.
 
+### Aggregation vs. Composition — a closer look
+
+The one question that decides which one you're looking at:
+
+> **When the "whole" object is destroyed, does the "part" get destroyed too?**
+
+- **Yes** → **Composition** — the whole *owns* the part; they live and die together.
+- **No** → **Aggregation** — the whole just *references* the part; the part has its own independent lifetime.
+
+Everything else (pointer vs. value, single object vs. `vector`) is a
+side-effect of that one fact, not a separate rule to remember.
+
+| | Composition | Aggregation |
+|---|---|---|
+| Owns the part's lifetime? | **Yes** | **No** |
+| How it's stored | member **object** (by value) | member **pointer/reference** |
+| Who creates it | the owning class itself, usually in its constructor | someone else, outside the class, then handed in |
+| Who destroys it | automatically, when the owner is destroyed | not the owner — it survives |
+| Can the part be shared with other owners? | No — one part, one owner | Yes — the same object could be referenced by more than one owner |
+| UML symbol | filled diamond ◆ | hollow diamond ◇ |
+| Real-world example | Car → Engine (scrap the car, the engine's gone with it) | Department → Employee (dissolve the department, employees still exist and can join another) |
+
+#### Composition — code
+
+```cpp
+class Engine {
+public:
+    Engine() { std::cout << "Engine created\n"; }
+    ~Engine() { std::cout << "Engine destroyed\n"; }
+    void start() { std::cout << "Engine started\n"; }
+};
+
+class Car {
+private:
+    Engine m_engine;   // member OBJECT, by value — no pointer, no `new`
+
+public:
+    Car() {
+        // Nothing to do — m_engine is ALREADY created automatically,
+        // before Car's constructor body even runs
+    }
+    // No custom destructor needed either — m_engine is destroyed
+    // automatically when Car is destroyed
+
+    void start() { m_engine.start(); }
+};
+
+int main() {
+    Car car;              // prints "Engine created" — Car built its own Engine
+    car.start();
+} // car goes out of scope here
+  // prints "Engine destroyed" — automatic, no code needed
+```
+
+**Key code signals:** no `new`, no pointer, no manual `delete`. The
+compiler handles construction/destruction ordering for you.
+
+#### Aggregation — code
+
+```cpp
+class Employee {
+public:
+    Employee(std::string n) : name(n) {}
+    std::string name;
+};
+
+class Department {
+private:
+    std::vector<Employee*> m_employees;   // pointers, NOT owned objects
+
+public:
+    void addEmployee(Employee* e) {
+        m_employees.push_back(e);   // just storing an address, not creating anything
+    }
+    // No destructor needed to clean up employees — Department
+    // never created them, so it's not Department's job to delete them
+};
+
+int main() {
+    Employee* emp = new Employee("Kostas");   // created OUTSIDE Department, by someone else
+
+    Department dept;
+    dept.addEmployee(emp);   // Department just borrows a reference to it
+
+}   // dept goes out of scope here
+    // emp is NOT destroyed — it's still alive, still valid, still usable
+
+// emp must be cleaned up separately, by whoever owns it — e.g.:
+delete emp;
+```
+
+**Key code signals:** the object is created with `new` **outside** the
+owning class, then handed in via a setter/`add...()` method/constructor
+parameter. The owning class never calls `delete` on it.
+
+#### Direct diff, same shape of class
+
+| | Composition (`Car`) | Aggregation (`Department`) |
+|---|---|---|
+| Member declaration | `Engine m_engine;` | `Employee* m_employee;` (or `vector<Employee*>`) |
+| Where it's created | Inside `Car`'s constructor (implicitly) | Outside, by someone else (`new Employee(...)`) |
+| How it gets into the class | Built automatically as part of the object | Passed in via constructor param / setter |
+| Destructor code | None needed — automatic | None needed — because you must **not** delete it |
+| What happens if the owner is destroyed | Part is destroyed too (automatic) | Part survives, completely untouched |
+
+The single line that flips everything is `Engine m_engine;` vs
+`Employee* m_employee;` — value member vs. pointer member is the concrete
+code expression of "do I own this or not."
+
+**Modern C++ note:** raw pointers work for teaching, but idiomatically:
+- **Composition** → `std::unique_ptr<T>` (or plain member-by-value, as above) enforces exclusive ownership at compile time
+- **Aggregation** → a raw non-owning pointer (as above), a reference `T&` if it can never be null, or `std::weak_ptr<T>` if ownership is shared elsewhere via `shared_ptr` and you want to explicitly signal "I don't own this, and I acknowledge it might be destroyed"
+
 ---
 
 ## 5. Realization — is-a (implements interface)
