@@ -95,6 +95,71 @@ classDiagram
 **Difference from Association:** Dependency is temporary (method parameter),
 Association is more permanent (stored reference or pointer).
 
+### Association vs. Dependency — a closer look
+
+The line between these two is the one that's easiest to blur, so it's worth
+a dedicated side-by-side.
+
+**The one real test: is it stored, or does it just pass through?**
+
+- **Association** — the other class is baked into your class's
+  **structure**, as a **member variable**. You could look at the class
+  definition alone (ignore every method body) and already know the
+  relationship exists.
+- **Dependency** — the other class only shows up **inside a method's
+  body/signature** — a parameter, local variable, or return type. Delete
+  that one method, and the relationship vanishes entirely. Nothing about
+  it is stored anywhere.
+
+```cpp
+// ASSOCIATION — Teacher holds a reference, permanently
+class Teacher {
+private:
+    Student& favoriteStudent;   // member variable — exists for Teacher's whole lifetime
+
+public:
+    Teacher(Student& s) : favoriteStudent(s) {}
+
+    void praise() {
+        favoriteStudent.learn();   // uses the SAME student every time
+    }
+};
+```
+
+```cpp
+// DEPENDENCY — ReportGenerator doesn't hold anything
+class ReportGenerator {
+public:
+    // No Printer member variable anywhere in this class!
+    void generate(Printer& printer) {   // only exists as a parameter
+        printer.print("Report content");
+    }
+    // Once generate() returns, this ReportGenerator has
+    // zero memory of Printer ever existing.
+};
+
+// Proof: you could call generate() with a DIFFERENT printer every single time
+ReportGenerator rg;
+Printer officePrinter;
+Printer homePrinter;
+rg.generate(officePrinter);   // uses one
+rg.generate(homePrinter);     // uses a totally different one — rg doesn't care
+```
+
+| | Association | Dependency |
+|---|---|---|
+| Lifetime of the relationship | As long as the object exists | Just one function call |
+| Where you'd find it in code | Class header / member list | Buried inside a method's `.cpp` |
+| Can it change between calls? | No — fixed at construction | Yes — a different object every call |
+| Coupling | Stronger — the class *always* needs that type | Weaker — only *this one method* needs it |
+| Refactoring impact | Changing/removing the related class breaks the whole class | Changing it only affects that one method |
+
+**Quick gut-check for your own diagrams:** *"If I comment out every method
+body and just look at the member variable list, is this relationship still
+visible?"*
+- **Yes** → Association (or Aggregation/Composition, depending on ownership)
+- **No, it only appeared inside a method** → Dependency
+
 ---
 
 ## 3. Aggregation — has-a (part exists independently)
