@@ -366,6 +366,76 @@ code expression of "do I own this or not."
 - **Composition** → `std::unique_ptr<T>` (or plain member-by-value, as above) enforces exclusive ownership at compile time
 - **Aggregation** → a raw non-owning pointer (as above), a reference `T&` if it can never be null, or `std::weak_ptr<T>` if ownership is shared elsewhere via `shared_ptr` and you want to explicitly signal "I don't own this, and I acknowledge it might be destroyed"
 
+### Self-referencing relationships — Inheritance + Aggregation on the same type
+
+A class can be related to **another class of the same type** through two
+completely different relationships at once — this isn't a contradiction,
+it's two separate true facts that happen to point at the same class name.
+
+**Example: `Manager` and `Employee`**
+
+1. `Manager` **is an** `Employee` → Inheritance
+2. `Manager` **has** `Employee`s (their direct reports) → Aggregation
+
+```mermaid
+classDiagram
+    class Employee {
+        # baseSalary: double
+        + calculateSalary() double
+    }
+    class Manager {
+        - teamSize: int
+        - bonusPercentage: double
+        + calculateSalary() double
+    }
+    Employee <|-- Manager : is-a
+    Manager "0..1" o-- "0..*" Employee : manages
+```
+
+Applying the ownership question from Aggregation vs. Composition: if a
+`Manager` is removed, do their direct reports get destroyed too? No — they
+keep working, just report to someone else. So it's Aggregation, not
+Composition, for the "manages" relationship.
+
+Applying the two multiplicity questions:
+- *How many `Employee`s does one `Manager` manage?* → could be **zero**
+  (a newly promoted manager with no team yet) up to **many** → `0..*`,
+  written next to `Employee`.
+- *How many `Manager`s does one `Employee` have?* → could be **zero**
+  (top of the org chart — a CEO/owner has no manager) or **exactly one**
+  → `0..1`, written next to `Manager`.
+
+```cpp
+class Employee {
+protected:
+    Manager* manager = nullptr;   // 0..1 — nullable, top-level roles have none
+};
+
+class Manager : public Employee {
+private:
+    std::vector<Employee*> directReports;   // 0..* — could be empty right after promotion
+};
+```
+
+**How to tell a valid double relationship from a contradiction** (this is
+the exact mistake from the earlier `Cashier`/`Employee` "belongs to" case —
+see the case study README): ask whether the has-a relationship points at
+the **same instance** the is-a relationship already describes, or at
+**different instances** of that type.
+
+| | Invalid (earlier mistake) | Valid (this case) |
+|---|---|---|
+| What inheritance says | Cashier is-a Employee | Manager is-a Employee |
+| What the second line says | Cashier has-a reference to *the same* Employee it inherits from | Manager has-a reference to *other, different* Employee instances |
+| Same object? | Yes — contradiction (an object can't "belong to" itself) | No — different objects |
+| Valid? | ❌ | ✅ |
+
+This pattern has a name — a **self-referencing / recursive association** —
+and shows up constantly: org charts, tree structures (`TreeNode` aggregating
+child `TreeNode`s), an `Employee.mentor` field pointing at another
+`Employee`, or the Composite design pattern (`CompositeShape : public Shape`
+that also holds a `vector<Shape*>` of child shapes).
+
 ---
 
 ## 5. Realization — is-a (implements interface)
@@ -623,6 +693,7 @@ the "owning" (`Car`), not the thing being owned (`Engine`).
 ├── 04_Dependency
 ├── 05_Realization
 ├── 06_Multiplicity        ← degree/cardinality of each relationship
+├── 07_MemberNotation      ← visibility, attribute/method syntax, static/abstract/derived markers
 └── README.md               ← this file
 
 Note: Inheritance examples → ../04_Inheritance/
