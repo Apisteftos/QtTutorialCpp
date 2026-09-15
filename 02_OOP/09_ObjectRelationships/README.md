@@ -95,6 +95,46 @@ classDiagram
 **Difference from Association:** Dependency is temporary (method parameter),
 Association is more permanent (stored reference or pointer).
 
+### Why Dependency never carries multiplicity
+
+Multiplicity requires something **stored** to count — not something
+merely **requested or passed through**. A method parameter is a single,
+one-off event: once the call returns, nothing is left over anywhere to
+count. Multiplicity only exists where an object's **state** holds onto a
+connection over time — that's what makes "how many?" a meaningful,
+answerable question in the first place.
+
+```cpp
+// Association — something to count (a stored, persistent field)
+class Library {
+    std::vector<Book> books;   // "how many books?" is a real, answerable question
+};
+```
+
+```cpp
+// Dependency — nothing to count
+class Intern {
+    void bookForStudying(Book book) { /* ... */ }
+    // Intern holds zero Books between calls — "how many?" has no answer
+};
+```
+
+```mermaid
+classDiagram
+    class Intern {
+        + bookForStudying(book: Book) void
+    }
+    class Book {
+        + showBooksByCategory() void
+    }
+    Intern ..> Book : uses
+```
+
+No numbers anywhere on that line — same underlying reason Inheritance and
+Realization never carry multiplicity either (see the note in the UML
+notation reference below): the relationship isn't about a stored,
+countable quantity of objects.
+
 ### Association vs. Dependency — a closer look
 
 The line between these two is the one that's easiest to blur, so it's worth

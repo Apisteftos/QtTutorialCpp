@@ -183,6 +183,37 @@ these are the relationships where "how many objects are connected" is a
 meaningful design decision. Dependency, Realization, and Inheritance describe
 *structure*, not *counts*, so they're typically left unlabeled.
 
+### The underlying reason: stored vs. requested
+
+Multiplicity requires something **stored** to count — not something merely
+**requested or passed through**. A method parameter (Dependency) is a
+single, one-off event: once the call returns, nothing is left over
+anywhere to count. A type contract (Inheritance, Realization) is a
+compile-time fact about the class definition, not a runtime collection of
+objects. Multiplicity only exists where an object's **state** holds onto a
+connection over time — that's what makes "how many?" a meaningful,
+answerable question in the first place.
+
+```cpp
+// Association — something to count (a stored, persistent field)
+class Library {
+    std::vector<Book> books;   // "how many books?" is a real, answerable question
+};
+```
+
+```cpp
+// Dependency — nothing to count
+class Intern {
+    void bookForStudying(Book book) { /* ... */ }
+    // Intern holds zero Books between calls — "how many?" has no answer
+};
+```
+
+This is why the same "no multiplicity" rule shows up for three seemingly
+unrelated relationships (Dependency, Realization, Inheritance) — they're
+all missing the one prerequisite multiplicity needs: a stored, countable
+connection.
+
 ---
 
 ## Multiplicity for Enums
