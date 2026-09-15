@@ -536,6 +536,58 @@ interface — they "realize" the printing contract in their own way.
 > class** toward it — `Printable <|.. Document` reads as "Document realizes
 > Printable," same direction logic as Inheritance below.
 
+### Interface vs. Regular abstract class
+
+C++ has no dedicated `interface` keyword — an "interface" is a **convention**
+applied to an ordinary base class, using pure virtual functions (`= 0`).
+What actually earns a base class the `<<interface>>` label (Realization,
+dashed) instead of `<<abstract>>` (Inheritance, solid) comes down to this:
+
+| Requirement | Interface | Regular abstract class |
+|---|---|---|
+| Is it a base class in C++? | **Yes** — same mechanism (`class Document : public Printable`) | Yes |
+| Data members? | **None** | Can have them |
+| Method implementations? | **None** — every method is pure virtual | Can mix pure virtual + implemented methods |
+| Virtual keyword needed? | Yes, specifically **pure virtual** (`= 0`) on every method | `virtual` (pure or not) as needed |
+| Virtual destructor | Yes — the *one* exception allowed to have a body | Yes |
+| UML relationship when derived | **Realization** (dashed line) | **Inheritance** (solid line) |
+
+```cpp
+// Interface — no data, no implemented methods (other than the destructor)
+class Printable {
+public:
+    virtual void print() const = 0;
+    virtual ~Printable() = default;
+};
+
+// Regular abstract class — has REAL data and a REAL implemented method,
+// even though it also uses `virtual ... = 0`
+class Employee {
+protected:
+    std::string name;              // real data member → disqualifies it as an interface
+    double baseSalary;              // real data member
+
+public:
+    virtual double calculateSalary() const = 0;   // pure virtual, same syntax as an interface
+    void displayInfo() const {                     // real, shared implementation
+        std::cout << name << "\n";
+    }
+};
+```
+
+`Employee` fails both interface requirements (it has data, and it has an
+implemented method), so it's drawn as `<<abstract>>` with an **Inheritance**
+triangle — not `<<interface>>` with a Realization dashed line — even though
+both use `virtual` and `= 0` in exactly the same way. The distinction is
+about **what the base class contains**, not which C++ keywords appear in it.
+
+> **Note:** inheritance doesn't require the base class to be abstract at
+> all — `class OrganicSupermarket : public Supermarket` is perfectly valid
+> even if `Supermarket` has no pure virtual methods and can be instantiated
+> directly. Abstractness (`= 0`) is an optional extra restriction, added
+> only when you want to forbid instantiating the base and force every
+> subclass to override something.
+
 ---
 
 ## 6. Inheritance — is-a (extends base class)
