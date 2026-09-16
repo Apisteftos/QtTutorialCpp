@@ -6,6 +6,11 @@
 
 It is the mechanism that lets you write code that works on a **base type** and automatically does the right thing for every derived type, without needing to know which concrete type you are dealing with.
 
+> **See also:** `14_VirtualFunctions` covers the mechanics behind this
+> folder in depth (static vs. dynamic binding, `override`/`final`, object
+> slicing), and `09_ObjectRelationships/07_MemberNotation` covers the UML
+> notation used in the diagrams below.
+
 ---
 
 ## Two Types
@@ -32,24 +37,129 @@ Resolved at runtime via the **vtable**. Tiny overhead (one pointer lookup per ca
 
 ## How the Vtable Works
 
-Every class with at least one virtual function gets a **vtable** — a table of function pointers.
+Every class with at least one virtual function gets a **vtable** — a table of function pointers. Every *object* of that class carries one extra hidden pointer, the **vptr**, pointing to its class's vtable.
 
+### The classes
+
+```cpp
+class Animal {
+public:
+    virtual void speak() const {
+        std::cout << "Some generic animal sound\n";
+    }
+    virtual void move() const {
+        std::cout << "Animal moves\n";
+    }
+    virtual ~Animal() = default;
+};
+
+class Dog : public Animal {
+public:
+    void speak() const override {
+        std::cout << "Woof!\n";
+    }
+    void move() const override {
+        std::cout << "Dog runs\n";
+    }
+};
+
+class Cat : public Animal {
+public:
+    void speak() const override {
+        std::cout << "Meow!\n";
+    }
+    // move() NOT overridden — inherits Animal's version
+};
 ```
-Dog object in memory:
-  [ vptr ] ──→ Dog's vtable: { &Dog::speak, &Dog::move }
-  [ name ]
 
-Cat object in memory:
-  [ vptr ] ──→ Cat's vtable: { &Cat::speak, &Cat::move }
-  [ name ]
+```mermaid
+classDiagram
+    class Animal {
+        + speak() void
+        + move() void
+        + ~Animal() void
+    }
+    class Dog {
+        + speak() void
+        + move() void
+    }
+    class Cat {
+        + speak() void
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat
 ```
 
-When you call `animal->speak()`:
-1. Follow `vptr` to the vtable
+### The vtables this generates
+
+```mermaid
+flowchart LR
+    subgraph animalVT["Animal vtable"]
+        av1["speak() → Animal::speak"]
+        av2["move() → Animal::move"]
+    end
+
+    subgraph dogVT["Dog vtable"]
+        dv1["speak() → Dog::speak"]
+        dv2["move() → Dog::move"]
+    end
+
+    subgraph catVT["Cat vtable"]
+        cv1["speak() → Cat::speak"]
+        cv2["move() → Animal::move  (inherited, not overridden)"]
+    end
+```
+
+*Notice `Cat`'s vtable — since `Cat` never overrode `move()`, its vtable
+slot for `move()` still points to `Animal::move`. This is exactly why a
+`Cat` object correctly falls back to the generic animal movement without
+any extra code on your part.*
+
+### What happens when you call `animal->speak()`
+
+```mermaid
+flowchart LR
+    ptr["Animal* animal\n(actually points to a Dog)"] --> obj["Dog object\n(vptr + data)"]
+    obj -->|vptr| vtable["Dog's vtable"]
+    vtable -->|"speak() slot"| code["Dog::speak() code\n→ prints 'Woof!'"]
+```
+
+1. Follow `vptr` to the vtable — **the object's actual type decides which
+   vtable**, not the pointer's declared type
 2. Look up the `speak` slot
-3. Call whatever function is there
+3. Call whatever function pointer is stored there
 
-The compiler does not need to know the concrete type at the call site — the object carries that information itself.
+The compiler does not need to know the concrete type at the call site —
+the object carries that information itself, via its `vptr`.
+
+### Worked example — a mixed collection
+
+```cpp
+std::vector<std::unique_ptr<Animal>> animals;
+animals.push_back(std::make_unique<Dog>());
+animals.push_back(std::make_unique<Cat>());
+
+for (const auto& a : animals) {
+    a->speak();   // Dog's vptr → "Woof!"  |  Cat's vptr → "Meow!"
+    a->move();    // Dog's vptr → "Dog runs"  |  Cat's vptr → "Animal moves" (inherited)
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant Loop as for (auto& a : animals)
+    participant DogObj as Dog object
+    participant CatObj as Cat object
+
+    Loop->>DogObj: a->speak()
+    DogObj-->>Loop: "Woof!" (via Dog's vtable)
+    Loop->>CatObj: a->speak()
+    CatObj-->>Loop: "Meow!" (via Cat's vtable)
+```
+
+Same line of code (`a->speak()`), two different outcomes — decided purely
+by which vtable each object's `vptr` points to at that moment. No
+`if`/`switch` on type anywhere in the loop.
 
 ---
 
@@ -62,6 +172,14 @@ Animal a = dog;     // ❌ Object slicing — Dog part is cut off
 
 Animal& ref = dog;  // ✅ Reference — original object, vptr intact
 Animal* ptr = &dog; // ✅ Pointer  — original object, vptr intact
+```
+
+```mermaid
+flowchart TD
+    A["Dog dog;"] --> B{"How do you refer to it?"}
+    B -->|"Animal a = dog;"| C["❌ Slicing\nvptr overwritten with Animal's\npolymorphism LOST"]
+    B -->|"Animal& ref = dog;"| D["✅ Reference\nsame object, vptr intact"]
+    B -->|"Animal* ptr = &dog;"| E["✅ Pointer\nsame object, vptr intact"]
 ```
 
 ---
@@ -81,13 +199,14 @@ Animal* ptr = &dog; // ✅ Pointer  — original object, vptr intact
 
 ## Relationship to Other Topics
 
-```
-AbstractClass  ──→  defines the interface   (what operations exist)
-Overriding     ──→  provides the behavior   (how each type does it)
-Polymorphism   ──→  dispatches at runtime   (which version is called)
+```mermaid
+flowchart LR
+    AC["AbstractClass\ndefines the interface\n(what operations exist)"] --> OV["Overriding\nprovides the behavior\n(how each type does it)"]
+    OV --> PM["Polymorphism\ndispatches at runtime\n(which version is called)"]
 ```
 
-These three topics work together. You cannot have meaningful runtime polymorphism without all three.
+These three topics work together. You cannot have meaningful runtime
+polymorphism without all three.
 
 ---
 
@@ -140,6 +259,23 @@ animals.push_back(make_unique<Cat>());
 for (const auto& a : animals) {
     a->speak();                       // each calls its own version
 }
+```
+
+```mermaid
+classDiagram
+    class Animal {
+        <<abstract>>
+        + speak() void*
+        + ~Animal() void
+    }
+    class Dog {
+        + speak() void
+    }
+    class Cat {
+        + speak() void
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat
 ```
 
 ---
