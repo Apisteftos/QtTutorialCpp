@@ -147,14 +147,14 @@ for (const auto& a : animals) {
 
 ```mermaid
 sequenceDiagram
-    participant Loop as for (auto& a : animals)
+    participant Caller as for (auto& a : animals)
     participant DogObj as Dog object
     participant CatObj as Cat object
 
-    Loop->>DogObj: a->speak()
-    DogObj-->>Loop: "Woof!" (via Dog's vtable)
-    Loop->>CatObj: a->speak()
-    CatObj-->>Loop: "Meow!" (via Cat's vtable)
+    Caller->>DogObj: a->speak()
+    DogObj-->>Caller: "Woof!" (via Dog's vtable)
+    Caller->>CatObj: a->speak()
+    CatObj-->>Caller: "Meow!" (via Cat's vtable)
 ```
 
 Same line of code (`a->speak()`), two different outcomes — decided purely
