@@ -8,6 +8,12 @@ This folder introduces **Virtual Functions** - the mechanism that enables runtim
 
 This is THE cornerstone of object-oriented programming that makes polymorphism possible.
 
+> **See also:** `15_AbstractClasses` builds directly on this folder (pure
+> virtual functions, `<<abstract>>` classes), and
+> `09_ObjectRelationships/07_MemberNotation` covers the UML notation for
+> everything here — italicized/`*`-suffixed pure virtual methods, the
+> `<<abstract>>` stereotype, and inheritance vs. realization arrows.
+
 ---
 
 ## 🎯 What You'll Learn
@@ -66,48 +72,32 @@ ptr->makeSound();  // Prints "Woof!" ✅
 ```
 
 ### Real-World Analogy
-```
+
 Think of a remote control:
 
-Remote Control (Base Class)
-  - Has button: "Play"
-  - Button behavior: virtual void play()
+- `RemoteControl` (Base Class) has a button: **"Play"** → `virtual void play()`
+- Different devices (Derived Classes) each implement it differently:
+  - `DVDPlayer::play()` → plays DVD
+  - `MusicPlayer::play()` → plays music
+  - `TV::play()` → shows channel
 
-Different Devices (Derived Classes)
-  - DVD Player: play() → plays DVD
-  - Music Player: play() → plays music
-  - TV: play() → shows channel
-
-When you press "Play" on the remote:
-  • Remote doesn't know which device
-  • Device itself determines behavior
-  • Same button, different actions
-  • That's polymorphism!
-```
+When you press "Play" on the remote: the remote doesn't know which device
+it's connected to — the device itself determines the behavior. Same
+button, different actions. That's polymorphism.
 
 ### Visual Representation
-```
-WITHOUT virtual (Static Binding):
-┌──────────────┐
-│ Animal* ptr  │ ────┐
-└──────────────┘     │ Compiler sees pointer type
-                     │ Calls Animal::makeSound()
-                     ▼
-                ┌─────────┐
-                │   Dog   │ (actual object ignored)
-                │  Woof!  │
-                └─────────┘
 
-WITH virtual (Dynamic Binding):
-┌──────────────┐
-│ Animal* ptr  │ ────┐
-└──────────────┘     │ Runtime checks actual object
-                     │ Follows vptr to vtable
-                     ▼
-                ┌─────────┐
-                │   Dog   │ ✅ Calls Dog::makeSound()
-                │  Woof!  │
-                └─────────┘
+```mermaid
+flowchart TD
+    subgraph without["WITHOUT virtual — Static Binding"]
+        A1["Animal* ptr"] -->|"compiler sees POINTER type"| A2["Calls Animal::makeSound()"]
+        A2 --> A3["Actual object (Dog) is ignored"]
+    end
+
+    subgraph with["WITH virtual — Dynamic Binding"]
+        B1["Animal* ptr"] -->|"runtime checks ACTUAL object"| B2["Follows vptr → vtable"]
+        B2 --> B3["Calls Dog::makeSound() ✅"]
+    end
 ```
 
 ---
@@ -123,7 +113,7 @@ public:
     virtual void display() {
         cout << "Base display\n";
     }
-    
+
     // Virtual destructor (ALWAYS do this!)
     virtual ~Base() { }
 };
@@ -141,6 +131,18 @@ public:
 Base* ptr = new Derived();
 ptr->display();  // Calls Derived::display() ✅
 delete ptr;      // Calls both destructors ✅
+```
+
+```mermaid
+classDiagram
+    class Base {
+        + display() void
+        + ~Base() void
+    }
+    class Derived {
+        + display() void
+    }
+    Base <|-- Derived
 ```
 
 ### The Three Keywords
@@ -219,19 +221,16 @@ ptr->makeSound();  // "Woof!" (dynamic binding) ✅
 - 🎯 Based on actual object type
 
 ### Comparison Table
-```
-┌──────────────────┬──────────────────┬──────────────────┐
-│                  │ Static Binding   │ Dynamic Binding  │
-├──────────────────┼──────────────────┼──────────────────┤
-│ Keyword          │ (none)           │ virtual          │
-│ When resolved    │ Compile-time     │ Runtime          │
-│ Based on         │ Pointer type     │ Object type      │
-│ Speed            │ Fast             │ Slightly slower  │
-│ Polymorphism     │ No               │ Yes              │
-│ Overhead         │ None             │ vptr + vtable    │
-│ Use case         │ Non-polymorphic  │ Polymorphic      │
-└──────────────────┴──────────────────┴──────────────────┘
-```
+
+| | Static Binding | Dynamic Binding |
+|---|---|---|
+| Keyword | (none) | `virtual` |
+| When resolved | Compile-time | Runtime |
+| Based on | Pointer type | Object type |
+| Speed | Fast | Slightly slower |
+| Polymorphism | No | Yes |
+| Overhead | None | vptr + vtable |
+| Use case | Non-polymorphic | Polymorphic |
 
 ---
 
@@ -286,7 +285,7 @@ class Derived : public Base {
     int* data;
 public:
     Derived() { data = new int[100]; }
-    
+
     ~Derived() {  // Never called!
         delete[] data;
         cout << "Derived destructor\n";
@@ -318,7 +317,7 @@ class Derived : public Base {
     int* data;
 public:
     Derived() { data = new int[100]; }
-    
+
     ~Derived() {
         delete[] data;
         cout << "Derived destructor\n";
@@ -361,10 +360,10 @@ class Derived : public Base {
 public:
     // Typo - doesn't override, creates new function!
     void dysplay() { }  // ❌ Compiles but wrong!
-    
+
     // Missing parameter - doesn't override!
     void show() { }  // ❌ Compiles but wrong!
-    
+
     // Missing const - doesn't override!
     void print() { }  // ❌ Compiles but wrong!
 };
@@ -378,13 +377,13 @@ class Derived : public Base {
 public:
     // ❌ Compiler error - catches typo!
     void dysplay() override { }
-    
+
     // ❌ Compiler error - catches signature mismatch!
     void show() override { }
-    
+
     // ❌ Compiler error - catches missing const!
     void print() override { }
-    
+
     // ✅ Correct - compiles successfully
     void display() override { }
     void show(int x) override { }
@@ -453,10 +452,10 @@ class Abstract {
 public:
     // Pure virtual function (= 0)
     virtual void func() = 0;
-    
+
     // Pure virtual with implementation (rare)
     virtual void func2() = 0;
-    
+
     virtual ~Abstract() = default;
 };
 
@@ -481,7 +480,7 @@ public:
     void func() override {
         cout << "Concrete implementation\n";
     }
-    
+
     void func2() override {
         cout << "Concrete implementation 2\n";
     }
@@ -490,6 +489,24 @@ public:
 // Now can instantiate
 Concrete obj;  // ✅ OK!
 ```
+
+```mermaid
+classDiagram
+    class Abstract {
+        <<abstract>>
+        + func() void*
+        + func2() void*
+    }
+    class Concrete {
+        + func() void
+        + func2() void
+    }
+    Abstract <|-- Concrete
+```
+
+> Full coverage of pure virtual functions and abstract classes continues
+> in `15_AbstractClasses`, including the Interface-vs-Abstract-Base-Class
+> distinction.
 
 ---
 
@@ -504,20 +521,20 @@ Concrete obj;  // ✅ OK!
 class AbstractBase {
 protected:
     int data;  // ✅ Can have data members
-    
+
 public:
     // ✅ Can have constructor
     AbstractBase(int d) : data(d) { }
-    
+
     // ✅ Can have regular functions
     void normalFunc() { }
-    
+
     // ✅ Can have virtual functions
     virtual void virtualFunc() { }
-    
+
     // Pure virtual function
     virtual void pureVirtualFunc() = 0;
-    
+
     // ✅ Should have virtual destructor
     virtual ~AbstractBase() = default;
 };
@@ -579,20 +596,11 @@ ref.display();  // Prints "Derived"
 ```
 
 **What Happens:**
-```
-Derived object:
-┌──────────────┐
-│ Base part    │
-├──────────────┤
-│ Derived part │  ← This gets sliced off!
-│ extraData    │
-└──────────────┘
 
-After slicing (Base sliced = derived):
-┌──────────────┐
-│ Base part    │  ← Only this remains
-└──────────────┘
-```
+| `Derived` object in memory | After `Base sliced = derived;` |
+|---|---|
+| `Base` part | `Base` part ← only this remains |
+| `Derived` part (`extraData`) — **sliced off** | *(gone)* |
 
 **Problems with Slicing:**
 - ❌ Derived data lost
@@ -620,8 +628,8 @@ Every class with virtual functions has:
 1. **vtable (virtual table)** - stores function pointers
 2. Every object has **vptr (virtual pointer)** - points to class vtable
 
-**Visual:**
-```
+**Class setup:**
+```cpp
 class Base {
     virtual void func1() { }
     virtual void func2() { }
@@ -631,21 +639,32 @@ class Derived : public Base {
     void func1() override { }
     // func2 not overridden
 };
+```
 
-Base vtable:              Derived vtable:
-┌─────────────────┐      ┌─────────────────────┐
-│ func1() → Base  │      │ func1() → Derived   │
-│ func2() → Base  │      │ func2() → Base      │
-│ ~Base()         │      │ ~Derived()          │
-└─────────────────┘      └─────────────────────┘
+**The two vtables:**
 
-Base object:              Derived object:
-┌─────────────────┐      ┌─────────────────────┐
-│ vptr ─────────► │      │ vptr ─────────────► │
-│ (data members)  │      │ (data members)      │
-└─────────────────┘      └─────────────────────┘
-     │                         │
-     └────► Base vtable        └────► Derived vtable
+```mermaid
+flowchart LR
+    subgraph baseVT["Base vtable"]
+        bf1["func1() → Base::func1"]
+        bf2["func2() → Base::func2"]
+        bd["~Base()"]
+    end
+
+    subgraph derivedVT["Derived vtable"]
+        df1["func1() → Derived::func1"]
+        df2["func2() → Base::func2 (inherited, not overridden)"]
+        dd["~Derived()"]
+    end
+```
+
+**Object → vptr → vtable → function:**
+
+```mermaid
+flowchart LR
+    ptr["Base* ptr"] --> obj["Derived object\n(data members)"]
+    obj -->|vptr| vtable["Derived vtable"]
+    vtable -->|"func1() entry"| code["Derived::func1() code"]
 ```
 
 **Function Call Process:**
@@ -699,6 +718,22 @@ void render(const IDrawable& shape) {
 }
 ```
 
+```mermaid
+classDiagram
+    class IDrawable {
+        <<interface>>
+        + draw() void
+    }
+    class Circle {
+        + draw() void
+    }
+    class Rectangle {
+        + draw() void
+    }
+    IDrawable <|.. Circle
+    IDrawable <|.. Rectangle
+```
+
 ### Template Method Pattern
 ```cpp
 class Algorithm {
@@ -709,7 +744,7 @@ public:
         step2();  // Hook - can override
         step3();
     }
-    
+
     virtual ~Algorithm() = default;
 
 protected:
@@ -790,7 +825,7 @@ Create `GameObject` base:
 
 ### Compile:
 ```bash
-g++ -std=c++17 virtual_functions.cpp -o virtual_functions
+g++ -std=c++23 virtual_functions.cpp -o virtual_functions
 ```
 
 ### Run:
@@ -816,69 +851,52 @@ The program demonstrates:
 ## 📊 Visual Concepts
 
 ### Static vs Dynamic Binding
-```
-STATIC BINDING (Compile-time):
-    Code                    Compiled
-Base* ptr = &derived;  →  Call Base::func()
-ptr->func();              (Direct address)
 
-DYNAMIC BINDING (Runtime):
-    Code                    Runtime
-Base* ptr = &derived;  →  Follow vptr
-ptr->func();              → Lookup vtable
-                          → Call Derived::func()
+```mermaid
+flowchart TD
+    subgraph static_binding["STATIC BINDING (Compile-time)"]
+        sc1["Code: Base* ptr = &derived; ptr->func();"] --> sc2["Compiled to: direct call Base::func()\n(pointer address only)"]
+    end
+
+    subgraph dynamic_binding["DYNAMIC BINDING (Runtime)"]
+        dc1["Code: Base* ptr = &derived; ptr->func();"] --> dc2["Follow vptr"]
+        dc2 --> dc3["Lookup vtable"]
+        dc3 --> dc4["Call Derived::func()"]
+    end
 ```
 
 ### Virtual Function Call
-```
-1. Code:
-   ptr->virtualFunc();
 
-2. Compiled to:
-   (*ptr->vptr[index])();
-
-3. At runtime:
-   ┌─────┐
-   │ ptr │──┐
-   └─────┘  │
-            ▼
-   ┌─────────────┐
-   │   Object    │
-   │ vptr ───────┼──┐
-   └─────────────┘  │
-                    ▼
-            ┌──────────────┐
-            │    vtable    │
-            │ [0] func1()  │
-            │ [1] func2()  │◄── index
-            │ [2] ...      │
-            └──────────────┘
-                    │
-                    ▼
-            ┌──────────────┐
-            │  Function    │
-            │    Code      │
-            └──────────────┘
+```mermaid
+flowchart LR
+    code["ptr->virtualFunc();"] -->|"compiles to"| compiled["(*ptr->vptr[index])();"]
+    compiled --> ptr["ptr"]
+    ptr --> object["Object"]
+    object -->|vptr| vtable["vtable"]
+    vtable -->|"[0] func1()"| idx0["..."]
+    vtable -->|"[1] func2()  ← index"| func["Function Code"]
+    vtable -->|"[2] ..."| idx2["..."]
 ```
 
 ### Abstract Class Hierarchy
-```
-        ┌─────────────┐
-        │   Shape     │ (Abstract)
-        │  ────────   │
-        │ + area()=0  │ Pure virtual
-        │ + draw()    │ Virtual
-        └─────────────┘
-               ▲
-               │ implements
-        ┌──────┴──────┐
-        │             │
-┌───────▼───────┐ ┌──▼─────────┐
-│    Circle     │ │  Rectangle │ (Concrete)
-│  ──────────   │ │  ────────  │
-│ + area()      │ │ + area()   │ Must implement
-│ + draw()      │ │ + draw()   │
-└───────────────┘ └────────────┘
+
+```mermaid
+classDiagram
+    class Shape {
+        <<abstract>>
+        + area() double*
+        + draw() void
+    }
+    class Circle {
+        + area() double
+        + draw() void
+    }
+    class Rectangle {
+        + area() double
+        + draw() void
+    }
+    Shape <|-- Circle
+    Shape <|-- Rectangle
 ```
 
 ---
@@ -891,14 +909,15 @@ ptr->func();              → Lookup vtable
 - **07_CopyConstructor** - Constructors
 
 ### Coming Next:
-- **15_Polymorphism** - Advanced polymorphism
-- **16_AbstractClasses** - Interface design
+- **15_AbstractClasses** - Interface design (pure virtual functions, `<<abstract>>`/`<<interface>>` in UML)
+- **16_Polymorphism** - Advanced polymorphism
 - **17_OperatorOverloading** - With virtual
 
 ### Related Concepts:
 - **Dynamic Binding** - Runtime resolution
 - **vtable/vptr** - Implementation mechanism
 - **RTTI** - Runtime type information
+- **`09_ObjectRelationships/07_MemberNotation`** - UML notation for pure virtual (`*`), `<<abstract>>`, `<<interface>>`
 
 ---
 
@@ -926,10 +945,10 @@ public:
     virtual void regularVirtual() {
         cout << "Base implementation\n";
     }
-    
+
     // Pure virtual function
     virtual void mustImplement() = 0;
-    
+
     // Virtual destructor (CRITICAL!)
     virtual ~Base() = default;
 };
@@ -941,7 +960,7 @@ public:
     void regularVirtual() override {
         cout << "Derived implementation\n";
     }
-    
+
     // Must implement pure virtual
     void mustImplement() override {
         cout << "Derived implementation\n";
@@ -1094,7 +1113,7 @@ class WordDocument : public Document { };
 
 **Previous Topic:** [13_Inheritance](../13_Inheritance/) - Inheritance Basics
 
-**Next Topic:** [15_Polymorphism](../15_Polymorphism/) - Advanced Polymorphism (coming next)
+**Next Topic:** [15_AbstractClasses](../15_AbstractClasses/) - Interface-Based Design
 
 ---
 
