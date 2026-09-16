@@ -8,6 +8,12 @@ This folder introduces **Abstract Classes** - classes that cannot be instantiate
 
 This is essential for writing extensible, maintainable, and loosely-coupled C++ applications.
 
+> **See also:** `09_ObjectRelationships/05_Realization` and
+> `09_ObjectRelationships/07_MemberNotation` cover the UML side of
+> everything in this file — Realization vs. Inheritance arrows, the
+> `<<interface>>`/`<<abstract>>` stereotypes, and the full
+> Interface-vs-Regular-abstract-class requirements table.
+
 ---
 
 ## 🎯 What You'll Learn
@@ -38,43 +44,46 @@ This is essential for writing extensible, maintainable, and loosely-coupled C++ 
 - ✅ **Enable polymorphism** through common interface
 
 ### Real-World Analogy
-```
+
 Think of a "Vehicle" specification document:
 
-Vehicle (Abstract Class)
-  - MUST have: start(), stop(), refuel()
-  - These are requirements (pure virtual functions)
-  - You can't build a "generic vehicle"
-  - But you CAN build:
-    * Car (implements all requirements)
-    * Motorcycle (implements all requirements)
-    * Truck (implements all requirements)
+- `Vehicle` (Abstract Class) **MUST have**: `start()`, `stop()`, `refuel()`
+- These are requirements (pure virtual functions)
+- You can't build a "generic vehicle"
+- But you **CAN** build: `Car`, `Motorcycle`, `Truck` — each implementing all requirements
 
-The specification defines WHAT must be done,
-Concrete classes define HOW it's done.
-```
+The specification defines **WHAT** must be done; concrete classes define **HOW** it's done.
 
 ### Visual Representation
+
+```mermaid
+classDiagram
+    class Shape {
+        <<abstract>>
+        + area() double*
+        + perimeter() double*
+        + draw() void
+    }
+    class Circle {
+        - radius: double
+        + area() double
+        + perimeter() double
+    }
+    class Square {
+        - side: double
+        + area() double
+        + perimeter() double
+    }
+    Shape <|-- Circle
+    Shape <|-- Square
 ```
-ABSTRACT CLASS (Cannot instantiate):
-┌─────────────────────────┐
-│       Shape             │  ❌ Shape obj;
-│  ─────────────────────  │     (Error!)
-│  + area() = 0           │  Pure virtual
-│  + perimeter() = 0      │  Pure virtual
-│  + draw()               │  Regular virtual
-└─────────────────────────┘
-           ▲
-           │ implements
-    ┌──────┴──────┐
-    │             │
-┌───▼──────┐  ┌──▼─────┐
-│ Circle   │  │ Square │  CONCRETE CLASSES
-│ ──────── │  │ ────── │  ✅ Can instantiate
-│ +area()  │  │+area() │  Must implement
-│ +perim() │  │+perim()│  pure virtuals
-└──────────┘  └────────┘
-```
+
+`Shape` cannot be instantiated (`Shape obj;` is a compile error) — `area()`
+and `perimeter()` are pure virtual (marked with `*` here, per the
+`07_MemberNotation` convention). `draw()` is a regular virtual method with
+a default body, so subclasses may override it but aren't required to.
+`Circle` and `Square` **can** be instantiated because they implement both
+pure virtuals.
 
 ---
 
@@ -88,12 +97,12 @@ public:
     // Pure virtual function (= 0)
     virtual double area() const = 0;
     virtual double perimeter() const = 0;
-    
+
     // Regular virtual function (default implementation)
     virtual void draw() const {
         cout << "Drawing shape\n";
     }
-    
+
     // Virtual destructor (ALWAYS!)
     virtual ~Shape() = default;
 };
@@ -104,15 +113,15 @@ public:
 // Concrete class - implements all pure virtuals
 class Circle : public Shape {
     double radius;
-    
+
 public:
     Circle(double r) : radius(r) { }
-    
+
     // MUST implement pure virtual functions
     double area() const override {
         return 3.14159 * radius * radius;
     }
-    
+
     double perimeter() const override {
         return 2 * 3.14159 * radius;
     }
@@ -144,18 +153,15 @@ virtual ReturnType functionName(parameters) = 0;
 ## 🔍 Abstract vs Concrete Classes
 
 ### Comparison
-```
-┌──────────────────────────┬──────────────────────────┐
-│ ABSTRACT CLASS           │ CONCRETE CLASS           │
-├──────────────────────────┼──────────────────────────┤
-│ Has ≥1 pure virtual      │ No pure virtual          │
-│ Cannot instantiate       │ Can instantiate          │
-│ Defines interface        │ Provides implementation  │
-│ Used as base class       │ Used to create objects   │
-│ Pointers/references only │ Can create actual objects│
-│ Forces derived to impl   │ Complete implementation  │
-└──────────────────────────┴──────────────────────────┘
-```
+
+| Abstract Class | Concrete Class |
+|---|---|
+| Has ≥ 1 pure virtual function | No pure virtual functions |
+| Cannot be instantiated | Can be instantiated |
+| Defines interface | Provides implementation |
+| Used as a base class | Used to create objects |
+| Pointers/references only | Can create actual objects |
+| Forces derived classes to implement | Complete implementation |
 
 ### Code Example
 ```cpp
@@ -177,6 +183,18 @@ public:
 };
 
 Dog dog;  // ✅ OK! Can instantiate
+```
+
+```mermaid
+classDiagram
+    class Animal {
+        <<abstract>>
+        + makeSound() void*
+    }
+    class Dog {
+        + makeSound() void
+    }
+    Animal <|-- Dog
 ```
 
 ---
@@ -271,24 +289,24 @@ public:
 class AbstractClass {
 protected:
     int data;  // ✅ Data members
-    
+
 public:
     // ✅ Constructor (called by derived)
     AbstractClass(int d) : data(d) { }
-    
+
     // ✅ Pure virtual functions
     virtual void pureVirtual() = 0;
-    
+
     // ✅ Regular virtual functions
     virtual void virtualFunc() {
         cout << "Default implementation\n";
     }
-    
+
     // ✅ Non-virtual functions
     void regularFunc() {
         cout << "Regular function\n";
     }
-    
+
     // ✅ Virtual destructor (IMPORTANT!)
     virtual ~AbstractClass() = default;
 };
@@ -317,7 +335,7 @@ public:
     virtual void draw() const = 0;
     virtual void resize(double factor) = 0;
     virtual ~IDrawable() = default;
-    
+
     // NO data members
     // NO implementation
 };
@@ -336,6 +354,15 @@ public:
 - Plugin interfaces
 - Dependency inversion
 
+```mermaid
+classDiagram
+    class IDrawable {
+        <<interface>>
+        + draw() void
+        + resize(factor: double) void
+    }
+```
+
 #### Abstract Base Class
 
 **Mix of pure virtual, virtual, and regular functions:**
@@ -343,23 +370,23 @@ public:
 class AbstractBase {
 protected:
     string name;  // Data member
-    
+
 public:
     AbstractBase(string n) : name(n) { }
-    
+
     // Pure virtual - must implement
     virtual void pureMethod() = 0;
-    
+
     // Virtual - can override
     virtual void virtualMethod() {
         cout << "Default implementation\n";
     }
-    
+
     // Regular - cannot override
     void regularMethod() {
         cout << "Regular method\n";
     }
-    
+
     virtual ~AbstractBase() = default;
 };
 ```
@@ -374,6 +401,37 @@ public:
 - Sharing common implementation
 - Template Method pattern
 - Base class with required + optional behavior
+
+### Requirement comparison — Interface vs. Abstract Base Class
+
+| Requirement | Pure Interface | Abstract Base Class |
+|---|---|---|
+| Is it a base class in C++? | Yes — same mechanism (`class X : public Y`) | Yes |
+| Data members? | **None** | Can have them |
+| Method implementations? | **None** — every method is pure virtual | Can mix pure virtual + implemented methods |
+| Virtual keyword needed? | Pure virtual (`= 0`) on every method | `virtual` (pure or not) as needed |
+| Virtual destructor | Yes | Yes |
+| UML relationship when derived | **Realization** (dashed line, hollow triangle) | **Inheritance** (solid line, hollow triangle) |
+
+```mermaid
+classDiagram
+    class IDrawable {
+        <<interface>>
+        + draw() void
+    }
+    class AbstractBase {
+        <<abstract>>
+        # name: string
+        + pureMethod() void*
+        + virtualMethod() void
+        + regularMethod() void
+    }
+    class ConcreteShape
+    class ConcreteBase
+
+    IDrawable <|.. ConcreteShape : Realization (dashed)
+    AbstractBase <|-- ConcreteBase : Inheritance (solid)
+```
 
 ---
 
@@ -411,6 +469,28 @@ public:
 Level3 l3;     // ✅ OK! Concrete
 ```
 
+```mermaid
+classDiagram
+    class Level1 {
+        <<abstract>>
+        + func1() void*
+        + func2() void*
+    }
+    class Level2 {
+        <<abstract>>
+        + func1() void
+    }
+    class Level3 {
+        + func2() void
+    }
+    Level1 <|-- Level2
+    Level2 <|-- Level3
+```
+
+*`Level2` is still abstract (still shown `<<abstract>>`) because `func2()`
+remains unimplemented. Only `Level3`, which implements both, drops the
+stereotype and becomes instantiable.*
+
 **Benefits:**
 - Share partial implementation
 - Reduce code duplication
@@ -433,9 +513,9 @@ public:
         step2();  // Abstract - must implement
         step3();
     }
-    
+
     virtual ~Algorithm() = default;
-    
+
 protected:
     void step1() { cout << "Step 1\n"; }
     virtual void step2() = 0;  // Must implement
@@ -451,6 +531,21 @@ protected:
 
 ConcreteAlgorithm algo;
 algo.execute();  // Runs full algorithm with custom step2
+```
+
+```mermaid
+classDiagram
+    class Algorithm {
+        <<abstract>>
+        + execute() void
+        # step1() void
+        # step2() void*
+        # step3() void
+    }
+    class ConcreteAlgorithm {
+        # step2() void
+    }
+    Algorithm <|-- ConcreteAlgorithm
 ```
 
 **Use when:**
@@ -491,6 +586,33 @@ ctx.setStrategy(&stratA);
 ctx.doWork();  // Uses Strategy A
 ```
 
+```mermaid
+classDiagram
+    class Strategy {
+        <<interface>>
+        + execute() void
+    }
+    class StrategyA {
+        + execute() void
+    }
+    class StrategyB {
+        + execute() void
+    }
+    class Context {
+        - strategy: Strategy*
+        + setStrategy(s: Strategy*) void
+        + doWork() void
+    }
+    Strategy <|.. StrategyA
+    Strategy <|.. StrategyB
+    Context o-- Strategy : uses
+```
+
+*`Context o-- Strategy` is Aggregation — `Context` doesn't own the
+`Strategy` object's lifetime, it just holds a non-owning pointer that can
+be swapped at runtime (`setStrategy()`), same reasoning as `Manager`'s
+`directReports` in `09_ObjectRelationships`.*
+
 **Use when:**
 - Multiple algorithms for same task
 - Want to switch at runtime
@@ -524,6 +646,24 @@ class ConcreteObserver : public Observer {
 };
 ```
 
+```mermaid
+classDiagram
+    class Observer {
+        <<interface>>
+        + update(message: string) void
+    }
+    class Subject {
+        - observers: Observer* [0..*]
+        + attach(obs: Observer*) void
+        + notify(msg: string) void
+    }
+    class ConcreteObserver {
+        + update(msg: string) void
+    }
+    Observer <|.. ConcreteObserver
+    Subject "1" o-- "0..*" Observer : notifies
+```
+
 **Use when:**
 - One object changes, many need notification
 - Event handling systems
@@ -548,9 +688,9 @@ public:
         p->use();
         delete p;
     }
-    
+
     virtual ~Creator() = default;
-    
+
 protected:
     virtual Product* createProduct() = 0;  // Factory method
 };
@@ -566,6 +706,34 @@ protected:
     }
 };
 ```
+
+```mermaid
+classDiagram
+    class Product {
+        <<interface>>
+        + use() void
+    }
+    class Creator {
+        <<abstract>>
+        + doSomething() void
+        # createProduct() Product**
+    }
+    class ConcreteProduct {
+        + use() void
+    }
+    class ConcreteCreator {
+        # createProduct() Product*
+    }
+    Product <|.. ConcreteProduct
+    Creator <|-- ConcreteCreator
+    Creator ..> Product : creates
+```
+
+*`Creator ..> Product` is Dependency, not Association — `Creator` doesn't
+store a `Product`, it only creates and hands one off inside
+`doSomething()`. Per `09_ObjectRelationships/06_Multiplicity`, no
+multiplicity is written on this line either, for the same "nothing stored
+to count" reason covered there.*
 
 **Use when:**
 - Class can't anticipate type to create
@@ -606,7 +774,7 @@ Create abstract `Shape`:
 
 ### Compile:
 ```bash
-g++ -std=c++17 abstract_classes.cpp -o abstract_classes
+g++ -std=c++23 abstract_classes.cpp -o abstract_classes
 ```
 
 ### Run:
@@ -632,73 +800,80 @@ The program demonstrates:
 ## 📊 Visual Concepts
 
 ### Abstract Class Hierarchy
-```
-        ┌──────────────┐
-        │   Animal     │  (Abstract)
-        │  ──────────  │
-        │ +makeSound()=0  Pure virtual
-        │ +move()=0       Pure virtual
-        │ +sleep()        Virtual
-        └──────────────┘
-               ▲
-               │ implements
-        ┌──────┴──────┐
-        │             │
-    ┌───▼────┐    ┌──▼────┐
-    │  Dog   │    │  Cat  │  (Concrete)
-    │ ────── │    │ ────  │
-    │+sound()│    │+sound()│  Must implement
-    │+move() │    │+move() │  all pure virtuals
-    └────────┘    └───────┘
+
+```mermaid
+classDiagram
+    class Animal {
+        <<abstract>>
+        + makeSound() void*
+        + move() void*
+        + sleep() void
+    }
+    class Dog {
+        + makeSound() void
+        + move() void
+    }
+    class Cat {
+        + makeSound() void
+        + move() void
+    }
+    Animal <|-- Dog
+    Animal <|-- Cat
 ```
 
+`Animal` cannot be instantiated — `makeSound()` and `move()` are pure
+virtual. `sleep()` is a regular virtual method with a default body that
+both `Dog` and `Cat` inherit as-is unless they choose to override it.
+
 ### Instantiation Rules
-```
-ABSTRACT CLASS:
-┌────────────────────┐
-│  Abstract          │
-│  ───────────────   │
-│  + pureFunc() = 0  │
-└────────────────────┘
-         │
-         │ ❌ Abstract obj;
-         │    (Cannot instantiate)
-         │
-         │ ✅ Abstract* ptr;
-         │    (Can have pointer)
-         │
-         ▼
-┌────────────────────┐
-│  Concrete          │
-│  ───────────────   │
-│  + pureFunc()      │  Implemented
-└────────────────────┘
-         │
-         │ ✅ Concrete obj;
-         ▼    (Can instantiate)
+
+| | Abstract (`pureFunc() = 0`) | Concrete (`pureFunc()` implemented) |
+|---|---|---|
+| `X obj;` | ❌ Compile error | ✅ OK |
+| `X* ptr;` | ✅ OK | ✅ OK |
+| `X& ref;` | ✅ OK (must bind to an existing object) | ✅ OK |
+
+```cpp
+// ABSTRACT CLASS
+class Abstract {
+public:
+    virtual void pureFunc() = 0;
+};
+
+// Abstract obj;   // ❌ Cannot instantiate
+Abstract* ptr;      // ✅ Can have a pointer
+
+// CONCRETE CLASS (implements pureFunc)
+class Concrete : public Abstract {
+public:
+    void pureFunc() override { }
+};
+
+Concrete obj;        // ✅ Can instantiate
+ptr = &obj;          // ✅ Base pointer to a derived object
 ```
 
 ### Template Method Pattern
+
+```mermaid
+classDiagram
+    class AbstractClass {
+        <<abstract>>
+        + templateMethod() void
+        # step1() void
+        # step2() void*
+        # step3() void
+    }
+    class ConcreteClass {
+        # step2() void
+    }
+    AbstractClass <|-- ConcreteClass
 ```
-┌─────────────────────────┐
-│     AbstractClass       │
-├─────────────────────────┤
-│ templateMethod() {      │  ← Defines structure
-│     step1();            │     (non-virtual)
-│     step2();  ←abstract │
-│     step3();            │
-│ }                       │
-└─────────────────────────┘
-            ▲
-            │ implements step2()
-┌───────────▼─────────────┐
-│    ConcreteClass        │
-├─────────────────────────┤
-│ step2() {               │  ← Provides implementation
-│     // Custom impl      │
-│ }                       │
-└─────────────────────────┘
-```
+
+`templateMethod()` is defined once, non-virtual, in the base class — it
+fixes the *order* of operations (`step1()` → `step2()` → `step3()`).
+Only `step2()` is pure virtual, so only that one step varies by subclass;
+`step1()` and `step3()` are shared, non-overridable behavior.
 
 ---
 
@@ -718,6 +893,8 @@ ABSTRACT CLASS:
 - **Interface Design** - Pure interfaces
 - **Design Patterns** - GoF patterns
 - **SOLID Principles** - OOP principles
+- **`09_ObjectRelationships/05_Realization`** - UML notation for interfaces (dashed line, hollow triangle)
+- **`09_ObjectRelationships/07_MemberNotation`** - `<<abstract>>`/`<<interface>>` stereotypes, italicized pure-virtual methods
 
 ---
 
@@ -742,24 +919,24 @@ ABSTRACT CLASS:
 class AbstractBase {
 protected:
     int data;  // Can have data
-    
+
 public:
     // Constructor (called by derived)
     AbstractBase(int d) : data(d) { }
-    
+
     // Pure virtual - must implement
     virtual void pureVirtual() = 0;
-    
+
     // Regular virtual - can override
     virtual void regularVirtual() {
         cout << "Default implementation\n";
     }
-    
+
     // Non-virtual - cannot override
     void nonVirtual() {
         cout << "Fixed implementation\n";
     }
-    
+
     // Virtual destructor (CRITICAL!)
     virtual ~AbstractBase() = default;
 };
@@ -768,12 +945,12 @@ public:
 class Concrete : public AbstractBase {
 public:
     Concrete(int d) : AbstractBase(d) { }
-    
+
     // MUST implement pure virtual
     void pureVirtual() override {
         cout << "Concrete implementation\n";
     }
-    
+
     // CAN override regular virtual
     void regularVirtual() override {
         cout << "Overridden implementation\n";
@@ -796,15 +973,15 @@ class Abstract {
 public:
     // Pure virtual (= 0)
     virtual void pureFunc() = 0;
-    
+
     // Regular virtual
     virtual void virtualFunc() {
         // Default implementation
     }
-    
+
     // Non-virtual
     void regularFunc() { }
-    
+
     // Virtual destructor
     virtual ~Abstract() = default;
 };
