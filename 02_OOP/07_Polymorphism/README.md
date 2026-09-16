@@ -35,6 +35,184 @@ Resolved at runtime via the **vtable**. Tiny overhead (one pointer lookup per ca
 
 ---
 
+## How Runtime Polymorphism Actually Works — Step by Step
+
+This is the part that's easy to gloss over: **"resolved at runtime" means
+the decision of which function to call happens while the program is
+executing, not while it's being compiled.** Here's the exact sequence,
+tied to the timeline of when each step happens.
+
+### At compile time — before the program ever runs
+
+The compiler sees this line:
+
+```cpp
+Animal* animal = /* ... */;
+animal->speak();
+```
+
+It looks at the **declared type of the pointer** (`Animal*`) and checks:
+*does `Animal` have a `speak()` method, and is it `virtual`?* If yes, the
+compiler does **not** hard-code a call to `Animal::speak()`. Instead, it
+generates code that says, in effect: *"at runtime, go find out what this
+pointer's vtable says the `speak()` slot points to, and call that."* This
+generated lookup instruction is fixed at compile time — but *which
+function it ends up calling* is not decided yet.
+
+### At runtime — every time this line actually executes
+
+```mermaid
+sequenceDiagram
+    participant Prog as Running Program
+    participant Ptr as animal (Animal*)
+    participant Obj as Actual object (e.g. a Dog)
+    participant VT as Dog's vtable
+
+    Prog->>Ptr: animal->speak()
+    Ptr->>Obj: dereference pointer
+    Obj->>VT: follow this object's vptr
+    VT->>VT: look up the speak() slot
+    VT-->>Prog: call Dog::speak()
+```
+
+1. **The program reaches the call** `animal->speak()`.
+2. **It dereferences `animal`** to get the actual object in memory — this
+   could be a `Dog`, a `Cat`, or any other `Animal` subclass; the pointer
+   itself doesn't carry that information, only an address.
+3. **It reads that object's `vptr`** — a hidden pointer every polymorphic
+   object carries, set automatically by the constructor, pointing at the
+   vtable of the object's *actual* class (not the pointer's declared type).
+4. **It follows the `vptr` to the vtable** and looks up the `speak()`
+   slot in it.
+5. **It calls whatever function address is stored in that slot** — for a
+   `Dog` object, that's `Dog::speak()`; for a `Cat` object, it's
+   `Cat::speak()`, even though both calls came from the exact same line
+   of source code (`animal->speak()`).
+
+### C++ example — tracing all 5 steps
+
+This example prints something at each conceptual step so you can watch
+the sequence happen, run after run, with different objects behind the
+same pointer:
+
+```cpp
+#include <iostream>
+#include <memory>
+#include <vector>
+
+class Animal {
+public:
+    // step 3/4 setup: this being `virtual` is what makes the compiler
+    // generate a vtable lookup instead of a direct call
+    virtual void speak() const {
+        std::cout << "  -> ran Animal::speak()\n";
+    }
+    virtual ~Animal() = default;
+};
+
+class Dog : public Animal {
+public:
+    void speak() const override {
+        std::cout << "  -> ran Dog::speak() => Woof!\n";
+    }
+};
+
+class Cat : public Animal {
+public:
+    void speak() const override {
+        std::cout << "  -> ran Cat::speak() => Meow!\n";
+    }
+};
+
+// step 1: the compiler only ever sees "Animal*" here — it has NO idea,
+// while compiling this function, whether it will run Dog::speak(),
+// Cat::speak(), or Animal::speak(). It just emits a vtable-lookup call.
+void makeItSpeak(const Animal* animal) {
+    std::cout << "step 1: compiled call site reached (animal->speak())\n";
+    animal->speak();   // steps 2-5 happen HERE, at this exact moment
+}
+
+int main() {
+    Dog dog;
+    Cat cat;
+
+    std::cout << "--- Calling with a Dog* ---\n";
+    makeItSpeak(&dog);   // step 2: dereferences to the Dog object
+                          // step 3: reads Dog's vptr
+                          // step 4: follows it to Dog's vtable
+                          // step 5: calls Dog::speak()
+
+    std::cout << "--- SAME function, now called with a Cat* ---\n";
+    makeItSpeak(&cat);   // step 2: dereferences to the Cat object
+                          // step 3: reads Cat's vptr
+                          // step 4: follows it to Cat's vtable
+                          // step 5: calls Cat::speak()
+
+    std::cout << "--- Mixed collection: steps 2-5 repeat for EACH element ---\n";
+    std::vector<std::unique_ptr<Animal>> animals;
+    animals.push_back(std::make_unique<Dog>());
+    animals.push_back(std::make_unique<Cat>());
+    animals.push_back(std::make_unique<Dog>());
+
+    for (const auto& a : animals) {
+        makeItSpeak(a.get());   // re-resolved fresh, every single iteration
+    }
+}
+```
+
+**Output:**
+```
+--- Calling with a Dog* ---
+step 1: compiled call site reached (animal->speak())
+  -> ran Dog::speak() => Woof!
+--- SAME function, now called with a Cat* ---
+step 1: compiled call site reached (animal->speak())
+  -> ran Cat::speak() => Meow!
+--- Mixed collection: steps 2-5 repeat for EACH element ---
+step 1: compiled call site reached (animal->speak())
+  -> ran Dog::speak() => Woof!
+step 1: compiled call site reached (animal->speak())
+  -> ran Cat::speak() => Meow!
+step 1: compiled call site reached (animal->speak())
+  -> ran Dog::speak() => Woof!
+```
+
+**What to notice:** `makeItSpeak()` is compiled exactly **once**. The
+`animal->speak()` line inside it never changes. Yet it produces three
+different outputs across the loop — proof that steps 2 through 5 are
+genuinely happening again at runtime, for every call, rather than being
+baked in when the function was compiled.
+
+### The key insight
+
+**The same compiled instruction produces a different function call every
+time, depending only on which object's address happens to be in the
+pointer at that moment.** Nothing about the *code* changes between calls
+— what changes is *which object the pointer refers to*, and each object
+carries its own vptr pointing to its own class's vtable. That's the
+entire mechanism: the object, not the pointer, decides which version
+runs — and it decides it fresh, at the moment of the call, not in advance.
+
+```cpp
+Dog dog;
+Cat cat;
+
+Animal* animal = &dog;
+animal->speak();     // runtime: follows dog's vptr → "Woof!"
+
+animal = &cat;        // SAME pointer, now pointing at a different object
+animal->speak();     // runtime: follows cat's vptr → "Meow!"
+                       // Notice: same variable, same line of code,
+                       // different result — because the OBJECT changed,
+                       // and that's checked again at each call.
+```
+
+This is also why it's called **dynamic** binding — the binding between
+the call `animal->speak()` and the actual function that runs isn't fixed
+once; it's re-evaluated dynamically, every single time that line executes.
+
+---
+
 ## How the Vtable Works
 
 Every class with at least one virtual function gets a **vtable** — a table of function pointers. Every *object* of that class carries one extra hidden pointer, the **vptr**, pointing to its class's vtable.
