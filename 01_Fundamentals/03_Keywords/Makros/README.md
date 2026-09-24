@@ -296,6 +296,87 @@ Even in modern C++23, some macros remain:
 
 ---
 
+## Further pragma usages
+
+`#pragma` is a *different* preprocessor mechanism from `#define` — instead
+of text substitution, each `#pragma` is a direct instruction to the
+compiler itself (change struct layout, silence a warning, mark a region).
+Almost all of them are **implementation-defined**, not ISO C++ — including
+`#pragma once` — except the two `#pragma STDC` ones below, which are
+actually standardized (inherited from C99/C++).
+
+| Pragma | What it does |
+|---|---|
+| `#pragma once` | Include guard — file included at most once per translation unit. Non-standard, but supported by every compiler in real-world use (already covered above as the modern alternative to `#ifndef`/`#define`/`#endif`). |
+| `#pragma pack(push, n)` / `#pragma pack(pop)` | Changes struct/class member alignment to `n` bytes instead of the compiler's default — used when a struct's binary layout has to match an external spec exactly (network protocol headers, file formats, hardware registers). |
+| `#pragma GCC diagnostic push/pop/ignored/warning/error` | GCC/Clang warning control, scoped with push/pop (already covered above). |
+| `#pragma GCC optimize("...")` / `#pragma GCC push_options` / `pop_options` | Per-function or per-region optimization/target flags — e.g. forcing `-O3` or a CPU feature like `avx2` for just one hot function, without changing the whole file's build flags. |
+| `#pragma message("text")` | Emits a compiler note at compile time — useful for confirming which `#ifdef` branch got taken, or flagging "compiling the legacy path here." |
+| `#pragma omp ...` | OpenMP directives (e.g. `#pragma omp parallel for`) — auto-parallelizes a loop across threads when compiled with `-fopenmp`. Common in numeric/scientific code. |
+| `#pragma STDC FP_CONTRACT ON/OFF` | **Standardized.** Controls whether the compiler may fuse `a*b+c` into a single fused-multiply-add instruction, which can change floating-point rounding results. |
+| `#pragma STDC FENV_ACCESS ON/OFF` | **Standardized.** Tells the compiler the code reads/writes the floating-point environment (rounding mode, exception flags via `<cfenv>`), so it must not reorder/optimize around those reads. |
+| `#pragma comment(lib, "...")` | **MSVC-only** — embeds a library-linking instruction directly in source instead of the linker command line. Not portable to GCC/Clang. |
+| `#pragma region` / `#pragma endregion` | **Editor/IDE-only**, purely cosmetic — creates a collapsible code-folding region. Zero effect on compilation. |
+| `_Pragma("...")` (C++11) | The **operator form** of `#pragma` — usable inside a macro expansion, since a bare `#pragma` can't appear inside a `#define`. |
+
+### Example — `#pragma pack` changing struct layout
+
+```cpp
+#include <cstdio>
+#include <cstdint>
+
+struct Default {
+    uint8_t  a;
+    uint32_t b;
+    uint8_t  c;
+};
+
+#pragma pack(push, 1)
+struct Packed {
+    uint8_t  a;
+    uint32_t b;
+    uint8_t  c;
+};
+#pragma pack(pop)
+
+int main() {
+    std::printf("sizeof(Default) = %zu\n", sizeof(Default));  // padded, e.g. 12
+    std::printf("sizeof(Packed)  = %zu\n", sizeof(Packed));   // no padding, 6
+}
+```
+
+Without `#pragma pack`, the compiler inserts padding bytes so `b` starts
+at a 4-byte-aligned offset (faster access, more memory). With
+`pack(push, 1)`, every member is packed with no padding — smaller, but
+slower/misaligned access on some architectures. This matters whenever a
+struct's exact byte layout has to match something external, like a wire
+protocol.
+
+### Example — `_Pragma` wrapped inside a macro
+
+```cpp
+#define SILENCE_UNUSED_WARNING \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wunused-variable\"")
+
+#define RESTORE_WARNINGS \
+    _Pragma("GCC diagnostic pop")
+
+void f() {
+    SILENCE_UNUSED_WARNING
+    int unused = 42;   // no warning here
+    RESTORE_WARNINGS
+}
+```
+
+A plain `#pragma GCC diagnostic ignored "..."` can't be written *inside*
+a `#define` body — the preprocessor doesn't allow `#` directives there.
+`_Pragma("...")` is the operator form of the same instruction, so it
+*can* be used inside a macro, which is the only reason to reach for it
+over a plain `#pragma`.
+
+---
+
 ## Compile commands
 
 ```bash
