@@ -102,11 +102,84 @@ They follow different rules.
 | Class / struct / enum | `PascalCase` | `class SocketHandler` |
 | Function / method | `camelCase` or `snake_case` | `connect()` / `do_connect()` |
 | Variable | `camelCase` or `snake_case` | `portNumber` / `port_number` |
-| Member variable | trailing `_` or `m_` prefix | `port_` or `m_port` |
+| Member variable | see **Member Variable Naming Conventions** below | `m_port`, `mPort`, `port_`, `port` |
 | Constant / `constexpr` | `UPPER_CASE` or `kPascalCase` | `MAX_SIZE` / `kMaxSize` |
 | Namespace | `snake_case` | `namespace socket_utils` |
 | Macro | `UPPER_CASE` | `#define MYLIB_EXPORT` |
 | Template parameter | `PascalCase` or single capital | `typename T`, `typename InputIter` |
+
+---
+
+## Member Variable Naming Conventions
+
+Unlike file naming, there is no single dominant convention for member variables —
+five distinct styles are all in active, widespread use. The right choice is
+"whatever the project already does," but it helps to know what each style
+signals and where it comes from.
+
+| Style | Example | Also written | Used by |
+|---|---|---|---|
+| `m_` prefix (underscore) | `m_workingHours` | `m_port`, `m_count` | Qt (older APIs), many enterprise / MFC-influenced codebases |
+| `m` prefix (no underscore) | `mWorkingHours` | `mPort`, `mCount` | Common in Java-influenced C++ shops, some Qt/QML-adjacent projects, Android NDK code |
+| Trailing underscore | `workingHours_` | `port_`, `count_` | Google C++ Style Guide, Chromium, protobuf, abseil |
+| No prefix / plain | `workingHours` | `port`, `count` | STL-style / "modern C++" codebases that rely on `this->` or scope to disambiguate |
+| Leading underscore | `_workingHours` | `_port` | Rare — technically legal at class scope, but risky (see caveat below) |
+
+### Why so many styles exist
+
+All of them solve the same real problem — telling a member variable apart
+from a local variable, a parameter, or a getter of the same conceptual name
+(`int port() const { return m_port; }` vs. the ambiguity of `int port() const { return port; }`).
+Which one "wins" is a matter of which style guide a codebase's founders followed:
+
+- **`m_` prefix** is the classic C++/MFC/Qt convention — the underscore makes
+  the prefix visually distinct from the rest of the name at a glance.
+- **`m` prefix, no underscore** produces cleaner camelCase (`mWorkingHours`
+  reads as one camelCase word) and is common where the team's naming style
+  leans toward Java/Android conventions, or simply as a shorter variant of
+  `m_`.
+- **Trailing underscore** (`workingHours_`) is Google's and Chromium's choice
+  specifically because it doesn't disturb the camelCase/snake_case of the
+  base name — `_` is just appended, not inserted as a prefix.
+- **No prefix** relies entirely on `this->member` or on the member simply
+  not colliding with any local/parameter name in scope; more common in
+  small classes or in codebases that prioritize minimal visual noise.
+
+### The leading-underscore caveat
+
+A single leading underscore on an ordinary member name (`_workingHours`) is
+**legal** at class scope in C++. It becomes a problem only under two
+specific patterns, both reserved for the implementation by the standard:
+
+- A leading underscore **followed by a capital letter**, anywhere: `_Port` — reserved.
+- **Two consecutive underscores**, anywhere in the identifier: `__port` — reserved.
+- A leading underscore **at global/namespace scope** (not inside a class): reserved.
+
+`_workingHours` itself (lowercase after the underscore, inside a class) does
+not violate either rule, but it's easy to typo into a reserved form, and
+many style guides ban leading underscores outright to avoid the ambiguity.
+For that reason it's the least-used of the five styles in production code.
+
+### Picking one
+
+```
+Contributing to an existing project?
+  → Match whatever it already uses. This overrides every preference below.
+
+Starting fresh, following Qt conventions?
+  → m_ prefix (or mPrefix if you prefer the shorter camelCase look)
+
+Starting fresh, following Google/Chromium/abseil conventions?
+  → trailing underscore (workingHours_)
+
+Small class, low collision risk, prioritizing minimal visual noise?
+  → no prefix, disambiguate with this-> where needed
+```
+
+**The one rule that matters more than which style you pick:** be
+consistent within a single class, and ideally within the whole project.
+Mixing `m_port` and `mCount` and `label_` in the same class is worse than
+any single style applied uniformly.
 
 ---
 
@@ -202,6 +275,7 @@ Are you contributing to an existing project?
 | Internal / detail headers | `snake_case` regardless of project style |
 | Identifiers (classes) | Always `PascalCase` — universal across all guides |
 | Identifiers (functions/vars) | `camelCase` or `snake_case` — depends on guide |
+| Member variables | `m_` prefix, `m` prefix, trailing `_`, or no prefix — pick one, be consistent |
 | Constants / macros | `UPPER_CASE` — universal |
 
 **The one rule that has no exceptions:**
