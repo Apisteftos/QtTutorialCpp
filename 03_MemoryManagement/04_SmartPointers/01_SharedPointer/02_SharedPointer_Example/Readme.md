@@ -54,6 +54,27 @@ Deep dive into how reference counting works:
 - When count increases/decreases
 - Automatic deletion at count == 0
 
+```
+┌─────────────────┐
+│   CONTROL BLOCK │
+├─────────────────┤
+│ Ref Count: 3    │  ← Number of shared_ptr owners
+│ Weak Count: 1   │  ← Number of weak_ptr observers
+│ Deleter: func   │  ← Custom delete function
+│ Allocator: ...  │  ← Memory allocator
+├─────────────────┤
+│ Object: [Data]  │  ← Your actual object
+└─────────────────┘
+```
+
+Every `shared_ptr<T>` is really two pointers under the hood: one to the
+object itself, one to this shared control block. Copying a `shared_ptr`
+copies both pointers and increments `Ref Count`; destroying one
+decrements it. The object is deleted the instant `Ref Count` reaches 0 —
+the control block itself survives a little longer if any `weak_ptr`
+still references it (`Weak Count` > 0), since it needs to keep answering
+"is the object still alive?" even after the object is gone.
+
 ### Example 4: shared_ptr vs unique_ptr
 Decision guide for choosing the right smart pointer:
 - **`unique_ptr`**: Exclusive ownership, zero overhead, fastest
@@ -68,6 +89,32 @@ shared_ptr<T> ptr(new T(args));
 // ✅ GOOD: One allocation
 auto ptr = make_shared<T>(args);
 ```
+
+**`shared_ptr<T>(new T(args))` — two separate allocations:**
+```
+┌─────────────────┐  Allocation 1 (operator new)
+│  T object       │
+└─────────────────┘
+┌─────────────────┐  Allocation 2 (shared_ptr constructor)
+│  Control Block  │
+└─────────────────┘
+```
+Non-contiguous in memory, and if a second argument in the same
+expression throws before the `shared_ptr` constructor runs, the first
+`new` can leak with no owner ever created for it.
+
+**`make_shared<T>(args)` — one allocation:**
+```
+┌─────────────────┐  Single allocation
+│  Control Block  │  ← ref counts, deleter
+├─────────────────┤
+│  T object       │  ← your object, stored right next to its control block
+└─────────────────┘
+```
+Cheaper (one allocation instead of two), cache-friendlier (object and
+control block sit next to each other), and exception-safe by
+construction — there's no in-between state where one exists without
+the other.
 
 ### Example 6: Custom Deleters
 Handling special cleanup requirements:
@@ -390,8 +437,4 @@ This is a learning resource. Feel free to:
 
 This educational material is provided as-is for learning purposes.
 
----
 
-**Happy Coding! 🚀**
-
-Remember: Smart pointers make C++ memory management easier, but understanding them deeply makes you a better programmer!
