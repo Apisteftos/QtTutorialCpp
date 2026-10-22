@@ -140,16 +140,16 @@ instance) is shown **underlined**.
 classDiagram
     class Employee {
         - name: string
-        $ employeeCount: int
+        employeeCount: int$
         + calculateSalary() double
-        $ getEmployeeCount() int
+        + getEmployeeCount() int$
     }
 ```
 
-Mermaid's text syntax uses a `$` prefix (rendered as an underline) instead
-of literal underline formatting, since underlining specific characters in
-plain text isn't practical — the `$` is Mermaid's way of marking a member
-`static`.
+Mermaid's text syntax uses a `$` **suffix** — written at the very end of the
+member (`employeeCount: int$`, `getEmployeeCount() int$`) — instead of literal
+underline formatting. The `$` is Mermaid's way of marking a member `static`
+(per the Mermaid class-diagram docs: `someStaticMethod()$`, `String someField$`).
 
 ```cpp
 class Employee {
@@ -213,6 +213,10 @@ classDiagram
     }
 ```
 
+> **Mermaid note:** the Mermaid docs do not list a `/` marker for derived
+> attributes, so `/ teamSize` may simply be shown as plain text. In UML itself
+> `/` is the standard notation; in Mermaid treat it as a readable convention.
+
 *`teamSize` isn't its own independent field — it's always
 `directReports.size()`.* Marking it `/` documents that fact directly in
 the diagram, so nobody wonders why there are seemingly two separate,
@@ -270,19 +274,19 @@ classDiagram
 
 ## 8. Read-only / const attributes
 
-Not all UML tools agree on one symbol for this, but the common convention
-Mermaid supports is appending `{readOnly}` as a property string after the
-attribute:
+Not all UML tools agree on one symbol for this. In UML the property string
+`{readOnly}` is placed after the attribute; Mermaid has no special syntax for
+it, so it is just text you can add if you want it explicit:
 
 ```mermaid
 classDiagram
     class Employee {
-        - employeeId: string
+        - employeeId: string {readOnly}
         + getEmployeeId() string
     }
 ```
 
-In practice, most diagrams (including your own so far) just express
+In practice, most diagrams just express
 "read-only" implicitly — a `private` field with only a `getter` and no
 `setter` — rather than annotating it explicitly. That's a perfectly valid
 and common simplification; use the explicit `{readOnly}` tag only when it
@@ -301,6 +305,20 @@ public:
 
 ---
 
+## Runnable example (`main.cpp`)
+
+Four of the notations have real C++ behaviour behind them, so `main.cpp`
+shows them in a small hierarchy (`std::println` output):
+
+| Notation | In `main.cpp` | What you see |
+|---|---|---|
+| `employeeCount: int$` | `static inline int s_employeeCount` + `static int getEmployeeCount()` | 0 → 2 employees → 0 again after the scope ends |
+| `calculateSalary()*` | `virtual double calculateSalary() const = 0;` | `Employee e;` does not compile (abstract) |
+| `employeeId` read-only | `const std::string m_employeeId` + getter only | assigning to it does not compile |
+| `/ teamSize` | `int teamSize() const` computed from `m_directReports.size()` | 0 → 1 → 2 as reports are added, no second field to update |
+
+---
+
 ## Full worked example — tying it all together
 
 ```mermaid
@@ -309,10 +327,10 @@ classDiagram
         <<abstract>>
         # name: string
         # baseSalary: double
-        $ employeeCount: int
+        employeeCount: int$
         + calculateSalary() double*
         + displayInfo() void
-        $ getEmployeeCount() int
+        + getEmployeeCount() int$
     }
 
     class Manager {
@@ -346,7 +364,7 @@ classDiagram
 
 This single diagram now demonstrates: visibility markers, an `<<abstract>>`
 base class with an italicized pure-virtual method, a `static` counter
-(`$`), a derived attribute (`/teamSize`), a multi-value attribute
+(`$` suffix), a derived attribute (`/teamSize`), a multi-value attribute
 (`[1..*]`), an enum association, inheritance, and the self-referencing
 Aggregation pattern from the main README — every notation rule in this
 file, in one place.
@@ -362,8 +380,19 @@ file, in one place.
 | `name: type = value` | attribute with a default value |
 | `name: type [m..n]` | attribute holding multiple values (multiplicity) |
 | `name(param: type): returnType` | method signature |
-| `$name` | static member (underlined) |
+| `name$` | static member (underlined) — `$` goes at the **end** in Mermaid |
 | `name()*` | abstract/pure virtual method (italicized) |
 | `/name` | derived (computed) attribute |
 | `<<stereotype>>` | class-level marker: `<<interface>>`, `<<enumeration>>`, `<<abstract>>` |
 | `{readOnly}` | explicit read-only tag (optional — omission + getter-only is also common) |
+
+---
+
+## Build
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o membernotation
+./membernotation
+```
+
+`main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <print>
@@ -144,48 +143,47 @@ public:
 
 
 // ============================================================
-// Example 4 — MCX context: Session ↔ Group
-// A session is associated with a group — neither owns the other
+// Example 4 — User ↔ ChatRoom
+// A user is associated with a chat room — neither owns the other
 // ============================================================
-class McxGroup {
+class ChatRoom {
 private:
-    std::string m_groupId;
-    int         m_priority;
+    std::string m_name;
+    int         m_maxUsers;
 
 public:
-    McxGroup(const std::string& id, int priority)
-        : m_groupId(id), m_priority(priority) {}
+    ChatRoom(const std::string& name, int maxUsers)
+        : m_name(name), m_maxUsers(maxUsers) {}
 
-    std::string getId()       const { return m_groupId; }
-    int         getPriority() const { return m_priority; }
+    std::string getName()     const { return m_name;     }
+    int         getMaxUsers() const { return m_maxUsers; }
 };
 
-class McxSession {
+class User {
 private:
-    std::string  m_sessionId;
-    McxGroup*    m_activeGroup;   // association — session does not own group
+    std::string m_name;
+    ChatRoom*   m_activeRoom;   // association — user does not own the room
 
 public:
-    explicit McxSession(const std::string& id)
-        : m_sessionId(id), m_activeGroup(nullptr) {}
+    explicit User(const std::string& name)
+        : m_name(name), m_activeRoom(nullptr) {}
 
-    void joinGroup(McxGroup* group) {
-        m_activeGroup = group;
-        std::println("  Session {} joined group {} (priority {})",
-                     m_sessionId, group->getId(), group->getPriority());
+    void joinRoom(ChatRoom* room) {
+        m_activeRoom = room;
+        std::println("  {} joined room {} (max {} users)",
+                     m_name, room->getName(), room->getMaxUsers());
     }
 
-    void leaveGroup() {
-        if (m_activeGroup) {
-            std::println("  Session {} left group {}", m_sessionId, m_activeGroup->getId());
-            m_activeGroup = nullptr;
+    void leaveRoom() {
+        if (m_activeRoom) {
+            std::println("  {} left room {}", m_name, m_activeRoom->getName());
+            m_activeRoom = nullptr;
         }
     }
 
-    void requestFloor() const {
-        if (m_activeGroup)
-            std::println("  Session {} requests floor in group {}",
-                         m_sessionId, m_activeGroup->getId());
+    void sendMessage(const std::string& text) const {
+        if (m_activeRoom)
+            std::println("  {} says in {}: {}", m_name, m_activeRoom->getName(), text);
     }
 };
 
@@ -195,9 +193,9 @@ public:
 // ============================================================
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Teacher — Student (basic association)\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Teacher — Student (basic association)");
+    std::println("=====================================================");
 
     {
         Teacher teacher("Mr. Schmidt", "C++23");
@@ -209,15 +207,13 @@ int main()
         teacher.teach(bob);
         teacher.gradeStudent(alice);
         teacher.gradeStudent(bob);
-
-        std::cout << "\nBoth teacher and students exist independently.\n";
-        std::cout << "Teacher does not own the students.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Doctor — Patient (bidirectional association)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Doctor — Patient (bidirectional association)");
+    std::println("=====================================================");
 
     {
         Doctor doctor("Mueller");
@@ -229,15 +225,13 @@ int main()
 
         doctor.treatPatient(p1);
         doctor.treatPatient(p2);
-
-        std::cout << "\nBoth Doctor and Patients exist independently.\n";
-        std::cout << "If Doctor object is destroyed, Patients still exist.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Driver — Vehicle (many-to-many)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Driver — Vehicle (many-to-many)");
+    std::println("=====================================================");
 
     {
         // Vehicles exist independently
@@ -257,48 +251,32 @@ int main()
 
         driver1.listVehicles();
         driver2.listVehicles();
-
-        std::cout << "\nVehicles and Drivers exist independently.\n";
-        std::cout << "Same vehicle can be associated with multiple drivers.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: MCX Session — Group (domain example)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: User — ChatRoom");
+    std::println("=====================================================");
 
     {
-        // Groups exist independently of sessions
-        McxGroup groupAlpha("GRP-ALPHA", 1);
-        McxGroup groupBeta ("GRP-BETA",  2);
+        // Rooms exist independently of users
+        ChatRoom general("general", 100);
+        ChatRoom random ("random",   50);
 
-        McxSession session1("SES-001");
-        McxSession session2("SES-002");
+        User alice("Alice");
+        User bob  ("Bob");
 
-        session1.joinGroup(&groupAlpha);
-        session2.joinGroup(&groupAlpha);   // same group, two sessions
+        alice.joinRoom(&general);
+        bob.joinRoom(&general);       // same room, two users
 
-        session1.requestFloor();
-        session2.requestFloor();
+        alice.sendMessage("Hello!");
+        bob.sendMessage("Hi Alice!");
 
-        session1.leaveGroup();
-        session1.joinGroup(&groupBeta);    // session switches group
-        session1.requestFloor();
-
-        std::cout << "\nGroups and Sessions exist independently.\n";
-        std::cout << "Sessions can switch groups. Groups survive without sessions.\n";
+        alice.leaveRoom();
+        alice.joinRoom(&random);      // user switches room
+        alice.sendMessage("Anyone here?");
     }
-
-
-    std::cout << "\n=====================================================\n";
-    std::cout << "Summary: Association\n";
-    std::cout << "=====================================================\n";
-    std::cout << "  Relationship:  uses-a\n";
-    std::cout << "  Ownership:     none — neither owns the other\n";
-    std::cout << "  Lifetime:      both exist independently\n";
-    std::cout << "  Storage:       pointer or reference passed from outside\n";
-    std::cout << "  Destroy one:   the other still exists\n";
-    std::cout << "  UML:           A ————————> B (solid line, open arrow)\n";
 
     return 0;
 }

@@ -424,6 +424,88 @@ obj.function();
 
 ---
 
+## 🧾 Notes moved from `main.cpp`
+
+The long summary that used to be printed at the end of `main()` is mostly covered by the sections above (what is a class, structure, dot operator, public/private, terminology, why use classes, what's next, quick reference). These points were only in `main.cpp`, so they are kept here.
+
+### Class vs Struct
+
+In C++ `class` and `struct` are almost identical. The only difference is the default access:
+
+| | `class` | `struct` |
+|---|---------|----------|
+| Members are | `private` by default | `public` by default |
+| Convention | complex types with behavior | simple data containers |
+
+### Object Lifetime
+
+```cpp
+Student s1;                  // Stack object
+// - automatic lifetime
+// - destroyed when the scope ends
+// - no manual cleanup needed
+
+Student* s2 = new Student;   // Heap object
+// - manual lifetime control
+// - exists until 'delete' is called
+// - must remember to delete!
+delete s2;
+```
+
+### Real-World Analogies
+
+| Class | Variables | Functions |
+|-------|-----------|-----------|
+| `Student` | name, age, ID, GPA | `study()`, `takeExam()`, `displayInfo()` |
+| `Car` | brand, model, year, color | `drive()`, `honk()`, `displayInfo()` |
+| `BankAccount` | accountNumber, balance, holder | `deposit()`, `withdraw()`, `displayBalance()` |
+| `GameCharacter` | name, health, attackPower, level | `attack()`, `takeDamage()`, `heal()`, `levelUp()` |
+
+### Design Tips
+
+**Good class design:**
+- clear, descriptive class name (`Student`, not `S`)
+- related data grouped together
+- functions operate on class data
+- represents one concept/entity
+
+**Naming conventions:**
+- class names: `PascalCase` (`Student`, `BankAccount`)
+- variables: `camelCase` (`studentId`, `accountNumber`)
+- functions: `camelCase` (`displayInfo`, `calculateGPA`)
+
+**A class can represent:**
+- a thing (`Student`, `Car`, `Account`)
+- a concept (`Calculator`, `Timer`, `Logger`)
+- an entity (`Player`, `Enemy`, `Item`)
+
+### Extra Terminology
+
+- **Class** is also called: type, blueprint, template
+- **Object** is also called: instance (`student1`, `car2` are instances)
+- **Member variables** are also called: attributes, properties, fields, data members
+- **Member functions** are also called: methods, behaviors, operations
+- **Instantiation:** the process of creating an object from a class (`Student s;`)
+
+### Extra Benefits of Classes
+
+- **Abstraction:** hide complex details, show only what's necessary
+- **Maintainability:** a change in one place affects all objects, so it is easier to debug and update
+- **Real-world modeling:** represent real entities in code, a natural way to think about problems
+
+### More Key Takeaways
+
+1. Class = Blueprint, Object = Instance
+2. Classes group data and functions together
+3. Use the dot (`.`) to access members
+4. Many objects can be created from one class
+5. Each object has its own data
+6. Objects share the same functions (code)
+7. Classes help organize and structure code
+8. They represent real-world entities in code
+
+---
+
 ## 📖 Further Reading
 
 - [cppreference.com - Classes](https://en.cppreference.com/w/cpp/language/class)

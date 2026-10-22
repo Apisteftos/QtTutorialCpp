@@ -96,34 +96,34 @@ classDiagram
 
 ---
 
-## MCX client composition
+## WebServer composition
 
 ```mermaid
 classDiagram
-    class McxClient {
-        -string m_clientId
-        -SessionConfig m_config
-        -AudioCodec m_codec
-        +connect()
-        +~McxClient()
+    class WebServer {
+        -string m_serverId
+        -ServerConfig m_config
+        -Cache m_cache
+        +start()
+        +~WebServer()
     }
 
-    class SessionConfig {
+    class ServerConfig {
         -string m_host
         -uint16_t m_port
         -bool m_encrypted
         +toString() string
     }
 
-    class AudioCodec {
+    class Cache {
         -string m_name
-        -int m_bitrate
-        +encode()
+        -int m_sizeMb
+        +warmUp()
     }
 
-    McxClient "1" *-- "1" SessionConfig : owns
-    McxClient "1" *-- "1" AudioCodec : owns
-    note for McxClient "Config and Codec have no\nmeaning without the Client"
+    WebServer "1" *-- "1" ServerConfig : owns
+    WebServer "1" *-- "1" Cache : owns
+    note for WebServer "Config and Cache have no\nmeaning without the Server"
 ```
 
 ---
@@ -133,7 +133,7 @@ classDiagram
 ```mermaid
 flowchart TD
     subgraph ByValue ["Option 1: Member by value (most common)"]
-        Car1[Car] --> Eng1["Engine m_engine\n(on Car's stack frame)"]
+        Car1[Car] --> Eng1["Engine m_engine\n(stored inside the Car object)"]
     end
 
     subgraph UniquePtr ["Option 2: unique_ptr (dynamic, polymorphic)"]
@@ -180,6 +180,31 @@ public:
 
 ---
 
+## Examples in this file
+
+| # | Whole → Parts | Storage | Shows |
+|---|---------------|---------|-------|
+| 1 | Car → Engine, Gearbox | member objects | construction/destruction order |
+| 2 | Human → Heart, Brain | member objects | parts created and destroyed with the whole |
+| 3 | House → Room | `vector<unique_ptr<Room>>` | owned heap parts, any number of rooms |
+| 4 | WebServer → ServerConfig, Cache | member objects | parts meaningless without the server |
+
+**Order of events (from the real output of Example 1):**
+1. Construction: members first in **declaration order** (`Engine`, then `Gearbox`), then the body of `Car()` runs (`[Car created]`)
+2. Destruction is the reverse: the body of `~Car()` runs first (`[Car destroyed]`), then members in **reverse declaration order** (`Gearbox`, then `Engine`)
+3. Same pattern in Examples 2 and 4. In Example 3 the rooms are destroyed by the `unique_ptr`s after `~House()`'s body
+
+## 🧾 Notes moved from `main.cpp`
+
+The summary printout was removed from `main.cpp` (the demos now only print what they do). Its content, so nothing is lost:
+
+- Relationship: **has-a (strong)**; ownership: full — the whole owns and manages the parts
+- Lifetime: parts created with the whole, destroyed with the whole; destroy the whole → all parts destroyed automatically
+- Storage: member object by value, or `unique_ptr`; part sharing: impossible — a part belongs to one whole only
+- UML: `A <♦>———————B` (filled diamond at A) — see the Summary table below
+
+---
+
 ## Composition vs Aggregation
 
 ```mermaid
@@ -217,3 +242,14 @@ flowchart LR
 | Storage | Member object by value, or `unique_ptr` |
 | Part sharing | Not possible |
 | UML | `A <♦>———————B` filled diamond at A |
+
+---
+
+## Build
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o composition
+./composition
+```
+
+`main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.

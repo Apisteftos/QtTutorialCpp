@@ -1,7 +1,10 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <fstream>
 #include <vector>
+#include <cstdio>      // FILE, fopen, fclose, fprintf
+#include <ctime>       // clock, CLOCKS_PER_SEC
+#include <stdexcept>   // runtime_error
 using namespace std;
 
 // ============================================
@@ -29,28 +32,30 @@ public:
 
     // Constructor
     SimpleClass(string n) : name(n) {
-        cout << "🏗️  Constructor: Creating " << name << "\n";
+        std::println("🏗️  Constructor: Creating {}", name);
     }
 
     // Destructor
     ~SimpleClass() {
-        cout << "💥 Destructor: Destroying " << name << "\n";
+        std::println("💥 Destructor: Destroying {}", name);
     }
 };
 
 void demonstrateBasicDestructor() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC DESTRUCTOR       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC DESTRUCTOR       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating object in scope ---\n";
+    std::println("--- Creating object in scope ---");
     {
         SimpleClass obj("Object1");
-        cout << "   Object is alive and usable\n";
+        std::println("   Object is alive and usable");
     }  // ← Destructor called here when scope ends!
 
-    cout << "--- After scope ended ---\n";
-    cout << "✓ Destructor automatically called!\n";
+    std::println("--- After scope ended ---");
+    std::println("✓ Destructor automatically called!");
 }
 
 // ============================================
@@ -62,42 +67,46 @@ public:
     string name;
 
     LifetimeDemo(string n) : name(n) {
-        cout << "   ➕ Created: " << name << "\n";
+        std::println("   ➕ Created: {}", name);
     }
 
     ~LifetimeDemo() {
-        cout << "   ➖ Destroyed: " << name << "\n";
+        std::println("   ➖ Destroyed: {}", name);
     }
 };
 
 void innerFunction() {
-    cout << "  [Inside innerFunction]\n";
+    std::println("  [Inside innerFunction]");
     LifetimeDemo local("LocalInFunction");
-    cout << "  [Exiting innerFunction]\n";
+    std::println("  [Exiting innerFunction]");
 }
 
 void demonstrateWhenDestructorsCalled() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: WHEN CALLED            ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: WHEN CALLED            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Case 1: Scope ends ---\n";
+    std::println("--- Case 1: Scope ends ---");
     {
         LifetimeDemo obj1("ScopeObject");
     }  // Destructor called here
 
-    cout << "\n--- Case 2: Function returns ---\n";
+    std::println("");
+    std::println("--- Case 2: Function returns ---");
     innerFunction();  // obj destroyed when function returns
 
-    cout << "\n--- Case 3: Return statement ---\n";
+    std::println("");
+    std::println("--- Case 3: Return statement ---");
     {
         LifetimeDemo obj2("EarlyReturn");
         if (true) {
-            cout << "  Returning early...\n";
+            std::println("  Returning early...");
             // Destructor called before return
             return;  // Destructor called here!
         }
-        cout << "  This won't print\n";
+        std::println("  This won't print");
     }
 }
 
@@ -113,7 +122,7 @@ private:
 public:
     DynamicArray(size_t s) : size(s) {
         data = new int[size];
-        cout << "🏗️  Allocated " << size << " integers\n";
+        std::println("🏗️  Allocated {} integers", size);
 
         // Initialize with values
         for (size_t i = 0; i < size; i++) {
@@ -123,35 +132,36 @@ public:
 
     // Destructor - FREE THE MEMORY!
     ~DynamicArray() {
-        cout << "💥 Freeing " << size << " integers\n";
+        std::println("💥 Freeing {} integers", size);
         delete[] data;  // ← Critical! Must free memory
     }
 
     void display() {
-        cout << "Array contents: ";
+        std::print("Array contents: ");
         for (size_t i = 0; i < size && i < 5; i++) {
-            cout << data[i] << " ";
+            std::print("{} ", data[i]);
         }
-        if (size > 5) cout << "...";
-        cout << "\n";
+        if (size > 5) std::print("...");
+        std::println("");
     }
 };
 
 void demonstrateMemoryCleanup() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: MEMORY CLEANUP         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: MEMORY CLEANUP         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating array ---\n";
+    std::println("--- Creating array ---");
     {
         DynamicArray arr(100);
         arr.display();
-        cout << "--- Using array... ---\n";
+        std::println("--- Using array... ---");
     }  // ← Destructor automatically frees memory!
 
-    cout << "\n✅ Memory automatically freed!\n";
-    cout << "   Without destructor → Memory leak! 💔\n";
-    cout << "   With destructor → Safe and automatic! ✨\n";
+    std::println("");
+    std::println("✅ Memory automatically freed!");
 }
 
 // ============================================
@@ -167,9 +177,9 @@ public:
     FileManager(const string& fname) : filename(fname) {
         file = fopen(fname.c_str(), "w");
         if (file) {
-            cout << "📂 Opened file: " << filename << "\n";
+            std::println("📂 Opened file: {}", filename);
         } else {
-            cout << "❌ Failed to open file\n";
+            std::println("❌ Failed to open file");
         }
     }
 
@@ -177,33 +187,35 @@ public:
     ~FileManager() {
         if (file) {
             fclose(file);
-            cout << "📁 Closed file: " << filename << "\n";
+            std::println("📁 Closed file: {}", filename);
         }
     }
 
     void write(const string& text) {
         if (file) {
             fprintf(file, "%s\n", text.c_str());
-            cout << "✍️  Wrote: " << text << "\n";
+            std::println("✍️  Wrote: {}", text);
         }
     }
 };
 
 void demonstrateFileCleanup() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: FILE CLEANUP           ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: FILE CLEANUP           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using file manager ---\n";
+    std::println("--- Using file manager ---");
     {
         FileManager file("test_output.txt");
         file.write("Line 1: Hello from destructor example!");
         file.write("Line 2: File will be closed automatically");
-        cout << "--- Doing other work... ---\n";
+        std::println("--- Doing other work... ---");
     }  // ← File automatically closed by destructor!
 
-    cout << "\n✅ File automatically closed!\n";
-    cout << "   Even if exception thrown → file still closed!\n";
+    std::println("");
+    std::println("✅ File automatically closed!");
 }
 
 // ============================================
@@ -215,32 +227,32 @@ public:
     string name;
 
     OrderDemo(string n) : name(n) {
-        cout << "  ➕ Constructed: " << name << "\n";
+        std::println("  ➕ Constructed: {}", name);
     }
 
     ~OrderDemo() {
-        cout << "  ➖ Destructed: " << name << "\n";
+        std::println("  ➖ Destructed: {}", name);
     }
 };
 
 void demonstrateDestructorOrder() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: DESTRUCTOR ORDER       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: DESTRUCTOR ORDER       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating objects ---\n";
+    std::println("--- Creating objects ---");
     {
         OrderDemo obj1("First");
         OrderDemo obj2("Second");
         OrderDemo obj3("Third");
 
-        cout << "\n--- All objects created ---\n";
-        cout << "--- Scope ending... ---\n\n";
+        std::println("");
+        std::println("--- All objects created ---");
+        std::println("--- Scope ending... ---");
+        std::println("");
     }  // Destructors called in REVERSE order!
-
-    cout << "\n💡 Destructors called in REVERSE order of construction!\n";
-    cout << "   Construction: First → Second → Third\n";
-    cout << "   Destruction:  Third → Second → First\n";
 }
 
 // ============================================
@@ -250,22 +262,22 @@ void demonstrateDestructorOrder() {
 class Engine {
 public:
     Engine() {
-        cout << "    🔧 Engine constructed\n";
+        std::println("    🔧 Engine constructed");
     }
 
     ~Engine() {
-        cout << "    🔧 Engine destructed\n";
+        std::println("    🔧 Engine destructed");
     }
 };
 
 class Wheels {
 public:
     Wheels() {
-        cout << "    🛞 Wheels constructed\n";
+        std::println("    🛞 Wheels constructed");
     }
 
     ~Wheels() {
-        cout << "    🛞 Wheels destructed\n";
+        std::println("    🛞 Wheels destructed");
     }
 };
 
@@ -276,26 +288,25 @@ private:
 
 public:
     CarComposite() {
-        cout << "  🚗 Car constructed\n";
+        std::println("  🚗 Car constructed");
     }
 
     ~CarComposite() {
-        cout << "  🚗 Car destructed\n";
+        std::println("  🚗 Car destructed");
     }
 };
 
 void demonstrateComposition() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: COMPOSITION            ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: COMPOSITION            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating car ---\n";
+    std::println("--- Creating car ---");
     {
         CarComposite car;
     }
-
-    cout << "\n💡 Member destructors called automatically!\n";
-    cout << "   Order: Car → Wheels → Engine (reverse of construction)\n";
 }
 
 // ============================================
@@ -309,36 +320,37 @@ private:
 public:
     ExceptionSafeResource() {
         data = new int[1000];
-        cout << "🏗️  Resource allocated\n";
+        std::println("🏗️  Resource allocated");
     }
 
     ~ExceptionSafeResource() {
         delete[] data;
-        cout << "💥 Resource freed (even with exception!)\n";
+        std::println("💥 Resource freed (even with exception!)");
     }
 
     void riskyOperation() {
-        cout << "⚠️  Performing risky operation...\n";
+        std::println("⚠️  Performing risky operation...");
         throw runtime_error("Something went wrong!");
     }
 };
 
 void demonstrateExceptionSafety() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: EXCEPTION SAFETY       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: EXCEPTION SAFETY       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Testing exception safety ---\n";
+    std::println("--- Testing exception safety ---");
     try {
         ExceptionSafeResource resource;
         resource.riskyOperation();
     } catch (const exception& e) {
-        cout << "🚨 Caught exception: " << e.what() << "\n";
+        std::println("🚨 Caught exception: {}", e.what());
     }
 
-    cout << "\n✅ Destructor called even when exception thrown!\n";
-    cout << "   This is RAII (Resource Acquisition Is Initialization)\n";
-    cout << "   Resources are ALWAYS cleaned up!\n";
+    std::println("");
+    std::println("✅ Destructor called even when exception thrown!");
 }
 
 // ============================================
@@ -351,36 +363,40 @@ private:
 
 public:
     ArrayElement() : id(0) {
-        cout << "  ➕ Element constructed\n";
+        std::println("  ➕ Element constructed");
     }
 
     ArrayElement(int i) : id(i) {
-        cout << "  ➕ Element " << id << " constructed\n";
+        std::println("  ➕ Element {} constructed", id);
     }
 
     ~ArrayElement() {
-        cout << "  ➖ Element " << id << " destructed\n";
+        std::println("  ➖ Element {} destructed", id);
     }
 
     void setId(int i) { id = i; }
 };
 
 void demonstrateArrayDestruction() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: ARRAY DESTRUCTION      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: ARRAY DESTRUCTION      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating array of 3 objects ---\n";
+    std::println("--- Creating array of 3 objects ---");
     {
         ArrayElement arr[3];
         arr[0].setId(1);
         arr[1].setId(2);
         arr[2].setId(3);
 
-        cout << "\n--- Array in use ---\n";
+        std::println("");
+        std::println("--- Array in use ---");
     }  // Destructors called for all 3 objects!
 
-    cout << "\n✅ All array elements automatically destroyed!\n";
+    std::println("");
+    std::println("✅ All array elements automatically destroyed!");
 }
 
 // ============================================
@@ -392,37 +408,37 @@ public:
     string location;
 
     HeapStackDemo(string loc) : location(loc) {
-        cout << "  ➕ Created on " << location << "\n";
+        std::println("  ➕ Created on {}", location);
     }
 
     ~HeapStackDemo() {
-        cout << "  ➖ Destroyed from " << location << "\n";
+        std::println("  ➖ Destroyed from {}", location);
     }
 };
 
 void demonstrateHeapVsStack() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: HEAP vs STACK          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: HEAP vs STACK          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Stack object (automatic) ---\n";
+    std::println("--- Stack object (automatic) ---");
     {
         HeapStackDemo stackObj("STACK");
     }  // Destructor called automatically
 
-    cout << "\n--- Heap object (manual) ---\n";
+    std::println("");
+    std::println("--- Heap object (manual) ---");
     HeapStackDemo* heapObj = new HeapStackDemo("HEAP");
-    cout << "  Object created, still exists...\n";
+    std::println("  Object created, still exists...");
     delete heapObj;  // Must manually delete - calls destructor
 
-    cout << "\n--- What if we forget delete? ---\n";
+    std::println("");
+    std::println("--- What if we forget delete? ---");
     HeapStackDemo* forgotten = new HeapStackDemo("HEAP-FORGOTTEN");
     // delete forgotten;  // ❌ Forgot to delete!
-    cout << "  ⚠️  MEMORY LEAK! Destructor never called!\n";
-
-    cout << "\n💡 Stack objects: Automatic cleanup\n";
-    cout << "💡 Heap objects: Must manually delete\n";
-    cout << "💡 Best practice: Use smart pointers (unique_ptr, shared_ptr)\n";
+    std::println("  ⚠️  MEMORY LEAK! Destructor never called!");
 }
 
 // ============================================
@@ -432,12 +448,12 @@ void demonstrateHeapVsStack() {
 class Base {
 public:
     Base() {
-        cout << "  🏗️  Base constructor\n";
+        std::println("  🏗️  Base constructor");
     }
 
     // Virtual destructor (IMPORTANT for polymorphism!)
     virtual ~Base() {
-        cout << "  💥 Base destructor\n";
+        std::println("  💥 Base destructor");
     }
 };
 
@@ -448,35 +464,37 @@ private:
 public:
     Derived() {
         data = new int[100];
-        cout << "  🏗️  Derived constructor (allocated memory)\n";
+        std::println("  🏗️  Derived constructor (allocated memory)");
     }
 
     ~Derived() {
         delete[] data;
-        cout << "  💥 Derived destructor (freed memory)\n";
+        std::println("  💥 Derived destructor (freed memory)");
     }
 };
 
 void demonstrateVirtualDestructor() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: VIRTUAL DESTRUCTOR    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: VIRTUAL DESTRUCTOR    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Without virtual destructor would be BAD ---\n";
-    cout << "--- With virtual destructor (GOOD) ---\n\n";
+    std::println("--- Without virtual destructor would be BAD ---");
+    std::println("--- With virtual destructor (GOOD) ---");
+    std::println("");
 
-    cout << "Creating derived object via base pointer:\n";
+    std::println("Creating derived object via base pointer:");
     {
         Base* ptr = new Derived();
-        cout << "\n  Deleting via base pointer...\n\n";
+        std::println("");
+        std::println("  Deleting via base pointer...");
+        std::println("");
         delete ptr;  // Calls Derived destructor then Base destructor!
     }
 
-    cout << "\n✅ Both destructors called!\n";
-    cout << "💡 Without 'virtual' → Only Base destructor called → MEMORY LEAK!\n";
-    cout << "💡 With 'virtual' → Both called in correct order → SAFE!\n";
-
-    cout << "\n⚠️  RULE: Always make destructor virtual in base classes!\n";
+    std::println("");
+    std::println("✅ Both destructors called!");
 }
 
 // ============================================
@@ -490,43 +508,44 @@ private:
 
 public:
     DatabaseConnection(const string& connStr) : connectionString(connStr), connected(false) {
-        cout << "🔌 Connecting to database...\n";
-        cout << "   Connection string: " << connectionString << "\n";
+        std::println("🔌 Connecting to database...");
+        std::println("   Connection string: {}", connectionString);
         connected = true;
-        cout << "✅ Connected!\n";
+        std::println("✅ Connected!");
     }
 
     ~DatabaseConnection() {
         if (connected) {
-            cout << "🔌 Disconnecting from database...\n";
+            std::println("🔌 Disconnecting from database...");
             connected = false;
-            cout << "✅ Disconnected safely!\n";
+            std::println("✅ Disconnected safely!");
         }
     }
 
     void executeQuery(const string& query) {
         if (connected) {
-            cout << "📊 Executing: " << query << "\n";
+            std::println("📊 Executing: {}", query);
         }
     }
 };
 
 void demonstrateDatabaseConnection() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 11: DATABASE CONNECTION   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 11: DATABASE CONNECTION   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using database ---\n";
+    std::println("--- Using database ---");
     {
         DatabaseConnection db("server=localhost;database=mydb");
         db.executeQuery("SELECT * FROM users");
         db.executeQuery("UPDATE users SET status='active'");
-        cout << "--- Done with database ---\n";
+        std::println("--- Done with database ---");
     }  // Connection automatically closed!
 
-    cout << "\n✅ Connection automatically closed!\n";
-    cout << "   No need to remember to disconnect!\n";
-    cout << "   Even if exception thrown → still disconnected!\n";
+    std::println("");
+    std::println("✅ Connection automatically closed!");
 }
 
 // ============================================
@@ -541,13 +560,13 @@ private:
 public:
     Timer(const string& task) : taskName(task) {
         startTime = clock();
-        cout << "⏱️  Started: " << taskName << "\n";
+        std::println("⏱️  Started: {}", taskName);
     }
 
     ~Timer() {
         clock_t endTime = clock();
         double elapsed = double(endTime - startTime) / CLOCKS_PER_SEC * 1000;
-        cout << "⏱️  Finished: " << taskName << " (" << elapsed << " ms)\n";
+        std::println("⏱️  Finished: {} ({} ms)", taskName, elapsed);
     }
 };
 
@@ -559,19 +578,20 @@ void expensiveOperation() {
 }
 
 void demonstrateRAII() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 12: RAII PATTERN          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 12: RAII PATTERN          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Automatic timing with RAII ---\n";
+    std::println("--- Automatic timing with RAII ---");
     {
         Timer timer("Expensive Operation");
         expensiveOperation();
     }  // Timer automatically reports elapsed time!
 
-    cout << "\n✅ Destructor automatically reports timing!\n";
-    cout << "   No need to manually stop timer!\n";
-    cout << "   This is RAII in action!\n";
+    std::println("");
+    std::println("✅ Destructor automatically reports timing!");
 }
 
 // ============================================
@@ -579,9 +599,9 @@ void demonstrateRAII() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "DESTRUCTOR DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("DESTRUCTOR DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicDestructor();
     demonstrateWhenDestructorsCalled();
@@ -595,295 +615,6 @@ int main() {
     demonstrateVirtualDestructor();
     demonstrateDatabaseConnection();
     demonstrateRAII();
-
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT IS A DESTRUCTOR?\n";
-    cout << "========================================\n";
-    cout << "A destructor is a special member function that:\n";
-    cout << "  • Has the SAME NAME as class with ~ prefix\n";
-    cout << "  • Has NO RETURN TYPE (not even void)\n";
-    cout << "  • Has NO PARAMETERS (cannot be overloaded)\n";
-    cout << "  • Automatically called when object is destroyed\n";
-    cout << "  • Used to CLEAN UP resources\n";
-    cout << "\n";
-    cout << "Purpose:\n";
-    cout << "  • Free allocated memory (delete)\n";
-    cout << "  • Close files and connections\n";
-    cout << "  • Release system resources\n";
-    cout << "  • Ensure proper cleanup\n";
-
-    cout << "\n========================================\n";
-    cout << "DESTRUCTOR SYNTAX\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "public:\n";
-    cout << "    // Constructor\n";
-    cout << "    MyClass() {\n";
-    cout << "        // Initialize\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    // Destructor\n";
-    cout << "    ~MyClass() {              // ~ prefix!\n";
-    cout << "        // Cleanup            // No parameters!\n";
-    cout << "    }                         // No return type!\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN DESTRUCTORS ARE CALLED\n";
-    cout << "========================================\n";
-    cout << "1. Scope ends:\n";
-    cout << "   { MyClass obj; }  // Destructor called here\n";
-    cout << "\n";
-    cout << "2. Function returns:\n";
-    cout << "   void func() {\n";
-    cout << "       MyClass obj;\n";
-    cout << "   }  // Destructor called\n";
-    cout << "\n";
-    cout << "3. delete called:\n";
-    cout << "   MyClass* ptr = new MyClass();\n";
-    cout << "   delete ptr;  // Destructor called\n";
-    cout << "\n";
-    cout << "4. Program exits:\n";
-    cout << "   // All remaining objects destroyed\n";
-    cout << "\n";
-    cout << "5. Exception thrown:\n";
-    cout << "   try {\n";
-    cout << "       MyClass obj;\n";
-    cout << "       throw exception();\n";
-    cout << "   }  // Destructor called before exception propagates\n";
-
-    cout << "\n========================================\n";
-    cout << "DESTRUCTION ORDER\n";
-    cout << "========================================\n";
-    cout << "Objects are destroyed in REVERSE order of construction:\n";
-    cout << "\n";
-    cout << "MyClass obj1;  // Created first\n";
-    cout << "MyClass obj2;  // Created second\n";
-    cout << "MyClass obj3;  // Created third\n";
-    cout << "\n";
-    cout << "// Destroyed: obj3, obj2, obj1 (reverse!)\n";
-    cout << "\n";
-    cout << "This ensures:\n";
-    cout << "  • Dependencies are handled correctly\n";
-    cout << "  • Last created, first destroyed\n";
-    cout << "  • LIFO (Last In, First Out) order\n";
-
-    cout << "\n========================================\n";
-    cout << "MEMBER DESTRUCTION ORDER\n";
-    cout << "========================================\n";
-    cout << "For objects with member objects:\n";
-    cout << "\n";
-    cout << "class Car {\n";
-    cout << "    Engine engine;\n";
-    cout << "    Wheels wheels;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Destruction order:\n";
-    cout << "  1. Car destructor body executes\n";
-    cout << "  2. wheels destructor called\n";
-    cout << "  3. engine destructor called\n";
-    cout << "  (reverse order of declaration)\n";
-
-    cout << "\n========================================\n";
-    cout << "STACK vs HEAP DESTRUCTION\n";
-    cout << "========================================\n";
-    cout << "Stack objects (automatic):\n";
-    cout << "  MyClass obj;              // Stack\n";
-    cout << "  // Destructor called automatically when scope ends\n";
-    cout << "  ✅ Automatic cleanup\n";
-    cout << "  ✅ Cannot forget\n";
-    cout << "  ✅ Exception-safe\n";
-    cout << "\n";
-    cout << "Heap objects (manual):\n";
-    cout << "  MyClass* ptr = new MyClass();  // Heap\n";
-    cout << "  delete ptr;  // MUST manually delete!\n";
-    cout << "  ❌ Can forget to delete\n";
-    cout << "  ❌ Causes memory leaks\n";
-    cout << "  ⚠️  Use smart pointers instead!\n";
-
-    cout << "\n========================================\n";
-    cout << "VIRTUAL DESTRUCTORS\n";
-    cout << "========================================\n";
-    cout << "When using inheritance and polymorphism:\n";
-    cout << "\n";
-    cout << "class Base {\n";
-    cout << "    virtual ~Base() { }  // ← virtual!\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "    ~Derived() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Base* ptr = new Derived();\n";
-    cout << "delete ptr;  // Calls Derived, then Base destructor\n";
-    cout << "\n";
-    cout << "⚠️  CRITICAL RULE:\n";
-    cout << "   Always make destructor virtual in base classes!\n";
-    cout << "   Without virtual → Only base destructor called → LEAK!\n";
-    cout << "   With virtual → Both destructors called → SAFE!\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON USES OF DESTRUCTORS\n";
-    cout << "========================================\n";
-    cout << "1. Free dynamic memory:\n";
-    cout << "   ~MyClass() { delete[] data; }\n";
-    cout << "\n";
-    cout << "2. Close files:\n";
-    cout << "   ~FileManager() { fclose(file); }\n";
-    cout << "\n";
-    cout << "3. Release locks:\n";
-    cout << "   ~LockGuard() { mutex.unlock(); }\n";
-    cout << "\n";
-    cout << "4. Close connections:\n";
-    cout << "   ~Database() { connection.close(); }\n";
-    cout << "\n";
-    cout << "5. Log/timing:\n";
-    cout << "   ~Timer() { reportElapsedTime(); }\n";
-
-    cout << "\n========================================\n";
-    cout << "RAII (Resource Acquisition Is Initialization)\n";
-    cout << "========================================\n";
-    cout << "RAII Pattern:\n";
-    cout << "  • Constructor acquires resource\n";
-    cout << "  • Destructor releases resource\n";
-    cout << "  • Automatic, exception-safe cleanup\n";
-    cout << "\n";
-    cout << "Example:\n";
-    cout << "  class FileHandle {\n";
-    cout << "      FileHandle(name) { file = open(name); }  // Acquire\n";
-    cout << "      ~FileHandle() { close(file); }           // Release\n";
-    cout << "  };\n";
-    cout << "\n";
-    cout << "Benefits:\n";
-    cout << "  ✅ Cannot forget cleanup\n";
-    cout << "  ✅ Exception-safe\n";
-    cout << "  ✅ Simple to use\n";
-    cout << "  ✅ No manual resource management\n";
-
-    cout << "\n========================================\n";
-    cout << "EXCEPTION SAFETY\n";
-    cout << "========================================\n";
-    cout << "Destructors are called even when exceptions thrown:\n";
-    cout << "\n";
-    cout << "try {\n";
-    cout << "    MyClass obj;  // Constructor\n";
-    cout << "    throw exception();\n";
-    cout << "}  // obj's destructor still called!\n";
-    cout << "\n";
-    cout << "This guarantees:\n";
-    cout << "  ✅ Resources always cleaned up\n";
-    cout << "  ✅ No leaks even with exceptions\n";
-    cout << "  ✅ Code is exception-safe by default\n";
-    cout << "\n";
-    cout << "⚠️  IMPORTANT:\n";
-    cout << "   Never throw exceptions from destructors!\n";
-    cout << "   Can cause program termination!\n";
-
-    cout << "\n========================================\n";
-    cout << "DESTRUCTOR BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Free all allocated resources\n";
-    cout << "  • Make destructor noexcept (implicit)\n";
-    cout << "  • Make virtual in base classes\n";
-    cout << "  • Keep simple and focused\n";
-    cout << "  • Use RAII pattern\n";
-    cout << "  • Handle null pointers safely\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Throw exceptions from destructor\n";
-    cout << "  • Call virtual functions\n";
-    cout << "  • Do complex operations\n";
-    cout << "  • Access other objects (might be destroyed)\n";
-    cout << "  • Forget virtual in base classes\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Memory leak\n";
-    cout << "   ~MyClass() {  // Forgot to delete!\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Non-virtual in base class\n";
-    cout << "   class Base {\n";
-    cout << "       ~Base() { }  // Should be virtual!\n";
-    cout << "   };\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Throwing exception\n";
-    cout << "   ~MyClass() {\n";
-    cout << "       throw exception();  // DON'T!\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Forgetting to delete heap object\n";
-    cout << "   MyClass* ptr = new MyClass();\n";
-    cout << "   // Forgot: delete ptr;\n";
-
-    cout << "\n========================================\n";
-    cout << "SMART POINTERS - MODERN SOLUTION\n";
-    cout << "========================================\n";
-    cout << "Instead of manual new/delete:\n";
-    cout << "\n";
-    cout << "Old way (manual):\n";
-    cout << "  MyClass* ptr = new MyClass();\n";
-    cout << "  delete ptr;  // Must remember!\n";
-    cout << "\n";
-    cout << "Modern way (automatic):\n";
-    cout << "  unique_ptr<MyClass> ptr = make_unique<MyClass>();\n";
-    cout << "  // Automatically deleted!\n";
-    cout << "\n";
-    cout << "Benefits:\n";
-    cout << "  ✅ Cannot forget to delete\n";
-    cout << "  ✅ Exception-safe\n";
-    cout << "  ✅ RAII built-in\n";
-    cout << "  ✅ Modern C++ style\n";
-
-    cout << "\n========================================\n";
-    cout << "CONSTRUCTOR vs DESTRUCTOR\n";
-    cout << "========================================\n";
-    cout << "┌──────────────┬────────────────┬──────────────┐\n";
-    cout << "│ Feature      │ Constructor    │ Destructor   │\n";
-    cout << "├──────────────┼────────────────┼──────────────┤\n";
-    cout << "│ Name         │ ClassName      │ ~ClassName   │\n";
-    cout << "│ Parameters   │ Yes (any)      │ No (none)    │\n";
-    cout << "│ Overloading  │ Yes (multiple) │ No (one only)│\n";
-    cout << "│ Called       │ Object created │ Object dies  │\n";
-    cout << "│ Purpose      │ Initialize     │ Cleanup      │\n";
-    cout << "│ Can throw    │ Yes            │ No (danger!) │\n";
-    cout << "└──────────────┴────────────────┴──────────────┘\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Basic Destructor\n";
-    cout << "class MyClass {\n";
-    cout << "public:\n";
-    cout << "    ~MyClass() {              // ~ prefix\n";
-    cout << "        // Cleanup code       // No return type\n";
-    cout << "    }                         // No parameters\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Virtual Destructor (for inheritance)\n";
-    cout << "class Base {\n";
-    cout << "public:\n";
-    cout << "    virtual ~Base() {         // virtual keyword\n";
-    cout << "        // Cleanup\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Destructor = Automatic cleanup when object destroyed\n";
-    cout << "2. ~ prefix, no return type, no parameters\n";
-    cout << "3. Called automatically (scope, delete, exception)\n";
-    cout << "4. Destruction order = Reverse of construction\n";
-    cout << "5. Always make virtual in base classes\n";
-    cout << "6. Never throw exceptions from destructor\n";
-    cout << "7. RAII pattern = Constructor acquires, destructor releases\n";
-    cout << "8. Stack objects: automatic, Heap objects: manual\n";
 
     return 0;
 }

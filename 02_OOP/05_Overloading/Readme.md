@@ -182,14 +182,24 @@ Fraction class with +, -, *, / operations.
 ### Example 2: Comparison Operators
 Point class with ==, !=, <, >, <=, >= comparisons.
 
+> Note: in the demo `<` orders by distance from the origin while `==` compares the coordinates, so `(3,4)` and `(4,3)` are neither equal nor less than each other. That is fine for a demo; if you want to sort objects or use them as keys in `std::set`/`std::map`, make `<` consistent with `==`.
+
 ### Example 3: Assignment Operators
 Counter class with =, +=, -=, *=, /= operations.
 
 ### Example 4: Increment/Decrement
 Iterator class with prefix and postfix ++/--.
 
+- **Prefix** (`++it`): increment first, return the new value
+- **Postfix** (`it++`): save the old value, increment, return the old value
+- Prefix is more efficient (no copy)
+
 ### Example 5: Stream Operators
 Complex class with << and >> for I/O.
+
+`cout << obj` instead of `obj.print()`, `cin >> obj` instead of `obj.read()`.
+
+> This is the one example (plus the `String` class) where `main.cpp` still uses `cout`/`ostream`: the lines that stream a `Complex` or a `String` use our own `operator<<`, and `std::println` does not know about it (see "std::println and operator<<" below).
 
 ### Example 6: Subscript Operator
 Array class with [] for element access.
@@ -197,8 +207,14 @@ Array class with [] for element access.
 ### Example 7: Function Call Operator
 Multiplier class with () to make objects callable.
 
+This creates **functors** (function objects). Useful for algorithms, callbacks, etc.
+
 ### Example 8: Member vs Non-Member
 Vector class showing both approaches.
+
+- Member: `obj.operator@(args)` → `obj @ args`
+- Non-member: `operator@(obj, args)` → allows symmetry
+- Use a non-member for commutativity: `2 * v` and `v * 2`
 
 ### Example 9: Matrix Class
 Complete 2D matrix with multiple operators.
@@ -575,7 +591,7 @@ public:
 ```cpp
 class MyClass {
 public:
-    // Implement == and 
+    // Implement == and <
     bool operator==(const MyClass& o) const { /* ... */ }
     bool operator<(const MyClass& o) const { /* ... */ }
     
@@ -624,8 +640,8 @@ public:
 ```cpp
 class Good {
 public:
-    Bad operator+(const Bad& other) const { }  // ✅ By value
-    Bad& operator=(const Bad& other) { }       // ✅ By reference
+    Good operator+(const Good& other) const { }  // ✅ By value
+    Good& operator=(const Good& other) { }       // ✅ By reference
 };
 ```
 
@@ -644,8 +660,8 @@ public:
 ```cpp
 class Good {
 public:
-    Bad operator+(const Bad& other) const {
-        Bad temp;
+    Good operator+(const Good& other) const {
+        Good temp;
         return temp;  // ✅ Returns copy
     }
 };
@@ -763,8 +779,9 @@ Create a `Matrix` class with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 operator_overloading.cpp -o operator_overloading
+g++ -std=c++23 -Wall -Wextra main.cpp -o operator_overloading
 ```
+(`std::println` needs C++23 and a recent compiler, e.g. GCC 14+. `main.cpp` still includes `<iostream>` for the stream-operator examples.)
 
 ### Run:
 ```bash
@@ -821,7 +838,8 @@ obj(args)    →      obj.operator()(args)     (functor)
 ├─────────────────────────────────────┤
 │ ASSIGNMENT: =, +=, -=, *=, /=       │
 │   Return: Reference to *this        │
-│   Type:   MUST be member            │
+│   Type:   = MUST be member          │
+│           (+= etc.: usually member) │
 ├─────────────────────────────────────┤
 │ INCREMENT: ++, --                   │
 │   Prefix:  Return reference         │
@@ -1014,6 +1032,40 @@ SmartPtr<int> ptr(new int(42));
 *ptr = 100;      // Dereference
 ptr->func();     // Member access
 ```
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The long summary that used to be printed at the end of `main()` is fully covered by the sections above (syntax, overloadable / non-overloadable operators, member vs non-member, specific operators, prefix vs postfix, stream operators, best practices, common patterns, common mistakes, quick reference, key takeaways). Nothing else was only in `main.cpp`, apart from the per-example points (added to the examples above) and this note.
+
+### `std::println` and `operator<<`
+
+`std::println("{}", obj)` does **not** use your `operator<<`. It uses `std::formatter`. So there are two ways to make a class printable:
+
+**1. Classic: overload `operator<<` (works with `cout`, C++98 and later)**
+```cpp
+friend ostream& operator<<(ostream& os, const Complex& c) {
+    return os << c.real << (c.imag >= 0 ? " + " : " - ") << abs(c.imag) << "i";
+}
+cout << c1 << "\n";
+```
+
+**2. Modern: specialize `std::formatter` (works with `std::format` / `std::println`, C++20/C++23)**
+```cpp
+template <>
+struct std::formatter<Complex> : std::formatter<std::string> {
+    auto format(const Complex& c, std::format_context& ctx) const {
+        std::string s = std::format("{} {} {}i", c.real, c.imag >= 0 ? '+' : '-', std::abs(c.imag));
+        return std::formatter<std::string>::format(s, ctx);
+    }
+};
+
+std::println("c = {}", c1);   // prints: c = 3.5 + 2i
+```
+(`real` and `imag` must be accessible: make them public or add a public getter.)
+
+The demo keeps option 1, because writing `operator<<` is exactly the topic of Example 5. Mixing `std::print`/`std::println` and `cout` in one program is fine, as long as you don't call `std::ios::sync_with_stdio(false)`.
 
 ---
 

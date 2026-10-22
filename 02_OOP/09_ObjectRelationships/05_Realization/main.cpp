@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -116,22 +115,22 @@ public:
     }
 };
 
-class SessionData : public Serializable {
+class AppSettings : public Serializable {
 private:
-    std::string m_sessionId;
-    std::string m_groupId;
-    bool        m_active;
+    std::string m_theme;
+    std::string m_language;
+    bool        m_notifications;
 
 public:
-    SessionData(const std::string& sid, const std::string& gid, bool active)
-        : m_sessionId(sid), m_groupId(gid), m_active(active) {}
+    AppSettings(const std::string& theme, const std::string& lang, bool notifications)
+        : m_theme(theme), m_language(lang), m_notifications(notifications) {}
 
     std::string serialize() const override {
-        return m_sessionId + ";" + m_groupId + ";" + (m_active ? "1" : "0");
+        return m_theme + ";" + m_language + ";" + (m_notifications ? "1" : "0");
     }
 
     void deserialize(const std::string& data) override {
-        std::println("  [SessionData] deserializing: {}", data);
+        std::println("  [AppSettings] deserializing: {}", data);
     }
 };
 
@@ -186,70 +185,70 @@ public:
 
 
 // ============================================================
-// Example 4 — MCX context: McxCodec interface
+// Example 4 — Compressor interface
 // ============================================================
-class McxCodec {
+class Compressor {
 public:
-    virtual std::string getName()         const = 0;
-    virtual int         getBitrate()      const = 0;
-    virtual std::string encode(const std::string& audio) const = 0;
-    virtual std::string decode(const std::string& data)  const = 0;
-    virtual ~McxCodec() = default;
+    virtual std::string getName()  const = 0;
+    virtual int         getLevel() const = 0;
+    virtual std::string compress(const std::string& data)   const = 0;
+    virtual std::string decompress(const std::string& data) const = 0;
+    virtual ~Compressor() = default;
 };
 
-class AmrNbCodec : public McxCodec {
+class ZipCompressor : public Compressor {
 public:
-    std::string getName()    const override { return "AMR-NB"; }
-    int         getBitrate() const override { return 12200;    }
+    std::string getName()  const override { return "ZIP"; }
+    int         getLevel() const override { return 6;     }
 
-    std::string encode(const std::string& audio) const override {
-        std::println("  [AMR-NB] encoding: {}", audio);
-        return "[AMR-NB encoded]";
+    std::string compress(const std::string& data) const override {
+        std::println("  [ZIP] compressing: {}", data);
+        return "[ZIP compressed]";
     }
 
-    std::string decode(const std::string& data) const override {
-        std::println("  [AMR-NB] decoding: {}", data);
-        return "[decoded audio]";
-    }
-};
-
-class AmrWbCodec : public McxCodec {
-public:
-    std::string getName()    const override { return "AMR-WB"; }
-    int         getBitrate() const override { return 23850;    }
-
-    std::string encode(const std::string& audio) const override {
-        std::println("  [AMR-WB] encoding: {}", audio);
-        return "[AMR-WB encoded]";
-    }
-
-    std::string decode(const std::string& data) const override {
-        std::println("  [AMR-WB] decoding: {}", data);
-        return "[decoded audio]";
+    std::string decompress(const std::string& data) const override {
+        std::println("  [ZIP] decompressing: {}", data);
+        return "[original data]";
     }
 };
 
-class OpusCodec : public McxCodec {
+class GzipCompressor : public Compressor {
 public:
-    std::string getName()    const override { return "OPUS";  }
-    int         getBitrate() const override { return 32000;   }
+    std::string getName()  const override { return "GZIP"; }
+    int         getLevel() const override { return 9;      }
 
-    std::string encode(const std::string& audio) const override {
-        std::println("  [OPUS] encoding: {}", audio);
-        return "[OPUS encoded]";
+    std::string compress(const std::string& data) const override {
+        std::println("  [GZIP] compressing: {}", data);
+        return "[GZIP compressed]";
     }
 
-    std::string decode(const std::string& data) const override {
-        std::println("  [OPUS] decoding: {}", data);
-        return "[decoded audio]";
+    std::string decompress(const std::string& data) const override {
+        std::println("  [GZIP] decompressing: {}", data);
+        return "[original data]";
     }
 };
 
-// Client code works through the interface — codec is interchangeable
-void processAudio(const McxCodec& codec, const std::string& audio) {
-    std::println("  Using codec: {} ({}bps)", codec.getName(), codec.getBitrate());
-    auto encoded = codec.encode(audio);
-    auto decoded = codec.decode(encoded);
+class ZstdCompressor : public Compressor {
+public:
+    std::string getName()  const override { return "ZSTD"; }
+    int         getLevel() const override { return 3;      }
+
+    std::string compress(const std::string& data) const override {
+        std::println("  [ZSTD] compressing: {}", data);
+        return "[ZSTD compressed]";
+    }
+
+    std::string decompress(const std::string& data) const override {
+        std::println("  [ZSTD] decompressing: {}", data);
+        return "[original data]";
+    }
+};
+
+// Client code works through the interface — compressor is interchangeable
+void processData(const Compressor& compressor, const std::string& data) {
+    std::println("  Using compressor: {} (level {})", compressor.getName(), compressor.getLevel());
+    auto packed   = compressor.compress(data);
+    auto unpacked = compressor.decompress(packed);
 }
 
 
@@ -258,9 +257,9 @@ void processAudio(const McxCodec& codec, const std::string& audio) {
 // ============================================================
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Printable interface\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Printable interface");
+    std::println("=====================================================");
 
     {
         std::vector<std::unique_ptr<Printable>> items;
@@ -272,42 +271,44 @@ int main()
         for (const auto& item : items)
             item->print();
 
-        std::println("\nConverting to text:");
+        std::println("");
+
+        std::println("Converting to text:");
         for (const auto& item : items)
             std::println("  {}", item->toText());
-
-        std::cout << "\nAll three classes realize the same Printable interface.\n";
-        std::cout << "Client works through interface — doesn't know concrete type.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Serializable interface\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Serializable interface");
+    std::println("=====================================================");
 
     {
         UserProfile profile("Kostas", 41, "kostas@example.com");
-        SessionData session("SES-001", "GRP-ALPHA", true);
+        AppSettings settings("dark", "en", true);
 
         profile.print();
 
         std::string serialized = profile.serialize();
         std::println("  Serialized: {}", serialized);
 
-        std::string sessionStr = session.serialize();
-        std::println("  Session:    {}", sessionStr);
+        std::string settingsStr = settings.serialize();
+        std::println("  Settings:   {}", settingsStr);
 
         // Use through interface
-        std::vector<Serializable*> objects = {&profile, &session};
-        std::println("\nSerializing all objects via interface:");
+        std::vector<Serializable*> objects = {&profile, &settings};
+        std::println("");
+        std::println("Serializing all objects via interface:");
         for (auto* obj : objects)
             std::println("  {}", obj->serialize());
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Button realizes Drawable AND Clickable\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Button realizes Drawable AND Clickable");
+    std::println("=====================================================");
 
     {
         Button btn("Connect", 100, 200, 120, 40);
@@ -322,48 +323,30 @@ int main()
         std::println("  Contains (110,210): {}", clickable.contains(110, 210));
         std::println("  Contains (50, 50):  {}", clickable.contains(50, 50));
         clickable.onClick();
-
-        std::cout << "\nSame Button object viewed through two different interfaces.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: McxCodec interface — AMR-NB, AMR-WB, OPUS\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Compressor interface — ZIP, GZIP, ZSTD");
+    std::println("=====================================================");
 
     {
-        AmrNbCodec amrNb;
-        AmrWbCodec amrWb;
-        OpusCodec  opus;
+        ZipCompressor  zip;
+        GzipCompressor gzip;
+        ZstdCompressor zstd;
 
-        std::println("Processing with AMR-NB:");
-        processAudio(amrNb, "Hello ALPHA, this is BRAVO");
-        std::cout << '\n';
+        std::println("Processing with ZIP:");
+        processData(zip, "Hello world, this is a test");
+        std::println("");
 
-        std::println("Processing with AMR-WB:");
-        processAudio(amrWb, "Hello ALPHA, this is BRAVO");
-        std::cout << '\n';
+        std::println("Processing with GZIP:");
+        processData(gzip, "Hello world, this is a test");
+        std::println("");
 
-        std::println("Processing with OPUS:");
-        processAudio(opus,  "Hello ALPHA, this is BRAVO");
-
-        std::cout << "\nAll three codecs realize the same McxCodec interface.\n";
-        std::cout << "processAudio() works with any codec — no changes needed.\n";
+        std::println("Processing with ZSTD:");
+        processData(zstd, "Hello world, this is a test");
     }
-
-
-    std::cout << "\n=====================================================\n";
-    std::cout << "Summary: Realization\n";
-    std::cout << "=====================================================\n";
-    std::cout << "  Relationship:  is-a (implements contract)\n";
-    std::cout << "  Base class:    pure abstract — no data, all = 0\n";
-    std::cout << "  Derived class: must implement ALL pure virtuals\n";
-    std::cout << "  Benefit:       interchangeable implementations\n";
-    std::cout << "  Multiple:      one class can realize many interfaces\n";
-    std::cout << "  UML:           A <— — — — —B (dashed, hollow triangle)\n";
-    std::cout << "\n  Realization vs Inheritance:\n";
-    std::cout << "    Realization  — implements pure interface (no data, no impl)\n";
-    std::cout << "    Inheritance  — extends concrete class (inherits data + impl)\n";
 
     return 0;
 }

@@ -144,6 +144,32 @@ dev.addEmployee(&emp);    // emp passed in from outside
 
 ---
 
+## Examples in this file
+
+| # | Whole → Parts | Shows |
+|---|---------------|-------|
+| 1 | Department → Employee | Anna is in two departments; removing her from one keeps her alive |
+| 2 | University → Course | Courses are created before and survive the university |
+| 3 | Playlist → Song | Same song in several playlists; `play()` sums durations |
+| 4 | Team → Player | a player is released by one team and signed by another |
+
+- Every whole prints `[… destroyed — parts still exist]` from its destructor, and `main` then calls the parts again to prove they are alive
+- Destruction order in `main`: wholes declared later are destroyed first (`ops` before `dev`, `favs` before `rock`, `blue` before `red`)
+- `removeEmployee` / `detach` use `std::find` + `erase` (needs `<algorithm>`)
+
+## 🧾 Notes moved from `main.cpp`
+
+The summary printout was removed from `main.cpp` (the demos now only print what they do). Its content, so nothing is lost:
+
+- Relationship: **has-a (weak)**; ownership: none — the whole does NOT own the parts
+- Lifetime: parts exist independently of the whole; storage: pointers to externally created objects
+- Destroy the whole → parts still alive; the same part can be in multiple wholes
+- UML: `A <>————————B` (hollow diamond at A) — see the Summary table below
+
+> **Caution:** "independent lifetimes" only works if the parts really outlive the whole *and* nobody keeps a pointer to a destroyed part. In `main` every part is declared **before** the wholes that point to it, so the wholes are destroyed first. If a part died first, the whole would hold a dangling pointer.
+
+---
+
 ## Aggregation vs Composition
 
 ```mermaid
@@ -205,3 +231,14 @@ flowchart LR
 | Storage | Pointer to externally created object |
 | Part sharing | Yes — same part in multiple wholes |
 | UML | `A <>————————B` hollow diamond at A |
+
+---
+
+## Build
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o aggregation
+./aggregation
+```
+
+`main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.

@@ -1,4 +1,4 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 #include <memory>
@@ -66,22 +66,22 @@ public:
 class Dog : public Animal {
 public:
     Dog(const string& n) : Animal(n) {}
-    void speak() const override { cout << "  " << name << ": Woof!\n"; }
-    void move()  const override { cout << "  " << name << " runs on four legs\n"; }
+    void speak() const override { std::println("  {}: Woof!", name); }
+    void move()  const override { std::println("  {} runs on four legs", name); }
 };
 
 class Cat : public Animal {
 public:
     Cat(const string& n) : Animal(n) {}
-    void speak() const override { cout << "  " << name << ": Meow!\n"; }
-    void move()  const override { cout << "  " << name << " pads silently\n"; }
+    void speak() const override { std::println("  {}: Meow!", name); }
+    void move()  const override { std::println("  {} pads silently", name); }
 };
 
 class Bird : public Animal {
 public:
     Bird(const string& n) : Animal(n) {}
-    void speak() const override { cout << "  " << name << ": Tweet!\n"; }
-    void move()  const override { cout << "  " << name << " flies through the air\n"; }
+    void speak() const override { std::println("  {}: Tweet!", name); }
+    void move()  const override { std::println("  {} flies through the air", name); }
 };
 
 // One function handles ALL animal types — this is the power
@@ -91,23 +91,27 @@ void makeAnimalAct(const Animal& a) {
 }
 
 void demonstrateRuntimePolymorphism() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: RUNTIME POLYMORPHISM         ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: RUNTIME POLYMORPHISM         ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
     Dog  dog("Rex");
     Cat  cat("Whiskers");
     Bird bird("Tweety");
 
-    cout << "--- Calling makeAnimalAct() on different types ---\n";
-    cout << "  Same function call → different behavior:\n\n";
+    std::println("--- Calling makeAnimalAct() on different types ---");
+    std::println("  Same function call → different behavior:");
+    std::println("");
     makeAnimalAct(dog);
-    cout << "\n";
+    std::println("");
     makeAnimalAct(cat);
-    cout << "\n";
+    std::println("");
     makeAnimalAct(bird);
 
-    cout << "\n--- Processing a mixed collection ---\n";
+    std::println("");
+    std::println("--- Processing a mixed collection ---");
     vector<unique_ptr<Animal>> zoo;
     zoo.push_back(make_unique<Dog>("Buddy"));
     zoo.push_back(make_unique<Cat>("Luna"));
@@ -117,9 +121,6 @@ void demonstrateRuntimePolymorphism() {
     for (const auto& animal : zoo) {
         animal->speak();   // correct version for each
     }
-
-    cout << "\n✅ Key point: We never asked 'what type is this?'\n";
-    cout << "   The object itself knows what to do.\n";
 }
 
 // ============================================
@@ -146,39 +147,39 @@ void demonstrateRuntimePolymorphism() {
 
 class Base {
 public:
-    virtual void show() const { cout << "  Base::show()\n"; }
-    virtual void display() const { cout << "  Base::display()\n"; }
+    virtual void show() const { std::println("  Base::show()"); }
+    virtual void display() const { std::println("  Base::display()"); }
     virtual ~Base() = default;
 };
 
 class Derived : public Base {
 public:
-    void show() const override { cout << "  Derived::show()\n"; }
+    void show() const override { std::println("  Derived::show()"); }
     // display() NOT overridden — inherits Base version
 };
 
 void demonstrateVtable() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: VTABLE DISPATCH              ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: VTABLE DISPATCH              ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
     Derived d;
     Base* ptr = &d;   // Base pointer → Derived object
 
-    cout << "--- ptr points to a Derived object ---\n";
+    std::println("--- ptr points to a Derived object ---");
     ptr->show();      // Derived::show()    — overridden
     ptr->display();   // Base::display()    — not overridden, uses Base
 
-    cout << "\n--- Demonstrating slice vs pointer ---\n";
+    std::println("");
+    std::println("--- Demonstrating slice vs pointer ---");
     Base copy = d;    // Object slicing — Derived part is cut off
-    cout << "  Via sliced copy (no polymorphism):\n";
+    std::println("  Via sliced copy (no polymorphism):");
     copy.show();      // Base::show() — vptr was NOT copied
 
-    cout << "  Via pointer (polymorphism):\n";
+    std::println("  Via pointer (polymorphism):");
     ptr->show();      // Derived::show() — vptr intact
-
-    cout << "\n✅ Always use pointer or reference for polymorphism.\n";
-    cout << "   Object slicing kills it.\n";
 }
 
 // ============================================
@@ -191,9 +192,9 @@ void demonstrateVtable() {
  */
 
 // --- Function overloading ---
-void print(int x)         { cout << "  int: "    << x       << "\n"; }
-void print(double x)      { cout << "  double: " << x       << "\n"; }
-void print(const string& x) { cout << "  string: " << x     << "\n"; }
+void print(int x)         { std::println("  int: {}", x); }
+void print(double x)      { std::println("  double: {}", x); }
+void print(const string& x) { std::println("  string: {}", x); }
 
 // --- Operator overloading ---
 class Vector2D {
@@ -210,7 +211,7 @@ public:
     }
 
     void print() const {
-        cout << "  (" << x << ", " << y << ")\n";
+        std::println("  ({}, {})", x, y);
     }
 };
 
@@ -223,37 +224,41 @@ T maxOf(T a, T b) {
 template<typename T>
 void printContainer(const vector<T>& v) {
     for (const auto& item : v) {
-        cout << "  " << item;
+        std::print("  {}", item);
     }
-    cout << "\n";
+    std::println("");
 }
 
 void demonstrateCompileTime() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: COMPILE-TIME POLYMORPHISM    ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: COMPILE-TIME POLYMORPHISM    ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Function overloading ---\n";
+    std::println("--- Function overloading ---");
     print(42);
     print(3.14);
     print(string("hello"));
 
-    cout << "\n--- Operator overloading ---\n";
+    std::println("");
+    std::println("--- Operator overloading ---");
     Vector2D v1(1.0, 2.0), v2(3.0, 4.0);
     Vector2D v3 = v1 + v2;
-    cout << "  v1 + v2 = ";
+    std::print("  v1 + v2 = ");
     v3.print();
 
-    cout << "\n--- Template polymorphism ---\n";
-    cout << "  maxOf(3, 7)       = " << maxOf(3, 7)          << "\n";
-    cout << "  maxOf(1.5, 0.8)   = " << maxOf(1.5, 0.8)      << "\n";
-    cout << "  maxOf('a', 'z')   = " << maxOf('a', 'z')       << "\n";
+    std::println("");
+    std::println("--- Template polymorphism ---");
+    std::println("  maxOf(3, 7)       = {}", maxOf(3, 7));
+    std::println("  maxOf(1.5, 0.8)   = {}", maxOf(1.5, 0.8));
+    std::println("  maxOf('a', 'z')   = {}", maxOf('a', 'z'));
 
-    cout << "\n  printContainer<int>:    "; printContainer<int>({1,2,3,4,5});
-    cout << "  printContainer<string>: "; printContainer<string>({"foo","bar","baz"});
-
-    cout << "\n✅ Compile-time polymorphism: zero runtime cost,\n";
-    cout << "   compiler resolves everything before the program runs.\n";
+    std::println("");
+    std::print("  printContainer<int>:    ");
+    printContainer<int>({1,2,3,4,5});
+    std::print("  printContainer<string>: ");
+    printContainer<string>({"foo","bar","baz"});
 }
 
 // ============================================
@@ -277,12 +282,12 @@ public:
     void execute(double amount) {
         double fee   = amount * getFeePercent() / 100.0;
         double total = amount + fee;
-        cout << "  Provider : " << getProviderName() << "\n";
-        cout << "  Amount   : €" << amount << "\n";
-        cout << "  Fee      : €" << fee    << " (" << getFeePercent() << "%)\n";
-        cout << "  Total    : €" << total  << "\n";
+        std::println("  Provider : {}", getProviderName());
+        std::println("  Amount   : €{:.2f}", amount);
+        std::println("  Fee      : €{:.2f} ({}%)", fee, getFeePercent());
+        std::println("  Total    : €{:.2f}", total);
         bool ok = processPayment(total);
-        cout << "  Status   : " << (ok ? "✅ Approved" : "❌ Declined") << "\n";
+        std::println("  Status   : {}", (ok ? "✅ Approved" : "❌ Declined"));
     }
 };
 
@@ -291,7 +296,7 @@ class CreditCard : public PaymentMethod {
 public:
     CreditCard(const string& l) : last4(l) {}
     bool   processPayment(double amount) override {
-        cout << "  Charging card **** " << last4 << "\n";
+        std::println("  Charging card **** {}", last4);
         return true;
     }
     string getProviderName() const override { return "Visa/Mastercard"; }
@@ -303,7 +308,7 @@ class PayPal : public PaymentMethod {
 public:
     PayPal(const string& e) : email(e) {}
     bool   processPayment(double amount) override {
-        cout << "  Sending PayPal request to " << email << "\n";
+        std::println("  Sending PayPal request to {}", email);
         return true;
     }
     string getProviderName() const override { return "PayPal"; }
@@ -315,7 +320,7 @@ class Crypto : public PaymentMethod {
 public:
     Crypto(const string& w) : wallet(w) {}
     bool   processPayment(double amount) override {
-        cout << "  Broadcasting to wallet " << wallet.substr(0,8) << "...\n";
+        std::println("  Broadcasting to wallet {}...", wallet.substr(0,8));
         return true;
     }
     string getProviderName() const override { return "Bitcoin"; }
@@ -324,14 +329,17 @@ public:
 
 // Checkout knows NOTHING about specific payment types
 void checkout(PaymentMethod& method, double amount) {
-    cout << "\n  --- Processing payment ---\n";
+    std::println("");
+    std::println("  --- Processing payment ---");
     method.execute(amount);
 }
 
 void demonstratePaymentSystem() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: REAL-WORLD PAYMENT SYSTEM    ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: REAL-WORLD PAYMENT SYSTEM    ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
     CreditCard card("4242");
     PayPal     paypal("kostas@email.com");
@@ -341,10 +349,8 @@ void demonstratePaymentSystem() {
     checkout(paypal, 49.50);
     checkout(crypto, 200.00);
 
-    cout << "\n--- Same checkout() function, three different behaviors ---\n";
-    cout << "✅ Adding a new payment type (e.g. SEPA) requires:\n";
-    cout << "   • One new class inheriting PaymentMethod\n";
-    cout << "   • Zero changes to checkout() or any existing code\n";
+    std::println("");
+    std::println("--- Same checkout() function, three different behaviors ---");
 }
 
 // ============================================
@@ -408,31 +414,34 @@ public:
 };
 
 void demonstrateVsTypechecking() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: POLYMORPHISM vs TYPE-CHECK   ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: POLYMORPHISM vs TYPE-CHECK   ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Anti-pattern: switch/if-else on type ---\n";
+    std::println("--- Anti-pattern: switch/if-else on type ---");
     vector<ShapeBad> badShapes = {
         {ShapeType::CIRCLE, 5.0},
         {ShapeType::SQUARE, 4.0},
         {ShapeType::TRIANGLE, 3.0}
     };
     for (const auto& s : badShapes) {
-        cout << "  area = " << areaBad(s) << "\n";
+        std::println("  area = {}", areaBad(s));
     }
-    cout << "  ❌ Adding a new shape requires editing areaBad()\n";
+    std::println("  ❌ Adding a new shape requires editing areaBad()");
 
-    cout << "\n--- Correct: polymorphic dispatch ---\n";
+    std::println("");
+    std::println("--- Correct: polymorphic dispatch ---");
     vector<unique_ptr<ShapeGood>> shapes;
     shapes.push_back(make_unique<Circle>(5.0));
     shapes.push_back(make_unique<Square>(4.0));
     shapes.push_back(make_unique<Triangle>(3.0, 6.0));
 
     for (const auto& s : shapes) {
-        cout << "  " << s->typeName() << " area = " << s->area() << "\n";
+        std::println("  {} area = {}", s->typeName(), s->area());
     }
-    cout << "  ✅ Adding a new shape: just add a new class, nothing else changes\n";
+    std::println("  ✅ Adding a new shape: just add a new class, nothing else changes");
 }
 
 // ============================================
@@ -465,25 +474,24 @@ public:
 };
 
 void demonstrateCovariant() {
-    cout << "\n╔══════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: COVARIANT RETURN TYPES       ║\n";
-    cout << "╚══════════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: COVARIANT RETURN TYPES       ║");
+    std::println("╚══════════════════════════════════════════╝");
+    std::println("");
 
     PDFDocument original;
     Document* basePtr = &original;
 
     // Via base pointer — returns Document*
     Document* cloned = basePtr->clone();
-    cout << "  Cloned via base pointer: " << cloned->type() << "\n";
+    std::println("  Cloned via base pointer: {}", cloned->type());
     delete cloned;
 
     // Via derived directly — returns PDFDocument* (no cast needed)
     PDFDocument* pdfClone = original.clone();
-    cout << "  Cloned via derived:      " << pdfClone->type() << "\n";
+    std::println("  Cloned via derived:      {}", pdfClone->type());
     delete pdfClone;
-
-    cout << "\n✅ Covariant return: override can return derived type.\n";
-    cout << "   Avoids casts when working with concrete types directly.\n";
 }
 
 // ============================================
@@ -491,9 +499,9 @@ void demonstrateCovariant() {
 // ============================================
 
 int main() {
-    cout << "============================================\n";
-    cout << "  POLYMORPHISM IN C++ — FULL DEMONSTRATION\n";
-    cout << "============================================\n";
+    std::println("============================================");
+    std::println("  POLYMORPHISM IN C++ — FULL DEMONSTRATION");
+    std::println("============================================");
 
     demonstrateRuntimePolymorphism();
     demonstrateVtable();
@@ -501,29 +509,6 @@ int main() {
     demonstratePaymentSystem();
     demonstrateVsTypechecking();
     demonstrateCovariant();
-
-    cout << "\n============================================\n";
-    cout << "  SUMMARY\n";
-    cout << "============================================\n";
-    cout << "\nTWO KINDS:\n";
-    cout << "  Compile-time  → overloading, templates    (zero cost)\n";
-    cout << "  Runtime       → virtual functions, vptr   (one indirection)\n";
-
-    cout << "\nTHE RULE:\n";
-    cout << "  Always use pointer or reference for runtime polymorphism.\n";
-    cout << "  Object slicing destroys it.\n";
-
-    cout << "\nWHEN TO USE:\n";
-    cout << "  ✅ Mixed collections of related types\n";
-    cout << "  ✅ Swappable implementations (plugins, drivers)\n";
-    cout << "  ✅ Extending a system without modifying it\n";
-    cout << "  ❌ Simple structs with no behavior\n";
-    cout << "  ❌ Performance-critical inner loops (prefer templates)\n";
-
-    cout << "\nRELATION TO OTHER TOPICS:\n";
-    cout << "  AbstractClass  → defines the interface  (what)\n";
-    cout << "  Overriding     → provides the behavior  (how)\n";
-    cout << "  Polymorphism   → dispatches at runtime  (which)\n";
 
     return 0;
 }

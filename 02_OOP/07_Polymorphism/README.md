@@ -345,7 +345,8 @@ by which vtable each object's `vptr` points to at that moment. No
 
 ```cpp
 Animal a = dog;     // ❌ Object slicing — Dog part is cut off
-                    //    vptr is overwritten with Animal's vtable
+                    //    the new Animal object gets Animal's own vptr
+                    //    (the copy never inherits Dog's vptr)
                     //    polymorphism is destroyed
 
 Animal& ref = dog;  // ✅ Reference — original object, vptr intact
@@ -355,7 +356,7 @@ Animal* ptr = &dog; // ✅ Pointer  — original object, vptr intact
 ```mermaid
 flowchart TD
     A["Dog dog;"] --> B{"How do you refer to it?"}
-    B -->|"Animal a = dog;"| C["❌ Slicing\nvptr overwritten with Animal's\npolymorphism LOST"]
+    B -->|"Animal a = dog;"| C["❌ Slicing\ncopy gets Animal's own vptr\npolymorphism LOST"]
     B -->|"Animal& ref = dog;"| D["✅ Reference\nsame object, vptr intact"]
     B -->|"Animal* ptr = &dog;"| E["✅ Pointer\nsame object, vptr intact"]
 ```
@@ -372,6 +373,27 @@ flowchart TD
 | 4 — Payment system | Real-world design, Open/Closed Principle |
 | 5 — Polymorphism vs type-checking | Anti-pattern comparison |
 | 6 — Covariant return types | Override returning derived type |
+
+- **Example 1:** one function `makeAnimalAct(const Animal&)` handles Dog, Cat and Bird; then a `vector<unique_ptr<Animal>>` zoo — we never ask "what type is this?", the object itself knows what to do
+- **Example 2:** `Derived` overrides `show()` but not `display()` (inherits the base version); a sliced copy `Base copy = d;` calls `Base::show()`, the pointer calls `Derived::show()`
+- **Example 3:** overloading (`print(int/double/string)`), `operator+`, templates (`maxOf`, `printContainer`) — all resolved by the compiler, zero runtime cost
+- **Example 4:** `checkout(PaymentMethod&, amount)` knows nothing about CreditCard/PayPal/Crypto; `execute()` is non-virtual but calls virtual functions inside (Template Method idea)
+- **Example 5:** `switch` on a type tag (must edit `areaBad()` for every new shape) vs. virtual `area()` (just add a class)
+- **Example 6:** `PDFDocument* clone() const override` — covariant return, no cast needed when you work with the concrete type
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The lecture-style printouts were removed from `main.cpp` (the demos now only print what they do). Their content, so nothing is lost:
+
+- **Example 1:** we never asked "what type is this?" — the object itself knows what to do.
+- **Example 2:** always use a pointer or reference for polymorphism; object slicing kills it.
+- **Example 3:** compile-time polymorphism has zero runtime cost, the compiler resolves everything before the program runs.
+- **Example 4:** adding a new payment type (e.g. SEPA) needs one new class inheriting `PaymentMethod` and **zero** changes to `checkout()` or any existing code.
+- **Example 6:** covariant return — an override can return a derived type, which avoids casts when working with concrete types directly.
+- **Summary block:** compile-time = overloading/templates (zero cost); runtime = virtual functions + vptr (one indirection). Use pointer/reference for runtime polymorphism. Use it for mixed collections, swappable implementations (plugins, drivers) and extending a system without modifying it; avoid it for simple structs with no behavior and performance-critical inner loops (prefer templates). *(The "When to Use" and "Relationship to Other Topics" sections below already cover these.)*
+- **Output note:** the payment demo prints money with `{:.2f}` (`€1.50`) instead of raw `double` output (`€1.49985`).
 
 ---
 
@@ -472,10 +494,17 @@ classDiagram
 ## Build
 
 ```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o Polymorphism
+./Polymorphism
+```
+
+Or with CMake (if the folder has a `CMakeLists.txt`):
+
+```bash
 mkdir build && cd build
 cmake ..
 cmake --build .
 ./Polymorphism
 ```
 
-**Requirements:** GCC 14+, C++23, CMake 3.16+
+**Requirements:** GCC 14+ (`main.cpp` uses `std::println` from `<print>`), C++23, CMake 3.16+ (CMake route only)

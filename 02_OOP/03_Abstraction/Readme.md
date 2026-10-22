@@ -204,32 +204,92 @@ classDiagram
 ### Example 1: Basic Abstract Class
 Understanding abstract classes fundamentals.
 
+**Abstract classes:**
+- cannot be instantiated
+- can have pointers/references
+- define an interface contract
+- force derived classes to implement
+
 ### Example 2: Pure Interface
 Interface with only pure virtual functions.
+
+**Pure interfaces:**
+- only pure virtual functions
+- no data members (usually)
+- define a behavior contract
+- allow multiple inheritance of interfaces (`Document` implements `IDrawable` and `IPrintable`)
 
 ### Example 3: Abstract Class with Implementation
 Mix of pure virtual and regular methods.
 
+**An abstract class can have:**
+- pure virtual functions (must implement)
+- virtual functions (can override, e.g. `sleep()`)
+- non-virtual functions (`displayInfo()`)
+- default implementations
+
 ### Example 4: Partially Abstract Class
 Implementing some but not all pure virtuals.
+
+**Partially abstract classes:**
+- implement some pure virtual functions (`LandVehicle`: `start`, `stop`)
+- still abstract if any pure virtual is left (`refuel`)
+- provide common implementation
+- reduce code duplication
 
 ### Example 5: Abstract Class as Interface
 Database interface example.
 
+**Interface benefits:**
+- swap implementations easily (MySQL ↔ PostgreSQL)
+- dependency inversion
+- testability (mock implementations)
+- loose coupling
+
 ### Example 6: Template Method Pattern
 Algorithm skeleton with abstract steps.
+
+**Template Method pattern:**
+- define the algorithm skeleton in the base class
+- let derived classes implement the steps
+- preserve the overall structure
+- code reuse with flexibility
 
 ### Example 7: Strategy Pattern
 Interchangeable algorithms.
 
+**Strategy pattern:**
+- define a family of algorithms
+- encapsulate each algorithm
+- make them interchangeable
+- select the algorithm at runtime
+
 ### Example 8: Observer Pattern
 Event notification system.
+
+**Observer pattern:**
+- define a one-to-many dependency
+- notify all dependents automatically
+- loose coupling
+- dynamic subscription (`attach` / `detach`)
 
 ### Example 9: Factory Method Pattern
 Object creation through abstract factory.
 
+**Factory Method pattern:**
+- define an interface for creating objects
+- let subclasses decide which class to instantiate
+- defer instantiation to subclasses
+- promote loose coupling
+
 ### Example 10: Payment Gateway
 Real-world payment processing system.
+
+**Real-world abstract classes:**
+- define the payment processing workflow
+- each gateway implements the details
+- easy to add new gateways
+- consistent interface
 
 ---
 
@@ -316,9 +376,9 @@ public:
 - Be instantiated directly
 - Create objects (only pointers/references)
 ```cpp
-// AbstractClass obj;     // ❌ Error!
-AbstractClass* ptr;       // ✅ OK!
-AbstractClass& ref;       // ✅ OK!
+// AbstractClass obj;                 // ❌ Error!
+AbstractClass* ptr = &concreteObj;    // ✅ OK!
+AbstractClass& ref = concreteObj;     // ✅ OK! (a reference must always be initialized)
 ```
 
 ---
@@ -774,8 +834,9 @@ Create abstract `Shape`:
 
 ### Compile:
 ```bash
-g++ -std=c++23 abstract_classes.cpp -o abstract_classes
+g++ -std=c++23 -Wall -Wextra main.cpp -o abstract_classes
 ```
+(`std::println` needs C++23 and a recent compiler, e.g. GCC 14+.)
 
 ### Run:
 ```bash
@@ -1077,6 +1138,70 @@ class IGameObject {
     virtual void handleCollision() = 0;
 };
 ```
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The long summary that used to be printed at the end of `main()` is covered by the sections above (syntax, pure virtual functions, rules, abstract vs concrete, pure interface, abstract class with implementation, the four design patterns, best practices, quick reference, key takeaways). These points were only in `main.cpp`, so they are kept here (one of them corrected).
+
+### When to Use Abstract Classes
+
+**✅ Use abstract classes when:**
+- you need to define an interface contract
+- you want to force implementation in derived classes
+- you have common behavior to share
+- you are building a framework/library
+- you are implementing design patterns
+- you need polymorphic behavior
+- you want to enforce a design
+
+**❌ Don't use them when:**
+- all methods have an implementation
+- no polymorphism is needed
+- you only have simple data structures
+- all implementations are concrete anyway
+
+### Interface vs Abstract Class
+
+C++ has no `interface` keyword. We create interfaces with pure virtual functions only.
+
+| Pure interface | Abstract class |
+|----------------|----------------|
+| Only pure virtual functions | Mix of pure virtual / virtual / regular |
+| No data members | Can have data |
+| No implementation | Can have implementation |
+| Pure contract | Base + contract |
+
+> ℹ️ The old `main.cpp` table said "Multiple inherit OK" for interfaces and "Single inherit" for abstract classes. That is not a C++ rule: **any** class can be inherited multiple times. Pure interfaces are simply the *safe* case, because they have no data or implementation that could conflict (diamond problem).
+
+### Common Mistakes
+
+**❌ Mistake 1: Trying to instantiate**
+```cpp
+class Abstract {
+    virtual void func() = 0;
+};
+Abstract obj;  // ❌ Error: cannot declare variable 'obj' to be of abstract type
+```
+
+**❌ Mistake 2: Forgetting to implement a pure virtual**
+```cpp
+class Derived : public Abstract {
+    // Forgot to implement func()!
+};
+Derived d;  // ❌ Error! Derived is still abstract
+```
+
+**❌ Mistake 3: Non-virtual destructor**
+```cpp
+class Abstract {
+public:
+    ~Abstract() { }  // ❌ Should be virtual!
+};
+// delete basePtr;   // undefined behavior if it points to a derived object
+```
+**Fix:** `virtual ~Abstract() = default;`
 
 ---
 

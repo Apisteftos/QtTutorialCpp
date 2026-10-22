@@ -320,32 +320,107 @@ public:
 ### Example 1: The Problem Without Mutable
 Shows why mutable is needed.
 
+**The problem:**
+- `compute()` can't be `const`, because it writes the cache
+- so it can't be used with `const` objects
+- the cache is an implementation detail and shouldn't affect const-ness
+
 ### Example 2: Solution with Mutable
 Caching with mutable keyword.
+
+**The solution:**
+- `compute()` is `const`
+- works with `const` objects
+- the cache members are `mutable`
+- logical constness is preserved
 
 ### Example 3: Access Counter
 Tracking usage statistics.
 
+**Use case:**
+- track access statistics
+- doesn't change the logical state
+- implementation detail only
+- useful for analytics / debugging
+
 ### Example 4: Lazy Initialization
 Loading resources on demand.
+
+**Use case:**
+- delay expensive operations
+- initialize only when needed
+- optimize performance
+- transparent to users
 
 ### Example 5: Mutex for Thread Safety
 Thread synchronization.
 
+**Use case:**
+- thread synchronization
+- the mutex must be `mutable`
+- locking in `const` functions
+- essential for thread safety
+
+**Critical:**
+- without `mutable` you can't lock in `const` functions
+- the mutex is an implementation detail
+- it doesn't affect the logical state
+
 ### Example 6: Timestamp/Logging
 Audit trails and logging.
+
+**Use case:**
+- audit trails
+- logging access
+- timestamp tracking
+- debug information
 
 ### Example 7: Caching with Invalidation
 Cache management patterns.
 
+**Cache invalidation:**
+- the cache is valid until the state changes
+- modifying functions (`setX`, `setY`) invalidate the cache
+- the next access recomputes
+- this maintains correctness
+
 ### Example 8: Debug/Statistics Mode
 Performance profiling.
+
+**Use case:**
+- performance profiling
+- usage statistics
+- debug information
+- hot path identification
 
 ### Example 9: When NOT to Use
 Anti-patterns and mistakes.
 
+**Bad uses of mutable:**
+- business logic state
+- core object data
+- user-visible state
+- making non-const functions "work"
+- avoiding proper design
+
+**Good uses of mutable:**
+- caching computed values
+- access counters
+- debug statistics
+- mutex for thread safety
+- lazy initialization
+- timestamp tracking
+
+**Golden rule:** if users care about it → NOT mutable. If it's an implementation detail → mutable is OK.
+
 ### Example 10: Real-World Example
 Cached image properties.
+
+**Real-world pattern:**
+- cache expensive computations
+- transparent to users
+- improves performance
+- maintains const correctness
 
 ---
 
@@ -896,6 +971,38 @@ class ProfiledFunction {
 - "Effective C++" by Scott Meyers - Item 3
 - "More Effective C++" by Scott Meyers - Item 14
 - [C++ Core Guidelines - Con](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-const)
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The long "COMPREHENSIVE EXPLANATION" that used to be printed at the end of `main()` is covered by the sections above (what/why, logical vs physical, use cases, when to use, best practices, patterns, threads, quick reference, key takeaways, golden rules). These points were only in `main.cpp`, so they are kept here:
+
+**Physical vs logical constness, example with `Point`:**
+```cpp
+class Point {
+    int x, y;
+    mutable int accessCount;
+public:
+    int getX() const {
+        accessCount++;   // physical change
+        return x;        // logical const - x unchanged
+    }
+};
+```
+- `accessCount` changes (physical)
+- the point coordinates stay the same (logical)
+- users don't care about the counter, so `mutable` enables logical constness
+
+**Second question in the decision guide:** ask "Does this affect observable behavior?" Yes → don't use `mutable`. No → `mutable` is OK.
+
+**Two more best practices:** test with `const` objects, and use `mutable` sparingly.
+
+**Why the mutex is mutable:**
+- locking modifies the mutex state, but not the logical state of the object
+- without `mutable` you can't lock in `const` functions, so `const` operations are not thread-safe, which is a major design problem
+
+**Extra golden rule:** use `mutable` sparingly. Not everything should be `mutable`, only what is truly needed for const correctness.
 
 ---
 

@@ -1,4 +1,4 @@
-#include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <print>
@@ -79,8 +79,8 @@ public:
 
 
 // ============================================================
-// Example 2 — University has Students (aggregation)
-// Students exist before/after the university
+// Example 2 — University has Courses (aggregation)
+// Courses exist before/after the university
 // ============================================================
 class Course {
 private:
@@ -173,56 +173,56 @@ public:
 
 
 // ============================================================
-// Example 4 — MCX context: CallGroup has Sessions
-// Sessions can join/leave groups — they exist independently
+// Example 4 — Team has Players
+// Players can join/leave teams — they exist independently
 // ============================================================
-class McxSession {
+class Player {
 private:
     std::string m_id;
-    std::string m_callsign;
+    std::string m_nickname;
 
 public:
-    McxSession(const std::string& id, const std::string& callsign)
-        : m_id(id), m_callsign(callsign) {}
+    Player(const std::string& id, const std::string& nickname)
+        : m_id(id), m_nickname(nickname) {}
 
     std::string getId()       const { return m_id;       }
-    std::string getCallsign() const { return m_callsign; }
+    std::string getNickname() const { return m_nickname; }
 
-    void transmit() const {
-        std::println("  [{}] {} transmitting", m_id, m_callsign);
+    void play() const {
+        std::println("  [{}] {} is playing", m_id, m_nickname);
     }
 };
 
-class CallGroup {
+class Team {
 private:
-    std::string                m_groupId;
-    std::vector<McxSession*>   m_sessions;   // aggregation — does NOT own sessions
+    std::string           m_teamName;
+    std::vector<Player*>  m_players;   // aggregation — does NOT own players
 
 public:
-    explicit CallGroup(const std::string& id) : m_groupId(id) {}
+    explicit Team(const std::string& name) : m_teamName(name) {}
 
-    ~CallGroup() {
-        std::println("  [CallGroup '{}' destroyed — sessions still exist]", m_groupId);
+    ~Team() {
+        std::println("  [Team '{}' destroyed — players still exist]", m_teamName);
     }
 
-    void attach(McxSession* s) {
-        m_sessions.push_back(s);
-        std::println("  Session {} ({}) attached to group {}",
-                     s->getId(), s->getCallsign(), m_groupId);
+    void signPlayer(Player* p) {
+        m_players.push_back(p);
+        std::println("  Player {} ({}) signed by team {}",
+                     p->getId(), p->getNickname(), m_teamName);
     }
 
-    void detach(McxSession* s) {
-        auto it = std::find(m_sessions.begin(), m_sessions.end(), s);
-        if (it != m_sessions.end()) {
-            m_sessions.erase(it);
-            std::println("  Session {} detached from group {}", s->getId(), m_groupId);
+    void releasePlayer(Player* p) {
+        auto it = std::find(m_players.begin(), m_players.end(), p);
+        if (it != m_players.end()) {
+            m_players.erase(it);
+            std::println("  Player {} released by team {}", p->getId(), m_teamName);
         }
     }
 
-    void broadcastFloor() const {
-        std::println("  Group {} floor active — {} session(s):",
-                     m_groupId, m_sessions.size());
-        for (const auto* s : m_sessions) s->transmit();
+    void showLineup() const {
+        std::println("  Team {} lineup — {} player(s):",
+                     m_teamName, m_players.size());
+        for (const auto* p : m_players) p->play();
     }
 };
 
@@ -232,9 +232,9 @@ public:
 // ============================================================
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Department — Employee\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Department — Employee");
+    std::println("=====================================================");
 
     {
         // Employees created outside — exist independently
@@ -261,16 +261,18 @@ int main()
         }   // departments destroyed here
 
         // Employees still alive after departments are gone
-        std::println("\nAfter departments destroyed:");
+        std::println("");
+        std::println("After departments destroyed:");
         e1.work();
         e2.work();
         e3.work();
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: University — Course\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: University — Course");
+    std::println("=====================================================");
 
     {
         // Courses exist independently
@@ -287,14 +289,16 @@ int main()
         }   // university destroyed
 
         // Courses still exist
-        std::println("\nCourses survive after university destroyed:");
+        std::println("");
+        std::println("Courses survive after university destroyed:");
         std::println("  {} ({} credits) still exists", cpp23.getTitle(), cpp23.getCredits());
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Playlist — Song\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Playlist — Song");
+    std::println("=====================================================");
 
     {
         // Songs exist independently
@@ -316,57 +320,48 @@ int main()
             favs.addSong(&s4);
 
             rock.play();
-            std::cout << '\n';
+            std::println("");
             favs.play();
         }   // playlists destroyed
 
         // Songs still exist
-        std::println("\nSongs survive after playlists destroyed:");
+        std::println("");
+        std::println("Songs survive after playlists destroyed:");
         s1.play();
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: MCX CallGroup — Session\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Team — Player");
+    std::println("=====================================================");
 
     {
-        McxSession ses1("SES-001", "ALPHA-1");
-        McxSession ses2("SES-002", "ALPHA-2");
-        McxSession ses3("SES-003", "BRAVO-1");
+        Player p1("P-001", "Falcon");
+        Player p2("P-002", "Viper");
+        Player p3("P-003", "Rookie");
 
         {
-            CallGroup groupA("GRP-ALPHA");
-            groupA.attach(&ses1);
-            groupA.attach(&ses2);
-            groupA.attach(&ses3);
+            Team red("Red");
+            red.signPlayer(&p1);
+            red.signPlayer(&p2);
+            red.signPlayer(&p3);
 
-            groupA.broadcastFloor();
+            red.showLineup();
 
-            groupA.detach(&ses3);   // BRAVO-1 leaves
+            red.releasePlayer(&p3);   // Rookie leaves
 
-            CallGroup groupB("GRP-BRAVO");
-            groupB.attach(&ses3);   // ses3 joins a different group
+            Team blue("Blue");
+            blue.signPlayer(&p3);     // Rookie joins a different team
 
-            groupA.broadcastFloor();
-            groupB.broadcastFloor();
-        }   // groups destroyed
+            red.showLineup();
+            blue.showLineup();
+        }   // teams destroyed
 
-        std::println("\nSessions survive after groups destroyed:");
-        ses1.transmit();
+        std::println("");
+        std::println("Players survive after teams destroyed:");
+        p1.play();
     }
-
-
-    std::cout << "\n=====================================================\n";
-    std::cout << "Summary: Aggregation\n";
-    std::cout << "=====================================================\n";
-    std::cout << "  Relationship:  has-a (weak)\n";
-    std::cout << "  Ownership:     none — whole does NOT own parts\n";
-    std::cout << "  Lifetime:      parts exist independently of whole\n";
-    std::cout << "  Storage:       pointers to externally created objects\n";
-    std::cout << "  Destroy whole: parts still alive\n";
-    std::cout << "  Part sharing:  same part can be in multiple wholes\n";
-    std::cout << "  UML:           A <>————————B (hollow diamond at A)\n";
 
     return 0;
 }

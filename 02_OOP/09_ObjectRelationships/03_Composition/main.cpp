@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <memory>
@@ -204,22 +204,22 @@ public:
 
 
 // ============================================================
-// Example 4 — MCX context: McxClient has Config, Logger, Codec
-// Config, Logger, Codec have no meaning outside the client
+// Example 4 — WebServer has ServerConfig, Cache
+// Config and Cache have no meaning outside the server
 // ============================================================
-class SessionConfig {
+class ServerConfig {
     std::string m_host;
     uint16_t    m_port;
     bool        m_encrypted;
 
 public:
-    SessionConfig(const std::string& host, uint16_t port, bool enc)
+    ServerConfig(const std::string& host, uint16_t port, bool enc)
         : m_host(host), m_port(port), m_encrypted(enc)
     {
-        std::println("    [SessionConfig created: {}:{}]", m_host, m_port);
+        std::println("    [ServerConfig created: {}:{}]", m_host, m_port);
     }
 
-    ~SessionConfig() { std::println("    [SessionConfig destroyed]"); }
+    ~ServerConfig() { std::println("    [ServerConfig destroyed]"); }
 
     std::string toString() const {
         return m_host + ":" + std::to_string(m_port) +
@@ -227,48 +227,48 @@ public:
     }
 };
 
-class AudioCodec {
+class Cache {
     std::string m_name;
-    int         m_bitrate;
+    int         m_sizeMb;
 
 public:
-    AudioCodec(const std::string& name, int bitrate)
-        : m_name(name), m_bitrate(bitrate)
+    Cache(const std::string& name, int sizeMb)
+        : m_name(name), m_sizeMb(sizeMb)
     {
-        std::println("    [AudioCodec {} {}kbps created]", m_name, m_bitrate);
+        std::println("    [Cache {} {}MB created]", m_name, m_sizeMb);
     }
 
-    ~AudioCodec() { std::println("    [AudioCodec {} destroyed]", m_name); }
+    ~Cache() { std::println("    [Cache {} destroyed]", m_name); }
 
-    void encode() const {
-        std::println("    {} encoding at {}kbps", m_name, m_bitrate);
+    void warmUp() const {
+        std::println("    {} warming up with {}MB", m_name, m_sizeMb);
     }
 };
 
-class McxClient {
+class WebServer {
 private:
-    std::string  m_clientId;
-    SessionConfig m_config;    // composition — config owned by client
-    AudioCodec    m_codec;     // composition — codec owned by client
+    std::string  m_serverId;
+    ServerConfig m_config;    // composition — config owned by server
+    Cache        m_cache;     // composition — cache owned by server
 
 public:
-    McxClient(const std::string& id,
+    WebServer(const std::string& id,
               const std::string& host, uint16_t port, bool enc,
-              const std::string& codec, int bitrate)
-        : m_clientId(id)
+              const std::string& cacheName, int cacheSizeMb)
+        : m_serverId(id)
         , m_config(host, port, enc)
-        , m_codec(codec, bitrate)
+        , m_cache(cacheName, cacheSizeMb)
     {
-        std::println("  [McxClient '{}' created]", m_clientId);
+        std::println("  [WebServer '{}' created]", m_serverId);
     }
 
-    ~McxClient() {
-        std::println("  [McxClient '{}' destroyed — config and codec destroyed]", m_clientId);
+    ~WebServer() {
+        std::println("  [WebServer '{}' destroyed — config and cache destroyed]", m_serverId);
     }
 
-    void connect() const {
-        std::println("  McxClient '{}' connecting to {}", m_clientId, m_config.toString());
-        m_codec.encode();
+    void start() const {
+        std::println("  WebServer '{}' listening on {}", m_serverId, m_config.toString());
+        m_cache.warmUp();
     }
 };
 
@@ -278,35 +278,41 @@ public:
 // ============================================================
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Car — Engine, Gearbox\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Car — Engine, Gearbox");
+    std::println("=====================================================");
 
     {
         std::println("Creating car:");
         Car bmw("BMW 320d", 190, 2.0, 8, true);
         bmw.drive();
-        std::println("\nLeaving scope — car destroyed:");
+        std::println("");
+        std::println("Leaving scope — car destroyed:");
     }
-    std::println("Car and all its parts are gone.\n");
+    std::println("Car and all its parts are gone.");
+    std::println("");
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Human — Heart, Brain\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Human — Heart, Brain");
+    std::println("=====================================================");
 
     {
         std::println("Creating human:");
         Human kostas("Kostas", 72, "left");
         kostas.live();
-        std::println("\nLeaving scope:");
+        std::println("");
+        std::println("Leaving scope:");
     }
-    std::println("Human and all organs are gone.\n");
+    std::println("Human and all organs are gone.");
+    std::println("");
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: House — Rooms (unique_ptr)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: House — Rooms (unique_ptr)");
+    std::println("=====================================================");
 
     {
         std::println("Building house:");
@@ -318,36 +324,29 @@ int main()
 
         house.describe();
         std::println("  Total area: {} m²", house.totalArea());
-        std::println("\nDemolishing house:");
+        std::println("");
+        std::println("Demolishing house:");
     }
-    std::println("House and all rooms are gone.\n");
+    std::println("House and all rooms are gone.");
+    std::println("");
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: McxClient — SessionConfig, AudioCodec\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: WebServer — ServerConfig, Cache");
+    std::println("=====================================================");
 
     {
-        std::println("Creating MCX client:");
-        McxClient client("MCXApp-Client",
-                         "192.168.1.100", 5060, true,
-                         "AMR-WB", 23);
-        client.connect();
-        std::println("\nClient going out of scope:");
+        std::println("Creating web server:");
+        WebServer server("Web-01",
+                         "localhost", 8080, true,
+                         "PageCache", 256);
+        server.start();
+        std::println("");
+        std::println("Server going out of scope:");
     }
-    std::println("Client and all components are gone.\n");
-
-
-    std::cout << "=====================================================\n";
-    std::cout << "Summary: Composition\n";
-    std::cout << "=====================================================\n";
-    std::cout << "  Relationship:  has-a (strong)\n";
-    std::cout << "  Ownership:     full — whole owns and manages parts\n";
-    std::cout << "  Lifetime:      parts created with whole, destroyed with whole\n";
-    std::cout << "  Storage:       member object by value, or unique_ptr\n";
-    std::cout << "  Destroy whole: all parts destroyed automatically\n";
-    std::cout << "  Part sharing:  impossible — part belongs to one whole only\n";
-    std::cout << "  UML:           A <♦>———————B (filled diamond at A)\n";
+    std::println("Server and all components are gone.");
+    std::println("");
 
     return 0;
 }

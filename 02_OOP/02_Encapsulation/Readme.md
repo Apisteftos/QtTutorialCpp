@@ -185,11 +185,29 @@ struct MyStruct {
 ### Example 1: Without Encapsulation (The Problem)
 Shows what goes wrong when data is public - no validation, chaos!
 
+**Problems:**
+- no validation
+- no control over modifications
+- data integrity compromised
+- business rules violated
+
 ### Example 2: With Encapsulation (The Solution)
 Proper data hiding with controlled access through methods.
 
+**Benefits:**
+- validation enforced
+- data integrity maintained
+- business rules respected
+- controlled access
+
 ### Example 3: Access Specifiers
 Demonstrates `private`, `protected`, and `public` in action.
+
+```
+private:   Only this class
+protected: This class + derived classes
+public:    Anywhere
+```
 
 ### Example 4: Data Validation
 Using setters to validate data before accepting it.
@@ -206,20 +224,46 @@ void setAge(int a) {
 ### Example 5: Information Hiding
 Hiding internal representation from users.
 
+- internal representation is hidden
+- implementation can be changed later
+- user doesn't need to know the internals
+- validation is centralized (private helper `isValidDimension`)
+
 ### Example 6: Email Validation
 Real-world example with email format validation.
 
 ### Example 7: Password Security
 Never expose passwords - only allow verification.
 
+- password is never stored in plaintext
+- no getter to retrieve the password
+- validation (strength rules) is enforced
+- only verification is possible
+
+> ⚠️ The hash function in the demo is a toy (djb2). In real code use a proper password hashing library (bcrypt, scrypt, Argon2).
+
 ### Example 8: Calculated Properties
 Hiding calculation logic and caching.
+
+- users don't see the caching logic (`mutable` cache, see `21_MutableKeyword`)
+- implementation can be optimized later
+- clean interface
 
 ### Example 9: Immutable Class
 Objects that cannot be modified after creation.
 
+- cannot be modified after creation
+- thread-safe by design (nothing to race on)
+- easier to reason about
+- no setters, only getters; to "change" a value you create a new object (`movedBy`)
+
 ### Example 10: Shopping Cart
 Complete real-world encapsulation with multiple features.
+
+- items and prices are kept in sync automatically
+- validation prevents invalid data
+- the internal calculation (`calculateSubtotal`) is hidden
+- clean public interface
 
 ---
 
@@ -468,12 +512,13 @@ private:
     int value;
     
 public:
+    Bad(int v) : value(v) { }
     int getValue() {  // ❌ Missing const!
         return value;
     }
 };
 
-const Bad b;
+const Bad b(42);
 // b.getValue();  // ❌ Error! Can't call non-const on const object
 ```
 
@@ -587,8 +632,9 @@ Create an `InventoryItem` class:
 
 ### Compile:
 ```bash
-g++ -std=c++17 encapsulation.cpp -o encapsulation
+g++ -std=c++23 -Wall -Wextra main.cpp -o encapsulation
 ```
+(`std::println` needs C++23 and a recent compiler, e.g. GCC 14+.)
 
 ### Run:
 ```bash
@@ -832,6 +878,54 @@ void setAge(int a) {
 ```
 
 Encapsulation is the **foundation** - you need it before the others!
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The long summary that used to be printed at the end of `main()` is covered by the sections above (what/why, access specifiers, typical class structure, getters and setters, information hiding, benefits, best practices, common mistakes, quick reference, four pillars, key takeaways). These points were only in `main.cpp`, so they are kept here.
+
+### Why Encapsulation? (in detail)
+
+1. **Data integrity:** validation before modification, prevent invalid states, maintain invariants
+2. **Flexibility:** change the implementation without breaking code, easy to maintain and extend
+3. **Security:** hide sensitive data, control access to critical operations, prevent unauthorized modifications
+4. **Modularity:** clear separation of interface and implementation, easier to understand and use
+5. **Debugging:** controlled access points, add logging easily, track modifications
+
+### Real-World Examples
+
+| Class | What encapsulation gives you |
+|-------|------------------------------|
+| Bank account | balance is private, deposits/withdrawals are validated, can't set a negative balance |
+| Email address | validation on set, can't store an invalid email, format checking enforced |
+| Password | never stored in plaintext, no getter, only verification possible, strength validation |
+| Shopping cart | items and prices kept in sync, total calculated automatically, discount logic hidden |
+
+### When to Use Public Data
+
+Rarely! But acceptable for:
+
+**1. POD (Plain Old Data) structures**
+```cpp
+struct Point {
+    int x, y;  // Simple data container
+};
+```
+
+**2. Constants**
+```cpp
+class MyClass {
+public:
+    static const int MAX_SIZE = 100;  // OK
+};
+```
+
+Otherwise: always use private data with getters/setters!
+
+### Two Main Aspects (recap)
+1. **Data hiding:** make members private
+2. **Abstraction:** provide a public interface
 
 ---
 

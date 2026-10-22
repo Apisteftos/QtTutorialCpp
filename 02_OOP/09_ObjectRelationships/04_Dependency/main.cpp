@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <print>
@@ -142,49 +141,49 @@ public:
 
 
 // ============================================================
-// Example 4 — MCX context: FloorController depends on Logger
-// Logger is used for audit but not stored in FloorController
+// Example 4 — MeetingRoom depends on ActivityLogger
+// Logger is used for an activity log but not stored in MeetingRoom
 // ============================================================
-class AuditLogger {
+class ActivityLogger {
 public:
     void log(const std::string& event, const std::string& details) const {
-        std::println("  [AUDIT] {} — {}", event, details);
+        std::println("  [LOG] {} — {}", event, details);
     }
 };
 
-enum class FloorResult { Granted, Denied, Released };
+enum class BookingResult { Booked, Denied, Released };
 
-class FloorController {
+class MeetingRoom {
 private:
-    std::string m_groupId;
-    std::string m_currentHolder;
+    std::string m_roomId;
+    std::string m_currentUser;
 
 public:
-    explicit FloorController(const std::string& groupId)
-        : m_groupId(groupId), m_currentHolder("") {}
+    explicit MeetingRoom(const std::string& roomId)
+        : m_roomId(roomId), m_currentUser("") {}
 
-    // Dependency: AuditLogger passed in — not stored as member
-    FloorResult requestFloor(const std::string& sessionId, AuditLogger& logger) {
-        if (m_currentHolder.empty()) {
-            m_currentHolder = sessionId;
-            std::println("  Floor GRANTED to {} in group {}", sessionId, m_groupId);
-            logger.log("FLOOR_GRANTED", "session=" + sessionId + " group=" + m_groupId);
-            return FloorResult::Granted;
+    // Dependency: ActivityLogger passed in — not stored as member
+    BookingResult book(const std::string& user, ActivityLogger& logger) {
+        if (m_currentUser.empty()) {
+            m_currentUser = user;
+            std::println("  Room {} BOOKED by {}", m_roomId, user);
+            logger.log("ROOM_BOOKED", "user=" + user + " room=" + m_roomId);
+            return BookingResult::Booked;
         } else {
-            std::println("  Floor DENIED for {} — held by {}", sessionId, m_currentHolder);
-            logger.log("FLOOR_DENIED", "session=" + sessionId + " holder=" + m_currentHolder);
-            return FloorResult::Denied;
+            std::println("  Room {} DENIED for {} — booked by {}", m_roomId, user, m_currentUser);
+            logger.log("BOOKING_DENIED", "user=" + user + " holder=" + m_currentUser);
+            return BookingResult::Denied;
         }
     }
 
-    FloorResult releaseFloor(const std::string& sessionId, AuditLogger& logger) {
-        if (m_currentHolder == sessionId) {
-            m_currentHolder = "";
-            std::println("  Floor RELEASED by {} in group {}", sessionId, m_groupId);
-            logger.log("FLOOR_RELEASED", "session=" + sessionId);
-            return FloorResult::Released;
+    BookingResult release(const std::string& user, ActivityLogger& logger) {
+        if (m_currentUser == user) {
+            m_currentUser = "";
+            std::println("  Room {} RELEASED by {}", m_roomId, user);
+            logger.log("ROOM_RELEASED", "user=" + user);
+            return BookingResult::Released;
         }
-        return FloorResult::Denied;
+        return BookingResult::Denied;
     }
 };
 
@@ -194,9 +193,9 @@ public:
 // ============================================================
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: ReportGenerator — Printer (dependency)\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: ReportGenerator — Printer (dependency)");
+    std::println("=====================================================");
 
     {
         ReportGenerator report("Q1 Performance Report");
@@ -209,17 +208,15 @@ int main()
 
         // Different printer each time — report stores neither
         report.printReport(officePrinter);
-        std::cout << '\n';
+        std::println("");
         report.printSummary(pdfPrinter);
-
-        std::cout << "\nReportGenerator stores no Printer as member.\n";
-        std::cout << "Any Printer can be passed at any time.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: OrderProcessor — PaymentService, EmailService\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: OrderProcessor — PaymentService, EmailService");
+    std::println("=====================================================");
 
     {
         OrderProcessor order("ORD-2026-001", 249.99);
@@ -231,15 +228,13 @@ int main()
                                 "4111-1111-1111-1111",
                                 "kostas@example.com");
         std::println("  Order result: {}", ok ? "SUCCESS" : "FAILED");
-
-        std::cout << "\nOrderProcessor stores neither service as member.\n";
-        std::cout << "Different services can be injected — testable!\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: DataSerializer — FileWriter\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: DataSerializer — FileWriter");
+    std::println("=====================================================");
 
     {
         DataSerializer serializer("JSON");
@@ -254,38 +249,23 @@ int main()
 
         FileWriter backup("backup.json");
         serializer.serialize(data, backup);   // different writer, same serializer
-
-        std::cout << "\nSerializer can write to any FileWriter passed to it.\n";
     }
 
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: FloorController — AuditLogger (MCX)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: MeetingRoom — ActivityLogger");
+    std::println("=====================================================");
 
     {
-        FloorController floor("GRP-ALPHA");
-        AuditLogger     logger;
+        MeetingRoom     room("ROOM-A");
+        ActivityLogger  logger;
 
-        floor.requestFloor("SES-001", logger);   // granted
-        floor.requestFloor("SES-002", logger);   // denied
-        floor.releaseFloor("SES-001", logger);   // released
-        floor.requestFloor("SES-002", logger);   // now granted
-
-        std::cout << "\nFloorController stores no AuditLogger as member.\n";
-        std::cout << "Logger injected per call — easy to swap for testing.\n";
+        room.book("alice", logger);      // booked
+        room.book("bob",   logger);      // denied
+        room.release("alice", logger);   // released
+        room.book("bob",   logger);      // now booked
     }
-
-
-    std::cout << "\n=====================================================\n";
-    std::cout << "Summary: Dependency\n";
-    std::cout << "=====================================================\n";
-    std::cout << "  Relationship:  uses-a (temporary)\n";
-    std::cout << "  Ownership:     none\n";
-    std::cout << "  Duration:      only during the method call\n";
-    std::cout << "  Storage:       method parameter or local variable only\n";
-    std::cout << "  Key benefit:   easy to swap — enables testing/mocking\n";
-    std::cout << "  UML:           A - - - - -> B (dashed line, open arrow)\n";
 
     return 0;
 }

@@ -157,6 +157,8 @@ Demonstrates all scenarios where destructors are invoked.
 
 ### Example 3: Memory Cleanup
 Managing dynamic memory allocation/deallocation.
+
+Without a destructor → memory leak 💔. With a destructor → safe and automatic ✨.
 ```cpp
 ~DynamicArray() {
     delete[] data;  // Free allocated memory
@@ -165,6 +167,8 @@ Managing dynamic memory allocation/deallocation.
 
 ### Example 4: File Handle Cleanup
 Automatically closing files.
+
+Even if an exception is thrown, the file is still closed.
 ```cpp
 ~FileManager() {
     if (file) {
@@ -175,6 +179,11 @@ Automatically closing files.
 
 ### Example 5: Destructor Order
 Objects destroyed in **reverse order** of construction.
+
+```
+Construction: First → Second → Third
+Destruction:  Third → Second → First
+```
 ```cpp
 MyClass obj1;  // Created 1st
 MyClass obj2;  // Created 2nd
@@ -184,16 +193,21 @@ MyClass obj3;  // Created 3rd
 
 ### Example 6: Composition (Nested Objects)
 Member destructors called automatically.
+
+Order: Car → Wheels → Engine (reverse of construction).
 ```cpp
 class Car {
-    Engine engine;   // Destroyed 2nd
-    Wheels wheels;   // Destroyed 1st
-    ~Car() { }       // Destroyed 3rd
+    Engine engine;   // Declared 1st -> destroyed 3rd
+    Wheels wheels;   // Declared 2nd -> destroyed 2nd
+    ~Car() { }       // Body runs first -> 1st
 };
 ```
+Order: Car destructor body → Wheels → Engine (reverse of construction).
 
 ### Example 7: Exception Safety
 Destructors ensure cleanup even when exceptions thrown.
+
+This is RAII (Resource Acquisition Is Initialization): resources are always cleaned up.
 
 ### Example 8: Array of Objects
 All array elements automatically destroyed.
@@ -201,8 +215,17 @@ All array elements automatically destroyed.
 ### Example 9: Heap vs Stack Destruction
 Comparing automatic (stack) vs manual (heap) cleanup.
 
+- Stack objects: automatic cleanup
+- Heap objects: must manually `delete`
+- `forgotten` in the demo is **never deleted on purpose** → memory leak, destructor never called
+- Best practice: use smart pointers (`unique_ptr`, `shared_ptr`)
+
 ### Example 10: Virtual Destructor
 **Critical** for polymorphism and inheritance.
+
+- Without `virtual` → only the `Base` destructor is called → memory leak
+- With `virtual` → both are called in the correct order → safe
+- **Rule:** always make the destructor `virtual` in base classes
 ```cpp
 class Base {
     virtual ~Base() { }  // ← Must be virtual!
@@ -212,8 +235,12 @@ class Base {
 ### Example 11: Database Connection
 Real-world RAII example with connections.
 
+The connection is closed automatically, even if an exception is thrown. No need to remember to disconnect.
+
 ### Example 12: RAII Pattern
 Timer that automatically reports elapsed time.
+
+The destructor reports the timing, so there is no need to stop the timer manually.
 
 ---
 
@@ -393,7 +420,7 @@ catch (...) { }
 
 **Why?**
 - Can cause program termination
-- If destructor called during exception handling → `std::terminate()`
+- Destructors are implicitly `noexcept`, so an exception that escapes one calls `std::terminate()` (also outside of exception handling)
 - Destructors are implicitly `noexcept`
 
 **✅ DO THIS:**
@@ -587,7 +614,14 @@ Object Created
 
 ### Compile:
 ```bash
-g++ -std=c++17 destructor.cpp -o destructor
+g++ -std=c++23 -Wall -Wextra main.cpp -o destructor
+```
+(`std::println` needs C++23 and a recent compiler, e.g. GCC 14+.)
+
+Example 9 leaks memory **on purpose**. To see it, build with AddressSanitizer:
+```bash
+g++ -std=c++23 -g -fsanitize=address main.cpp -o destructor
+./destructor    # LeakSanitizer reports the leak at the end
 ```
 
 ### Run:
@@ -792,6 +826,54 @@ void modernWay() {
 ```
 
 **This is C++'s superpower!** 🦸
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The long summary that used to be printed at the end of `main()` is covered by the sections above (syntax, when destructors are called, order, member order, stack vs heap, virtual destructors, RAII, exception safety, best practices, common mistakes, constructor vs destructor, quick reference, key takeaways). These points were only in `main.cpp`, so they are kept here.
+
+### Why Reverse Order?
+- dependencies are handled correctly
+- last created, first destroyed
+- LIFO (Last In, First Out) order
+
+### Common Uses of Destructors
+
+```cpp
+// 1. Free dynamic memory
+~MyClass() { delete[] data; }
+
+// 2. Close files
+~FileManager() { fclose(file); }
+
+// 3. Release locks
+~LockGuard() { mutex.unlock(); }
+
+// 4. Close connections
+~Database() { connection.close(); }
+
+// 5. Log / timing
+~Timer() { reportElapsedTime(); }
+```
+
+### Smart Pointers - the Modern Solution
+
+```cpp
+// Old way (manual)
+MyClass* ptr = new MyClass();
+delete ptr;  // Must remember!
+
+// Modern way (automatic)
+unique_ptr<MyClass> ptr = make_unique<MyClass>();
+// Automatically deleted!
+```
+- cannot forget to delete
+- exception-safe
+- RAII built in
+
+### One more best practice
+- handle null pointers safely in the destructor (`if (file) fclose(file);`)
 
 ---
 

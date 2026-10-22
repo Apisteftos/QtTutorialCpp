@@ -303,33 +303,46 @@ delete ptr;  // ✅ No leak!
 
 ### Example 1: Without Virtual Destructor (The Problem)
 Demonstrates memory leak and undefined behavior.
+- `delete ptr` through a `BaseNoVirtual*`: only `BaseNoVirtual destructor` is printed, the derived destructor never runs and its `int[100]` is not freed
+- Formally this is **undefined behavior**; the missing derived destructor / leak is just the typical symptom
 
 ### Example 2: With Virtual Destructor (The Solution)
 Shows proper cleanup with virtual destructor.
+- Same code with `virtual ~BaseWithVirtual()`: derived destructor first, then base
 
 ### Example 3: Comparison Side-by-Side
 Direct comparison of both approaches.
+- Pointer without virtual: base destructor only. Pointer with virtual: both
+- A **direct (stack) object** gets both destructors even without `virtual` — the problem exists only when deleting through a base pointer
 
 ### Example 4: Destruction Order
 Understanding the calling sequence.
+- Construction: GrandParent → Parent → Child. Destruction: Child → Parent → GrandParent (the numbers in the output are labels, not call order)
 
 ### Example 5: Default Virtual Destructor
 Using `= default` syntax (C++11).
+- `virtual ~SimpleBase() = default;` — compiler-generated and still virtual; `SimpleDerived` inherits the virtual destructor implicitly
 
 ### Example 6: Pure Virtual Destructor
 Abstract class with pure virtual destructor.
+- Makes the class abstract, but the destructor **must still have a body** (it is called last when a derived object is destroyed)
 
 ### Example 7: Protected Destructor
 Preventing polymorphic deletion pattern.
+- `delete basePtr` does not compile; only the derived type can be deleted directly
 
 ### Example 8: Memory Leak Demonstration
 Real memory leak tracking and fixing.
+- `Resource` counts live instances. Without virtual: `Test1-Derived` is never destroyed → counter stays at 1 (`Active leaks: 1 💥`)
+- The second block is clean, but its last line also prints `Active leaks: 1 ✅`: that 1 is the **leftover from the first block**, not a new leak (Test2 goes 2 → 3 → 2 → 1)
 
 ### Example 9: Smart Pointers
 Virtual destructors with modern C++.
+- `unique_ptr<ModernBase>` and `shared_ptr<ModernBase>` clean up automatically (the base destructor here is virtual)
 
 ### Example 10: Polymorphic Collection
 Real-world usage with shape hierarchy.
+- `vector<unique_ptr<Shape>>` + `shapes.clear()`: every derived destructor runs, then `Shape`'s
 
 ---
 
@@ -578,7 +591,7 @@ class Derived : public Base {
 
 **Why it's bad:**
 - Derived part already destroyed when base destructor runs
-- Virtual function calls base version (not derived)
+- The virtual call resolves to the **base** version (tested: prints `B::virtualFunc` even for a `D` object)
 - May access destroyed data
 - Undefined behavior
 
@@ -610,6 +623,8 @@ class Base {
 };
 ```
 
+> **Nuance (tested):** `shared_ptr<Base> p = make_shared<Derived>();` remembers the *real* type in its deleter, so it calls `~Derived()` and `~Base()` even without a virtual destructor. `unique_ptr<Base>` does not. Don't rely on this — make the destructor virtual anyway.
+
 ---
 
 ## 🎯 Practice Exercises
@@ -632,8 +647,11 @@ Create a multi-level hierarchy and trace destruction order with and without virt
 
 ### Compile:
 ```bash
-g++ -std=c++17 virtual_destructor.cpp -o virtual_destructor
+g++ -std=c++23 -Wall -Wextra main.cpp -o virtual_destructor
 ```
+
+> `main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.
+> GCC will warn `-Wdelete-non-virtual-dtor` for Examples 1, 3 and 8 — that is intentional, those examples delete through a base pointer *without* a virtual destructor to show the problem.
 
 ### Run:
 ```bash
@@ -716,7 +734,8 @@ Child ────────┘         └── ~GrandParent
 ### Prerequisites:
 - **14_VirtualFunctions** - Virtual functions
 - **13_Inheritance** - Inheritance basics
-- **07_CopyConstructor** - Constructors/destructors
+- **03_Destructor** - Destructors and RAII
+- **07_CopyConstructor** - Constructors
 
 ### Coming Next:
 - **18_RTTI** - Runtime type information
@@ -878,6 +897,20 @@ class Resource {
     virtual void release() = 0;
 };
 ```
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The lecture-style printouts were removed from `main.cpp` (the demos now only print what they do). Their content is already in the sections above (problem/solution, syntax, when to use, destruction order, special cases, smart pointers, best practices, common mistakes, key takeaways, golden rule). What was not covered yet:
+
+**Performance of a virtual destructor**
+- Space: one vptr per object (~8 bytes on 64-bit), which exists anyway as soon as the class has any virtual function
+- Time: one extra indirection when destroying through a base pointer — usually negligible
+- Skip it only for `final` classes, classes without any inheritance hierarchy, or when a protected non-virtual destructor is used
+- Rule of thumb: correctness > performance; a memory leak costs far more than the tiny overhead
+
+**Example 4 label note:** the numbers in the output (`1. Child destructor` …) are labels showing the position in the order, they are not a counter.
 
 ---
 

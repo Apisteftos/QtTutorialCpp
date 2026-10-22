@@ -41,10 +41,8 @@ In practice, **the two terms are used interchangeably** by most developers
 and in most UML tooling — you'll see both in textbooks, diagram tools, and
 casual conversation. If you're being precise in an academic/UML-spec
 context, **multiplicity** is the correct term. If you're talking to a
-database person, they'll likely say **cardinality**. Since your background
-touches both software design and DB-adjacent systems work, it's worth
-recognizing both so you're not thrown off when a source uses one or the
-other.
+database person, they'll likely say **cardinality**. It's worth recognizing
+both so you're not thrown off when a source uses one or the other.
 
 ---
 
@@ -139,31 +137,23 @@ classDiagram
 
 ```mermaid
 classDiagram
-    Employee "0..1" -- "1" Manager : reports to
+    Employee "1" -- "0..1" ParkingSpot : uses
 ```
 
-*An Employee reports to exactly 1 Manager. A Manager can have zero or one... wait — let's flip it correctly:*
-
-```mermaid
-classDiagram
-    Manager "1" -- "0..*" Employee : manages
-```
-
-*One Manager manages zero or more Employees. Each Employee has exactly 1 Manager.*
-(This is the corrected, more realistic version — read multiplicities
-carefully, it's easy to put them on the wrong side!)
+*One Employee uses zero or one ParkingSpot. Each ParkingSpot is used by exactly one Employee.*
+(Careful: the `0..1` sits next to `ParkingSpot` because it counts the spots
+**per employee**.)
 
 ### 6. Self-association (a class related to itself)
 
 ```mermaid
 classDiagram
     class Employee
-    Employee "1" --> "0..1" Employee : manages
+    Employee "0..1" --> "0..*" Employee : manages
 ```
 
-*One Employee (the manager) supervises zero or one other Employee directly
-above them... more precisely:* one `Employee` can optionally have one
-`Employee` as their manager, and one `Employee` can manage many others.
+*One Employee (the manager) manages zero or more Employees. Each Employee has
+zero or one manager (the boss at the top has none).*
 
 ---
 
@@ -318,7 +308,7 @@ Multiplicity tells you which **container/storage type** to use:
 
 | Multiplicity | C++ representation |
 |---|---|
-| `1` (mandatory, single) | value member, or reference |
+| `1` (mandatory, single) | value member, or reference (a reference member must be bound at construction, so it can never be null) |
 | `0..1` (optional, single) | `std::optional<T>`, or nullable pointer |
 | `0..*` / `1..*` (many, unbounded) | `std::vector<T>` |
 | `n` (fixed exact count) | `std::array<T, n>` |
@@ -333,31 +323,63 @@ private:
 };
 ```
 
+If `Wheel` has no default constructor, the four wheels must be initialized
+in the constructor (tested — `std::array<Wheel, 4> a;` alone does not compile):
+
+```cpp
+Car() : wheels{Wheel(1), Wheel(2), Wheel(3), Wheel(4)} {}
+```
+
 ### Example: `Team "1" o-- "5..30" Player`
 
 ```cpp
 class Team {
 private:
-    std::vector<Player*> players; // unbounded + shared ownership → vector of pointers
+    std::vector<Player*> players; // bounded range 5..30 → vector + validation
 
 public:
     void addPlayer(Player* p) {
-        if (players.size() >= 30) {
-            throw std::logic_error("Team is full");
+        if (players.size() >= 30) {                 // upper bound: checked when adding
+            throw std::logic_error("Team is full"); // (needs <stdexcept>)
         }
         players.push_back(p);
+    }
+
+    bool isValid() const {                          // lower bound: can only be checked
+        return players.size() >= 5;                 // once the team is "complete"
     }
 };
 ```
 
-### Example: `Manager "1" -- "0..1" Employee : reports to` (from Employee's side)
+### Example: `Employee "0..1" --> "0..*" Employee : manages`
 
 ```cpp
 class Employee {
 private:
-    Manager* manager = nullptr; // 0..1 → nullable pointer, or std::optional<Manager*>
+    Employee*              manager = nullptr;  // 0..1 → nullable pointer (or std::optional)
+    std::vector<Employee*> reports;            // 0..* → vector
 };
 ```
+
+---
+
+## Examples in `main.cpp`
+
+Each worked example above has a small runnable demo (`std::println` output):
+
+| # | Multiplicity | Classes | C++ storage | Shows |
+|---|--------------|---------|-------------|-------|
+| 1 | `1` to `1` | Person — Passport | `const Passport&` | a `Person` cannot be created without a `Passport` |
+| 2 | `1` to `0..*` | Library — Book | `vector<const Book*>` | an empty library is valid, then 3 books |
+| 3 | `0..*` to `0..*` | Student — Course | a vector on both sides | `enroll()` updates both sides so they stay consistent |
+| 4 | `1` to `4` | Car — Wheel | `std::array<Wheel, 4>` | wheels are created with the car and destroyed with it (reverse order) |
+| 5 | `0..1` / `0..*` | Employee — Employee | pointer + vector | the boss has no manager, everybody else exactly one |
+| 6 | `1` to `5..30` | Team — Player | vector + validation | `isValid()` is false below 5, the 31st player is rejected |
+| 7 | `1` vs `[1..*]` | TrafficLight / Shirt — Color | `Color` vs `vector<Color>` | a shirt without any color is rejected |
+
+> **Pitfall (bidirectional links):** when both sides store the link
+> (Example 3, Example 5), update **both** sides in one function (`enroll()`,
+> `manage()`). If only one side is updated, the two counts disagree.
 
 ---
 
@@ -387,3 +409,14 @@ that's genuinely easy to get backwards.
 - Numbers go **next to the class being counted**, read from the *other* class's perspective.
 - Matters most for **Association, Aggregation, Composition** — less relevant for Dependency, Realization, Inheritance.
 - Directly informs your **C++ storage choice**: `T`, `T*`/`std::optional<T>`, `std::vector<T>`, or `std::array<T, n>`.
+
+---
+
+## Build
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o multiplicity
+./multiplicity
+```
+
+`main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.

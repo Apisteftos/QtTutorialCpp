@@ -238,33 +238,56 @@ ptr->makeSound();  // "Woof!" (dynamic binding) ✅
 
 ### Example 1: Without Virtual (Static Binding)
 Shows the problem when virtual is not used.
+- A base-class pointer always calls the **base** version (static binding, decided at compile time)
+- Direct calls on the objects work, so the bug only shows up through pointers/references
 
 ### Example 2: With Virtual (Dynamic Binding)
 Demonstrates polymorphic behavior.
+- Same loop as Example 1, but now the **derived** version runs (dynamic binding)
+- Non-virtual `displayInfo()` stays statically bound
+- Watch the destruction order at the end: derived first, then base
 
 ### Example 3: Virtual Destructor
 Critical example showing memory leak prevention.
+- `delete` through a base pointer: without `virtual ~Base()` the derived destructor is never called
+- Formally this is **undefined behavior**; a leak is the typical symptom
+- Rule: if a class has any virtual function, make its destructor virtual
 
 ### Example 4: Override Keyword
 Using C++11 override for safety.
+- Catches typos in names and signature mismatches at compile time
+- Makes the intent explicit; use it on every overriding function
 
 ### Example 5: Final Keyword
 Preventing further overriding.
+- `virtual void f() final;` blocks overriding, `class X final` blocks inheritance
+- Also documents design intent and can help the compiler devirtualize calls
 
 ### Example 6: Pure Virtual Functions
 Creating abstract classes and interfaces.
+- `= 0` makes the class abstract (cannot be instantiated)
+- Derived classes MUST implement every pure virtual function
 
 ### Example 7: Object Slicing
 The problem with passing by value.
+- Copying a derived object into a base **object** cuts off the derived part
+- The sliced copy calls the base version; pointers/references keep polymorphism
 
 ### Example 8: vtable Mechanism
 How virtual functions work internally.
+- Each class with virtual functions has a vtable, each object has a hidden vptr
+- Call = follow vptr, look up the function in the vtable, jump (cost: one pointer per object plus one indirection)
+- Non-virtual calls are resolved at compile time
 
 ### Example 9: Payment System
 Real-world polymorphic design.
+- One `Payment` interface, several implementations stored in `vector<unique_ptr<Payment>>`
+- Adding a new payment type needs no change in the processing loop
 
 ### Example 10: Covariant Return Types
 Advanced override feature.
+- An override may return a more specific pointer/reference type (`DerivedCloneable*` instead of `BaseCloneable*`)
+- Typical use: `clone()` / `create()` patterns
 
 ---
 
@@ -453,11 +476,16 @@ public:
     // Pure virtual function (= 0)
     virtual void func() = 0;
 
-    // Pure virtual with implementation (rare)
+    // Another pure virtual function
     virtual void func2() = 0;
 
     virtual ~Abstract() = default;
 };
+
+// A pure virtual function CAN also have a body (rare), defined outside the class.
+// Derived classes must still override it, but may call it explicitly:
+// void Abstract::func2() { /* default behaviour */ }
+// void Concrete::func2() { Abstract::func2(); /* ... */ }
 
 // Cannot instantiate abstract class
 // Abstract obj;  // ❌ Error!
@@ -468,7 +496,7 @@ Abstract* ptr;  // ✅ OK!
 
 **Pure Virtual Function = Abstract Method**
 - Declared with `= 0`
-- No implementation (usually)
+- No implementation (usually; a body is allowed but must be defined outside the class)
 - Makes class abstract
 - Derived classes MUST implement
 
@@ -543,11 +571,12 @@ public:
 // AbstractBase obj;
 
 // ✅ Can have pointers/references
-AbstractBase* ptr;
-AbstractBase& ref;
+AbstractBase* ptr = nullptr;       // pointer (could point to a derived object)
+// AbstractBase& ref;              // ❌ Error: a reference must be initialized
+// AbstractBase& ref = *somePtr;   // ✅ OK: bound to an existing derived object
 
 // ✅ Can have constructors (called by derived)
-// ✅ Can have implementation for pure virtual (rare)
+// ✅ A pure virtual function can have a body (defined outside the class, rare)
 ```
 
 **What Abstract Classes Can Have:**
@@ -825,8 +854,10 @@ Create `GameObject` base:
 
 ### Compile:
 ```bash
-g++ -std=c++23 virtual_functions.cpp -o virtual_functions
+g++ -std=c++23 -Wall -Wextra main.cpp -o virtual_functions
 ```
+
+> `main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+** (or a recent Clang/MSVC).
 
 ### Run:
 ```bash
@@ -911,7 +942,6 @@ classDiagram
 ### Coming Next:
 - **15_AbstractClasses** - Interface design (pure virtual functions, `<<abstract>>`/`<<interface>>` in UML)
 - **16_Polymorphism** - Advanced polymorphism
-- **17_OperatorOverloading** - With virtual
 
 ### Related Concepts:
 - **Dynamic Binding** - Runtime resolution
@@ -1084,6 +1114,65 @@ class Document {
 class PDFDocument : public Document { };
 class WordDocument : public Document { };
 ```
+
+---
+
+## 🧾 Notes moved from `main.cpp`
+
+The lecture-style printouts were removed from `main.cpp` (the demos now only print what they do). Their content, so nothing is lost:
+
+**Examples 1/2/3/9 — what each demo shows**
+- Without `virtual`: base pointer calls the base version, static binding (compile time), no polymorphism. Fix: `virtual`.
+- With `virtual`: dynamic binding (runtime), polymorphic behavior, base pointer → derived implementation.
+- Common interface (`Payment`) + different implementations (CreditCard, PayPal, Crypto) = extensible design, clean polymorphic code.
+
+**Example 3 — critical rule**
+- ALWAYS make the base destructor virtual if the class has virtual functions.
+- Otherwise: the derived destructor is skipped (leak) — formally undefined behavior.
+- Tested with AddressSanitizer: `delete base_ptr_to_derived` with a non-virtual base destructor is reported as `new-delete-type-mismatch`.
+
+**Example 8 — vtable layout** (one table per class, one vptr per object)
+```
+BaseVTable vtable:        DerivedVTable vtable:
+┌──────────────────┐      ┌──────────────────────┐
+│ func1() → Base   │      │ func1() → Derived    │
+│ func2() → Base   │      │ func2() → Derived    │
+│ func3() → Base   │      │ func3() → Base       │
+│ ~BaseVTable()    │      │ ~DerivedVTable()     │
+└──────────────────┘      └──────────────────────┘
+```
+
+### ❌ Common Mistakes
+
+**1. Non-virtual destructor**
+```cpp
+class Base { ~Base() { } };            // ❌ derived destructor never runs via Base*
+class Base { virtual ~Base() { } };    // ✅ fix
+```
+
+**2. Not using `override`**
+```cpp
+class Derived : public Base {
+    void func(int x) { }               // ❌ typo/mismatch: silently a NEW function
+    void func(int x) override { }      // ✅ compiler checks it really overrides
+};
+```
+
+**3. Passing by value (slicing)**
+```cpp
+void process(Base obj) { obj.virtualFunc(); }   // ❌ slicing, always Base version
+void process(Base& obj) { obj.virtualFunc(); }  // ✅ keeps polymorphism
+```
+
+**4. Calling a virtual function in a constructor**
+```cpp
+class Base {
+public:
+    Base() { virtualFunc(); }          // calls Base::virtualFunc, NOT the derived one
+    virtual void virtualFunc() { }
+};
+```
+Reason: while `Base()` runs, the derived part is not constructed yet, so the object is still a `Base` (tested: prints `Base::vf` even for a `Der` object). The same applies in destructors.
 
 ---
 
