@@ -1,4 +1,6 @@
-#include <iostream>
+#include <print>
+#include <stdexcept>
+#include <cctype>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -49,7 +51,7 @@ public:
         if (!n.empty()) {
             name = n;
         } else {
-            cout << "⚠️  Name cannot be empty\n";
+            std::println("⚠️  Name cannot be empty");
         }
     }
 
@@ -63,39 +65,44 @@ public:
         if (a >= 0 && a <= 150) {
             age = a;
         } else {
-            cout << "⚠️  Invalid age: " << a << "\n";
+            std::println("⚠️  Invalid age: {}", a);
         }
     }
 
     void display() const {
-        cout << "👤 Person: " << name << ", Age: " << age << "\n";
+        std::println("👤 Person: {}, Age: {}", name, age);
     }
 };
 
 void demonstrateBasicGettersSetters() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC GETTERS/SETTERS ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC GETTERS/SETTERS ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Person person("Alice", 25);
 
-    cout << "--- Using getters ---\n";
-    cout << "Name: " << person.getName() << "\n";
-    cout << "Age: " << person.getAge() << "\n";
+    std::println("--- Using getters ---");
+    std::println("Name: {}", person.getName());
+    std::println("Age: {}", person.getAge());
 
-    cout << "\n--- Using setters ---\n";
+    std::println("");
+    std::println("--- Using setters ---");
     person.setName("Alice Johnson");
     person.setAge(26);
     person.display();
 
-    cout << "\n--- Invalid attempts ---\n";
+    std::println("");
+    std::println("--- Invalid attempts ---");
     person.setName("");      // Empty name - rejected
     person.setAge(-5);       // Negative age - rejected
     person.setAge(200);      // Too old - rejected
 
-    cout << "\n--- After invalid attempts ---\n";
+    std::println("");
+    std::println("--- After invalid attempts ---");
     person.display();
-    cout << "✅ Data integrity maintained!\n";
+    std::println("✅ Data integrity maintained!");
 }
 
 // ============================================
@@ -147,7 +154,7 @@ public:
     // Pattern 5: Lazy evaluation with caching
     int getExpensiveValue() const {
         if (!cacheValid) {
-            cout << "   [Computing expensive value...]\n";
+            std::println("   [Computing expensive value...]");
             // Simulate expensive calculation
             cachedValue = 0;
             for (int i = 0; i < 1000000; i++) {
@@ -155,7 +162,7 @@ public:
             }
             cacheValid = true;
         } else {
-            cout << "   [Using cached value]\n";
+            std::println("   [Using cached value]");
         }
         return cachedValue;
     }
@@ -168,37 +175,44 @@ public:
 };
 
 void demonstrateGetterPatterns() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: GETTER PATTERNS        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: GETTER PATTERNS        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     GetterPatterns obj;
 
-    cout << "--- Pattern 1: Return by value ---\n";
+    std::println("--- Pattern 1: Return by value ---");
     string name = obj.getName();
-    cout << "Name: " << name << "\n";
+    std::println("Name: {}", name);
 
-    cout << "\n--- Pattern 2: Return by const reference ---\n";
+    std::println("");
+    std::println("--- Pattern 2: Return by const reference ---");
     const vector<int>& data = obj.getData();
-    cout << "Data size: " << data.size() << "\n";
+    std::println("Data size: {}", data.size());
     // data.push_back(10);  // ❌ Error! Can't modify const reference
 
-    cout << "\n--- Pattern 3: Return pointer ---\n";
+    std::println("");
+    std::println("--- Pattern 3: Return pointer ---");
     const int* ptr = obj.getDynamicData();
     if (ptr) {
-        cout << "Dynamic data: " << *ptr << "\n";
+        std::println("Dynamic data: {}", *ptr);
     }
 
-    cout << "\n--- Pattern 4: Computed value ---\n";
-    cout << "Sum: " << obj.getSum() << "\n";
+    std::println("");
+    std::println("--- Pattern 4: Computed value ---");
+    std::println("Sum: {}", obj.getSum());
 
-    cout << "\n--- Pattern 5: Lazy evaluation ---\n";
-    cout << "First call:\n";
+    std::println("");
+    std::println("--- Pattern 5: Lazy evaluation ---");
+    std::println("First call:");
     obj.getExpensiveValue();
-    cout << "Second call:\n";
+    std::println("Second call:");
     obj.getExpensiveValue();
 
-    cout << "\nAfter modifying data:\n";
+    std::println("");
+    std::println("After modifying data:");
     obj.addData(10);
     obj.getExpensiveValue();  // Cache invalidated
 }
@@ -222,7 +236,7 @@ public:
         if (a >= 0 && a <= 150) {
             age = a;
         } else {
-            cout << "⚠️  Invalid age\n";
+            std::println("⚠️  Invalid age");
         }
     }
 
@@ -240,7 +254,7 @@ public:
             salary = s;
             return true;
         }
-        cout << "⚠️  Salary cannot be negative\n";
+        std::println("⚠️  Salary cannot be negative");
         return false;
     }
 
@@ -248,10 +262,10 @@ public:
     void setAgeClamp(int a) {
         if (a < 0) {
             age = 0;
-            cout << "⚠️  Age clamped to 0\n";
+            std::println("⚠️  Age clamped to 0");
         } else if (a > 150) {
             age = 150;
-            cout << "⚠️  Age clamped to 150\n";
+            std::println("⚠️  Age clamped to 150");
         } else {
             age = a;
         }
@@ -265,7 +279,7 @@ public:
 
         if (start == string::npos) {
             name = "";
-            cout << "⚠️  Empty name after trimming\n";
+            std::println("⚠️  Empty name after trimming");
         } else {
             name = n.substr(start, end - start + 1);
             // Capitalize first letter
@@ -299,49 +313,57 @@ public:
     }
 
     void display() const {
-        cout << "Name: " << name << ", Age: " << age << ", Salary: $" << salary << "\n";
+        std::println("Name: {}, Age: {}, Salary: ${:.2f}", name, age, salary);
     }
 };
 
 void demonstrateSetterPatterns() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: SETTER PATTERNS        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: SETTER PATTERNS        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     SetterPatterns obj;
 
-    cout << "--- Pattern 1: Basic validation ---\n";
+    std::println("--- Pattern 1: Basic validation ---");
     obj.setAge(25);
     obj.setAge(-5);  // Invalid
 
-    cout << "\n--- Pattern 2: Exception on invalid ---\n";
+    std::println("");
+    std::println("--- Pattern 2: Exception on invalid ---");
     try {
         obj.setAgeStrict(200);  // Throws exception
     } catch (const exception& e) {
-        cout << "❌ Exception: " << e.what() << "\n";
+        std::println("❌ Exception: {}", e.what());
     }
 
-    cout << "\n--- Pattern 3: Return bool ---\n";
+    std::println("");
+    std::println("--- Pattern 3: Return bool ---");
     bool success = obj.setSalary(50000);
-    cout << "Set salary: " << (success ? "✅ Success" : "❌ Failed") << "\n";
+    std::println("Set salary: {}", (success ? "✅ Success" : "❌ Failed"));
 
     success = obj.setSalary(-1000);
-    cout << "Set negative: " << (success ? "✅ Success" : "❌ Failed") << "\n";
+    std::println("Set negative: {}", (success ? "✅ Success" : "❌ Failed"));
 
-    cout << "\n--- Pattern 4: Clamp to range ---\n";
+    std::println("");
+    std::println("--- Pattern 4: Clamp to range ---");
     obj.setAgeClamp(200);  // Clamped to 150
 
-    cout << "\n--- Pattern 5: Normalize input ---\n";
+    std::println("");
+    std::println("--- Pattern 5: Normalize input ---");
     obj.setName("  alice johnson  ");  // Trimmed and capitalized
     obj.display();
 
-    cout << "\n--- Pattern 6: Method chaining ---\n";
+    std::println("");
+    std::println("--- Pattern 6: Method chaining ---");
     obj.setNameChain("Bob Smith")
         .setAgeChain(30)
         .setSalaryChain(60000);
     obj.display();
 
-    cout << "\n--- Pattern 7: Batch setter ---\n";
+    std::println("");
+    std::println("--- Pattern 7: Batch setter ---");
     obj.setPersonInfo("Charlie Brown", 35, 70000);
     obj.display();
 }
@@ -367,7 +389,7 @@ public:
     // WRITE-ONLY: Only setter, no getter
     void setWriteOnly(const string& value) {
         writeOnlyValue = value;
-        cout << "✅ Write-only value set (but can't read it back!)\n";
+        std::println("✅ Write-only value set (but can't read it back!)");
     }
 
     // FULL ACCESS: Both getter and setter
@@ -381,32 +403,31 @@ public:
 };
 
 void demonstrateAccessControl() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: ACCESS CONTROL         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: ACCESS CONTROL         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     AccessControl obj;
 
-    cout << "--- Read-only property ---\n";
-    cout << "Value: " << obj.getReadOnly() << "\n";
+    std::println("--- Read-only property ---");
+    std::println("Value: {}", obj.getReadOnly());
     // obj.setReadOnly("new");  // ❌ No setter available
-    cout << "✓ Can read, but cannot modify\n";
+    std::println("✓ Can read, but cannot modify");
 
-    cout << "\n--- Write-only property ---\n";
+    std::println("");
+    std::println("--- Write-only property ---");
     obj.setWriteOnly("secret_password");
     // string val = obj.getWriteOnly();  // ❌ No getter available
-    cout << "✓ Can write, but cannot read back\n";
+    std::println("✓ Can write, but cannot read back");
 
-    cout << "\n--- Full access property ---\n";
-    cout << "Value: " << obj.getFullAccess() << "\n";
+    std::println("");
+    std::println("--- Full access property ---");
+    std::println("Value: {}", obj.getFullAccess());
     obj.setFullAccess("modified");
-    cout << "New value: " << obj.getFullAccess() << "\n";
-    cout << "✓ Can both read and write\n";
-
-    cout << "\n💡 Use cases:\n";
-    cout << "   Read-only: ID, creation date, calculated values\n";
-    cout << "   Write-only: Passwords, secure tokens\n";
-    cout << "   Full access: Normal properties\n";
+    std::println("New value: {}", obj.getFullAccess());
+    std::println("✓ Can both read and write");
 }
 
 // ============================================
@@ -449,9 +470,9 @@ public:
     void setEmail(const string& e) {
         if (isValidEmail(e)) {
             email = e;
-            cout << "✅ Email set: " << email << "\n";
+            std::println("✅ Email set: {}", email);
         } else {
-            cout << "❌ Invalid email format: " << e << "\n";
+            std::println("❌ Invalid email format: {}", e);
         }
     }
 
@@ -470,9 +491,9 @@ public:
             // Format as (XXX) XXX-XXXX
             phoneNumber = "(" + digits.substr(0, 3) + ") " +
                           digits.substr(3, 3) + "-" + digits.substr(6, 4);
-            cout << "✅ Phone set: " << phoneNumber << "\n";
+            std::println("✅ Phone set: {}", phoneNumber);
         } else {
-            cout << "❌ Invalid phone number: " << phone << "\n";
+            std::println("❌ Invalid phone number: {}", phone);
         }
     }
 
@@ -484,9 +505,9 @@ public:
     void setZipCode(int zip) {
         if (isValidZipCode(zip)) {
             zipCode = zip;
-            cout << "✅ Zip code set: " << zipCode << "\n";
+            std::println("✅ Zip code set: {}", zipCode);
         } else {
-            cout << "❌ Invalid zip code: " << zip << " (must be 5 digits)\n";
+            std::println("❌ Invalid zip code: {} (must be 5 digits)", zip);
         }
     }
 
@@ -495,35 +516,40 @@ public:
     }
 
     void display() const {
-        cout << "📧 Email: " << (email.empty() ? "[not set]" : email) << "\n";
-        cout << "📞 Phone: " << (phoneNumber.empty() ? "[not set]" : phoneNumber) << "\n";
-        cout << "📮 Zip: " << (zipCode == 0 ? "[not set]" : to_string(zipCode)) << "\n";
+        std::println("📧 Email: {}", (email.empty() ? "[not set]" : email));
+        std::println("📞 Phone: {}", (phoneNumber.empty() ? "[not set]" : phoneNumber));
+        std::println("📮 Zip: {}", (zipCode == 0 ? "[not set]" : to_string(zipCode)));
     }
 };
 
 void demonstrateValidation() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: VALIDATION STRATEGIES  ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: VALIDATION STRATEGIES  ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     ValidationExample obj;
 
-    cout << "--- Email validation ---\n";
+    std::println("--- Email validation ---");
     obj.setEmail("user@example.com");    // ✅ Valid
     obj.setEmail("invalid.email");       // ❌ Invalid
     obj.setEmail("@example.com");        // ❌ Invalid
 
-    cout << "\n--- Phone validation and formatting ---\n";
+    std::println("");
+    std::println("--- Phone validation and formatting ---");
     obj.setPhoneNumber("1234567890");    // ✅ Valid, formatted
     obj.setPhoneNumber("(123) 456-7890"); // ✅ Valid, reformatted
     obj.setPhoneNumber("123");           // ❌ Invalid
 
-    cout << "\n--- Zip code validation ---\n";
+    std::println("");
+    std::println("--- Zip code validation ---");
     obj.setZipCode(12345);               // ✅ Valid
     obj.setZipCode(123);                 // ❌ Invalid
     obj.setZipCode(123456);              // ❌ Invalid
 
-    cout << "\n--- Final state ---\n";
+    std::println("");
+    std::println("--- Final state ---");
     obj.display();
 }
 
@@ -571,33 +597,31 @@ public:
     // They're calculated from width and height
 
     void display() const {
-        cout << "📐 Rectangle: " << width << " × " << height << "\n";
-        cout << "   Area: " << getArea() << "\n";
-        cout << "   Perimeter: " << getPerimeter() << "\n";
-        cout << "   Diagonal: " << getDiagonal() << "\n";
-        cout << "   Is square? " << (isSquare() ? "Yes" : "No") << "\n";
+        std::println("📐 Rectangle: {:g} × {:g}", width, height);
+        std::println("   Area: {:g}", getArea());
+        std::println("   Perimeter: {:g}", getPerimeter());
+        std::println("   Diagonal: {:g}", getDiagonal());
+        std::println("   Is square? {}", (isSquare() ? "Yes" : "No"));
     }
 };
 
 void demonstrateComputedProperties() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: COMPUTED PROPERTIES    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: COMPUTED PROPERTIES    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Rectangle rect(5.0, 3.0);
 
-    cout << "--- Initial rectangle ---\n";
+    std::println("--- Initial rectangle ---");
     rect.display();
 
-    cout << "\n--- After changing dimensions ---\n";
+    std::println("");
+    std::println("--- After changing dimensions ---");
     rect.setWidth(4.0);
     rect.setHeight(4.0);
     rect.display();
-
-    cout << "\n💡 Computed properties:\n";
-    cout << "   • Not stored, calculated on demand\n";
-    cout << "   • Always consistent with base data\n";
-    cout << "   • Only getters, no setters\n";
 }
 
 // ============================================
@@ -620,7 +644,7 @@ public:
         if (c >= -273.15) {  // Absolute zero
             celsius = c;
         } else {
-            cout << "⚠️  Temperature below absolute zero!\n";
+            std::println("⚠️  Temperature below absolute zero!");
         }
     }
 
@@ -643,35 +667,34 @@ public:
     }
 
     void display() const {
-        cout << "🌡️  Temperature:\n";
-        cout << "   Celsius:    " << getCelsius() << "°C\n";
-        cout << "   Fahrenheit: " << getFahrenheit() << "°F\n";
-        cout << "   Kelvin:     " << getKelvin() << "K\n";
+        std::println("🌡️  Temperature:");
+        std::println("   Celsius:    {:g}°C", getCelsius());
+        std::println("   Fahrenheit: {:g}°F", getFahrenheit());
+        std::println("   Kelvin:     {:g}K", getKelvin());
     }
 };
 
 void demonstrateDependentProperties() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: DEPENDENT PROPERTIES   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: DEPENDENT PROPERTIES   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Temperature temp(25.0);  // 25°C
 
-    cout << "--- Initial (25°C) ---\n";
+    std::println("--- Initial (25°C) ---");
     temp.display();
 
-    cout << "\n--- Set Fahrenheit to 100 ---\n";
+    std::println("");
+    std::println("--- Set Fahrenheit to 100 ---");
     temp.setFahrenheit(100);
     temp.display();
 
-    cout << "\n--- Set Kelvin to 300 ---\n";
+    std::println("");
+    std::println("--- Set Kelvin to 300 ---");
     temp.setKelvin(300);
     temp.display();
-
-    cout << "\n💡 All three properties stay in sync!\n";
-    cout << "   • Only Celsius is stored\n";
-    cout << "   • Others computed on the fly\n";
-    cout << "   • Setting any updates all\n";
 }
 
 // ============================================
@@ -696,10 +719,10 @@ public:
     void setValue(double v) {
         if (v < 0) {
             value = 0;
-            cout << "⚠️  Clamped to 0%\n";
+            std::println("⚠️  Clamped to 0%");
         } else if (v > 1) {
             value = 1;
-            cout << "⚠️  Clamped to 100%\n";
+            std::println("⚠️  Clamped to 100%");
         } else {
             value = v;
         }
@@ -716,26 +739,30 @@ public:
     }
 
     void display() const {
-        cout << "📊 Percentage: " << getPercent() << "% (decimal: " << getValue() << ")\n";
+        std::println("📊 Percentage: {:g}% (decimal: {:g})", getPercent(), getValue());
     }
 };
 
 void demonstrateRangeProperties() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: RANGE PROPERTIES       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: RANGE PROPERTIES       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Percentage pct;
 
-    cout << "--- Setting as decimal ---\n";
+    std::println("--- Setting as decimal ---");
     pct.setValue(0.75);
     pct.display();
 
-    cout << "\n--- Setting as percentage ---\n";
+    std::println("");
+    std::println("--- Setting as percentage ---");
     pct.setPercent(50);
     pct.display();
 
-    cout << "\n--- Out of range values ---\n";
+    std::println("");
+    std::println("--- Out of range values ---");
     pct.setPercent(150);  // Clamped to 100%
     pct.display();
 
@@ -779,10 +806,10 @@ public:
     bool setUsername(const string& user) {
         if (isValidUsername(user)) {
             username = user;
-            cout << "✅ Username set: " << username << "\n";
+            std::println("✅ Username set: {}", username);
             return true;
         }
-        cout << "❌ Invalid username (3-20 chars, alphanumeric + underscore)\n";
+        std::println("❌ Invalid username (3-20 chars, alphanumeric + underscore)");
         return false;
     }
 
@@ -792,10 +819,10 @@ public:
     bool setEmail(const string& e) {
         if (isValidEmail(e)) {
             email = e;
-            cout << "✅ Email set: " << email << "\n";
+            std::println("✅ Email set: {}", email);
             return true;
         }
-        cout << "❌ Invalid email format\n";
+        std::println("❌ Invalid email format");
         return false;
     }
 
@@ -807,7 +834,7 @@ public:
             age = a;
             return true;
         }
-        cout << "❌ Age must be between 13 and 120\n";
+        std::println("❌ Age must be between 13 and 120");
         return false;
     }
 
@@ -819,57 +846,62 @@ public:
             bio = b;
         } else {
             bio = b.substr(0, 500);
-            cout << "⚠️  Bio truncated to 500 characters\n";
+            std::println("⚠️  Bio truncated to 500 characters");
         }
     }
 
     // Verified - read-only for users
     bool getIsVerified() const { return isVerified; }
 
-    // Private method - only system can verify
+    // Only the system should verify a profile. In real code this would be private
+    // (or reachable only through a friend); it is public here to keep the demo short.
     void verify() {
         isVerified = true;
-        cout << "✅ Profile verified!\n";
+        std::println("✅ Profile verified!");
     }
 
     void display() const {
-        cout << "╔════════════════════════════════╗\n";
-        cout << "║       USER PROFILE             ║\n";
-        cout << "╚════════════════════════════════╝\n";
-        cout << "Username: " << username << (isVerified ? " ✓" : "") << "\n";
-        cout << "Email:    " << email << "\n";
-        cout << "Age:      " << age << "\n";
-        cout << "Bio:      " << (bio.empty() ? "[empty]" : bio.substr(0, 50))
-             << (bio.length() > 50 ? "..." : "") << "\n";
+        std::println("╔════════════════════════════════╗");
+        std::println("║       USER PROFILE             ║");
+        std::println("╚════════════════════════════════╝");
+        std::println("Username: {}{}", username, (isVerified ? " ✓" : ""));
+        std::println("Email:    {}", email);
+        std::println("Age:      {}", age);
+        std::println("Bio:      {}{}", (bio.empty() ? "[empty]" : bio.substr(0, 50)), (bio.length() > 50 ? "..." : ""));
     }
 
-    // For demo purposes - normally private
+    // Demo helper that stands in for "the system" calling verify()
     void systemVerify() { verify(); }
 };
 
 void demonstrateUserProfile() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: USER PROFILE           ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: USER PROFILE           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     UserProfile profile;
 
-    cout << "--- Setting up profile ---\n";
+    std::println("--- Setting up profile ---");
     profile.setUsername("alice_2024");
     profile.setEmail("alice@example.com");
     profile.setAge(25);
     profile.setBio("Software developer passionate about C++ and system programming");
 
-    cout << "\n--- Invalid attempts ---\n";
+    std::println("");
+    std::println("--- Invalid attempts ---");
     profile.setUsername("ab");            // Too short
     profile.setUsername("user@invalid");  // Invalid character
     profile.setEmail("invalid");          // Invalid format
     profile.setAge(10);                   // Too young
 
-    cout << "\n--- Profile display ---\n";
+    std::println("");
+    std::println("--- Profile display ---");
     profile.display();
 
-    cout << "\n--- System verification ---\n";
+    std::println("");
+    std::println("--- System verification ---");
     profile.systemVerify();
     profile.display();
 }
@@ -908,7 +940,7 @@ public:
             price = p;
             return true;
         }
-        cout << "❌ Price cannot be negative\n";
+        std::println("❌ Price cannot be negative");
         return false;
     }
 
@@ -920,7 +952,7 @@ public:
             quantity = q;
             return true;
         }
-        cout << "❌ Quantity cannot be negative\n";
+        std::println("❌ Quantity cannot be negative");
         return false;
     }
 
@@ -931,7 +963,7 @@ public:
     bool addStock(int amount) {
         if (amount > 0) {
             quantity += amount;
-            cout << "✅ Added " << amount << " units. New stock: " << quantity << "\n";
+            std::println("✅ Added {} units. New stock: {}", amount, quantity);
             return true;
         }
         return false;
@@ -940,11 +972,11 @@ public:
     bool removeStock(int amount) {
         if (amount > 0 && amount <= quantity) {
             quantity -= amount;
-            cout << "✅ Removed " << amount << " units. Remaining: " << quantity << "\n";
+            std::println("✅ Removed {} units. Remaining: {}", amount, quantity);
             return true;
         }
         if (amount > quantity) {
-            cout << "❌ Insufficient stock\n";
+            std::println("❌ Insufficient stock");
         }
         return false;
     }
@@ -963,39 +995,43 @@ public:
     }
 
     void display() const {
-        cout << "📦 Product: " << name << " [" << sku << "]\n";
-        cout << "   Price: $" << price << "\n";
-        cout << "   Stock: " << quantity;
-        if (isLowStock()) cout << " ⚠️  LOW STOCK";
-        if (!isInStock()) cout << " ❌ OUT OF STOCK";
-        cout << "\n";
-        cout << "   Total Value: $" << getTotalValue() << "\n";
+        std::println("📦 Product: {} [{}]", name, sku);
+        std::println("   Price: ${:.2f}", price);
+        std::print("   Stock: {}", quantity);
+        if (isLowStock()) std::print(" ⚠️  LOW STOCK");
+        if (!isInStock()) std::print(" ❌ OUT OF STOCK");
+        std::println("");
+        std::println("   Total Value: ${:.2f}", getTotalValue());
     }
 };
 
 void demonstrateProductInventory() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: PRODUCT INVENTORY     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: PRODUCT INVENTORY     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Product product("Laptop", 999.99, 50, "LAP-001");
 
-    cout << "--- Initial product ---\n";
+    std::println("--- Initial product ---");
     product.display();
 
-    cout << "\n--- Stock operations ---\n";
+    std::println("");
+    std::println("--- Stock operations ---");
     product.removeStock(45);  // Sell 45 units
     product.display();
 
-    cout << "\n";
+    std::println("");
     product.removeStock(3);   // Sell 3 more (low stock warning)
     product.display();
 
-    cout << "\n";
+    std::println("");
     product.addStock(100);    // Restock
     product.display();
 
-    cout << "\n--- Invalid operations ---\n";
+    std::println("");
+    std::println("--- Invalid operations ---");
     product.setPrice(-100);   // Negative price - rejected
     product.removeStock(200); // Insufficient stock
 }
@@ -1005,9 +1041,9 @@ void demonstrateProductInventory() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "GETTERS AND SETTERS DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("GETTERS AND SETTERS DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicGettersSetters();
     demonstrateGetterPatterns();
@@ -1019,306 +1055,6 @@ int main() {
     demonstrateRangeProperties();
     demonstrateUserProfile();
     demonstrateProductInventory();
-
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT ARE GETTERS AND SETTERS?\n";
-    cout << "========================================\n";
-    cout << "GETTERS (Accessors):\n";
-    cout << "  • Functions that return private member values\n";
-    cout << "  • Should always be const\n";
-    cout << "  • Provide read access to data\n";
-    cout << "  • Naming: get + PropertyName (e.g., getName())\n";
-    cout << "\n";
-    cout << "SETTERS (Mutators):\n";
-    cout << "  • Functions that modify private member values\n";
-    cout << "  • Should validate input\n";
-    cout << "  • Provide controlled write access\n";
-    cout << "  • Naming: set + PropertyName (e.g., setName())\n";
-
-    cout << "\n========================================\n";
-    cout << "BASIC PATTERN\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "private:\n";
-    cout << "    int value;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    // Getter - const, returns value\n";
-    cout << "    int getValue() const {\n";
-    cout << "        return value;\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    // Setter - validates, then sets\n";
-    cout << "    void setValue(int v) {\n";
-    cout << "        if (v >= 0) {  // Validation\n";
-    cout << "            value = v;\n";
-    cout << "        }\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "GETTER PATTERNS\n";
-    cout << "========================================\n";
-    cout << "1. Return by value (simple types):\n";
-    cout << "   int getAge() const { return age; }\n";
-    cout << "\n";
-    cout << "2. Return by const reference (large objects):\n";
-    cout << "   const string& getName() const { return name; }\n";
-    cout << "\n";
-    cout << "3. Return pointer (nullable):\n";
-    cout << "   const Data* getData() const { return ptr; }\n";
-    cout << "\n";
-    cout << "4. Computed/calculated:\n";
-    cout << "   double getArea() const { return w * h; }\n";
-    cout << "\n";
-    cout << "5. Lazy evaluation:\n";
-    cout << "   int getValue() const {\n";
-    cout << "       if (!cached) calculate();\n";
-    cout << "       return cachedValue;\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "SETTER PATTERNS\n";
-    cout << "========================================\n";
-    cout << "1. Basic validation:\n";
-    cout << "   void setValue(int v) {\n";
-    cout << "       if (valid(v)) value = v;\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "2. Throw exception:\n";
-    cout << "   void setValue(int v) {\n";
-    cout << "       if (!valid(v)) throw invalid_argument(\"...\");\n";
-    cout << "       value = v;\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "3. Return bool:\n";
-    cout << "   bool setValue(int v) {\n";
-    cout << "       if (valid(v)) { value = v; return true; }\n";
-    cout << "       return false;\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "4. Clamp to range:\n";
-    cout << "   void setValue(int v) {\n";
-    cout << "       value = max(min(v, MAX), MIN);\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "5. Normalize/sanitize:\n";
-    cout << "   void setName(string n) {\n";
-    cout << "       name = trim(capitalize(n));\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "6. Method chaining:\n";
-    cout << "   MyClass& setValue(int v) {\n";
-    cout << "       value = v;\n";
-    cout << "       return *this;\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "WHY USE GETTERS/SETTERS?\n";
-    cout << "========================================\n";
-    cout << "1. Validation:\n";
-    cout << "   • Check values before setting\n";
-    cout << "   • Enforce business rules\n";
-    cout << "   • Prevent invalid states\n";
-    cout << "\n";
-    cout << "2. Encapsulation:\n";
-    cout << "   • Hide internal representation\n";
-    cout << "   • Users don't know how data is stored\n";
-    cout << "   • Can change implementation later\n";
-    cout << "\n";
-    cout << "3. Flexibility:\n";
-    cout << "   • Store data differently internally\n";
-    cout << "   • Compute values on demand\n";
-    cout << "   • Cache expensive calculations\n";
-    cout << "\n";
-    cout << "4. Control:\n";
-    cout << "   • Read-only properties (getter only)\n";
-    cout << "   • Write-only properties (setter only)\n";
-    cout << "   • Full access (both)\n";
-    cout << "\n";
-    cout << "5. Debugging:\n";
-    cout << "   • Add logging in setter\n";
-    cout << "   • Set breakpoints easily\n";
-    cout << "   • Track modifications\n";
-    cout << "\n";
-    cout << "6. Side effects:\n";
-    cout << "   • Notify observers\n";
-    cout << "   • Update dependent values\n";
-    cout << "   • Trigger events\n";
-
-    cout << "\n========================================\n";
-    cout << "TYPES OF PROPERTIES\n";
-    cout << "========================================\n";
-    cout << "1. Stored Properties:\n";
-    cout << "   • Directly stored in member variable\n";
-    cout << "   • getter returns value, setter stores\n";
-    cout << "   • Example: name, age, price\n";
-    cout << "\n";
-    cout << "2. Computed Properties:\n";
-    cout << "   • Calculated on demand\n";
-    cout << "   • Only getter, no setter\n";
-    cout << "   • Example: area, total, isValid\n";
-    cout << "\n";
-    cout << "3. Dependent Properties:\n";
-    cout << "   • Multiple views of same data\n";
-    cout << "   • Setting one updates others\n";
-    cout << "   • Example: Celsius/Fahrenheit/Kelvin\n";
-    cout << "\n";
-    cout << "4. Validated Properties:\n";
-    cout << "   • Setter enforces rules\n";
-    cout << "   • Invalid values rejected\n";
-    cout << "   • Example: email, phone, age\n";
-    cout << "\n";
-    cout << "5. Lazy Properties:\n";
-    cout << "   • Calculated once, then cached\n";
-    cout << "   • Expensive to compute\n";
-    cout << "   • Example: file content, database query\n";
-
-    cout << "\n========================================\n";
-    cout << "ACCESS CONTROL PATTERNS\n";
-    cout << "========================================\n";
-    cout << "Read-Only (getter only):\n";
-    cout << "  class MyClass {\n";
-    cout << "      int id;\n";
-    cout << "  public:\n";
-    cout << "      int getId() const { return id; }\n";
-    cout << "      // No setter - can't modify after creation\n";
-    cout << "  };\n";
-    cout << "\n";
-    cout << "Write-Only (setter only):\n";
-    cout << "  class MyClass {\n";
-    cout << "      string password;\n";
-    cout << "  public:\n";
-    cout << "      void setPassword(string p) { password = hash(p); }\n";
-    cout << "      // No getter - security!\n";
-    cout << "      bool verify(string p) { return hash(p) == password; }\n";
-    cout << "  };\n";
-    cout << "\n";
-    cout << "Full Access (both):\n";
-    cout << "  class MyClass {\n";
-    cout << "      string name;\n";
-    cout << "  public:\n";
-    cout << "      string getName() const { return name; }\n";
-    cout << "      void setName(string n) { name = n; }\n";
-    cout << "  };\n";
-
-    cout << "\n========================================\n";
-    cout << "VALIDATION STRATEGIES\n";
-    cout << "========================================\n";
-    cout << "1. Range checking:\n";
-    cout << "   if (age >= 0 && age <= 150)\n";
-    cout << "\n";
-    cout << "2. Format validation:\n";
-    cout << "   if (email.contains('@') && email.contains('.'))\n";
-    cout << "\n";
-    cout << "3. Length validation:\n";
-    cout << "   if (username.length() >= 3 && username.length() <= 20)\n";
-    cout << "\n";
-    cout << "4. Pattern matching:\n";
-    cout << "   if (regex_match(phone, phonePattern))\n";
-    cout << "\n";
-    cout << "5. Business rules:\n";
-    cout << "   if (price > 0 && quantity >= 0 && price * quantity < MAX)\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Always make getters const\n";
-    cout << "  • Validate in setters\n";
-    cout << "  • Return const reference for large objects\n";
-    cout << "  • Use meaningful names (getValue, setValue)\n";
-    cout << "  • Keep getters/setters simple\n";
-    cout << "  • Document validation rules\n";
-    cout << "  • Consider computed properties\n";
-    cout << "  • Use read-only for immutable data\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Forget const on getters\n";
-    cout << "  • Skip validation in setters\n";
-    cout << "  • Return non-const reference to private data\n";
-    cout << "  • Make getters/setters too complex\n";
-    cout << "  • Expose internal representation\n";
-    cout << "  • Allow invalid states\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Non-const getter\n";
-    cout << "   int getValue() { return value; }  // Missing const!\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: No validation\n";
-    cout << "   void setAge(int a) { age = a; }  // No checking!\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Returning non-const reference\n";
-    cout << "   vector<int>& getData() { return data; }  // Exposes internals!\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Setter modifying other state\n";
-    cout << "   void setX(int x) {\n";
-    cout << "       this->x = x;\n";
-    cout << "       y = 0;  // Side effect - confusing!\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN NOT TO USE GETTERS/SETTERS\n";
-    cout << "========================================\n";
-    cout << "For simple data structures (POD):\n";
-    cout << "\n";
-    cout << "struct Point {  // Simple container\n";
-    cout << "    int x, y;   // Public is OK\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Use public data when:\n";
-    cout << "  • Pure data container (no behavior)\n";
-    cout << "  • No validation needed\n";
-    cout << "  • No computed properties\n";
-    cout << "  • Simple aggregation\n";
-    cout << "\n";
-    cout << "Otherwise: Use getters/setters!\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Simple getter/setter\n";
-    cout << "class MyClass {\n";
-    cout << "    int value;\n";
-    cout << "public:\n";
-    cout << "    int getValue() const { return value; }\n";
-    cout << "    void setValue(int v) { value = v; }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// With validation\n";
-    cout << "void setAge(int a) {\n";
-    cout << "    if (a >= 0 && a <= 150) age = a;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "// Computed property\n";
-    cout << "double getArea() const {\n";
-    cout << "    return width * height;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "// Method chaining\n";
-    cout << "MyClass& setValue(int v) {\n";
-    cout << "    value = v;\n";
-    cout << "    return *this;\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Getters provide read access (always const)\n";
-    cout << "2. Setters provide write access (with validation)\n";
-    cout << "3. Encapsulation: Hide internal representation\n";
-    cout << "4. Validation: Prevent invalid states\n";
-    cout << "5. Flexibility: Can change implementation\n";
-    cout << "6. Computed properties: Calculate on demand\n";
-    cout << "7. Dependent properties: Keep values in sync\n";
-    cout << "8. Access control: Read-only, write-only, full\n";
-    cout << "9. Always validate in setters\n";
-    cout << "10. Foundation of data encapsulation\n";
 
     return 0;
 }

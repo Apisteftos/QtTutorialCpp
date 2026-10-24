@@ -148,18 +148,22 @@ obj.useBoth(); // ✅ Uses both
 **Construction order: LEFT to RIGHT, then derived**
 ```cpp
 class A {
+public:
     A() { cout << "1. A\n"; }
 };
 
 class B {
+public:
     B() { cout << "2. B\n"; }
 };
 
 class C {
+public:
     C() { cout << "3. C\n"; }
 };
 
 class D : public A, public B, public C {
+public:
     D() { cout << "4. D\n"; }
 };
 
@@ -169,8 +173,9 @@ class D : public A, public B, public C {
 // 3. C
 // 4. D
 ```
+✅ tested. (An earlier version of this snippet had no `public:`, so all the constructors were private and it did not compile: `'A::A()' is private within this context`.) The order follows the order in the *base-specifier list* (`: public A, public B, public C`), not the order in a mem-initializer list.
 
-**Destruction order: REVERSE (right to left, then derived)**
+**Destruction order: exactly REVERSE (the derived destructor first, then the bases from right to left)**
 
 ---
 
@@ -207,17 +212,18 @@ void use() {
 }
 ```
 
-**Solution 2: Override in Derived**
+**Solution 2: Declare the function in the derived class**
 ```cpp
 class Derived : public ClassA, public ClassB {
 public:
-    void display() override {  // Resolve ambiguity
+    void display() {  // Hides both bases' display(), so the name is unambiguous
         ClassA::display();  // Choose which to call
         // or ClassB::display();
         // or both!
     }
 };
 ```
+This **hides** the two base functions; it is not overriding, because they are not `virtual`. ✅ tested: writing `void display() override` here does not compile (`marked 'override', but does not override`) - the earlier version of this snippet had `override`. Example 2 also prints a compile-time check (`requires { t.commonFunc(); }`): it is `true` for `ClassA` alone and `false` for the class derived from both.
 
 ---
 
@@ -270,8 +276,8 @@ public:
         Camera::powerOn();
         
         // Two different ids!
-        Phone::id;    // = 1
-        Camera::id;   // = 2
+        int phoneId  = Phone::id;    // = 1
+        int cameraId = Camera::id;   // = 2
     }
 };
 ```
@@ -282,6 +288,8 @@ public:
 - ❌ Wasted memory
 - ❌ Inconsistent state (two different ids!)
 - ❌ Confusing behavior
+
+✅ tested: `sm.powerOn()` is ambiguous, `Device* p = &sm;` is `'Device' is an ambiguous base of 'SmartPhone'`; in Example 3 `is_convertible_v<SmartPhone*, Device*>` is `false` and `sizeof(SmartPhone)` is 96 with GCC on x86-64 (two `Device` objects) versus 64 for the virtual version in Example 4.
 
 ---
 
@@ -343,7 +351,7 @@ WITHOUT virtual:                WITH virtual:
 **Key Points:**
 1. Use `virtual` keyword: `class Phone : virtual public Device`
 2. Only ONE shared base object
-3. Most derived class calls base constructor
+3. Most derived class calls base constructor (✅ Example 4 prints just one `VDevice constructor: iPhone (ID: 12345)`; the default arguments in `VPhone()` / `VCamera()` are never used for it)
 4. Solves diamond problem
 5. Slight performance overhead (one extra indirection)
 
@@ -464,12 +472,13 @@ public:
 };
 ```
 
-**Why this is safe:**
-- ✅ No diamond problem (no shared data)
-- ✅ No ambiguity (pure virtual only)
+**Why this is (mostly) safe:**
+- ✅ No duplicated or inconsistent state (interfaces hold no data)
+- ✅ Same-named pure virtual functions in two interfaces are implemented by one override ✅ tested (`P::run` and `Q::run` are both implemented by a single `PQ::run`)
 - ✅ Clear contracts
 - ✅ Flexible polymorphism
-- ✅ Common in modern C++ design
+- ✅ Common in modern C++ design (Core Guidelines [C.135](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-mi-interface))
+- ⚠️ A *diamond of interfaces* still exists if two interfaces derive from a common interface: ✅ tested `struct IA : I {}; struct IB : I {}; struct C : IA, IB {};` makes `I* p = &c;` the error `'I' is an ambiguous base of 'C'`. Deriving the shared interface virtually (`struct IA : virtual I {}`) fixes it ✅ tested.
 
 **Naming Convention:**
 - Prefix interfaces with 'I': `IDrawable`, `ISerializable`
@@ -522,14 +531,17 @@ public:
 │ IS-A relationship       │ HAS-A relationship      │
 │ Complex hierarchies     │ Flat structure          │
 │ Diamond problem         │ No diamond problem      │
-│ Compile-time binding    │ Runtime flexibility     │
-│ Hard to test            │ Easy to test            │
+│ Fixed at compile time   │ Swappable if held by    │
+│                         │ pointer/interface       │
+│ Harder to mock          │ Easier to mock/inject   │
 │ Less flexible           │ More flexible           │
 └─────────────────────────┴─────────────────────────┘
 ```
 
-**Gang of Four Principle:**
-> "Prefer composition over inheritance"
+Table rows are rules of thumb. Composition *by value* is also fixed at compile time; swapping an implementation at run time needs a pointer, reference or `std::function` to an interface.
+
+**Gang of Four Principle (from memory, not re-checked):**
+> "Favor object composition over class inheritance."
 
 ---
 
@@ -541,8 +553,8 @@ public:
 ```cpp
 class Widget : public IDrawable, public ISerializable, public IClickable {
     // Implement multiple interfaces
-    // NO diamond problem (no data)
-    // SAFE multiple inheritance
+    // No duplicated state (no data)
+    // Generally safe multiple inheritance
 };
 ```
 
@@ -572,6 +584,8 @@ Loggable<Timestamped<MyClass>> obj;
 - Orthogonal concerns
 - Template-based composition
 
+**Careful:** `Loggable<Timestamped<MyClass>>` is a *chain of single inheritance* (each mixin derives from the class passed to it), so it is multilevel inheritance, not multiple inheritance. Real multiple-inheritance mixins are ordinary bases: `class Widget : public Loggable, public Timestamped`. In Example 6 the mixins need forwarding constructors (`template<typename... Args> explicit Timestamped(Args&&... args) : Base(std::forward<Args>(args)...)`) to pass the arguments down the chain.
+
 #### 3. True Multiple IS-A (Rare!)
 ```cpp
 // Duck IS-A Flyer AND IS-A Swimmer
@@ -583,7 +597,7 @@ class Duck : public Flyer, public Swimmer {
 **Use when:**
 - Truly multiple IS-A relationships
 - No conflicts between bases
-- Not achievable with composition
+- You need to pass the object where *either* base is expected (substitutability for both); if not, composition is simpler
 
 ---
 
@@ -657,8 +671,10 @@ Apply them to different classes using templates.
 
 ### Compile:
 ```bash
-g++ -std=c++17 multiple_inheritance.cpp -o multiple_inheritance
+g++ -std=c++23 -Wall -Wextra main.cpp -o multiple_inheritance
 ```
+
+`main.cpp` uses `std::println` (`<print>`, GCC 14+ or a recent Clang with `-std=c++23`) and one C++20 `requires` expression.
 
 ### Run:
 ```bash
@@ -728,7 +744,7 @@ WITH virtual inheritance:
                   Button
     (implements all three interfaces)
 
-✅ Safe - no diamond problem
+✅ Safe - no shared state
 ✅ Clear - multiple contracts
 ✅ Flexible - polymorphic behavior
 ```
@@ -762,7 +778,7 @@ WITH virtual inheritance:
 ✅ **Ambiguity** when bases have same names
 ✅ **Diamond problem** creates duplicate bases
 ✅ **Virtual inheritance** solves diamond problem
-✅ **Constructor order** = left to right
+✅ **Constructor order** = left to right (the base-specifier order)
 ✅ **Virtual bases** constructed first
 ✅ **Multiple interfaces** = recommended pattern
 ✅ **Composition** often better than MI
@@ -795,6 +811,7 @@ class Base { };
 class A : virtual public Base { };
 class B : virtual public Base { };
 class C : public A, public B {
+public:
     C() : Base(), A(), B() { }  // Call Base explicitly
 };
 
@@ -811,6 +828,7 @@ class BetterDesign {
 ```cpp
 // BASIC MULTIPLE INHERITANCE
 class D : public A, public B, public C {
+public:
     D() : A(), B(), C() { }
 };
 
@@ -821,6 +839,7 @@ Base1::func();  // Explicit scope
 class A : virtual public Base { };
 class B : virtual public Base { };
 class C : public A, public B {
+public:
     C() : Base(), A(), B() { }  // Call Base!
 };
 
@@ -844,7 +863,7 @@ class MyClass {
 
 - **Use for multiple pure interfaces** (most common)
 - **Use virtual inheritance** for diamond
-- **Make destructors virtual** (always!)
+- **Give interfaces a virtual destructor** (needed for deletion through a base pointer, [C.35](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rc-dtor-virtual))
 - **Document MI relationships** clearly
 - **Consider composition first**
 - **Keep hierarchies shallow**
@@ -857,7 +876,7 @@ class MyClass {
 - **Use for implementation reuse** (use composition)
 - **Create diamond** without virtual
 - **Make deep hierarchies**
-- **Ignore ambiguity warnings**
+- **Ignore ambiguity** (it is a hard compile error, not a warning: qualify the call or declare the function in the derived class)
 - **Use MI** just because you can
 - **Forget to call** virtual base constructor
 - **Mix implementation** inheritance heavily
@@ -899,11 +918,10 @@ class TechLead : public IManager, public IDeveloper {
 
 ## 📖 Further Reading
 
-- [cppreference.com - Multiple Inheritance](https://en.cppreference.com/w/cpp/language/derived_class)
-- "Effective C++" by Scott Meyers - Item 40
-- "Multiple Inheritance Considered Useful" (papers)
-- "Design Patterns" by GoF - Composition
-- [C++ Core Guidelines - MI](https://isocpp.github.io/CppCoreGuidelines/)
+- [cppreference.com - Derived classes](https://en.cppreference.com/cpp/language/derived_class) (covers multiple and virtual inheritance)
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 40, "Use multiple inheritance judiciously"
+- "Design Patterns" by Gamma, Helm, Johnson, Vlissides - the chapter 1 discussion of class vs object composition
+- C++ Core Guidelines: [C.135 multiple distinct interfaces](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-mi-interface), [C.136 union of implementation attributes](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-mi-implementation), [C.137 virtual bases](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-vbase)
 
 ---
 
@@ -918,7 +936,7 @@ class TechLead : public IManager, public IDeveloper {
 7. **Multiple interfaces** = recommended pattern
 8. **Composition often better** than MI
 9. **Use sparingly** and carefully
-10. **"Prefer composition over inheritance"** - GoF
+10. **Favor composition over inheritance** - GoF
 
 ---
 
@@ -932,3 +950,40 @@ class TechLead : public IManager, public IDeveloper {
 *Difficulty: Advanced*
 *Prerequisites: 13_Inheritance, 14_VirtualFunctions*
 *Use with Caution - Powerful but Complex*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+Per-example points from the removed `✅`/`⚠️`/`💡` blocks (not repeated where the sections above already say them):
+
+- **Example 1:** `Car : public Engine, public Wheels` combines both; constructors run left to right, destructors right to left. New in the program: it prints where the base subobjects sit (`Engine` at offset 0, `Wheels` at offset 4 with GCC on x86-64). Converting a `Car*` to `Wheels*` therefore **changes the address** - one more difference from single inheritance.
+- **Example 2:** ambiguity occurs when several bases have a member with the same name; the compiler does not guess, so qualify the call (`obj.ClassA::commonFunc()`) or declare the function in the derived class (which hides both).
+- **Example 3:** two `Device` objects, ambiguous access, wasted memory and inconsistent state (the two IDs 1 and 2).
+- **Example 4:** one shared `VDevice`, no ambiguity, consistent state, the most derived class constructs the virtual base.
+- **Example 5:** only pure virtual functions → safe and common. (The old note "no diamond problem (no data)" was too strong, see the corrected list above.)
+- **Example 6:** small reusable features that are composed flexibly and avoid an explosion of hierarchy classes - but note it is a chain of single inheritance.
+- **Example 7:** regular: bases left to right, then derived. With virtual bases: virtual bases first, then the others. Destruction is always the exact reverse. The destruction labels were wrong (`3. 4. 5. 6.` and `2. 4. 5. 6.`); they now read `1. 2. 3. 4.` in the order they actually run, and the "Destruction order (reverse):" line is printed before the destructors, not after them.
+- **Example 8:** use multiple inheritance for multiple *interfaces* (pure virtual), no implementation conflicts, real IS-A for all bases; avoid it for implementation reuse, when composition works, when a diamond is likely.
+- **Example 9:** interfaces enable flexible role combinations (`TechLead` is an `IManager` and an `IDeveloper`) and interface-based polymorphism.
+- **Example 10:** composition: loose coupling, flexibility, easier testing, swappable implementations, no diamond. The Gang of Four wording is "Favor object composition over class inheritance" (the printed quote used a different wording).
+
+Other lecture content that was only in `main.cpp` (syntax, constructor-order lists, ambiguity, diamond, virtual inheritance, interfaces, "when to use", composition, best practices, common mistakes, quick reference) is already in the sections above. Two details were only in the lecture:
+
+- **Common mistakes:** (1) forgetting `virtual` on the two middle bases of a diamond; (2) calling an ambiguous function without qualification; (3) forgetting that the *most derived* class must initialize the virtual base (✅ tested: if `SmartPhone` omits `Device(n)` and `Device` has no default constructor it does not compile); (4) using multiple inheritance where composition is enough.
+- **With virtual bases:** 1. virtual base constructors, 2. non-virtual bases left to right, 3. derived constructor.
+
+**Code changes in `main.cpp`:**
+  - Example 2: the comment "Can override to resolve ambiguity" was wrong (hiding, not overriding); a compile-time check demo replaces the lecture text.
+  - Example 1/3/4: real demos (subobject offsets, `is_convertible_v`, `sizeof`; sizes are for GCC on x86-64).
+  - Example 6: `std::forward` was called unqualified (Clang `-Wunqualified-std-cast-call`); `<utility>` added.
+  - Example 7: destruction labels fixed, label line moved before the destructors.
+  - One-argument constructors made `explicit` (see 23_ExplicitKeyword); `using namespace std;` removed.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer (and Clang `-Wall -Wextra`); output identical to the original apart from the changes listed.
+
+---
+
+## ⚠️ Open points
+
+- Numbering: this README calls itself `16_MultipleInheritance`, but your other folders already use `16_Polymorphism` and `17_VirtualDestructor`. "Coming Next" (17_Templates, 18_STL, 19_DesignPatterns) and "Next Topic" were left as they are because I don't know the real next folder; the "Previous Topic" (15_AbstractClasses) and the prerequisites (13_Inheritance, 14_VirtualFunctions, 15_AbstractClasses) match your folders.
+- Not opened / not tested: the cppreference link (taken from a search result) and the Core Guidelines anchors (taken from the guidelines text); "Effective C++ Item 40" and the Gang of Four wording are from memory. The paper "Multiple Inheritance Considered Useful" was removed because I could not verify it.

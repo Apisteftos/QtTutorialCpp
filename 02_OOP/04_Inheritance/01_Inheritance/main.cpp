@@ -1,7 +1,6 @@
-#include <iostream>
+#include <print>
 #include <string>
-#include <vector>
-using namespace std;
+#include <type_traits>
 
 // ============================================
 // WHAT IS INHERITANCE?
@@ -45,82 +44,83 @@ using namespace std;
 
 class Animal {
 protected:  // Protected: accessible to derived classes
-    string name;
+    std::string name;
     int age;
 
 public:
-    Animal(string n, int a) : name(n), age(a) {
-        cout << "  Animal constructor: " << name << "\n";
+    Animal(std::string n, int a) : name(n), age(a) {
+        std::println("  Animal constructor: {}", name);
     }
 
     ~Animal() {
-        cout << "  Animal destructor: " << name << "\n";
+        std::println("  Animal destructor: {}", name);
     }
 
     void eat() {
-        cout << "  " << name << " is eating\n";
+        std::println("  {} is eating", name);
     }
 
     void sleep() {
-        cout << "  " << name << " is sleeping\n";
+        std::println("  {} is sleeping", name);
     }
 
     void displayInfo() {
-        cout << "  Name: " << name << ", Age: " << age << "\n";
+        std::println("  Name: {}, Age: {}", name, age);
     }
 };
 
 // Dog inherits from Animal
 class Dog : public Animal {  // public inheritance
 private:
-    string breed;
+    std::string breed;
 
 public:
     // Constructor must call base constructor
-    Dog(string n, int a, string b) : Animal(n, a), breed(b) {
-        cout << "  Dog constructor: " << name << " (" << breed << ")\n";
+    Dog(std::string n, int a, std::string b) : Animal(n, a), breed(b) {
+        std::println("  Dog constructor: {} ({})", name, breed);
     }
 
     ~Dog() {
-        cout << "  Dog destructor: " << name << "\n";
+        std::println("  Dog destructor: {}", name);
     }
 
     // Dog-specific method
     void bark() {
-        cout << "  " << name << " says: Woof! Woof!\n";
+        std::println("  {} says: Woof! Woof!", name);
     }
 
     // Dog can access protected members from Animal
     void displayDogInfo() {
-        cout << "  Dog: " << name << ", Age: " << age << ", Breed: " << breed << "\n";
+        std::println("  Dog: {}, Age: {}, Breed: {}", name, age, breed);
     }
 };
 
 void demonstrateBasicInheritance() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC INHERITANCE      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC INHERITANCE      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating Dog object ---\n";
+    std::println("--- Creating Dog object ---");
     Dog dog("Buddy", 3, "Golden Retriever");
 
-    cout << "\n--- Using inherited methods ---\n";
+    std::println("");
+    std::println("--- Using inherited methods ---");
     dog.eat();      // Inherited from Animal
     dog.sleep();    // Inherited from Animal
 
-    cout << "\n--- Using Dog-specific methods ---\n";
+    std::println("");
+    std::println("--- Using Dog-specific methods ---");
     dog.bark();     // Dog's own method
 
-    cout << "\n--- Displaying info ---\n";
+    std::println("");
+    std::println("--- Displaying info ---");
     dog.displayInfo();     // Inherited from Animal
     dog.displayDogInfo();  // Dog's own method
 
-    cout << "\n💡 Inheritance benefits:\n";
-    cout << "   • Code reuse (eat, sleep inherited)\n";
-    cout << "   • Hierarchical organization\n";
-    cout << "   • Add specialized behavior (bark)\n";
-
-    cout << "\n--- Destruction order (reverse of construction) ---\n";
+    std::println("");
+    std::println("--- Destruction order (reverse of construction) ---");
 }
 
 // ============================================
@@ -140,9 +140,7 @@ public:
     Base() : privateData(1), protectedData(2), publicData(3) { }
 
     void showBase() {
-        cout << "  Base - private: " << privateData
-             << ", protected: " << protectedData
-             << ", public: " << publicData << "\n";
+        std::println("  Base - private: {}, protected: {}, public: {}", privateData, protectedData, publicData);
     }
 };
 
@@ -150,10 +148,10 @@ public:
 class PublicDerived : public Base {
 public:
     void showAccess() {
-        cout << "  PublicDerived can access:\n";
-        // cout << privateData;     // ❌ Error! Private not accessible
-        cout << "    protected: " << protectedData << " ✅\n";
-        cout << "    public: " << publicData << " ✅\n";
+        std::println("  PublicDerived can access:");
+        // std::println("{}", privateData);     // ❌ Error! Private not accessible
+        std::println("    protected: {} ✅", protectedData);
+        std::println("    public: {} ✅", publicData);
     }
 };
 
@@ -161,10 +159,10 @@ public:
 class ProtectedDerived : protected Base {
 public:
     void showAccess() {
-        cout << "  ProtectedDerived can access:\n";
-        // cout << privateData;     // ❌ Error! Private not accessible
-        cout << "    protected: " << protectedData << " ✅\n";
-        cout << "    public: " << publicData << " ✅\n";
+        std::println("  ProtectedDerived can access:");
+        // std::println("{}", privateData);     // ❌ Error! Private not accessible
+        std::println("    protected: {} ✅", protectedData);
+        std::println("    public: {} ✅", publicData);
     }
 };
 
@@ -172,40 +170,43 @@ public:
 class PrivateDerived : private Base {
 public:
     void showAccess() {
-        cout << "  PrivateDerived can access:\n";
-        // cout << privateData;     // ❌ Error! Private not accessible
-        cout << "    protected: " << protectedData << " ✅\n";
-        cout << "    public: " << publicData << " ✅\n";
+        std::println("  PrivateDerived can access:");
+        // std::println("{}", privateData);     // ❌ Error! Private not accessible
+        std::println("    protected: {} ✅", protectedData);
+        std::println("    public: {} ✅", publicData);
     }
 };
 
 void demonstrateAccessSpecifiers() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: ACCESS SPECIFIERS      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: ACCESS SPECIFIERS      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Public inheritance ---\n";
+    std::println("--- Public inheritance ---");
     PublicDerived pub;
     pub.showAccess();
     pub.publicData = 100;  // ✅ Public members accessible
     pub.showBase();        // ✅ Public methods accessible
 
-    cout << "\n--- Protected inheritance ---\n";
+    std::println("");
+    std::println("--- Protected inheritance ---");
     ProtectedDerived prot;
     prot.showAccess();
     // prot.publicData = 100;  // ❌ Error! Now protected
     // prot.showBase();        // ❌ Error! Now protected
 
-    cout << "\n--- Private inheritance ---\n";
+    std::println("");
+    std::println("--- Private inheritance ---");
     PrivateDerived priv;
     priv.showAccess();
     // priv.publicData = 100;  // ❌ Error! Now private
     // priv.showBase();        // ❌ Error! Now private
-
-    cout << "\n💡 Inheritance types:\n";
-    cout << "   • public:    IS-A relationship (use 99% of time)\n";
-    cout << "   • protected: Rarely used\n";
-    cout << "   • private:   HAS-A (use composition instead)\n";
+    std::println("\n--- Which pointer conversions to Base* exist outside the class? ---");
+    std::println("  PublicDerived*    -> Base*: {}", std::is_convertible_v<PublicDerived*, Base*>);
+    std::println("  ProtectedDerived* -> Base*: {}", std::is_convertible_v<ProtectedDerived*, Base*>);
+    std::println("  PrivateDerived*   -> Base*: {}", std::is_convertible_v<PrivateDerived*, Base*>);
 }
 
 // ============================================
@@ -215,68 +216,71 @@ void demonstrateAccessSpecifiers() {
 class GrandParent {
 public:
     GrandParent() {
-        cout << "  1. GrandParent constructor\n";
+        std::println("  1. GrandParent constructor");
     }
 
     ~GrandParent() {
-        cout << "  3. GrandParent destructor\n";
+        std::println("  3. GrandParent destructor");
     }
 };
 
 class Parent : public GrandParent {
 public:
     Parent() {
-        cout << "  2. Parent constructor\n";
+        std::println("  2. Parent constructor");
     }
 
     ~Parent() {
-        cout << "  2. Parent destructor\n";
+        std::println("  2. Parent destructor");
     }
 };
 
 class Child : public Parent {
 public:
     Child() {
-        cout << "  3. Child constructor\n";
+        std::println("  3. Child constructor");
     }
 
     ~Child() {
-        cout << "  1. Child destructor\n";
+        std::println("  1. Child destructor");
     }
 };
 
 void demonstrateConstructorDestructor() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: CONSTRUCTOR/DESTRUCTOR ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: CONSTRUCTOR/DESTRUCTOR ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating Child object ---\n";
-    cout << "Construction order (base to derived):\n";
+    std::println("--- Creating Child object ---");
+    std::println("Construction order (base to derived):");
     Child child;
 
-    cout << "\n--- Destroying Child object ---\n";
-    cout << "Destruction order (derived to base):\n";
+    std::println("");
+    std::println("--- Destroying Child object ---");
+    std::println("Destruction order (derived to base):");
 }
 
 // ============================================
-// EXAMPLE 4: FUNCTION OVERRIDING
+// EXAMPLE 4: FUNCTION HIDING (draw() is not virtual)
 // ============================================
 
 class Shape {
 protected:
-    string color;
+    std::string color;
 
 public:
-    Shape(string c) : color(c) {
-        cout << "  Shape created: " << color << "\n";
+    explicit Shape(std::string c) : color(c) {
+        std::println("  Shape created: {}", color);
     }
 
-    // This function can be overridden
+    // Not virtual: derived classes can only HIDE this function
     void draw() {
-        cout << "  Drawing a generic shape\n";
+        std::println("  Drawing a generic shape");
     }
 
-    void setColor(string c) {
+    void setColor(std::string c) {
         color = c;
     }
 };
@@ -286,11 +290,11 @@ private:
     double radius;
 
 public:
-    Circle(string c, double r) : Shape(c), radius(r) { }
+    Circle(std::string c, double r) : Shape(c), radius(r) { }
 
-    // Override base class function
+    // Hides Shape::draw (no virtual, so this is hiding, not overriding)
     void draw() {
-        cout << "  Drawing a " << color << " circle with radius " << radius << "\n";
+        std::println("  Drawing a {} circle with radius {:g}", color, radius);
     }
 
     // Circle-specific function
@@ -304,12 +308,11 @@ private:
     double width, height;
 
 public:
-    Rectangle(string c, double w, double h) : Shape(c), width(w), height(h) { }
+    Rectangle(std::string c, double w, double h) : Shape(c), width(w), height(h) { }
 
-    // Override base class function
+    // Hides Shape::draw (no virtual, so this is hiding, not overriding)
     void draw() {
-        cout << "  Drawing a " << color << " rectangle: "
-             << width << "×" << height << "\n";
+        std::println("  Drawing a {} rectangle: {:g}×{:g}", color, width, height);
     }
 
     // Rectangle-specific function
@@ -319,28 +322,30 @@ public:
 };
 
 void demonstrateFunctionOverriding() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: FUNCTION OVERRIDING    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: FUNCTION HIDING        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating shapes ---\n";
+    std::println("--- Creating shapes ---");
     Shape shape("white");
     Circle circle("red", 5.0);
     Rectangle rect("blue", 10.0, 5.0);
 
-    cout << "\n--- Drawing shapes ---\n";
+    std::println("");
+    std::println("--- Drawing shapes ---");
     shape.draw();     // Generic shape
     circle.draw();    // Circle's overridden version
     rect.draw();      // Rectangle's overridden version
 
-    cout << "\n--- Calculating areas ---\n";
-    cout << "  Circle area: " << circle.area() << "\n";
-    cout << "  Rectangle area: " << rect.area() << "\n";
-
-    cout << "\n💡 Function overriding:\n";
-    cout << "   • Derived class provides new implementation\n";
-    cout << "   • Same function signature as base\n";
-    cout << "   • Without 'virtual', no polymorphism (yet!)\n";
+    std::println("");
+    std::println("--- Calculating areas ---");
+    std::println("  Circle area: {:g}", circle.area());
+    std::println("  Rectangle area: {:g}", rect.area());
+    std::println("\n--- Through a Shape pointer (draw is not virtual) ---");
+    Shape* ptr = &circle;
+    ptr->draw();  // Shape::draw - the static type decides
 }
 
 // ============================================
@@ -349,18 +354,18 @@ void demonstrateFunctionOverriding() {
 
 class BankAccount {
 private:
-    string accountNumber;  // Only BankAccount can access
+    std::string accountNumber;  // Only BankAccount can access
 
 protected:
     double balance;        // Derived classes can access
 
 public:
-    BankAccount(string accNum, double bal)
+    BankAccount(std::string accNum, double bal)
         : accountNumber(accNum), balance(bal) { }
 
     void deposit(double amount) {
         balance += amount;
-        cout << "  Deposited $" << amount << ", Balance: $" << balance << "\n";
+        std::println("  Deposited ${:g}, Balance: ${:g}", amount, balance);
     }
 
     double getBalance() const {
@@ -373,43 +378,41 @@ private:
     double interestRate;
 
 public:
-    SavingsAccount(string accNum, double bal, double rate)
+    SavingsAccount(std::string accNum, double bal, double rate)
         : BankAccount(accNum, bal), interestRate(rate) { }
 
     void addInterest() {
         // Can access protected balance
         double interest = balance * interestRate;
         balance += interest;
-        cout << "  Interest added: $" << interest
-             << ", New balance: $" << balance << "\n";
+        std::println("  Interest added: ${:g}, New balance: ${:g}", interest, balance);
     }
 
     void showDetails() {
-        // cout << accountNumber;  // ❌ Error! Private not accessible
-        cout << "  Balance: $" << balance << " ✅\n";  // Protected accessible
-        cout << "  Interest rate: " << interestRate * 100 << "%\n";
+        // std::println("{}", accountNumber);  // ❌ Error! Private not accessible
+        std::println("  Balance: ${:g} ✅", balance);  // Protected accessible
+        std::println("  Interest rate: {:g}%", interestRate * 100);
     }
 };
 
 void demonstrateProtectedAccess() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: PROTECTED ACCESS       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: PROTECTED ACCESS       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating savings account ---\n";
+    std::println("--- Creating savings account ---");
     SavingsAccount savings("SA-12345", 1000.0, 0.05);
 
-    cout << "\n--- Operations ---\n";
+    std::println("");
+    std::println("--- Operations ---");
     savings.deposit(500.0);
     savings.addInterest();
 
-    cout << "\n--- Account details ---\n";
+    std::println("");
+    std::println("--- Account details ---");
     savings.showDetails();
-
-    cout << "\n💡 Protected members:\n";
-    cout << "   • Accessible to derived classes\n";
-    cout << "   • Not accessible to outside code\n";
-    cout << "   • Balance between private and public\n";
 }
 
 // ============================================
@@ -421,12 +424,12 @@ protected:
     double maxAltitude;
 
 public:
-    Flyer(double alt) : maxAltitude(alt) {
-        cout << "  Flyer constructor\n";
+    explicit Flyer(double alt) : maxAltitude(alt) {
+        std::println("  Flyer constructor");
     }
 
     void fly() {
-        cout << "  Flying at altitude: " << maxAltitude << "m\n";
+        std::println("  Flying at altitude: {:g}m", maxAltitude);
     }
 };
 
@@ -435,32 +438,32 @@ protected:
     double maxDepth;
 
 public:
-    Swimmer(double depth) : maxDepth(depth) {
-        cout << "  Swimmer constructor\n";
+    explicit Swimmer(double depth) : maxDepth(depth) {
+        std::println("  Swimmer constructor");
     }
 
     void swim() {
-        cout << "  Swimming at depth: " << maxDepth << "m\n";
+        std::println("  Swimming at depth: {:g}m", maxDepth);
     }
 };
 
 // Duck inherits from both Flyer and Swimmer
 class Duck : public Flyer, public Swimmer {
 private:
-    string name;
+    std::string name;
 
 public:
-    Duck(string n, double alt, double depth)
+    Duck(std::string n, double alt, double depth)
         : Flyer(alt), Swimmer(depth), name(n) {
-        cout << "  Duck constructor: " << name << "\n";
+        std::println("  Duck constructor: {}", name);
     }
 
     void quack() {
-        cout << "  " << name << " says: Quack! Quack!\n";
+        std::println("  {} says: Quack! Quack!", name);
     }
 
     void showAbilities() {
-        cout << "  " << name << " can:\n";
+        std::println("  {} can:", name);
         fly();
         swim();
         quack();
@@ -468,20 +471,18 @@ public:
 };
 
 void demonstrateMultipleInheritance() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: MULTIPLE INHERITANCE   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: MULTIPLE INHERITANCE   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating duck ---\n";
+    std::println("--- Creating duck ---");
     Duck duck("Donald", 100.0, 5.0);
 
-    cout << "\n--- Duck abilities ---\n";
+    std::println("");
+    std::println("--- Duck abilities ---");
     duck.showAbilities();
-
-    cout << "\n💡 Multiple inheritance:\n";
-    cout << "   • Inherit from multiple base classes\n";
-    cout << "   • Duck IS-A Flyer AND IS-A Swimmer\n";
-    cout << "   • Can lead to diamond problem (see next)\n";
 }
 
 // ============================================
@@ -490,38 +491,38 @@ void demonstrateMultipleInheritance() {
 
 class Device {
 protected:
-    string name;
+    std::string name;
 
 public:
-    Device(string n) : name(n) {
-        cout << "  Device constructor: " << name << "\n";
+    explicit Device(std::string n) : name(n) {
+        std::println("  Device constructor: {}", name);
     }
 
     void powerOn() {
-        cout << "  " << name << " powered on\n";
+        std::println("  {} powered on", name);
     }
 };
 
 // Phone and Camera both inherit from Device
 class Phone : public Device {
 public:
-    Phone(string n) : Device(n) {
-        cout << "  Phone constructor\n";
+    explicit Phone(std::string n) : Device(n) {
+        std::println("  Phone constructor");
     }
 
     void makeCall() {
-        cout << "  Making a call\n";
+        std::println("  Making a call");
     }
 };
 
 class Camera : public Device {
 public:
-    Camera(string n) : Device(n) {
-        cout << "  Camera constructor\n";
+    explicit Camera(std::string n) : Device(n) {
+        std::println("  Camera constructor");
     }
 
     void takePicture() {
-        cout << "  Taking a picture\n";
+        std::println("  Taking a picture");
     }
 };
 
@@ -529,9 +530,9 @@ public:
 // This creates TWO copies of Device! (Diamond problem)
 class SmartPhone : public Phone, public Camera {
 public:
-    SmartPhone(string n)
+    explicit SmartPhone(std::string n)
         : Phone(n + "-Phone"), Camera(n + "-Camera") {
-        cout << "  SmartPhone constructor\n";
+        std::println("  SmartPhone constructor");
     }
 
     void useFeatures() {
@@ -544,21 +545,22 @@ public:
 };
 
 void demonstrateDiamondProblem() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: DIAMOND PROBLEM        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: DIAMOND PROBLEM        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating smartphone ---\n";
-    cout << "Notice: TWO Device constructors called!\n";
+    std::println("--- Creating smartphone ---");
+    std::println("Notice: TWO Device constructors called!");
     SmartPhone phone("MyPhone");
 
-    cout << "\n--- Using features ---\n";
+    std::println("");
+    std::println("--- Using features ---");
     phone.useFeatures();
-
-    cout << "\n⚠️  Diamond problem:\n";
-    cout << "   • SmartPhone has TWO copies of Device\n";
-    cout << "   • Ambiguity when accessing Device members\n";
-    cout << "   • Solution: Virtual inheritance (next example)\n";
+    std::println("\n--- Two Device subobjects ---");
+    std::println("  SmartPhone* converts to Device*: {} (ambiguous)", std::is_convertible_v<SmartPhone*, Device*>);
+    std::println("  sizeof(SmartPhone): {} (GCC x86-64)", sizeof(SmartPhone));
 }
 
 // ============================================
@@ -567,48 +569,48 @@ void demonstrateDiamondProblem() {
 
 class VDevice {
 protected:
-    string name;
+    std::string name;
 
 public:
-    VDevice(string n) : name(n) {
-        cout << "  VDevice constructor: " << name << "\n";
+    explicit VDevice(std::string n) : name(n) {
+        std::println("  VDevice constructor: {}", name);
     }
 
     void powerOn() {
-        cout << "  " << name << " powered on\n";
+        std::println("  {} powered on", name);
     }
 };
 
 // VIRTUAL inheritance
 class VPhone : virtual public VDevice {
 public:
-    VPhone(string n) : VDevice(n) {
-        cout << "  VPhone constructor\n";
+    explicit VPhone(std::string n) : VDevice(n) {
+        std::println("  VPhone constructor");
     }
 
     void makeCall() {
-        cout << "  Making a call\n";
+        std::println("  Making a call");
     }
 };
 
 // VIRTUAL inheritance
 class VCamera : virtual public VDevice {
 public:
-    VCamera(string n) : VDevice(n) {
-        cout << "  VCamera constructor\n";
+    explicit VCamera(std::string n) : VDevice(n) {
+        std::println("  VCamera constructor");
     }
 
     void takePicture() {
-        cout << "  Taking a picture\n";
+        std::println("  Taking a picture");
     }
 };
 
 // Now only ONE copy of VDevice!
 class VSmartPhone : public VPhone, public VCamera {
 public:
-    VSmartPhone(string n)
+    explicit VSmartPhone(std::string n)
         : VDevice(n), VPhone(n), VCamera(n) {  // Must call VDevice explicitly
-        cout << "  VSmartPhone constructor\n";
+        std::println("  VSmartPhone constructor");
     }
 
     void useFeatures() {
@@ -619,21 +621,22 @@ public:
 };
 
 void demonstrateVirtualInheritance() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: VIRTUAL INHERITANCE    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: VIRTUAL INHERITANCE    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating smartphone with virtual inheritance ---\n";
-    cout << "Notice: Only ONE VDevice constructor called!\n";
+    std::println("--- Creating smartphone with virtual inheritance ---");
+    std::println("Notice: Only ONE VDevice constructor called!");
     VSmartPhone phone("MyVPhone");
 
-    cout << "\n--- Using features ---\n";
+    std::println("");
+    std::println("--- Using features ---");
     phone.useFeatures();
-
-    cout << "\n✅ Virtual inheritance solves diamond problem:\n";
-    cout << "   • Only ONE copy of VDevice\n";
-    cout << "   • No ambiguity\n";
-    cout << "   • Most derived class calls base constructor\n";
+    std::println("\n--- One shared VDevice ---");
+    std::println("  VSmartPhone* converts to VDevice*: {}", std::is_convertible_v<VSmartPhone*, VDevice*>);
+    std::println("  sizeof(VSmartPhone): {} (GCC x86-64)", sizeof(VSmartPhone));
 }
 
 // ============================================
@@ -642,19 +645,18 @@ void demonstrateVirtualInheritance() {
 
 class Employee {
 protected:
-    string name;
+    std::string name;
     int employeeId;
     double baseSalary;
 
 public:
-    Employee(string n, int id, double salary)
+    Employee(std::string n, int id, double salary)
         : name(n), employeeId(id), baseSalary(salary) { }
 
     virtual ~Employee() { }  // Virtual destructor for polymorphism
 
-    void displayInfo() {
-        cout << "  ID: " << employeeId << ", Name: " << name
-             << ", Salary: $" << baseSalary << "\n";
+    virtual void displayInfo() {
+        std::println("  ID: {}, Name: {}, Salary: ${:g}", employeeId, name, baseSalary);
     }
 
     double getSalary() const {
@@ -668,13 +670,12 @@ private:
     double bonus;
 
 public:
-    Manager(string n, int id, double salary, int team, double b)
+    Manager(std::string n, int id, double salary, int team, double b)
         : Employee(n, id, salary), teamSize(team), bonus(b) { }
 
-    void displayInfo() {
+    void displayInfo() override {
         Employee::displayInfo();  // Call base version
-        cout << "  Role: Manager, Team size: " << teamSize
-             << ", Bonus: $" << bonus << "\n";
+        std::println("  Role: Manager, Team size: {}, Bonus: ${:g}", teamSize, bonus);
     }
 
     double getTotalCompensation() const {
@@ -684,50 +685,54 @@ public:
 
 class Developer : public Employee {
 private:
-    string programmingLanguage;
-    string project;
+    std::string programmingLanguage;
+    std::string project;
 
 public:
-    Developer(string n, int id, double salary, string lang, string proj)
+    Developer(std::string n, int id, double salary, std::string lang, std::string proj)
         : Employee(n, id, salary), programmingLanguage(lang), project(proj) { }
 
-    void displayInfo() {
+    void displayInfo() override {
         Employee::displayInfo();
-        cout << "  Role: Developer, Language: " << programmingLanguage
-             << ", Project: " << project << "\n";
+        std::println("  Role: Developer, Language: {}, Project: {}", programmingLanguage, project);
     }
 
     void code() {
-        cout << "  " << name << " is coding in " << programmingLanguage << "\n";
+        std::println("  {} is coding in {}", name, programmingLanguage);
     }
 };
 
 void demonstrateEmployeeHierarchy() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: EMPLOYEE HIERARCHY     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: EMPLOYEE HIERARCHY     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating employees ---\n";
+    std::println("--- Creating employees ---");
     Manager manager("Alice", 1001, 100000, 5, 20000);
     Developer dev1("Bob", 1002, 80000, "C++", "Database Engine");
     Developer dev2("Charlie", 1003, 85000, "Python", "ML Platform");
 
-    cout << "\n--- Manager info ---\n";
+    std::println("");
+    std::println("--- Manager info ---");
     manager.displayInfo();
-    cout << "  Total compensation: $" << manager.getTotalCompensation() << "\n";
+    std::println("  Total compensation: ${:g}", manager.getTotalCompensation());
 
-    cout << "\n--- Developer 1 info ---\n";
+    std::println("");
+    std::println("--- Developer 1 info ---");
     dev1.displayInfo();
     dev1.code();
 
-    cout << "\n--- Developer 2 info ---\n";
+    std::println("");
+    std::println("--- Developer 2 info ---");
     dev2.displayInfo();
     dev2.code();
-
-    cout << "\n✅ Real-world inheritance:\n";
-    cout << "   • Common properties in base (Employee)\n";
-    cout << "   • Specialized properties in derived (Manager, Developer)\n";
-    cout << "   • Code reuse and organization\n";
+    std::println("\n--- Through Employee pointers (displayInfo is virtual) ---");
+    Employee* staff[] = {&manager, &dev1};
+    for (Employee* e : staff) {
+        e->displayInfo();
+    }
 }
 
 // ============================================
@@ -737,14 +742,14 @@ void demonstrateEmployeeHierarchy() {
 // IS-A relationship (inheritance)
 class Vehicle {
 protected:
-    string brand;
+    std::string brand;
     int year;
 
 public:
-    Vehicle(string b, int y) : brand(b), year(y) { }
+    Vehicle(std::string b, int y) : brand(b), year(y) { }
 
     void start() {
-        cout << "  " << brand << " vehicle starting\n";
+        std::println("  {} vehicle starting", brand);
     }
 };
 
@@ -753,10 +758,10 @@ private:
     int doors;
 
 public:
-    Car(string b, int y, int d) : Vehicle(b, y), doors(d) { }
+    Car(std::string b, int y, int d) : Vehicle(b, y), doors(d) { }
 
     void drive() {
-        cout << "  Driving " << brand << " car with " << doors << " doors\n";
+        std::println("  Driving {} car with {} doors", brand, doors);
     }
 };
 
@@ -766,10 +771,10 @@ private:
     int horsepower;
 
 public:
-    Engine(int hp) : horsepower(hp) { }
+    explicit Engine(int hp) : horsepower(hp) { }
 
     void run() {
-        cout << "  Engine running: " << horsepower << "hp\n";
+        std::println("  Engine running: {}hp", horsepower);
     }
 
     int getHorsepower() const {
@@ -779,43 +784,39 @@ public:
 
 class Motorcycle {  // Motorcycle HAS-A Engine
 private:
-    string brand;
+    std::string brand;
     Engine engine;  // Composition
 
 public:
-    Motorcycle(string b, int hp) : brand(b), engine(hp) { }
+    Motorcycle(std::string b, int hp) : brand(b), engine(hp) { }
 
     void ride() {
-        cout << "  Riding " << brand << " motorcycle\n";
+        std::println("  Riding {} motorcycle", brand);
         engine.run();
     }
 };
 
 void demonstrateIsAvsHasA() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: IS-A vs HAS-A         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: IS-A vs HAS-A         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- IS-A relationship (inheritance) ---\n";
+    std::println("--- IS-A relationship (inheritance) ---");
     Car car("Toyota", 2024, 4);
     car.start();  // Inherited from Vehicle
     car.drive();  // Car's own method
-    cout << "  Car IS-A Vehicle ✅\n";
+    std::println("  Car IS-A Vehicle ✅");
 
-    cout << "\n--- HAS-A relationship (composition) ---\n";
+    std::println("");
+    std::println("--- HAS-A relationship (composition) ---");
     Motorcycle bike("Harley", 150);
     bike.ride();
-    cout << "  Motorcycle HAS-A Engine ✅\n";
-
-    cout << "\n💡 When to use:\n";
-    cout << "   IS-A (inheritance): Natural hierarchy, substitutability\n";
-    cout << "   HAS-A (composition): One object contains another\n";
-    cout << "\n";
-    cout << "   Examples:\n";
-    cout << "   • Dog IS-A Animal ✅ (inheritance)\n";
-    cout << "   • Car HAS-A Engine ✅ (composition)\n";
-    cout << "   • Student IS-A Person ✅ (inheritance)\n";
-    cout << "   • Book HAS-A Author ✅ (composition)\n";
+    std::println("  Motorcycle HAS-A Engine ✅");
+    std::println("\n--- Checking the relationships at compile time ---");
+    std::println("  Car* converts to Vehicle*:        {}", std::is_convertible_v<Car*, Vehicle*>);
+    std::println("  Motorcycle* converts to Engine*:  {}", std::is_convertible_v<Motorcycle*, Engine*>);
 }
 
 // ============================================
@@ -823,9 +824,9 @@ void demonstrateIsAvsHasA() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "INHERITANCE DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("INHERITANCE DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicInheritance();
     demonstrateAccessSpecifiers();
@@ -838,340 +839,6 @@ int main() {
     demonstrateEmployeeHierarchy();
     demonstrateIsAvsHasA();
 
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT IS INHERITANCE?\n";
-    cout << "========================================\n";
-    cout << "Inheritance is a mechanism to create new classes\n";
-    cout << "from existing classes, promoting code reuse and\n";
-    cout << "hierarchical organization.\n";
-    cout << "\n";
-    cout << "Key concepts:\n";
-    cout << "  • Base class (parent/superclass)\n";
-    cout << "  • Derived class (child/subclass)\n";
-    cout << "  • IS-A relationship\n";
-    cout << "  • Code reuse\n";
-    cout << "  • Specialization\n";
-
-    cout << "\n========================================\n";
-    cout << "BASIC SYNTAX\n";
-    cout << "========================================\n";
-    cout << "class Base {\n";
-    cout << "protected:\n";
-    cout << "    int data;\n";
-    cout << "public:\n";
-    cout << "    Base(int d) : data(d) { }\n";
-    cout << "    void baseMethod() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "private:\n";
-    cout << "    int derivedData;\n";
-    cout << "public:\n";
-    cout << "    // Must call base constructor\n";
-    cout << "    Derived(int d, int dd) : Base(d), derivedData(dd) { }\n";
-    cout << "    \n";
-    cout << "    void derivedMethod() {\n";
-    cout << "        baseMethod();  // Can call base methods\n";
-    cout << "        data = 10;     // Can access protected members\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "TYPES OF INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "1. SINGLE INHERITANCE:\n";
-    cout << "   A → B\n";
-    cout << "   class B : public A { };\n";
-    cout << "\n";
-    cout << "2. MULTIPLE INHERITANCE:\n";
-    cout << "   A, B → C\n";
-    cout << "   class C : public A, public B { };\n";
-    cout << "\n";
-    cout << "3. MULTILEVEL INHERITANCE:\n";
-    cout << "   A → B → C\n";
-    cout << "   class B : public A { };\n";
-    cout << "   class C : public B { };\n";
-    cout << "\n";
-    cout << "4. HIERARCHICAL INHERITANCE:\n";
-    cout << "   A → B, A → C\n";
-    cout << "   class B : public A { };\n";
-    cout << "   class C : public A { };\n";
-    cout << "\n";
-    cout << "5. HYBRID INHERITANCE:\n";
-    cout << "   Combination of above\n";
-
-    cout << "\n========================================\n";
-    cout << "ACCESS SPECIFIERS IN INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "PUBLIC INHERITANCE (most common):\n";
-    cout << "class Derived : public Base { };\n";
-    cout << "  • Base's public    → Derived's public\n";
-    cout << "  • Base's protected → Derived's protected\n";
-    cout << "  • Base's private   → Not accessible\n";
-    cout << "  • IS-A relationship\n";
-    cout << "\n";
-    cout << "PROTECTED INHERITANCE (rarely used):\n";
-    cout << "class Derived : protected Base { };\n";
-    cout << "  • Base's public    → Derived's protected\n";
-    cout << "  • Base's protected → Derived's protected\n";
-    cout << "  • Base's private   → Not accessible\n";
-    cout << "\n";
-    cout << "PRIVATE INHERITANCE (composition alternative):\n";
-    cout << "class Derived : private Base { };\n";
-    cout << "  • Base's public    → Derived's private\n";
-    cout << "  • Base's protected → Derived's private\n";
-    cout << "  • Base's private   → Not accessible\n";
-    cout << "  • HAS-A relationship (use composition instead)\n";
-
-    cout << "\n========================================\n";
-    cout << "WHAT IS INHERITED?\n";
-    cout << "========================================\n";
-    cout << "✅ INHERITED:\n";
-    cout << "  • Public members (as public/protected/private)\n";
-    cout << "  • Protected members (as protected/private)\n";
-    cout << "  • Member functions\n";
-    cout << "  • Static members\n";
-    cout << "\n";
-    cout << "❌ NOT INHERITED (but called):\n";
-    cout << "  • Constructors (must be called explicitly)\n";
-    cout << "  • Destructors (called automatically)\n";
-    cout << "  • Copy constructors\n";
-    cout << "  • Assignment operators\n";
-    cout << "\n";
-    cout << "❌ NEVER ACCESSIBLE:\n";
-    cout << "  • Private members of base class\n";
-
-    cout << "\n========================================\n";
-    cout << "CONSTRUCTOR/DESTRUCTOR ORDER\n";
-    cout << "========================================\n";
-    cout << "CONSTRUCTION (base to derived):\n";
-    cout << "  1. Base class constructor\n";
-    cout << "  2. Member objects constructors\n";
-    cout << "  3. Derived class constructor\n";
-    cout << "\n";
-    cout << "DESTRUCTION (derived to base - reverse):\n";
-    cout << "  1. Derived class destructor\n";
-    cout << "  2. Member objects destructors\n";
-    cout << "  3. Base class destructor\n";
-    cout << "\n";
-    cout << "Example:\n";
-    cout << "class A {\n";
-    cout << "    A() { cout << \"A constructor\"; }\n";
-    cout << "    ~A() { cout << \"A destructor\"; }\n";
-    cout << "};\n";
-    cout << "class B : public A {\n";
-    cout << "    B() { cout << \"B constructor\"; }  // Calls A() first\n";
-    cout << "    ~B() { cout << \"B destructor\"; }  // Calls ~A() after\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "PROTECTED ACCESS MODIFIER\n";
-    cout << "========================================\n";
-    cout << "protected members:\n";
-    cout << "  • NOT accessible to outside code\n";
-    cout << "  • Accessible to derived classes\n";
-    cout << "  • Useful for data that derived classes need\n";
-    cout << "\n";
-    cout << "Example:\n";
-    cout << "class Base {\n";
-    cout << "private:\n";
-    cout << "    int secret;        // Only Base can access\n";
-    cout << "protected:\n";
-    cout << "    int shared;        // Base and derived can access\n";
-    cout << "public:\n";
-    cout << "    int publicData;    // Everyone can access\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "    void func() {\n";
-    cout << "        // secret = 10;     // ❌ Error! Private\n";
-    cout << "        shared = 20;        // ✅ OK! Protected\n";
-    cout << "        publicData = 30;    // ✅ OK! Public\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "MULTIPLE INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "Syntax:\n";
-    cout << "class Derived : public Base1, public Base2 {\n";
-    cout << "    Derived() : Base1(), Base2() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Advantages:\n";
-    cout << "  • Inherit from multiple classes\n";
-    cout << "  • Combine functionality\n";
-    cout << "\n";
-    cout << "Disadvantages:\n";
-    cout << "  • Complexity\n";
-    cout << "  • Diamond problem\n";
-    cout << "  • Ambiguity issues\n";
-    cout << "\n";
-    cout << "⚠️  Use sparingly! Consider composition instead.\n";
-
-    cout << "\n========================================\n";
-    cout << "DIAMOND PROBLEM\n";
-    cout << "========================================\n";
-    cout << "Problem:\n";
-    cout << "       A\n";
-    cout << "      / \\\n";
-    cout << "     B   C\n";
-    cout << "      \\ /\n";
-    cout << "       D\n";
-    cout << "\n";
-    cout << "D inherits from B and C,\n";
-    cout << "B and C both inherit from A.\n";
-    cout << "Result: D has TWO copies of A!\n";
-    cout << "\n";
-    cout << "Solution: VIRTUAL INHERITANCE\n";
-    cout << "class B : virtual public A { };\n";
-    cout << "class C : virtual public A { };\n";
-    cout << "class D : public B, public C { };\n";
-    cout << "\n";
-    cout << "Now D has only ONE copy of A!\n";
-
-    cout << "\n========================================\n";
-    cout << "FUNCTION OVERRIDING\n";
-    cout << "========================================\n";
-    cout << "Derived class can override base class functions:\n";
-    cout << "\n";
-    cout << "class Base {\n";
-    cout << "public:\n";
-    cout << "    void display() {\n";
-    cout << "        cout << \"Base display\";\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "public:\n";
-    cout << "    void display() {  // Overrides Base::display()\n";
-    cout << "        cout << \"Derived display\";\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "To call base version from derived:\n";
-    cout << "void Derived::display() {\n";
-    cout << "    Base::display();  // Call base version\n";
-    cout << "    cout << \"Additional\";\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "IS-A vs HAS-A\n";
-    cout << "========================================\n";
-    cout << "IS-A relationship (INHERITANCE):\n";
-    cout << "  • \"Dog IS-A Animal\"\n";
-    cout << "  • \"Car IS-A Vehicle\"\n";
-    cout << "  • Use public inheritance\n";
-    cout << "  • Substitutability principle\n";
-    cout << "\n";
-    cout << "HAS-A relationship (COMPOSITION):\n";
-    cout << "  • \"Car HAS-A Engine\"\n";
-    cout << "  • \"Book HAS-A Author\"\n";
-    cout << "  • Use member objects\n";
-    cout << "  • More flexible\n";
-    cout << "\n";
-    cout << "Example:\n";
-    cout << "// IS-A (inheritance)\n";
-    cout << "class Dog : public Animal { };\n";
-    cout << "\n";
-    cout << "// HAS-A (composition)\n";
-    cout << "class Car {\n";
-    cout << "    Engine engine;  // Car HAS-A Engine\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "General rule: Prefer composition over inheritance!\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use public inheritance for IS-A relationships\n";
-    cout << "  • Make base destructors virtual (for polymorphism)\n";
-    cout << "  • Call base constructors explicitly\n";
-    cout << "  • Use protected for data derived classes need\n";
-    cout << "  • Keep inheritance hierarchies shallow\n";
-    cout << "  • Override functions with same signature\n";
-    cout << "  • Document inheritance relationships\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Overuse inheritance (favor composition)\n";
-    cout << "  • Use multiple inheritance without good reason\n";
-    cout << "  • Forget to call base constructors\n";
-    cout << "  • Make everything public just to inherit it\n";
-    cout << "  • Create deep inheritance hierarchies\n";
-    cout << "  • Use private/protected inheritance (use composition)\n";
-    cout << "  • Ignore the diamond problem\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Not calling base constructor\n";
-    cout << "class Derived : public Base {\n";
-    cout << "    Derived() { }  // ❌ Base() called implicitly\n";
-    cout << "};\n";
-    cout << "Fix: Derived() : Base(args) { }\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Trying to access private base members\n";
-    cout << "class Derived : public Base {\n";
-    cout << "    void func() {\n";
-    cout << "        privateBaseMember = 10;  // ❌ Error!\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "Fix: Use protected or public interface\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Forgetting virtual destructor\n";
-    cout << "class Base {\n";
-    cout << "    ~Base() { }  // ❌ Not virtual\n";
-    cout << "};\n";
-    cout << "Fix: virtual ~Base() { }\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Basic inheritance\n";
-    cout << "class Base {\n";
-    cout << "protected:\n";
-    cout << "    int data;\n";
-    cout << "public:\n";
-    cout << "    Base(int d) : data(d) { }\n";
-    cout << "    virtual ~Base() { }\n";
-    cout << "    void baseFunc() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "private:\n";
-    cout << "    int derivedData;\n";
-    cout << "public:\n";
-    cout << "    Derived(int d, int dd) : Base(d), derivedData(dd) { }\n";
-    cout << "    void derivedFunc() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Multiple inheritance\n";
-    cout << "class Multi : public Base1, public Base2 {\n";
-    cout << "    Multi() : Base1(), Base2() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Virtual inheritance (diamond problem)\n";
-    cout << "class B : virtual public A { };\n";
-    cout << "class C : virtual public A { };\n";
-    cout << "class D : public B, public C { };\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Inheritance creates IS-A relationships\n";
-    cout << "2. Derived class inherits base class members\n";
-    cout << "3. Public inheritance is most common\n";
-    cout << "4. Protected members accessible to derived classes\n";
-    cout << "5. Constructors called base-to-derived\n";
-    cout << "6. Destructors called derived-to-base\n";
-    cout << "7. Use virtual inheritance for diamond problem\n";
-    cout << "8. Prefer composition over inheritance\n";
-    cout << "9. Make base destructors virtual\n";
-    cout << "10. Keep hierarchies simple and shallow\n";
-
     return 0;
 }
+

@@ -1,4 +1,4 @@
-#include <iostream>
+#include <print>
 #include <string>
 
 int main()
@@ -6,108 +6,114 @@ int main()
     // =================================================
     // BASIC POINTER — declaration and initialization
     // =================================================
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Basic Pointer Declaration\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Basic Pointer Declaration");
+    std::println("=====================================================");
 
     int  number  = 42;
     int* ptr     = &number;    // ptr holds the ADDRESS of number
 
-    std::cout << "number value:      " << number  << '\n';
-    std::cout << "number address:    " << &number << '\n';
-    std::cout << "ptr (address):     " << ptr     << '\n';   // same as &number
-    std::cout << "ptr value (*ptr):  " << *ptr    << '\n';   // dereference — gets the value
+    std::println("number value:      {}", number);
+    std::println("number address:    {}", static_cast<const void*>(&number));
+    std::println("ptr (address):     {}", static_cast<const void*>(ptr));  // same as &number
+    std::println("ptr value (*ptr):  {}", *ptr);  // dereference — gets the value
 
 
     // =================================================
     // MODIFYING VALUE THROUGH POINTER
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Modifying Value Through Pointer\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Modifying Value Through Pointer");
+    std::println("=====================================================");
 
     int score = 100;
     int* pScore = &score;
 
-    std::cout << "Before: score = " << score << '\n';
+    std::println("Before: score = {}", score);
 
     *pScore = 250;    // modify score through the pointer
 
-    std::cout << "After (*pScore = 250): score = " << score << '\n';
-    std::cout << "score and *pScore are the same: " << (*pScore == score ? "YES" : "NO") << '\n';
+    std::println("After (*pScore = 250): score = {}", score);
+    std::println("score and *pScore are the same: {}", (*pScore == score ? "YES" : "NO"));
 
 
     // =================================================
     // POINTER ARITHMETIC
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Pointer Arithmetic\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Pointer Arithmetic");
+    std::println("=====================================================");
 
     int arr[5] = {10, 20, 30, 40, 50};
     int* pArr  = arr;    // pointer to first element (arr decays to &arr[0])
 
-    std::cout << "Array traversal using pointer arithmetic:\n";
+    std::println("Array traversal using pointer arithmetic:");
     for (int i = 0; i < 5; ++i) {
-        std::cout << "pArr + " << i << " → address: " << (pArr + i)
-                  << " → value: " << *(pArr + i) << '\n';
+        std::println("pArr + {} → address: {} → value: {}", i, static_cast<const void*>(pArr + i), *(pArr + i));
     }
 
     // Increment pointer
-    std::cout << "\nMoving pointer forward:\n";
-    std::cout << "*pArr     = " << *pArr     << '\n';   // 10
+    std::println("");
+    std::println("Moving pointer forward:");
+    std::println("*pArr              = {}", *pArr);  // 10
     ++pArr;
-    std::cout << "*pArr++   = " << *pArr     << '\n';   // 20
+    std::println("*pArr after ++pArr = {}", *pArr);  // 20
     ++pArr;
-    std::cout << "*pArr++   = " << *pArr     << '\n';   // 30
+    std::println("*pArr after ++pArr = {}", *pArr);  // 30
 
     // Pointer difference
     int* pFirst = arr;
     int* pLast  = &arr[4];
-    std::cout << "\nDistance between pFirst and pLast: " << (pLast - pFirst) << " elements\n";
+    std::println("");
+    std::println("Distance between pFirst and pLast: {} elements", (pLast - pFirst));
 
 
     // =================================================
     // POINTER TO POINTER
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Pointer to Pointer\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Pointer to Pointer");
+    std::println("=====================================================");
 
     int   value  = 99;
     int*  pVal   = &value;    // pointer to int
     int** ppVal  = &pVal;     // pointer to pointer to int
 
-    std::cout << "value:         " << value   << '\n';
-    std::cout << "*pVal:         " << *pVal   << '\n';
-    std::cout << "**ppVal:       " << **ppVal << '\n';   // double dereference
+    std::println("value:         {}", value);
+    std::println("*pVal:         {}", *pVal);
+    std::println("**ppVal:       {}", **ppVal);  // double dereference
 
     **ppVal = 777;    // modify value through double pointer
-    std::cout << "After **ppVal = 777 → value = " << value << '\n';
+    std::println("After **ppVal = 777 → value = {}", value);
 
 
     // =================================================
     // POINTER AND DYNAMIC MEMORY
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Dynamic Memory (heap allocation)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Dynamic Memory (heap allocation)");
+    std::println("=====================================================");
 
     // Single value on heap
     int* pHeap = new int(55);
-    std::cout << "Heap value:   " << *pHeap << '\n';
-    std::cout << "Heap address: " << pHeap  << '\n';
+    std::println("Heap value:   {}", *pHeap);
+    std::println("Heap address: {}", static_cast<const void*>(pHeap));
     delete pHeap;       // ALWAYS delete what you new
     pHeap = nullptr;    // good practice — prevent dangling pointer
-    std::cout << "After delete + nullptr: pHeap = " << pHeap << '\n';
+    std::println("After delete + nullptr: pHeap = {}", static_cast<const void*>(pHeap));
 
     // Array on heap
     int size = 4;
     int* pDynArr = new int[size]{100, 200, 300, 400};
-    std::cout << "\nDynamic array: ";
+    std::println("");
+    std::print("Dynamic array: ");
     for (int i = 0; i < size; ++i)
-        std::cout << pDynArr[i] << " ";
-    std::cout << '\n';
+        std::print("{} ", pDynArr[i]);
+    std::println("");
     delete[] pDynArr;   // use delete[] for arrays
     pDynArr = nullptr;
 
@@ -115,28 +121,29 @@ int main()
     // =================================================
     // CONST POINTER VARIATIONS
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: const Pointer Variations\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: const Pointer Variations");
+    std::println("=====================================================");
 
     int a = 10, b = 20;
 
     // Pointer to const — cannot modify the VALUE, but can point elsewhere
     const int* pToConst = &a;
-    std::cout << "const int* pToConst = " << *pToConst << '\n';
+    std::println("const int* pToConst = {}", *pToConst);
     // *pToConst = 99;   // ERROR — value is const
     pToConst = &b;       // OK — pointer itself can change
-    std::cout << "pToConst now points to b: " << *pToConst << '\n';
+    std::println("pToConst now points to b: {}", *pToConst);
 
     // Const pointer — cannot point elsewhere, but CAN modify the value
     int* const constPtr = &a;
     *constPtr = 99;      // OK — value can change
     // constPtr = &b;    // ERROR — pointer itself is const
-    std::cout << "int* const constPtr → a is now: " << a << '\n';
+    std::println("int* const constPtr → a is now: {}", a);
 
     // Const pointer to const — cannot do either
     const int* const fullConst = &b;
-    std::cout << "const int* const fullConst = " << *fullConst << '\n';
+    std::println("const int* const fullConst = {}", *fullConst);
     // *fullConst = 99;   // ERROR
     // fullConst  = &a;   // ERROR
 

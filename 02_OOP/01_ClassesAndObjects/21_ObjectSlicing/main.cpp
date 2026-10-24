@@ -1,7 +1,9 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 #include <memory>
+#include <typeinfo>
+#include <type_traits>
 using namespace std;
 
 // ============================================
@@ -35,6 +37,7 @@ using namespace std;
  * - Delete copy operations
  * - Make base class abstract
  * - Use containers of pointers
+ * - Detect it: clang-tidy check cppcoreguidelines-slicing
  *
  * BEST PRACTICES:
  * - Never pass polymorphic objects by value
@@ -53,20 +56,20 @@ protected:
     string name;
 
 public:
-    Animal(const string& n) : name(n) {
-        cout << "  Animal constructor: " << name << "\n";
+    explicit Animal(const string& n) : name(n) {
+        std::println("  Animal constructor: {}", name);
     }
 
     virtual void speak() const {
-        cout << "  " << name << " makes a sound\n";
+        std::println("  {} makes a sound", name);
     }
 
     virtual void display() const {
-        cout << "  Animal: " << name << "\n";
+        std::println("  Animal: {}", name);
     }
 
     virtual ~Animal() {
-        cout << "  Animal destructor: " << name << "\n";
+        std::println("  Animal destructor: {}", name);
     }
 };
 
@@ -77,43 +80,39 @@ private:
 public:
     Dog(const string& n, const string& b)
         : Animal(n), breed(b) {
-        cout << "  Dog constructor: " << name << " (" << breed << ")\n";
+        std::println("  Dog constructor: {} ({})", name, breed);
     }
 
     void speak() const override {
-        cout << "  " << name << " barks: Woof! Woof!\n";
+        std::println("  {} barks: Woof! Woof!", name);
     }
 
     void display() const override {
-        cout << "  Dog: " << name << " (Breed: " << breed << ")\n";
+        std::println("  Dog: {} (Breed: {})", name, breed);
     }
 
     ~Dog() {
-        cout << "  Dog destructor: " << name << "\n";
+        std::println("  Dog destructor: {}", name);
     }
 };
 
 void demonstrateProblem() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: THE PROBLEM           ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: THE PROBLEM           ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating a Dog object ---\n";
+    std::println("--- Creating a Dog object ---");
     Dog dog("Buddy", "Golden Retriever");
     dog.display();
     dog.speak();
 
-    cout << "\n--- Object Slicing: Assigning Dog to Animal ---\n";
+    std::println("");
+    std::println("--- Object Slicing: Assigning Dog to Animal ---");
     Animal animal = dog;  // ⚠️ SLICING HAPPENS HERE!
     animal.display();     // ⚠️ Calls Animal::display, not Dog::display
     animal.speak();       // ⚠️ Calls Animal::speak, not Dog::speak
-
-    cout << "\n⚠️  WHAT HAPPENED:\n";
-    cout << "   • Dog object was sliced\n";
-    cout << "   • breed member was lost\n";
-    cout << "   • Polymorphism is lost\n";
-    cout << "   • Only base part copied\n";
-    cout << "   • Incorrect behavior!\n";
 }
 
 // ============================================
@@ -121,44 +120,42 @@ void demonstrateProblem() {
 // ============================================
 
 void processAnimalByValue(Animal a) {  // ⚠️ Pass by value - causes slicing!
-    cout << "  Processing animal:\n";
+    std::println("  Processing animal:");
     a.display();
     a.speak();
 }
 
 void processAnimalByReference(const Animal& a) {  // ✅ Pass by reference - no slicing
-    cout << "  Processing animal:\n";
+    std::println("  Processing animal:");
     a.display();
     a.speak();
 }
 
 void processAnimalByPointer(const Animal* a) {  // ✅ Pass by pointer - no slicing
-    cout << "  Processing animal:\n";
+    std::println("  Processing animal:");
     a->display();
     a->speak();
 }
 
 void demonstrateFunctionSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: FUNCTION SLICING      ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: FUNCTION SLICING      ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     Dog dog("Max", "German Shepherd");
 
-    cout << "--- Pass by value (SLICING!) ---\n";
+    std::println("--- Pass by value (SLICING!) ---");
     processAnimalByValue(dog);  // ⚠️ Dog is sliced to Animal
 
-    cout << "\n--- Pass by reference (NO slicing) ---\n";
+    std::println("");
+    std::println("--- Pass by reference (NO slicing) ---");
     processAnimalByReference(dog);  // ✅ Polymorphism works!
 
-    cout << "\n--- Pass by pointer (NO slicing) ---\n";
+    std::println("");
+    std::println("--- Pass by pointer (NO slicing) ---");
     processAnimalByPointer(&dog);  // ✅ Polymorphism works!
-
-    cout << "\n💡 KEY LESSON:\n";
-    cout << "   • NEVER pass polymorphic objects by value\n";
-    cout << "   • ALWAYS use references or pointers\n";
-    cout << "   • Pass by value loses derived information\n";
-    cout << "   • Pass by reference/pointer preserves polymorphism\n";
 }
 
 // ============================================
@@ -166,30 +163,33 @@ void demonstrateFunctionSlicing() {
 // ============================================
 
 void demonstrateContainerSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: CONTAINER SLICING     ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: CONTAINER SLICING     ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     Dog dog1("Rocky", "Bulldog");
     Dog dog2("Luna", "Husky");
 
-    cout << "--- BAD: vector of Animal (value) - SLICING! ---\n";
+    std::println("--- BAD: vector of Animal (value) - SLICING! ---");
     vector<Animal> animals;  // ⚠️ Stores by value!
     animals.push_back(dog1);  // ⚠️ Dog is sliced!
     animals.push_back(dog2);  // ⚠️ Dog is sliced!
 
-    cout << "Iterating over animals:\n";
+    std::println("Iterating over animals:");
     for (const auto& a : animals) {
         a.display();  // ⚠️ Only calls Animal::display
         a.speak();    // ⚠️ Only calls Animal::speak
     }
 
-    cout << "\n--- GOOD: vector of pointers - NO slicing ---\n";
+    std::println("");
+    std::println("--- GOOD: vector of pointers - NO slicing ---");
     vector<Animal*> animalPtrs;  // ✅ Stores pointers!
     animalPtrs.push_back(new Dog("Charlie", "Beagle"));
     animalPtrs.push_back(new Dog("Daisy", "Poodle"));
 
-    cout << "Iterating over animal pointers:\n";
+    std::println("Iterating over animal pointers:");
     for (const auto* a : animalPtrs) {
         a->display();  // ✅ Calls Dog::display
         a->speak();    // ✅ Calls Dog::speak
@@ -200,22 +200,18 @@ void demonstrateContainerSlicing() {
         delete a;
     }
 
-    cout << "\n--- BEST: vector of smart pointers ---\n";
+    std::println("");
+    std::println("--- BEST: vector of smart pointers ---");
     vector<unique_ptr<Animal>> smartPtrs;
     smartPtrs.push_back(make_unique<Dog>("Bella", "Labrador"));
     smartPtrs.push_back(make_unique<Dog>("Cooper", "Boxer"));
 
-    cout << "Iterating over smart pointers:\n";
+    std::println("Iterating over smart pointers:");
     for (const auto& a : smartPtrs) {
         a->display();  // ✅ Calls Dog::display
         a->speak();    // ✅ Calls Dog::speak
     }
     // Automatic cleanup!
-
-    cout << "\n💡 CONTAINER RULES:\n";
-    cout << "   • NEVER use vector<Base> for polymorphic objects\n";
-    cout << "   • Use vector<Base*> (manual memory management)\n";
-    cout << "   • BEST: vector<unique_ptr<Base>> (automatic cleanup)\n";
 }
 
 // ============================================
@@ -227,8 +223,8 @@ protected:
     string color;
 
 public:
-    Shape(const string& c) : color(c) {
-        cout << "  Shape(" << color << ")\n";
+    explicit Shape(const string& c) : color(c) {
+        std::println("  Shape({})", color);
     }
 
     virtual double area() const {
@@ -236,11 +232,11 @@ public:
     }
 
     virtual void display() const {
-        cout << "  Shape, color: " << color << "\n";
+        std::println("  Shape, color: {}", color);
     }
 
     virtual ~Shape() {
-        cout << "  ~Shape()\n";
+        std::println("  ~Shape()");
     }
 };
 
@@ -251,7 +247,7 @@ private:
 public:
     Circle(const string& c, double r)
         : Shape(c), radius(r) {
-        cout << "  Circle(radius=" << radius << ")\n";
+        std::println("  Circle(radius={})", radius);
     }
 
     double area() const override {
@@ -259,40 +255,36 @@ public:
     }
 
     void display() const override {
-        cout << "  Circle, color: " << color
-             << ", radius: " << radius
-             << ", area: " << area() << "\n";
+        std::println("  Circle, color: {}, radius: {:g}, area: {:g}", color, radius, area());
     }
 
     ~Circle() {
-        cout << "  ~Circle()\n";
+        std::println("  ~Circle()");
     }
 };
 
 void demonstrateCopySlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: COPY SLICING          ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: COPY SLICING          ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating Circle ---\n";
+    std::println("--- Creating Circle ---");
     Circle circle("Red", 5.0);
     circle.display();
 
-    cout << "\n--- Copy to Shape (SLICING) ---\n";
+    std::println("");
+    std::println("--- Copy to Shape (SLICING) ---");
     Shape shape = circle;  // ⚠️ Slicing!
     shape.display();       // ⚠️ Only Shape part
-    cout << "  Area: " << shape.area() << "\n";  // ⚠️ Returns 0, not circle area!
+    std::println("  Area: {:g}", shape.area());  // ⚠️ Returns 0, not circle area!
 
-    cout << "\n--- Copy via reference (NO slicing) ---\n";
+    std::println("");
+    std::println("--- Copy via reference (NO slicing) ---");
     const Shape& shapeRef = circle;  // ✅ Reference
     shapeRef.display();              // ✅ Calls Circle::display
-    cout << "  Area: " << shapeRef.area() << "\n";  // ✅ Correct area!
-
-    cout << "\n💡 COPY OPERATIONS:\n";
-    cout << "   • Copy construction can cause slicing\n";
-    cout << "   • Assignment can cause slicing\n";
-    cout << "   • Use references to avoid slicing\n";
-    cout << "   • Consider making base non-copyable\n";
+    std::println("  Area: {:g}", shapeRef.area());  // ✅ Correct area!
 }
 
 // ============================================
@@ -304,7 +296,7 @@ protected:
     string brand;
 
 public:
-    Vehicle(const string& b) : brand(b) {}
+    explicit Vehicle(const string& b) : brand(b) {}
 
     // ✅ Delete copy operations to prevent slicing
     Vehicle(const Vehicle&) = delete;
@@ -322,34 +314,30 @@ public:
     Car(const string& b, int d) : Vehicle(b), doors(d) {}
 
     void drive() const override {
-        cout << "  Driving " << brand << " car with " << doors << " doors\n";
+        std::println("  Driving {} car with {} doors", brand, doors);
     }
 };
 
 void demonstratePreventSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: PREVENTING SLICING    ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: PREVENTING SLICING    ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     Car car("Toyota", 4);
 
     // Vehicle v = car;  // ❌ Compilation error! Copy deleted
     // Vehicle v2;       // ❌ Can't create Vehicle (abstract)
 
-    cout << "--- Using through reference (correct way) ---\n";
+    std::println("--- Using through reference (correct way) ---");
     const Vehicle& vRef = car;
     vRef.drive();
 
-    cout << "\n--- Using through pointer (correct way) ---\n";
+    std::println("");
+    std::println("--- Using through pointer (correct way) ---");
     Vehicle* vPtr = &car;
     vPtr->drive();
-
-    cout << "\n✅ PREVENTION TECHNIQUES:\n";
-    cout << "   • Delete copy constructor\n";
-    cout << "   • Delete copy assignment operator\n";
-    cout << "   • Make base class abstract (pure virtual)\n";
-    cout << "   • Force use of pointers/references\n";
-    cout << "   • Compiler errors instead of runtime bugs!\n";
 }
 
 // ============================================
@@ -359,11 +347,11 @@ void demonstratePreventSlicing() {
 class Base {
 public:
     Base() {
-        cout << "  Base constructor\n";
+        std::println("  Base constructor");
     }
 
     virtual ~Base() {  // ✅ Virtual destructor
-        cout << "  Base destructor\n";
+        std::println("  Base destructor");
     }
 };
 
@@ -373,37 +361,38 @@ private:
 
 public:
     Derived() : data(new int[100]) {
-        cout << "  Derived constructor (allocated memory)\n";
+        std::println("  Derived constructor (allocated memory)");
     }
 
     ~Derived() {
         delete[] data;
-        cout << "  Derived destructor (freed memory)\n";
+        std::println("  Derived destructor (freed memory)");
     }
+
+    // Owns a raw array: copying a Derived would delete it twice
+    Derived(const Derived&) = delete;
+    Derived& operator=(const Derived&) = delete;
 };
 
 void demonstrateDestructorSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: DESTRUCTOR & SLICING  ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: DESTRUCTOR & SLICING  ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- WRONG: Delete through base pointer (no slicing) ---\n";
+    std::println("--- Delete through a base pointer (the virtual destructor makes it safe) ---");
     Base* ptr = new Derived();
     delete ptr;  // ✅ Virtual destructor calls both destructors
 
-    cout << "\n--- Slicing in variable assignment ---\n";
+    std::println("");
+    std::println("--- Slicing in variable assignment ---");
     {
         Derived d;
         Base b = d;  // ⚠️ Slicing! Only base part copied
-        // When b goes out of scope, only Base destructor called
-        // Derived destructor NOT called for sliced part
+        // b is a complete Base object: at the end of the scope ~Base() runs for b,
+        // and ~Derived() + ~Base() run for d. Nothing leaks - slicing copies, it destroys nothing.
     }
-
-    cout << "\n💡 VIRTUAL DESTRUCTOR:\n";
-    cout << "   • Always virtual in base classes\n";
-    cout << "   • Ensures proper cleanup\n";
-    cout << "   • Prevents memory leaks\n";
-    cout << "   • Related to slicing issues\n";
 }
 
 // ============================================
@@ -419,7 +408,7 @@ public:
     Employee(const string& n, double s) : name(n), salary(s) {}
 
     virtual void displaySalary() const {
-        cout << "  " << name << ": $" << salary << "\n";
+        std::println("  {}: ${}", name, salary);
     }
 
     virtual ~Employee() = default;
@@ -434,9 +423,7 @@ public:
         : Employee(n, s), bonus(b) {}
 
     void displaySalary() const override {
-        cout << "  " << name << ": $" << salary
-             << " + $" << bonus << " bonus = $"
-             << (salary + bonus) << "\n";
+        std::println("  {}: ${} + ${} bonus = ${}", name, salary, bonus, (salary + bonus));
     }
 };
 
@@ -457,29 +444,27 @@ unique_ptr<Employee> getEmployeeBest() {
 }
 
 void demonstrateReturnSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: RETURN VALUE SLICING  ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: RETURN VALUE SLICING  ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Return by value (SLICING) ---\n";
+    std::println("--- Return by value (SLICING) ---");
     Employee emp = getEmployeeBad();
     emp.displaySalary();  // ⚠️ Bonus is lost!
 
-    cout << "\n--- Return by pointer (NO slicing) ---\n";
+    std::println("");
+    std::println("--- Return by pointer (NO slicing) ---");
     Employee* empPtr = getEmployeeGood();
     empPtr->displaySalary();  // ✅ Bonus included!
     delete empPtr;
 
-    cout << "\n--- Return smart pointer (BEST) ---\n";
+    std::println("");
+    std::println("--- Return smart pointer (BEST) ---");
     auto empSmart = getEmployeeBest();
     empSmart->displaySalary();  // ✅ Bonus included!
     // Automatic cleanup
-
-    cout << "\n💡 RETURN VALUES:\n";
-    cout << "   • Never return polymorphic objects by value\n";
-    cout << "   • Use pointers or references\n";
-    cout << "   • Prefer smart pointers\n";
-    cout << "   • Avoid slicing in return values\n";
 }
 
 // ============================================
@@ -495,7 +480,7 @@ public:
     Book(const string& t, double p) : title(t), price(p) {}
 
     virtual void display() const {
-        cout << "  Book: " << title << " ($" << price << ")\n";
+        std::println("  Book: {} (${})", title, price);
     }
 
     virtual ~Book() = default;
@@ -510,35 +495,32 @@ public:
         : Book(t, p), format(f) {}
 
     void display() const override {
-        cout << "  EBook: " << title << " ($" << price
-             << ") Format: " << format << "\n";
+        std::println("  EBook: {} (${}) Format: {}", title, price, format);
     }
 };
 
 void demonstrateAssignmentSlicing() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: ASSIGNMENT SLICING    ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: ASSIGNMENT SLICING    ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     EBook ebook("Modern C++", 49.99, "PDF");
     Book book("Old C++", 29.99);
 
-    cout << "--- Before assignment ---\n";
+    std::println("--- Before assignment ---");
     ebook.display();
     book.display();
 
-    cout << "\n--- Assignment (SLICING) ---\n";
+    std::println("");
+    std::println("--- Assignment (SLICING) ---");
     book = ebook;  // ⚠️ Only base part assigned, format is lost!
 
-    cout << "\n--- After assignment ---\n";
+    std::println("");
+    std::println("--- After assignment ---");
     ebook.display();  // ✅ Still has format
     book.display();   // ⚠️ Format was sliced off
-
-    cout << "\n⚠️  WHAT HAPPENED:\n";
-    cout << "   • Only Book part of EBook was copied\n";
-    cout << "   • format member was lost\n";
-    cout << "   • book is still a Book, not an EBook\n";
-    cout << "   • Assignment operator doesn't change type\n";
 }
 
 // ============================================
@@ -561,17 +543,48 @@ private:
     string data;
 
 public:
-    SafeDerived(const string& d) : data(d) {}
+    explicit SafeDerived(const string& d) : data(d) {}
 
     void display() const {
-        cout << "  SafeDerived: " << data << "\n";
+        std::println("  SafeDerived: {}", data);
+    }
+};
+
+// Alternative to "no copy at all": protected copy operations + virtual clone()
+class ClonableBase {
+protected:
+    ClonableBase() = default;
+    ClonableBase(const ClonableBase&) = default;  // protected: no slicing from outside
+    ClonableBase& operator=(const ClonableBase&) = default;
+
+public:
+    virtual unique_ptr<ClonableBase> clone() const = 0;
+    virtual void speak() const = 0;
+    virtual ~ClonableBase() = default;
+};
+
+class ClonableDog : public ClonableBase {
+private:
+    string name;
+
+public:
+    explicit ClonableDog(const string& n) : name(n) {}
+
+    unique_ptr<ClonableBase> clone() const override {
+        return make_unique<ClonableDog>(*this);
+    }
+
+    void speak() const override {
+        std::println("  {} barks", name);
     }
 };
 
 void demonstrateCompileTimeDetection() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: COMPILE-TIME DETECTION║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: COMPILE-TIME DETECTION║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     SafeDerived obj("Test");
     obj.display();
@@ -579,16 +592,20 @@ void demonstrateCompileTimeDetection() {
     // SafeDerived copy = obj;  // ❌ Compilation error!
     // NonCopyableBase base = obj;  // ❌ Compilation error!
 
-    cout << "--- Using through reference (OK) ---\n";
+    std::println("--- Using through reference (OK) ---");
     const NonCopyableBase& ref = obj;
-    // ref.display();  // Would work if display() was in base
+    (void)ref;  // display() is not in the base, so there is nothing to call here
 
-    cout << "\n✅ COMPILE-TIME DETECTION:\n";
-    cout << "   • Delete copy operations in base\n";
-    cout << "   • Compiler catches slicing attempts\n";
-    cout << "   • Errors at compile time, not runtime\n";
-    cout << "   • Forces correct usage\n";
-    cout << "   • Safer design\n";
+    std::println("");
+    std::println("--- Alternative: protected copy + clone() ---");
+    ClonableDog rex("Rex");
+    ClonableDog copy = rex;  // ✅ copying the DERIVED type is fine
+    copy.speak();
+
+    unique_ptr<ClonableBase> original = make_unique<ClonableDog>("Fido");
+    unique_ptr<ClonableBase> cloned = original->clone();  // ✅ copy through a base pointer
+    cloned->speak();
+    // ClonableBase b = rex;  // ❌ Error: copy constructor is protected
 }
 
 // ============================================
@@ -596,47 +613,33 @@ void demonstrateCompileTimeDetection() {
 // ============================================
 
 void demonstrateBestPractices() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: BEST PRACTICES       ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: BEST PRACTICES       ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "✅ PREVENTING OBJECT SLICING:\n";
-    cout << "\n";
-    cout << "1. Use Pointers or References:\n";
-    cout << "   void func(Base& obj);          // ✅ Reference\n";
-    cout << "   void func(Base* obj);          // ✅ Pointer\n";
-    cout << "   void func(Base obj);           // ❌ Value - slicing!\n";
-    cout << "\n";
-    cout << "2. Use Smart Pointers in Containers:\n";
-    cout << "   vector<unique_ptr<Base>> v;    // ✅ Smart pointers\n";
-    cout << "   vector<Base*> v;               // ⚠️  Raw pointers\n";
-    cout << "   vector<Base> v;                // ❌ Value - slicing!\n";
-    cout << "\n";
-    cout << "3. Delete Copy Operations:\n";
-    cout << "   Base(const Base&) = delete;\n";
-    cout << "   Base& operator=(const Base&) = delete;\n";
-    cout << "\n";
-    cout << "4. Make Base Class Abstract:\n";
-    cout << "   virtual void func() = 0;       // Pure virtual\n";
-    cout << "\n";
-    cout << "5. Always Virtual Destructor:\n";
-    cout << "   virtual ~Base() = default;\n";
-    cout << "\n";
-    cout << "❌ COMMON MISTAKES:\n";
-    cout << "   • Passing polymorphic objects by value\n";
-    cout << "   • Using vector<Base> instead of vector<Base*>\n";
-    cout << "   • Returning derived objects by value as base\n";
-    cout << "   • Assigning derived to base variable\n";
-    cout << "   • Not using virtual destructor\n";
-    cout << "\n";
-    cout << "💡 GOLDEN RULE:\n";
-    cout << "   For polymorphic types, ALWAYS use:\n";
-    cout << "   • Pointers (preferably smart pointers)\n";
-    cout << "   • References\n";
-    cout << "   NEVER use:\n";
-    cout << "   • Pass by value\n";
-    cout << "   • Store by value\n";
-    cout << "   • Return by value\n";
+    std::println("--- Creating objects ---");
+    Dog dog("Rex", "Collie");
+    Animal sliced = dog;         // ⚠️ copy into an Animal
+    const Animal& ref = dog;     // ✅ no copy
+
+    std::println("");
+    std::println("--- What is the dynamic type? ---");
+    std::println("  typeid(sliced) == typeid(Animal): {}", (typeid(sliced) == typeid(Animal)));
+    std::println("  typeid(ref)    == typeid(Dog):    {}", (typeid(ref) == typeid(Dog)));
+    std::println("  sizeof(Dog) > sizeof(Animal):     {}", (sizeof(Dog) > sizeof(Animal)));
+
+    std::println("");
+    std::println("--- Which types can be copied (= sliced) at all? ---");
+    std::println("  Animal copyable?      {}", is_copy_constructible_v<Animal>);
+    std::println("  Vehicle copyable?     {}", is_copy_constructible_v<Vehicle>);
+    std::println("  Car copyable?         {}", is_copy_constructible_v<Car>);
+    std::println("  SafeDerived copyable? {}", is_copy_constructible_v<SafeDerived>);
+    std::println("  Vehicle abstract?     {}", is_abstract_v<Vehicle>);
+
+    // Tool support: clang-tidy -checks=-*,cppcoreguidelines-slicing main.cpp
+    // reports every "Animal animal = dog;" style slicing in this file.
 }
 
 // ============================================
@@ -644,13 +647,13 @@ void demonstrateBestPractices() {
 // ============================================
 
 int main() {
-    cout << "\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║             OBJECT SLICING IN C++                         ║\n";
-    cout << "║          The Hidden Danger of Inheritance                 ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════════╗");
+    std::println("║                                                           ║");
+    std::println("║             OBJECT SLICING IN C++                         ║");
+    std::println("║          The Hidden Danger of Inheritance                 ║");
+    std::println("║                                                           ║");
+    std::println("╚═══════════════════════════════════════════════════════════╝");
 
     demonstrateProblem();
     demonstrateFunctionSlicing();
@@ -662,256 +665,6 @@ int main() {
     demonstrateAssignmentSlicing();
     demonstrateCompileTimeDetection();
     demonstrateBestPractices();
-
-    // ============================================
-    // COMPREHENSIVE EXPLANATION
-    // ============================================
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║              COMPREHENSIVE EXPLANATION                    ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
-
-    cout << "\n========================================\n";
-    cout << "WHAT IS OBJECT SLICING?\n";
-    cout << "========================================\n";
-    cout << "Definition:\n";
-    cout << "  Object slicing occurs when a derived class object is\n";
-    cout << "  assigned to a base class object. The derived part is\n";
-    cout << "  'sliced off', causing data loss and loss of polymorphism.\n";
-    cout << "\n";
-    cout << "EXAMPLE:\n";
-    cout << "class Base {\n";
-    cout << "    int x;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base {\n";
-    cout << "    int y;  // Additional member\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Derived d;\n";
-    cout << "Base b = d;  // ⚠️  SLICING! y is lost\n";
-    cout << "\n";
-    cout << "WHAT GETS LOST:\n";
-    cout << "  • Derived class members\n";
-    cout << "  • Polymorphic behavior\n";
-    cout << "  • Virtual function dispatch\n";
-    cout << "  • Type information\n";
-
-    cout << "\n========================================\n";
-    cout << "WHY SLICING HAPPENS\n";
-    cout << "========================================\n";
-    cout << "1. Pass by Value:\n";
-    cout << "   void func(Base b);  // ⚠️  Slicing!\n";
-    cout << "   Derived d;\n";
-    cout << "   func(d);  // Only base part copied\n";
-    cout << "\n";
-    cout << "2. Assignment:\n";
-    cout << "   Derived d;\n";
-    cout << "   Base b = d;  // ⚠️  Slicing!\n";
-    cout << "\n";
-    cout << "3. Containers of Values:\n";
-    cout << "   vector<Base> v;  // ⚠️  Slicing!\n";
-    cout << "   v.push_back(derived);  // Sliced\n";
-    cout << "\n";
-    cout << "4. Return by Value:\n";
-    cout << "   Base func() {\n";
-    cout << "       Derived d;\n";
-    cout << "       return d;  // ⚠️  Slicing!\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "THE DANGERS\n";
-    cout << "========================================\n";
-    cout << "SILENT DATA LOSS:\n";
-    cout << "  • Derived members disappear\n";
-    cout << "  • No compiler warning\n";
-    cout << "  • Hard to detect\n";
-    cout << "  • Runtime bugs\n";
-    cout << "\n";
-    cout << "LOSS OF POLYMORPHISM:\n";
-    cout << "  • Virtual functions don't work\n";
-    cout << "  • Wrong function called\n";
-    cout << "  • Incorrect behavior\n";
-    cout << "  • Breaks OOP principles\n";
-    cout << "\n";
-    cout << "MEMORY ISSUES:\n";
-    cout << "  • Destructor might not be called\n";
-    cout << "  • Memory leaks possible\n";
-    cout << "  • Resource cleanup fails\n";
-
-    cout << "\n========================================\n";
-    cout << "HOW TO PREVENT SLICING\n";
-    cout << "========================================\n";
-    cout << "SOLUTION 1: Use References\n";
-    cout << "void func(const Base& b);  // ✅ No slicing\n";
-    cout << "Derived d;\n";
-    cout << "func(d);  // Polymorphism works!\n";
-    cout << "\n";
-    cout << "SOLUTION 2: Use Pointers\n";
-    cout << "void func(Base* b);  // ✅ No slicing\n";
-    cout << "Derived d;\n";
-    cout << "func(&d);  // Polymorphism works!\n";
-    cout << "\n";
-    cout << "SOLUTION 3: Smart Pointers\n";
-    cout << "vector<unique_ptr<Base>> v;  // ✅ No slicing\n";
-    cout << "v.push_back(make_unique<Derived>());\n";
-    cout << "\n";
-    cout << "SOLUTION 4: Delete Copy Operations\n";
-    cout << "class Base {\n";
-    cout << "    Base(const Base&) = delete;\n";
-    cout << "    Base& operator=(const Base&) = delete;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "SOLUTION 5: Abstract Base Class\n";
-    cout << "class Base {\n";
-    cout << "    virtual void func() = 0;  // Pure virtual\n";
-    cout << "};\n";
-    cout << "// Can't create Base objects directly\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use pointers/references for polymorphic types\n";
-    cout << "  • Prefer smart pointers (unique_ptr, shared_ptr)\n";
-    cout << "  • Make base destructors virtual\n";
-    cout << "  • Delete copy operations if appropriate\n";
-    cout << "  • Use abstract base classes\n";
-    cout << "  • Store pointers in containers\n";
-    cout << "  • Pass by reference or pointer\n";
-    cout << "  • Return pointers, not values\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Pass polymorphic objects by value\n";
-    cout << "  • Use vector<Base> for derived objects\n";
-    cout << "  • Return polymorphic objects by value\n";
-    cout << "  • Assign derived to base variables\n";
-    cout << "  • Forget virtual destructors\n";
-    cout << "  • Copy polymorphic objects carelessly\n";
-    cout << "  • Ignore slicing warnings\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// ❌ WRONG - Causes slicing\n";
-    cout << "void func(Base b) { }           // Pass by value\n";
-    cout << "Base b = derived;               // Assignment\n";
-    cout << "vector<Base> v;                 // Container of values\n";
-    cout << "return derivedObject;           // Return by value\n";
-    cout << "\n";
-    cout << "// ✅ CORRECT - No slicing\n";
-    cout << "void func(const Base& b) { }    // Pass by reference\n";
-    cout << "void func(Base* b) { }          // Pass by pointer\n";
-    cout << "Base& b = derived;              // Reference\n";
-    cout << "Base* b = &derived;             // Pointer\n";
-    cout << "vector<unique_ptr<Base>> v;     // Container of pointers\n";
-    cout << "return unique_ptr<Base>(...);   // Return smart pointer\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON SCENARIOS\n";
-    cout << "========================================\n";
-    cout << "SCENARIO 1: Function Parameters\n";
-    cout << "❌ void process(Animal a);          // Slicing\n";
-    cout << "✅ void process(const Animal& a);   // No slicing\n";
-    cout << "✅ void process(Animal* a);         // No slicing\n";
-    cout << "\n";
-    cout << "SCENARIO 2: Containers\n";
-    cout << "❌ vector<Shape> shapes;            // Slicing\n";
-    cout << "✅ vector<Shape*> shapes;           // No slicing\n";
-    cout << "✅ vector<unique_ptr<Shape>> shapes;// Best\n";
-    cout << "\n";
-    cout << "SCENARIO 3: Return Values\n";
-    cout << "❌ Animal getAnimal();              // Slicing\n";
-    cout << "✅ Animal* getAnimal();             // No slicing\n";
-    cout << "✅ unique_ptr<Animal> getAnimal();  // Best\n";
-    cout << "\n";
-    cout << "SCENARIO 4: Assignment\n";
-    cout << "❌ Base b = derived;                // Slicing\n";
-    cout << "✅ Base& b = derived;               // No slicing\n";
-    cout << "✅ Base* b = &derived;              // No slicing\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Object slicing loses derived class data\n";
-    cout << "2. Slicing happens with pass-by-value\n";
-    cout << "3. Polymorphism is lost when sliced\n";
-    cout << "4. Silent bug - usually no warning\n";
-    cout << "5. Use pointers/references to prevent\n";
-    cout << "6. Smart pointers are best solution\n";
-    cout << "7. Delete copy operations to enforce safety\n";
-    cout << "8. Virtual destructors are essential\n";
-    cout << "9. Abstract base classes help prevent\n";
-    cout << "10. NEVER pass polymorphic objects by value\n";
-
-    cout << "\n========================================\n";
-    cout << "MEMORY LAYOUT\n";
-    cout << "========================================\n";
-    cout << "BEFORE SLICING (Derived object):\n";
-    cout << "┌─────────────────────┐\n";
-    cout << "│ Base part:          │\n";
-    cout << "│   - vptr            │\n";
-    cout << "│   - base members    │\n";
-    cout << "├─────────────────────┤\n";
-    cout << "│ Derived part:       │\n";
-    cout << "│   - derived members │\n";
-    cout << "└─────────────────────┘\n";
-    cout << "\n";
-    cout << "AFTER SLICING (Base object):\n";
-    cout << "┌─────────────────────┐\n";
-    cout << "│ Base part:          │\n";
-    cout << "│   - vptr (Base)     │\n";
-    cout << "│   - base members    │\n";
-    cout << "└─────────────────────┘\n";
-    cout << "  ⚠️  Derived part LOST!\n";
-
-    cout << "\n========================================\n";
-    cout << "DECISION TREE\n";
-    cout << "========================================\n";
-    cout << "Working with polymorphic types?\n";
-    cout << "  YES → Continue...\n";
-    cout << "  NO  → Can use values\n";
-    cout << "\n";
-    cout << "Need to pass to function?\n";
-    cout << "  YES → Use reference or pointer ✅\n";
-    cout << "  NO  → Continue...\n";
-    cout << "\n";
-    cout << "Need to store in container?\n";
-    cout << "  YES → Use vector<unique_ptr<Base>> ✅\n";
-    cout << "  NO  → Continue...\n";
-    cout << "\n";
-    cout << "Need to return from function?\n";
-    cout << "  YES → Return unique_ptr<Base> ✅\n";
-    cout << "  NO  → Continue...\n";
-    cout << "\n";
-    cout << "Need to assign?\n";
-    cout << "  YES → Use reference or pointer ✅\n";
-    cout << "  NO  → Still use pointer/reference ✅\n";
-    cout << "\n";
-    cout << "DEFAULT: ALWAYS use pointers/references\n";
-    cout << "         for polymorphic types!\n";
-
-    cout << "\n========================================\n";
-    cout << "COMPARISON TABLE\n";
-    cout << "========================================\n";
-    cout << "┌────────────────────┬──────────┬────────────┐\n";
-    cout << "│ Approach           │ Slicing? │ Recommend  │\n";
-    cout << "├────────────────────┼──────────┼────────────┤\n";
-    cout << "│ Pass by value      │ YES ❌   │ Never      │\n";
-    cout << "│ Pass by reference  │ NO ✅    │ Yes        │\n";
-    cout << "│ Pass by pointer    │ NO ✅    │ Yes        │\n";
-    cout << "│ vector<Base>       │ YES ❌   │ Never      │\n";
-    cout << "│ vector<Base*>      │ NO ✅    │ OK         │\n";
-    cout << "│ vector<unique_ptr> │ NO ✅    │ Best       │\n";
-    cout << "│ Return by value    │ YES ❌   │ Never      │\n";
-    cout << "│ Return pointer     │ NO ✅    │ OK         │\n";
-    cout << "│ Return unique_ptr  │ NO ✅    │ Best       │\n";
-    cout << "│ Assignment         │ YES ❌   │ Avoid      │\n";
-    cout << "│ Reference          │ NO ✅    │ Yes        │\n";
-    cout << "└────────────────────┴──────────┴────────────┘\n";
 
     return 0;
 }

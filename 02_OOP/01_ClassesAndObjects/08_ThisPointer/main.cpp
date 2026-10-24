@@ -1,8 +1,9 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 #include <cstring>
 #include <cmath>
+#include <type_traits>
 using namespace std;
 
 // ============================================
@@ -13,7 +14,8 @@ using namespace std;
  * THE 'THIS' POINTER:
  * - Hidden pointer available in every non-static member function
  * - Points to the object for which the member function is called
- * - Type: ClassName* const (constant pointer to object)
+ * - Type: ClassName* (const ClassName* in const functions). It is a prvalue, so it
+ *   cannot be reassigned: it behaves like a ClassName* const
  * - Automatically passed to member functions by compiler
  *
  * COMMON USES:
@@ -44,11 +46,11 @@ public:
         this->name = name;  // this->name = member, name = parameter
         this->age = age;    // this->age = member, age = parameter
 
-        cout << "  Person created at address: " << this << "\n";
+        std::println("  Person created at address: {}", static_cast<const void*>(this));
     }
 
     void display() {
-        cout << "  Person '" << name << "' (age " << age << ") at " << this << "\n";
+        std::println("  Person '{}' (age {}) at {}", name, age, static_cast<const void*>(this));
     }
 
     // Get pointer to current object
@@ -58,35 +60,37 @@ public:
 
     // Get address of current object
     void showAddress() {
-        cout << "  Object address (using this): " << this << "\n";
-        cout << "  Object address (using &):    " << this << "\n";
+        std::println("  Object address (using this):   {}", static_cast<const void*>(this));
+        std::println("  Object address (using &*this): {}", static_cast<const void*>(&*this));
     }
 };
 
 void demonstrateBasicThis() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC 'THIS' POINTER  ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC 'THIS' POINTER  ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating persons ---\n";
+    std::println("--- Creating persons ---");
     Person p1("Alice", 25);
     Person p2("Bob", 30);
 
-    cout << "\n--- Display with 'this' pointer ---\n";
+    std::println("");
+    std::println("--- Display with 'this' pointer ---");
     p1.display();
     p2.display();
 
-    cout << "\n--- Getting pointers ---\n";
+    std::println("");
+    std::println("--- Getting pointers ---");
     Person* ptr1 = p1.getPointer();
-    cout << "Pointer to p1: " << ptr1 << "\n";
-    cout << "Address of p1: " << &p1 << "\n";
-    cout << "Same? " << (ptr1 == &p1 ? "Yes ✅" : "No ❌") << "\n";
+    std::println("Pointer to p1: {}", static_cast<const void*>(ptr1));
+    std::println("Address of p1: {}", static_cast<const void*>(&p1));
+    std::println("Same? {}", (ptr1 == &p1 ? "Yes ✅" : "No ❌"));
 
-    cout << "\n--- Show address ---\n";
+    std::println("");
+    std::println("--- Show address ---");
     p1.showAddress();
-
-    cout << "\n💡 'this' is a pointer to the current object\n";
-    cout << "   Type: Person* const (constant pointer)\n";
 }
 
 // ============================================
@@ -105,7 +109,7 @@ public:
         this->width = width;    // this->width is the member
         this->height = height;  // width is the parameter
 
-        cout << "  Rectangle: " << this->width << "×" << this->height << "\n";
+        std::println("  Rectangle: {:g}×{:g}", this->width, this->height);
     }
 
     // Setter with same parameter name
@@ -125,28 +129,25 @@ public:
     }
 
     void display() const {
-        cout << "  " << width << "×" << height << "\n";
+        std::println("  {:g}×{:g}", width, height);
     }
 };
 
 void demonstrateNameConflicts() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: NAME CONFLICTS         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: NAME CONFLICTS         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating rectangle ---\n";
+    std::println("--- Creating rectangle ---");
     Rectangle r1(10.0, 5.0);
 
-    cout << "\n--- Using setters with 'this' ---\n";
+    std::println("");
+    std::println("--- Using setters with 'this' ---");
     r1.setWidth(15.0);
     r1.setHeight(8.0);
     r1.display();
-
-    cout << "\n💡 Use 'this->' when parameter names match member names\n";
-    cout << "   Without 'this':\n";
-    cout << "     width = width;  // Assigns parameter to itself! ❌\n";
-    cout << "   With 'this':\n";
-    cout << "     this->width = width;  // Assigns to member ✅\n";
 }
 
 // ============================================
@@ -162,49 +163,52 @@ private:
 
 public:
     Builder() : age(0) {
-        cout << "  Builder created\n";
+        std::println("  Builder created");
     }
 
     // Return *this (reference to current object) for chaining
     Builder& setName(const string& name) {
         this->name = name;
-        cout << "  Name set to: " << name << "\n";
+        std::println("  Name set to: {}", name);
         return *this;  // Return reference to current object
     }
 
     Builder& setAge(int age) {
         this->age = age;
-        cout << "  Age set to: " << age << "\n";
+        std::println("  Age set to: {}", age);
         return *this;
     }
 
     Builder& setCity(const string& city) {
         this->city = city;
-        cout << "  City set to: " << city << "\n";
+        std::println("  City set to: {}", city);
         return *this;
     }
 
     Builder& setOccupation(const string& occupation) {
         this->occupation = occupation;
-        cout << "  Occupation set to: " << occupation << "\n";
+        std::println("  Occupation set to: {}", occupation);
         return *this;
     }
 
     void display() const {
-        cout << "\n  Profile:\n";
-        cout << "    Name: " << name << "\n";
-        cout << "    Age: " << age << "\n";
-        cout << "    City: " << city << "\n";
-        cout << "    Occupation: " << occupation << "\n";
+        std::println("");
+        std::println("  Profile:");
+        std::println("    Name: {}", name);
+        std::println("    Age: {}", age);
+        std::println("    City: {}", city);
+        std::println("    Occupation: {}", occupation);
     }
 };
 
 void demonstrateMethodChaining() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: METHOD CHAINING        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: METHOD CHAINING        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Building object with method chaining ---\n";
+    std::println("--- Building object with method chaining ---");
     Builder person;
     person.setName("Alice")
         .setAge(28)
@@ -213,19 +217,14 @@ void demonstrateMethodChaining() {
 
     person.display();
 
-    cout << "\n--- Without chaining (traditional way) ---\n";
+    std::println("");
+    std::println("--- Without chaining (traditional way) ---");
     Builder person2;
     person2.setName("Bob");
     person2.setAge(35);
     person2.setCity("London");
     person2.setOccupation("Teacher");
     person2.display();
-
-    cout << "\n✅ Method chaining with 'return *this':\n";
-    cout << "   • More fluent syntax\n";
-    cout << "   • Builder pattern\n";
-    cout << "   • jQuery-style API\n";
-    cout << "   • Return reference, not copy!\n";
 }
 
 // ============================================
@@ -260,32 +259,39 @@ public:
     }
 
     void display() const {
-        cout << "(" << x << ", " << y << ")";
+        std::print("({}, {})", x, y);
     }
 };
 
 void demonstrateComparingObjects() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: COMPARING OBJECTS      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: COMPARING OBJECTS      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Point p1(3, 4);
     Point p2(3, 4);
     Point p3(5, 5);
 
-    cout << "p1 = "; p1.display(); cout << "\n";
-    cout << "p2 = "; p2.display(); cout << "\n";
-    cout << "p3 = "; p3.display(); cout << "\n\n";
+    std::print("p1 = ");
+    p1.display();
+    std::println("");
+    std::print("p2 = ");
+    p2.display();
+    std::println("");
+    std::print("p3 = ");
+    p3.display();
+    std::println("");
+    std::println("");
 
-    cout << "p1.equals(p2): " << (p1.equals(p2) ? "true" : "false") << "\n";
-    cout << "p1.equals(p3): " << (p1.equals(p3) ? "true" : "false") << "\n\n";
+    std::println("p1.equals(p2): {}", (p1.equals(p2) ? "true" : "false"));
+    std::println("p1.equals(p3): {}", (p1.equals(p3) ? "true" : "false"));
+    std::println("");
 
-    cout << "p1.isCloserToOrigin(p3): "
-         << (p1.isCloserToOrigin(p3) ? "true" : "false") << "\n";
+    std::println("p1.isCloserToOrigin(p3): {}", (p1.isCloserToOrigin(p3) ? "true" : "false"));
 
-    cout << "Distance from p1 to p3: " << p1.distanceTo(p3) << "\n";
-
-    cout << "\n💡 'this' used to compare current object with parameter\n";
+    std::println("Distance from p1 to p3: {:g}", p1.distanceTo(p3));
 }
 
 // ============================================
@@ -304,7 +310,7 @@ public:
         for (int i = 0; i < size; i++) {
             values[i] = i * 10;
         }
-        cout << "  Constructed: " << name << "\n";
+        std::println("  Constructed: {}", name);
     }
 
     // Copy constructor uses 'this'
@@ -313,16 +319,16 @@ public:
         for (int i = 0; i < size; i++) {
             this->values[i] = other.values[i];  // 'this' is new object
         }
-        cout << "  Copy constructed: " << this->name << " from " << other.name << "\n";
+        std::println("  Copy constructed: {} from {}", this->name, other.name);
     }
 
     // Copy assignment operator - critical use of 'this'
     Data& operator=(const Data& other) {
-        cout << "  Copy assignment: " << this->name << " = " << other.name << "\n";
+        std::println("  Copy assignment: {} = {}", this->name, other.name);
 
         // CRITICAL: Check for self-assignment
         if (this == &other) {
-            cout << "    Self-assignment detected! Skipping.\n";
+            std::println("    Self-assignment detected! Skipping.");
             return *this;
         }
 
@@ -341,45 +347,46 @@ public:
     }
 
     ~Data() {
-        cout << "  Destructed: " << name << "\n";
+        std::println("  Destructed: {}", name);
         delete[] values;
     }
 
     void display() const {
-        cout << "  " << name << ": ";
+        std::print("  {}: ", name);
         for (int i = 0; i < size; i++) {
-            cout << values[i] << " ";
+            std::print("{} ", values[i]);
         }
-        cout << "\n";
+        std::println("");
     }
 };
 
 void demonstrateCopyAndAssignment() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: COPY & ASSIGNMENT      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: COPY & ASSIGNMENT      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating original ---\n";
+    std::println("--- Creating original ---");
     Data d1("Original", 3);
     d1.display();
 
-    cout << "\n--- Copy construction ---\n";
+    std::println("");
+    std::println("--- Copy construction ---");
     Data d2 = d1;  // Copy constructor
     d2.display();
 
-    cout << "\n--- Copy assignment ---\n";
+    std::println("");
+    std::println("--- Copy assignment ---");
     Data d3("Third", 2);
     d3 = d1;  // Copy assignment
     d3.display();
 
-    cout << "\n--- Self-assignment test ---\n";
+    std::println("");
+    std::println("--- Self-assignment test ---");
     d1 = d1;  // Self-assignment - 'this' check prevents disaster!
-
-    cout << "\n💡 'this' in assignment:\n";
-    cout << "   • Check self-assignment: if (this == &other)\n";
-    cout << "   • Return *this for chaining\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
 }
 
 // ============================================
@@ -395,7 +402,7 @@ private:
     // Private helper function
     void logTransaction(const string& transaction) {
         transactionLog.push_back(transaction);
-        cout << "  Logged: " << transaction << "\n";
+        std::println("  Logged: {}", transaction);
     }
 
 public:
@@ -422,32 +429,33 @@ public:
     }
 
     void display() const {
-        cout << "\n  Account: " << accountNumber << "\n";
-        cout << "  Balance: $" << balance << "\n";
-        cout << "  Transaction History:\n";
+        std::println("");
+        std::println("  Account: {}", accountNumber);
+        std::println("  Balance: ${:.2f}", balance);
+        std::println("  Transaction History:");
         for (const auto& transaction : transactionLog) {
-            cout << "    - " << transaction << "\n";
+            std::println("    - {}", transaction);
         }
     }
 };
 
 void demonstrateCallingMemberFunctions() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: CALLING MEMBERS        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: CALLING MEMBERS        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating account ---\n";
+    std::println("--- Creating account ---");
     Account acc("12345", 1000.0);
 
-    cout << "\n--- Transactions ---\n";
+    std::println("");
+    std::println("--- Transactions ---");
     acc.deposit(500.0);
     acc.withdraw(200.0);
     acc.withdraw(2000.0);  // Will fail
 
     acc.display();
-
-    cout << "\n💡 'this->' can call other member functions\n";
-    cout << "   Usually omitted (implicit)\n";
 }
 
 // ============================================
@@ -464,13 +472,15 @@ public:
 
     // Non-const member function
     void setValue(int v) {
-        // 'this' has type: ConstDemo* const
+        // 'this' has type: ConstDemo*  (checked below at compile time)
+        static_assert(is_same_v<decltype(this), ConstDemo*>);
         this->value = v;
     }
 
     // Const member function
     int getValue() const {
-        // 'this' has type: const ConstDemo* const
+        // 'this' has type: const ConstDemo*  (checked below at compile time)
+        static_assert(is_same_v<decltype(this), const ConstDemo*>);
         // Can't modify members through 'this'
         // this->value = 0;  // ❌ Error! Can't modify
 
@@ -481,34 +491,43 @@ public:
 
     // Demonstrate 'this' pointer type
     void showThisType() {
-        cout << "  In non-const function:\n";
-        cout << "    'this' type: ConstDemo* const\n";
-        cout << "    Can modify members\n";
+        static_assert(is_same_v<decltype(this), ConstDemo*>);        // compile-time check
+        std::println("  In non-const function:");
+        std::println("    'this' type: ConstDemo*  (static_assert passed)");
+        std::println("    Can modify members");
     }
 
     void showThisTypeConst() const {
-        cout << "  In const function:\n";
-        cout << "    'this' type: const ConstDemo* const\n";
-        cout << "    Cannot modify members (except mutable)\n";
+        static_assert(is_same_v<decltype(this), const ConstDemo*>);  // compile-time check
+        std::println("  In const function:");
+        std::println("    'this' type: const ConstDemo*  (static_assert passed)");
+        std::println("    Cannot modify members (except mutable)");
     }
+
+    int getAccessCount() const { return accessCount; }
 };
 
 void demonstrateConstThis() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: 'THIS' WITH CONST      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: 'THIS' WITH CONST      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     ConstDemo obj(42);
 
-    cout << "--- Non-const function ---\n";
+    std::println("--- Non-const function ---");
     obj.showThisType();
 
-    cout << "\n--- Const function ---\n";
+    std::println("");
+    std::println("--- Const function ---");
     obj.showThisTypeConst();
 
-    cout << "\n💡 'this' pointer type changes with const:\n";
-    cout << "   Non-const function: ClassName* const\n";
-    cout << "   Const function:     const ClassName* const\n";
+    std::println("");
+    std::println("--- mutable member changed inside a const function ---");
+    std::println("getValue() = {}", obj.getValue());
+    std::println("getValue() = {}", obj.getValue());
+    std::println("accessCount = {}  (getValue() is const but counts its calls)", obj.getAccessCount());
 }
 
 // ============================================
@@ -525,18 +544,18 @@ public:
 
     // Non-static member function - HAS 'this'
     void nonStaticFunction() {
-        cout << "  Non-static function:\n";
-        cout << "    'this' pointer: " << this << "\n";
-        cout << "    Can access: this->instanceVar = " << this->instanceVar << "\n";
-        cout << "    Can access: staticVar = " << staticVar << "\n";
+        std::println("  Non-static function:");
+        std::println("    'this' pointer: {}", static_cast<const void*>(this));
+        std::println("    Can access: this->instanceVar = {}", this->instanceVar);
+        std::println("    Can access: staticVar = {}", staticVar);
     }
 
     // Static member function - NO 'this'
     static void staticFunction() {
-        cout << "  Static function:\n";
-        cout << "    NO 'this' pointer!\n";
-        // cout << this->instanceVar;  // ❌ Error! No 'this'
-        cout << "    Can only access: staticVar = " << staticVar << "\n";
+        std::println("  Static function:");
+        std::println("    NO 'this' pointer!");
+        // std::println("{}", this->instanceVar);  // ❌ Error! No 'this'
+        std::println("    Can only access: staticVar = {}", staticVar);
     }
 
     int getInstanceVar() const {
@@ -552,21 +571,20 @@ public:
 int StaticDemo::staticVar = 100;
 
 void demonstrateStaticVsNonStatic() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: STATIC vs NON-STATIC  ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: STATIC vs NON-STATIC  ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     StaticDemo obj(42);
 
-    cout << "--- Calling non-static function ---\n";
+    std::println("--- Calling non-static function ---");
     obj.nonStaticFunction();
 
-    cout << "\n--- Calling static function ---\n";
+    std::println("");
+    std::println("--- Calling static function ---");
     StaticDemo::staticFunction();
-
-    cout << "\n💡 'this' pointer:\n";
-    cout << "   Non-static functions: ✅ Have 'this'\n";
-    cout << "   Static functions:     ❌ No 'this'\n";
 }
 
 // ============================================
@@ -580,7 +598,7 @@ private:
 
 public:
     Node(int value) : data(value), next(nullptr) {
-        cout << "  Node created with value " << data << " at " << this << "\n";
+        std::println("  Node created with value {} at {}", data, static_cast<const void*>(this));
     }
 
     // Set next node - returns reference for chaining
@@ -615,9 +633,9 @@ public:
 
     // Display from this node onwards
     void display() const {
-        cout << this->data;
+        std::print("{}", this->data);
         if (this->next != nullptr) {
-            cout << " -> ";
+            std::print(" -> ");
             this->next->display();
         }
     }
@@ -627,36 +645,36 @@ public:
 };
 
 void demonstrateLinkedList() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: LINKED LIST NODE       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: LINKED LIST NODE       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating nodes ---\n";
+    std::println("--- Creating nodes ---");
     Node n1(10);
     Node n2(20);
     Node n3(30);
 
-    cout << "\n--- Linking nodes ---\n";
-    n1.setNext(&n2).setNext(&n3);  // Won't work as expected, but shows chaining
-    n1.setNext(&n2);
+    std::println("");
+    std::println("--- Linking nodes ---");
+    n1.setNext(&n2).setNext(&n3);  // Chaining: both calls act on n1, so n1.next ends up as n3 (not what we want)
+    n1.setNext(&n2);               // relink correctly: n1 -> n2 -> n3
     n2.setNext(&n3);
 
-    cout << "\n--- Displaying list ---\n";
-    cout << "List: ";
+    std::println("");
+    std::println("--- Displaying list ---");
+    std::print("List: ");
     n1.display();
-    cout << "\n";
+    std::println("");
 
-    cout << "\n--- Node information ---\n";
-    cout << "n1.isLast(): " << (n1.isLast() ? "true" : "false") << "\n";
-    cout << "n3.isLast(): " << (n3.isLast() ? "true" : "false") << "\n";
-    cout << "Contains 20: " << (n1.contains(20) ? "true" : "false") << "\n";
-    cout << "Contains 99: " << (n1.contains(99) ? "true" : "false") << "\n";
-    cout << "Count: " << n1.count() << " nodes\n";
-
-    cout << "\n✅ 'this' used for:\n";
-    cout << "   • Recursive calls (this->next->contains())\n";
-    cout << "   • Self-reference\n";
-    cout << "   • Method chaining\n";
+    std::println("");
+    std::println("--- Node information ---");
+    std::println("n1.isLast(): {}", (n1.isLast() ? "true" : "false"));
+    std::println("n3.isLast(): {}", (n3.isLast() ? "true" : "false"));
+    std::println("Contains 20: {}", (n1.contains(20) ? "true" : "false"));
+    std::println("Contains 99: {}", (n1.contains(99) ? "true" : "false"));
+    std::println("Count: {} nodes", n1.count());
 }
 
 // ============================================
@@ -702,29 +720,32 @@ public:
 
     // Execute request (simulated)
     void execute() const {
-        cout << "\n  Executing HTTP Request:\n";
-        cout << "  ==================\n";
-        cout << "  Method:  " << method << "\n";
-        cout << "  URL:     " << url << "\n";
-        cout << "  Timeout: " << timeout << "s\n";
+        std::println("");
+        std::println("  Executing HTTP Request:");
+        std::println("  ==================");
+        std::println("  Method:  {}", method);
+        std::println("  URL:     {}", url);
+        std::println("  Timeout: {}s", timeout);
         if (!body.empty()) {
-            cout << "  Body:    " << body << "\n";
+            std::println("  Body:    {}", body);
         }
         if (!headers.empty()) {
-            cout << "  Headers:\n";
+            std::println("  Headers:");
             for (const auto& header : headers) {
-                cout << "    " << header.first << ": " << header.second << "\n";
+                std::println("    {}: {}", header.first, header.second);
             }
         }
     }
 };
 
 void demonstrateBuilderPattern() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: BUILDER PATTERN       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: BUILDER PATTERN       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Building HTTP request with fluent API ---\n";
+    std::println("--- Building HTTP request with fluent API ---");
 
     HttpRequest request;
     request.setUrl("https://api.example.com/users")
@@ -734,11 +755,6 @@ void demonstrateBuilderPattern() {
         .addHeader("Authorization", "Bearer token123")
         .setTimeout(60)
         .execute();
-
-    cout << "\n✅ Builder pattern benefits:\n";
-    cout << "   • Fluent, readable API\n";
-    cout << "   • Optional parameters\n";
-    cout << "   • All done via 'return *this'\n";
 }
 
 // ============================================
@@ -746,9 +762,9 @@ void demonstrateBuilderPattern() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "'THIS' POINTER DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("'THIS' POINTER DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicThis();
     demonstrateNameConflicts();
@@ -760,286 +776,6 @@ int main() {
     demonstrateStaticVsNonStatic();
     demonstrateLinkedList();
     demonstrateBuilderPattern();
-
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT IS THE 'THIS' POINTER?\n";
-    cout << "========================================\n";
-    cout << "'this' is a hidden pointer available in every non-static\n";
-    cout << "member function that points to the object for which the\n";
-    cout << "function was called.\n";
-    cout << "\n";
-    cout << "Type: ClassName* const\n";
-    cout << "      (constant pointer to object)\n";
-    cout << "\n";
-    cout << "In const member functions:\n";
-    cout << "Type: const ClassName* const\n";
-    cout << "      (constant pointer to constant object)\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE 'THIS'\n";
-    cout << "========================================\n";
-    cout << "1. Resolve name conflicts:\n";
-    cout << "   void setX(int x) {\n";
-    cout << "       this->x = x;  // member = parameter\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "2. Method chaining:\n";
-    cout << "   MyClass& setValue(int v) {\n";
-    cout << "       value = v;\n";
-    cout << "       return *this;  // Return current object\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "3. Self-assignment check:\n";
-    cout << "   MyClass& operator=(const MyClass& other) {\n";
-    cout << "       if (this == &other) return *this;\n";
-    cout << "       // ...\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "4. Compare with another object:\n";
-    cout << "   bool equals(const MyClass& other) const {\n";
-    cout << "       return this->data == other.data;\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "5. Get object address:\n";
-    cout << "   MyClass* getPointer() {\n";
-    cout << "       return this;\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "6. Pass to other functions:\n";
-    cout << "   void process() {\n";
-    cout << "       externalFunction(this);\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "'THIS' POINTER TYPE\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    void nonConstFunction() {\n";
-    cout << "        // 'this' type: MyClass* const\n";
-    cout << "        // Can modify members\n";
-    cout << "        this->value = 10;  // ✅\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    void constFunction() const {\n";
-    cout << "        // 'this' type: const MyClass* const\n";
-    cout << "        // Cannot modify members\n";
-    cout << "        // this->value = 10;  // ❌ Error\n";
-    cout << "        int x = this->value;   // ✅ Read OK\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "USING 'THIS' vs NOT USING 'THIS'\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    int value;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    void setValue(int v) {\n";
-    cout << "        // Both are equivalent when no name conflict:\n";
-    cout << "        value = v;        // Implicit 'this'\n";
-    cout << "        this->value = v;  // Explicit 'this'\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    void setValueConflict(int value) {\n";
-    cout << "        // MUST use 'this' to disambiguate:\n";
-    cout << "        this->value = value;  // member = parameter\n";
-    cout << "        // value = value;     // ❌ Assigns to itself!\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "General rule:\n";
-    cout << "  • Use 'this->' when there's name conflict\n";
-    cout << "  • Use 'this->' for clarity if desired\n";
-    cout << "  • Can omit when no conflict (common practice)\n";
-
-    cout << "\n========================================\n";
-    cout << "METHOD CHAINING PATTERN\n";
-    cout << "========================================\n";
-    cout << "class Builder {\n";
-    cout << "    string data;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    Builder& setData(const string& d) {\n";
-    cout << "        data = d;\n";
-    cout << "        return *this;  // Return reference\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    Builder& process() {\n";
-    cout << "        // Do something\n";
-    cout << "        return *this;\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Usage:\n";
-    cout << "  Builder b;\n";
-    cout << "  b.setData(\"test\").process().setData(\"done\");\n";
-    cout << "\n";
-    cout << "Key points:\n";
-    cout << "  • Return *this (not this)\n";
-    cout << "  • Return by reference (MyClass&)\n";
-    cout << "  • Enables fluent interface\n";
-
-    cout << "\n========================================\n";
-    cout << "SELF-ASSIGNMENT CHECK\n";
-    cout << "========================================\n";
-    cout << "MyClass& operator=(const MyClass& other) {\n";
-    cout << "    // CRITICAL: Check for self-assignment\n";
-    cout << "    if (this == &other) {\n";
-    cout << "        return *this;  // Skip if same object\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    // Delete old resources\n";
-    cout << "    delete[] data;\n";
-    cout << "    \n";
-    cout << "    // Copy new data\n";
-    cout << "    data = new int[other.size];\n";
-    cout << "    // ...\n";
-    cout << "    \n";
-    cout << "    return *this;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "Why check?\n";
-    cout << "  obj = obj;  // Without check:\n";
-    cout << "              // 1. Delete obj's data\n";
-    cout << "              // 2. Try to copy from deleted data ❌\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC vs NON-STATIC\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    int instanceVar;\n";
-    cout << "    static int staticVar;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    // Non-static: HAS 'this'\n";
-    cout << "    void nonStatic() {\n";
-    cout << "        this->instanceVar = 10;  // ✅\n";
-    cout << "        staticVar = 20;          // ✅\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    // Static: NO 'this'\n";
-    cout << "    static void staticFunc() {\n";
-    cout << "        // this->instanceVar = 10;  // ❌ Error!\n";
-    cout << "        staticVar = 20;             // ✅\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Rule:\n";
-    cout << "  • Static functions have NO 'this' pointer\n";
-    cout << "  • Can only access static members\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON USE CASES\n";
-    cout << "========================================\n";
-    cout << "1. Constructor with same parameter names:\n";
-    cout << "   MyClass(int x, int y) : x(x), y(y) { }\n";
-    cout << "   // Or: this->x = x; this->y = y;\n";
-    cout << "\n";
-    cout << "2. Builder pattern (fluent interface):\n";
-    cout << "   return *this;  // For chaining\n";
-    cout << "\n";
-    cout << "3. Copy assignment operator:\n";
-    cout << "   if (this == &other) return *this;  // Self-check\n";
-    cout << "\n";
-    cout << "4. Comparison operations:\n";
-    cout << "   return this->data == other.data;\n";
-    cout << "\n";
-    cout << "5. Passing current object:\n";
-    cout << "   externalFunction(this);\n";
-    cout << "\n";
-    cout << "6. Recursive calls:\n";
-    cout << "   return this->next->process();\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use 'this->' for name conflicts\n";
-    cout << "  • Return *this for method chaining\n";
-    cout << "  • Check 'this == &other' in assignment\n";
-    cout << "  • Use 'this' for clarity when helpful\n";
-    cout << "  • Return reference (MyClass&) for chaining\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Use 'this' in static functions (won't compile)\n";
-    cout << "  • Return 'this' instead of '*this' for chaining\n";
-    cout << "  • Return *this by value for chaining\n";
-    cout << "  • Overuse 'this->' when not needed\n";
-    cout << "  • Forget self-assignment check in operator=\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Returning 'this' instead of '*this'\n";
-    cout << "   MyClass setValue(int v) {\n";
-    cout << "       value = v;\n";
-    cout << "       return this;  // ❌ Wrong type!\n";
-    cout << "   }\n";
-    cout << "   Fix: return *this;\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Returning by value for chaining\n";
-    cout << "   MyClass setValue(int v) {  // ❌ Returns copy\n";
-    cout << "       value = v;\n";
-    cout << "       return *this;\n";
-    cout << "   }\n";
-    cout << "   Fix: MyClass& setValue(int v)\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: No self-assignment check\n";
-    cout << "   MyClass& operator=(const MyClass& o) {\n";
-    cout << "       delete[] data;  // ❌ If this == &o, disaster!\n";
-    cout << "       // ...\n";
-    cout << "   }\n";
-    cout << "   Fix: if (this == &other) return *this;\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Using 'this' in static function\n";
-    cout << "   static void func() {\n";
-    cout << "       this->value = 10;  // ❌ Error! No 'this'\n";
-    cout << "   }\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Access member\n";
-    cout << "this->memberVariable\n";
-    cout << "this->memberFunction()\n";
-    cout << "\n";
-    cout << "// Get object address\n";
-    cout << "this  // Pointer to current object\n";
-    cout << "\n";
-    cout << "// Return current object reference\n";
-    cout << "*this  // Reference to current object\n";
-    cout << "\n";
-    cout << "// Method chaining\n";
-    cout << "MyClass& func() {\n";
-    cout << "    return *this;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "// Self-comparison\n";
-    cout << "if (this == &other)\n";
-    cout << "\n";
-    cout << "// Type in non-const function\n";
-    cout << "MyClass* const\n";
-    cout << "\n";
-    cout << "// Type in const function\n";
-    cout << "const MyClass* const\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. 'this' is a pointer to the current object\n";
-    cout << "2. Type: ClassName* const (or const ClassName* const)\n";
-    cout << "3. Automatically available in non-static member functions\n";
-    cout << "4. Use 'this->' to resolve name conflicts\n";
-    cout << "5. Return '*this' for method chaining (by reference!)\n";
-    cout << "6. Check 'this == &other' in assignment operator\n";
-    cout << "7. Static functions don't have 'this'\n";
-    cout << "8. Use '*this' to refer to current object\n";
-    cout << "9. Use 'this' to get pointer to current object\n";
-    cout << "10. Essential for builder pattern and fluent APIs\n";
 
     return 0;
 }

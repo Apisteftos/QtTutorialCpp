@@ -152,12 +152,195 @@ MyClass::staticFunction();
 │ Each object has own     │ One copy for class      │
 │ Requires object         │ No object needed        │
 │ Has 'this' pointer      │ No 'this' pointer       │
-│ Can access all members  │ Only static members     │
+│ Can access all members  │ Only static members (*)  │
 │ Object-level            │ Class-level             │
 │ Created with object     │ Created at program start│
 │ Memory per object       │ Memory once per program │
 └─────────────────────────┴─────────────────────────┘
 ```
+(*) directly. A static function can still reach instance members of an object it is given as a parameter (see the workaround below).
+
+### Code Comparison
+```cpp
+class Demo {
+    int instanceVar;        // Instance member
+    static int staticVar;   // Static member
+    
+public:
+    // INSTANCE FUNCTION
+    void instanceFunc() {
+        instanceVar = 10;   // ✅ Can access instance
+        staticVar = 20;     // ✅ Can access static
+        this->instanceVar;  // ✅ Has 'this' pointer
+    }
+    
+    // STATIC FUNCTION
+    static void staticFunc() {
+        // instanceVar = 10;   // ❌ Error! No 'this'
+        staticVar = 20;        // ✅ Can access static only
+        // this->instanceVar;  // ❌ Error! No 'this'
+    }
+};
+
+// USAGE
+Demo obj;
+obj.instanceFunc();    // Needs object
+Demo::staticFunc();    // No object needed!
+```
+
+---
+
+## 📋 Examples in This Folder
+
+### Example 1: Basic Static Members
+`Counter` counts live objects with a static counter. `displayCount()` is called on the class before any object exists, and also through an object (`c1.displayCount()`).
+
+### Example 2: Static vs Instance Members
+`Student`: name and grade belong to each object, school name and student total are shared. The school name is set before any student exists.
+
+### Example 3: Object Counting
+`Tracker` counts active, created and destroyed objects, including copies (it has a copy constructor that counts).
+
+### Example 4: Shared Configuration
+`DatabaseConnection` with a shared server address, port and connection limit. The fourth connection is refused. It now remembers whether it was established, so the destructor does not close a connection that never existed (see Mistake 7).
+
+### Example 5: Static Const Members
+`MathConstants`: `constexpr` integers in-class, `static const double` defined outside (the old rule), and functions using them.
+
+### Example 6: Static Function Restrictions
+A static function can use static members, call other static functions, and work on an object passed as a parameter (`processObject`). It cannot use instance members directly.
+
+### Example 7: Factory Pattern
+Private constructor plus static `createBasic()`, `createPremium()`, `createCustom()`. A static `nextId` hands out IDs.
+
+### Example 8: Singleton Pattern
+`Logger` with a static instance pointer, a private constructor, deleted copy operations and an explicit `cleanup()`.
+
+### Example 9: Utility Class
+`StringUtils`: all static, constructor deleted.
+
+### Example 10: ID Generator
+`Employee` with auto-incrementing IDs, a static list of recycled IDs and statistics.
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+### Static function: what it can and cannot do
+- ✅ use static data members, call other static functions, work with objects/parameters it is given, be called without an object
+- ❌ use instance members directly, call non-static functions directly, use `this`, be `const`, be `virtual`
+
+### Student example (Example 2), in one picture
+```
+Each Student object has its own:      name, grade       (s1: Alice/95, s2: Bob/87, s3: Charlie/92)
+ONE copy for the whole class:         schoolName ("MIT"), totalStudents (3)
+```
+
+---
+
+## 🎓 Key Concepts
+
+### Static Data Members
+
+**Declaration:**
+```cpp
+class MyClass {
+    static int count;  // Declaration only
+};
+```
+
+**Definition (REQUIRED):**
+```cpp
+int MyClass::count = 0;  // Must initialize outside class
+```
+
+**Access:**
+```cpp
+// Via class name (preferred)
+MyClass::count = 10;
+
+// Via object (also works)
+MyClass obj;
+obj.count = 20;
+
+// Both refer to same variable!
+```
+
+### Static Const Members
+
+**Integral types** (int, char, bool) can be initialized in-class, but prefer `constexpr`:
+```cpp
+class MyClass {
+    static constexpr int MAX_SIZE = 100;     // ✅ best: in-class, nothing else needed
+    static constexpr double PI = 3.14159265; // ✅ constexpr also works for double
+    static const char DELIMITER = ',';       // ok, but see the warning below
+};
+```
+
+⚠️ **Why `constexpr`?** The in-class line of a plain `static const int` is only a *declaration with a value*, not a definition. As soon as the member is bound to a reference (**odr-used**), the linker needs a real definition. `std::println` and `std::format` take their arguments by reference, so
+```cpp
+struct A { static const int MAX = 1000; };
+std::format("{}", A::MAX);    // ❌ linker: undefined reference to `A::MAX'   (tested, GCC -O0)
+```
+fails at `-O0` (an optimizer may hide the problem, so it can work with `-O2`: another reason to avoid relying on it). Fixes: `static constexpr int MAX = 1000;` (since C++17 `constexpr` static members are implicitly `inline`, so no outside definition is needed), or add `const int A::MAX;` in one `.cpp` file. Example 5 uses `constexpr` for the integers.
+
+**Non-integral types before C++11 / the old rule** must be initialized outside:
+```cpp
+class MyClass {
+    static const double PI;      // Declaration
+    static const string NAME;    // Declaration
+};
+
+// Must initialize outside (in exactly one .cpp file)
+const double MyClass::PI = 3.14159;
+const string MyClass::NAME = "MyClass";
+```
+(`static constexpr double` can be written in-class, and so can a `static constexpr std::string_view NAME = "MyClass";`; both tested. A `std::string` member stays outside the class as above.)
+
+### Static Member Functions
+```cpp
+class MyClass {
+private:
+    int instanceVar;
+    static int staticVar;
+    
+public:
+    // Non-static function - has 'this'
+    void instanceFunction() {
+        instanceVar = 10;  // ✅ Can access instance members
+        staticVar = 20;    // ✅ Can access static members
+    }
+    
+    // Static function - NO 'this'
+    static void staticFunction() {
+        // instanceVar = 10;  // ❌ Error! No 'this' pointer
+        staticVar = 20;       // ✅ Can access static members
+    }
+};
+
+// Usage - no object needed!
+MyClass::staticFunction();
+```
+
+---
+
+## 🔍 Static vs Instance Members
+
+### Comparison Table
+```
+┌─────────────────────────┬─────────────────────────┐
+│ INSTANCE MEMBERS        │ STATIC MEMBERS          │
+├─────────────────────────┼─────────────────────────┤
+│ Each object has own     │ One copy for class      │
+│ Requires object         │ No object needed        │
+│ Has 'this' pointer      │ No 'this' pointer       │
+│ Can access all members  │ Only static members (*)  │
+│ Object-level            │ Class-level             │
+│ Created with object     │ Created at program start│
+│ Memory per object       │ Memory once per program │
+└─────────────────────────┴─────────────────────────┘
+```
+(*) directly. A static function can still reach instance members of an object it is given as a parameter (see the workaround below).
 
 ### Code Comparison
 ```cpp
@@ -277,10 +460,10 @@ const string MyClass::NAME = "MyClass";
 
 **Characteristics:**
 - No `this` pointer
-- Can only access static members
+- Cannot access instance members directly (only through an object passed in)
 - Can be called without an object
-- Cannot be const (no `this` to be const)
-- Cannot be virtual
+- Cannot be const (no `this` to be const): `static void f() const` → *error: static member function cannot have cv-qualifier* (tested)
+- Cannot be virtual: *error: member 'f' cannot be declared both 'virtual' and 'static'* (tested)
 
 **Example:**
 ```cpp
@@ -373,6 +556,15 @@ Singleton* s2 = Singleton::getInstance();
 // s1 == s2 (same instance!)
 ```
 
+⚠️ This classic version has two weaknesses: the `instance == nullptr` check is not thread-safe (two threads can both create an instance), and the instance is never deleted unless you add a `cleanup()` as Example 8 does. The usual modern form is a function-local static (a "Meyers singleton"):
+```cpp
+static Singleton& getInstance() {
+    static Singleton instance;   // created on first call; C++11 guarantees this initialization is thread-safe
+    return instance;             // destroyed automatically at program end
+}
+```
+*(The thread-safe initialization is guaranteed by the C++11 standard; I did not write a race test for it.)* Singletons are also global state, so they make code harder to test; use them sparingly.
+
 ### 3. Factory Pattern
 
 **Controlled object creation:**
@@ -409,7 +601,7 @@ Product p2 = Product::createPremium();
 
 ### 4. Utility Class
 
-**Pure static functionality:**
+**Pure static functionality** (in C++ a `namespace` with free functions does the same job more simply; the class form is mostly seen in code ported from Java or C#):
 ```cpp
 class MathUtils {
 private:
@@ -472,7 +664,7 @@ Connection c2("App2");  // Uses new config
 
 ### Basic Rule
 
-**Static data members MUST be initialized outside the class:**
+**A non-inline static data member needs exactly one definition outside the class:**
 ```cpp
 // In header (.h):
 class MyClass {
@@ -484,6 +676,20 @@ class MyClass {
 int MyClass::count = 0;        // REQUIRED
 double MyClass::rate = 1.5;    // REQUIRED
 ```
+Put the definition in **one** `.cpp` file, not in the header: a header definition included from two files gives a "multiple definition" linker error.
+
+### Modern Alternative (C++17): `static inline`
+
+```cpp
+class MyClass {
+    static inline int count = 0;           // ✅ defined right here, header-safe
+    static inline std::vector<int> ids;    // ✅ works for any type
+};
+```
+Tested: this compiles and links with no definition outside the class. The examples in this folder keep the classic outside definition because that is what you will see in most code.
+
+### Initialization Order Warning
+Static data members of *different* `.cpp` files are initialized in an unspecified order. If one static object's initialization uses another from a different file (a `std::vector` or `std::string` static used during start-up of another static), it may be used before it exists (the "static initialization order fiasco"). The usual fix is a function-local static (see Singleton below). *Not tested here: a well-known rule, e.g. Effective C++ Item 4.*
 
 ### Exception: Static Const Integral
 
@@ -495,7 +701,7 @@ class MyClass {
     static const bool FLAG = true;     // ✅ OK
     
     // But not these:
-    static const double PI;            // ❌ Must init outside
+    static const double PI;            // ❌ (old rule) must init outside, or use constexpr double
     static const string NAME;          // ❌ Must init outside
 };
 
@@ -533,7 +739,7 @@ class Bad {
 // Missing: int Bad::count = 0;
 
 int main() {
-    Bad::count = 10;  // ❌ Linker error!
+    Bad::count = 10;  // ❌ Linker error: undefined reference to `Bad::count'  (tested)
 }
 ```
 
@@ -603,7 +809,7 @@ class MyClass {
     static void func();
 };
 
-// ❌ Wrong:
+// ❌ Wrong (error: cannot declare member function to have static linkage, tested):
 static void MyClass::func() { }
 
 // ✅ Correct:
@@ -615,12 +821,29 @@ void MyClass::func() { }
 class Bad {
     static int count;
 public:
-    static void func() const {  // ❌ Error!
+    static void func() const {  // ❌ Error: static member function cannot have cv-qualifier (tested)
         // Static functions can't be const
         // (no 'this' pointer to be const)
     }
 };
 ```
+
+### ❌ Mistake 6: Counting Objects But Forgetting Copies
+```cpp
+struct Counter {
+    static int n;
+    Counter()  { n++; }
+    ~Counter() { n--; }
+};
+int Counter::n = 0;
+
+{ Counter a; Counter b = a; }   // b is made by the implicit COPY constructor: n is not incremented
+// While both are alive n == 1 instead of 2, and after the scope n == -1   (tested)
+```
+**Fix:** write a copy constructor that also does `n++` (Example 3's `Tracker` does exactly this).
+
+### ❌ Mistake 7: Counting a Failed Construction Twice
+A constructor that "fails" with an early `return` still creates an object, and the destructor still runs. If the destructor does `count--` but the constructor never did `count++`, the count is wrong. Example 4 had this bug (the refused `App-4` connection was "closed", lowering the count to -1 at the end). It now remembers whether the connection was established (`bool connected`). In real code, throw an exception from the constructor instead, then no object exists.
 
 ---
 
@@ -660,8 +883,9 @@ Create a `Connection` class with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 static_members.cpp -o static_members
+g++ -std=c++23 -Wall -Wextra main.cpp -o static_members
 ```
+`main.cpp` uses `std::println`, so it needs GCC 14 or newer (or another compiler with `<print>`). The addresses in the output are different on every run.
 
 ### Run:
 ```bash
@@ -735,7 +959,7 @@ Both refer to same variable!
 ### Coming Next:
 - **12_FriendFunctions** - Friend functions
 - **13_Inheritance** - Static in inheritance
-- **14_Polymorphism** - Static vs virtual
+- **16_Polymorphism** - Static vs virtual
 
 ### Related Concepts:
 - **Singleton Pattern** - Uses static extensively
@@ -918,8 +1142,8 @@ public:
 
 ## 📖 Further Reading
 
-- [cppreference.com - Static Members](https://en.cppreference.com/w/cpp/language/static)
-- "Effective C++" by Scott Meyers - Item 4
+- [cppreference.com - static members](https://en.cppreference.com/cpp/language/static)
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 4: Make sure that objects are initialized before they're used (static initialization order and function-local statics)
 - "Design Patterns" - Singleton and Factory patterns
 - [C++ Core Guidelines - Static Members](https://isocpp.github.io/CppCoreGuidelines/)
 

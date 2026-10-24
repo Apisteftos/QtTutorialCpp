@@ -61,6 +61,8 @@ Animal animal = dog;  // breed is LOST!
 animal.speak();  // ⚠️ Calls Animal::speak, not Dog::speak!
 ```
 
+`Animal animal = dog;` is copy-*initialization* (it calls `Animal`'s copy constructor); `animal = dog;` on an existing object is copy *assignment*. Both slice (Examples 1 and 8).
+
 **What gets lost:**
 - Derived class member variables (`breed`)
 - Polymorphic behavior (calls `Animal::speak` instead of `Dog::speak`)
@@ -75,6 +77,8 @@ Dog dog("Max", "German Shepherd");
 Animal animal = dog;  // ⚠️ breed member is silently lost!
 // No compiler warning!
 ```
+
+✅ tested: GCC 13 with `-Wall -Wextra -Wpedantic` is silent. **clang-tidy does warn**: `clang-tidy -checks=-*,cppcoreguidelines-slicing main.cpp` reports e.g. `slicing object from type 'Dog' to 'Animal' discards 32 bytes of state` and `discards override 'speak'` - also for `Animal copy = *ptr;`, so use it (the old advice "don't ignore slicing warnings" assumed warnings that compilers do not give).
 
 **2. Loss of Polymorphism:**
 ```cpp
@@ -280,6 +284,8 @@ Dog dog("Max", "Terrier");
 // Animal animal = dog;  // ❌ Compilation error!
 ```
 
+⚠️ Downside: this also forbids copying a whole `Dog`. The usual compromise is **protected** copy operations plus a virtual `clone()`: `Dog d2 = d;` works, `Animal a = d;` is an error (`copy constructor is protected within this context`), and `animal->clone()` copies through a base pointer without slicing ✅ tested (Example 9).
+
 ### Solution 5: Abstract Base Class
 
 **Can't create base objects directly:**
@@ -301,33 +307,43 @@ public:
 
 ### Example 1: The Problem
 Demonstrates basic object slicing with data loss.
+- `Animal animal = dog;` copies only the Animal part; `display()`/`speak()` now call the Animal versions
 
 ### Example 2: Function Slicing
 Slicing when passing to functions by value.
+- By value slices; `const Animal&` and `const Animal*` keep polymorphism
 
 ### Example 3: Container Slicing
 Slicing in vectors and other containers.
+- `vector<Animal>` slices, `vector<Animal*>` works but needs manual `delete`, `vector<unique_ptr<Animal>>` is the best option
 
 ### Example 4: Copy Constructor Slicing
 How copy construction causes slicing.
+- `Shape shape = circle;` loses the radius, so `area()` returns 0; a reference to the same circle gives the real area
 
 ### Example 5: Preventing Slicing
 Using deleted copy operations.
+- Deleted copy + pure virtual: slicing becomes a compile error
 
 ### Example 6: Virtual Destructor
 Relationship between destructors and slicing.
+- Virtual destructor for deleting through a base pointer; label fixed (the first demo is the *correct* case, not "WRONG"). Sliced copies leak nothing - the old comment "Derived destructor NOT called for sliced part" was misleading
 
 ### Example 7: Return Value Slicing
 Slicing when returning by value.
+- `return mgr;` as `Employee` loses the bonus; pointer / `unique_ptr` keep it
 
 ### Example 8: Assignment Slicing
 Slicing through assignment operator.
+- `book = ebook;` copies only the Book part; `book` stays a Book
 
 ### Example 9: Compile-Time Detection
 Making slicing a compile error.
+- Non-copyable base class; added: protected copy + `clone()` as the alternative that still lets you copy derived objects
 
 ### Example 10: Best Practices
 Summary of prevention techniques.
+- Was only printed text. Now real output: `typeid` of a sliced copy vs. a reference, `sizeof`, and `is_copy_constructible_v` / `is_abstract_v` of the protected types
 
 ---
 
@@ -453,8 +469,10 @@ public:
 };
 
 Base* ptr = new Derived();
-delete ptr;  // ⚠️ Only Base destructor called!
+delete ptr;  // ⚠️ Undefined behavior! (usually only ~Base runs, so Derived's resources leak)
 ```
+
+✅ tested: AddressSanitizer aborts this with `new-delete-type-mismatch`. Note that this is a *different* bug from slicing: a sliced copy is a complete `Base` object and does not leak anything ✅ tested.
 
 **Fix:**
 ```cpp
@@ -489,8 +507,10 @@ Convert raw pointer code to use smart pointers.
 
 ### Compile:
 ```bash
-g++ -std=c++17 object_slicing.cpp -o object_slicing
+g++ -std=c++23 -Wall -Wextra main.cpp -o object_slicing
 ```
+
+(`<print>` / `std::println` needs GCC 14 or newer.)
 
 ### Run:
 ```bash
@@ -573,15 +593,12 @@ PASS BY REFERENCE (No Slicing)
 ## 📚 Related Topics
 
 ### Prerequisites:
-- **12_Inheritance** - Inheritance basics
-- **Virtual Functions** - Polymorphism
-- **09_Constructors** - Copy constructors
-- **10_Destructors** - Virtual destructors
+- **14_VirtualFunctions** - Polymorphism
+- **02_Constructor** - Constructors (copy constructors)
+- **03_Destructor** and **17_VirtualDestructor** - Virtual destructors
 
 ### Coming Next:
-- **29_VirtualFunctions** - Virtual function details
-- **30_AbstractClasses** - Pure virtual functions
-- **31_Polymorphism** - Polymorphic design
+- (virtual functions, abstract classes and polymorphism are your existing folders 14, 15 and 16)
 
 ### Related Concepts:
 - **Smart Pointers** - Memory management
@@ -663,8 +680,8 @@ ref.speak();  // ✅ Calls Dog::speak
 
 // ❌ THESE ARE IMPOSSIBLE (compilation errors):
 // Animal animal = dog;  // Error - copy deleted
-// process(dog);  // Error if process takes Animal by value
-// vector<Animal> v;  // Would cause slicing
+// void process(Animal a);  // Error already at the declaration: abstract parameter type
+// vector<Animal> v;  // declaring it compiles, but push_back(dog) does not (copy deleted)
 ```
 
 ---
@@ -723,7 +740,7 @@ virtual ~Base() = default;  // Virtual destructor
 - **Never assign** derived to base variables
 - **Don't forget** virtual destructors
 - **Don't copy** polymorphic objects carelessly
-- **Don't ignore** slicing warnings
+- **Run clang-tidy** (`cppcoreguidelines-slicing`) - compilers do not warn
 - **Don't assume** copy will work correctly
 - **Don't use** value semantics for polymorphism
 - **Don't make** base classes copyable without reason
@@ -769,10 +786,10 @@ for (const auto& d : docs) {
 
 ## 📖 Further Reading
 
-- [C++ FAQ - Object Slicing](https://isocpp.org/wiki/faq/proper-inheritance#slicing)
-- "Effective C++" by Scott Meyers - Item 38
-- [C++ Core Guidelines - C.67](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-copy-virtual)
-- [cppreference.com - Object Slicing](https://en.cppreference.com/w/cpp/language/copy_constructor)
+- [C++ FAQ - proper inheritance](https://isocpp.org/wiki/faq/proper-inheritance) (the slicing anchor could not be verified)
+- [clang-tidy: cppcoreguidelines-slicing](https://releases.llvm.org/13.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-slicing.html) (found via search; the check itself ✅ tested)
+- "Effective C++" by Scott Meyers - Item 20 (Prefer pass-by-reference-to-const to pass-by-value; from memory, not checked)
+- [C++ Core Guidelines - C.67](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rc-copy-virtual): A polymorphic class should suppress public copy/move ✅ anchor checked
 
 ---
 
@@ -836,3 +853,33 @@ for (const auto& d : docs) {
 *Difficulty: Intermediate to Advanced*  
 *Prerequisites: Inheritance, virtual functions, pointers*  
 *CRITICAL for Correct Polymorphism*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Slicing is not a memory leak.** The old lecture listed "Destructor might not be called / memory leaks possible" among the dangers of slicing. A sliced copy is a complete base object with its own base destructor, and the original derived object is destroyed normally ✅ tested (AddressSanitizer: no leak). The real destructor hazard is `delete basePtr` without a virtual destructor, which is undefined behavior (see Mistake 4).
+- **Other places where slicing hides** ✅ tested:
+  - `Animal copy = *ptr;` - copying through a pointer slices (flagged by clang-tidy).
+  - `catch (std::exception e)` catches a `std::runtime_error("disk full")` by value and `e.what()` returns `std::exception` instead of `disk full`; GCC warns with `-Wcatch-value`. Always `catch (const std::exception& e)`.
+- **What the sliced object really is:** `typeid(sliced) == typeid(Animal)` and `sizeof(Dog) > sizeof(Animal)` are both true (Example 10). The copy constructor never copies the vptr; the new object gets its own class's vptr.
+- **Decision tree:** polymorphic type? No → values are fine. Yes → function parameter: reference/pointer; container: `vector<unique_ptr<Base>>`; return value: `unique_ptr<Base>`; assignment: reference or pointer. Always use pointers/references for polymorphic types.
+- **Corrected comparison table:**
+
+| Approach | Slicing? | Recommended |
+|---|---|---|
+| Pass by value | Yes | Never |
+| Pass by reference / pointer | No | Yes |
+| `vector<Base>` | Yes | Never |
+| `vector<Base*>` | No | OK (manual `delete`) |
+| `vector<unique_ptr<Base>>` | No | Best |
+| Return by value as `Base` | Yes | Never |
+| Return pointer | No | OK |
+| Return `unique_ptr<Base>` | No | Best |
+| `Base b = derived;` / `b = derived;` | Yes | Avoid |
+| `Base& b = derived;` | No | Yes |
+
+- **Code changes in main.cpp:**
+  - Example 6: wrong "WRONG" label and the misleading destructor comment fixed; `Derived` (owns a raw array) got its copy operations deleted.
+  - Example 9: unused variable `ref` (GCC warning) silenced; added the protected-copy + `clone()` alternative; Example 10 is a real demo now.
+  - One-argument constructors (`Animal`, `Shape`, `Vehicle`, `SafeDerived`) made `explicit` (see 23_ExplicitKeyword).
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer.

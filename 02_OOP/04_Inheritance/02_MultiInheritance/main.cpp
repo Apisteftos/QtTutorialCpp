@@ -1,7 +1,8 @@
-#include <iostream>
+#include <print>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
-using namespace std;
 
 // ============================================
 // WHAT IS MULTIPLE INHERITANCE?
@@ -47,16 +48,16 @@ protected:
     int horsepower;
 
 public:
-    Engine(int hp) : horsepower(hp) {
-        cout << "  Engine constructor: " << horsepower << "hp\n";
+    explicit Engine(int hp) : horsepower(hp) {
+        std::println("  Engine constructor: {}hp", horsepower);
     }
 
     ~Engine() {
-        cout << "  Engine destructor\n";
+        std::println("  Engine destructor");
     }
 
     void startEngine() {
-        cout << "  Engine started: " << horsepower << "hp\n";
+        std::println("  Engine started: {}hp", horsepower);
     }
 
     int getHorsepower() const {
@@ -69,16 +70,16 @@ protected:
     int numWheels;
 
 public:
-    Wheels(int wheels) : numWheels(wheels) {
-        cout << "  Wheels constructor: " << numWheels << " wheels\n";
+    explicit Wheels(int wheels) : numWheels(wheels) {
+        std::println("  Wheels constructor: {} wheels", numWheels);
     }
 
     ~Wheels() {
-        cout << "  Wheels destructor\n";
+        std::println("  Wheels destructor");
     }
 
     void roll() {
-        cout << "  Rolling on " << numWheels << " wheels\n";
+        std::println("  Rolling on {} wheels", numWheels);
     }
 
     int getWheelCount() const {
@@ -89,50 +90,53 @@ public:
 // Multiple inheritance - inherits from both Engine and Wheels
 class Car : public Engine, public Wheels {
 private:
-    string brand;
+    std::string brand;
 
 public:
-    Car(string b, int hp, int wheels)
+    Car(std::string b, int hp, int wheels)
         : Engine(hp), Wheels(wheels), brand(b) {
-        cout << "  Car constructor: " << brand << "\n";
+        std::println("  Car constructor: {}", brand);
     }
 
     ~Car() {
-        cout << "  Car destructor: " << brand << "\n";
+        std::println("  Car destructor: {}", brand);
     }
 
     void drive() {
-        cout << "  Driving " << brand << ":\n";
+        std::println("  Driving {}:", brand);
         startEngine();
         roll();
     }
 
     void displayInfo() {
-        cout << "  Brand: " << brand << "\n";
-        cout << "  Horsepower: " << getHorsepower() << "\n";
-        cout << "  Wheels: " << getWheelCount() << "\n";
+        std::println("  Brand: {}", brand);
+        std::println("  Horsepower: {}", getHorsepower());
+        std::println("  Wheels: {}", getWheelCount());
     }
 };
 
 void demonstrateBasicMultiple() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC MULTIPLE         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC MULTIPLE         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating car (multiple inheritance) ---\n";
+    std::println("--- Creating car (multiple inheritance) ---");
     Car car("Toyota", 150, 4);
 
-    cout << "\n--- Using car ---\n";
+    std::println("");
+    std::println("--- Using car ---");
     car.displayInfo();
     car.drive();
+    std::println("");
+    std::println("--- Where do the base subobjects live? ---");
+    const char* start = reinterpret_cast<const char*>(&car);
+    std::println("  Engine subobject at offset {}", reinterpret_cast<const char*>(static_cast<Engine*>(&car)) - start);
+    std::println("  Wheels subobject at offset {} (GCC x86-64)", reinterpret_cast<const char*>(static_cast<Wheels*>(&car)) - start);
 
-    cout << "\n✅ Multiple inheritance:\n";
-    cout << "   • Car inherits from Engine AND Wheels\n";
-    cout << "   • Combines functionality from both\n";
-    cout << "   • Constructor order: left to right\n";
-    cout << "   • Destructor order: right to left\n";
-
-    cout << "\n--- Destruction order ---\n";
+    std::println("");
+    std::println("--- Destruction order ---");
 }
 
 // ============================================
@@ -142,22 +146,22 @@ void demonstrateBasicMultiple() {
 class ClassA {
 public:
     void display() {
-        cout << "  ClassA::display()\n";
+        std::println("  ClassA::display()");
     }
 
     void commonFunc() {
-        cout << "  ClassA::commonFunc()\n";
+        std::println("  ClassA::commonFunc()");
     }
 };
 
 class ClassB {
 public:
     void display() {
-        cout << "  ClassB::display()\n";
+        std::println("  ClassB::display()");
     }
 
     void commonFunc() {
-        cout << "  ClassB::commonFunc()\n";
+        std::println("  ClassB::commonFunc()");
     }
 };
 
@@ -171,35 +175,40 @@ public:
         ClassB::display();  // ✅ Use ClassB's version
     }
 
-    // Can override to resolve ambiguity
+    // Declaring display() here hides both base versions
+    // (not virtual: this is hiding, not overriding)
     void display() {
-        cout << "  MultiDerived::display() (resolves ambiguity)\n";
+        std::println("  MultiDerived::display() (resolves ambiguity)");
         ClassA::display();  // Can still call base versions
         ClassB::display();
     }
 };
-
+// Compile-time check: is "t.commonFunc()" a valid expression for T?
+template<typename T>
+constexpr bool hasCommonFunc = requires(T t) { t.commonFunc(); };
 void demonstrateAmbiguity() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: AMBIGUITY PROBLEM      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: AMBIGUITY PROBLEM      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     MultiDerived obj;
 
-    cout << "--- Ambiguity problem ---\n";
+    std::println("--- Ambiguity problem ---");
     // obj.commonFunc();  // ❌ Error! Which commonFunc()?
 
-    cout << "--- Solution 1: Scope resolution ---\n";
+    std::println("--- Solution 1: Scope resolution ---");
     obj.ClassA::commonFunc();
     obj.ClassB::commonFunc();
 
-    cout << "\n--- Solution 2: Override in derived ---\n";
+    std::println("");
+    std::println("--- Solution 2: Override in derived ---");
     obj.display();  // Calls MultiDerived version
-
-    cout << "\n⚠️  Ambiguity occurs when:\n";
-    cout << "   • Multiple bases have same function name\n";
-    cout << "   • Compiler doesn't know which to call\n";
-    cout << "   • Must explicitly specify with Base::func()\n";
+    std::println("");
+    std::println("--- Does the call compile? ---");
+    std::println("  ClassA alone:  a.commonFunc() -> {}", hasCommonFunc<ClassA>);
+    std::println("  MultiDerived:  obj.commonFunc() -> {} (ambiguous)", hasCommonFunc<MultiDerived>);
 }
 
 // ============================================
@@ -208,20 +217,20 @@ void demonstrateAmbiguity() {
 
 class Device {
 protected:
-    string deviceName;
+    std::string deviceName;
     int deviceId;
 
 public:
-    Device(string name, int id) : deviceName(name), deviceId(id) {
-        cout << "  Device constructor: " << deviceName << " (ID: " << deviceId << ")\n";
+    Device(std::string name, int id) : deviceName(name), deviceId(id) {
+        std::println("  Device constructor: {} (ID: {})", deviceName, deviceId);
     }
 
     virtual ~Device() {
-        cout << "  Device destructor: " << deviceName << "\n";
+        std::println("  Device destructor: {}", deviceName);
     }
 
     void powerOn() {
-        cout << "  Device " << deviceName << " powered on\n";
+        std::println("  Device {} powered on", deviceName);
     }
 
     int getDeviceId() const {
@@ -232,32 +241,32 @@ public:
 // Phone inherits from Device
 class Phone : public Device {
 public:
-    Phone(string name, int id) : Device(name, id) {
-        cout << "  Phone constructor\n";
+    Phone(std::string name, int id) : Device(name, id) {
+        std::println("  Phone constructor");
     }
 
     ~Phone() {
-        cout << "  Phone destructor\n";
+        std::println("  Phone destructor");
     }
 
     void makeCall() {
-        cout << "  Making a call on " << deviceName << "\n";
+        std::println("  Making a call on {}", deviceName);
     }
 };
 
 // Camera inherits from Device
 class Camera : public Device {
 public:
-    Camera(string name, int id) : Device(name, id) {
-        cout << "  Camera constructor\n";
+    Camera(std::string name, int id) : Device(name, id) {
+        std::println("  Camera constructor");
     }
 
     ~Camera() {
-        cout << "  Camera destructor\n";
+        std::println("  Camera destructor");
     }
 
     void takePicture() {
-        cout << "  Taking a picture with " << deviceName << "\n";
+        std::println("  Taking a picture with {}", deviceName);
     }
 };
 
@@ -265,13 +274,13 @@ public:
 // This creates TWO copies of Device! (Diamond Problem)
 class SmartPhone : public Phone, public Camera {
 public:
-    SmartPhone(string name)
+    explicit SmartPhone(std::string name)
         : Phone(name + "-Phone", 1), Camera(name + "-Camera", 2) {
-        cout << "  SmartPhone constructor\n";
+        std::println("  SmartPhone constructor");
     }
 
     ~SmartPhone() {
-        cout << "  SmartPhone destructor\n";
+        std::println("  SmartPhone destructor");
     }
 
     void useFeatures() {
@@ -283,40 +292,35 @@ public:
         Camera::powerOn();
 
         // Two different device IDs!
-        cout << "  Phone device ID: " << Phone::getDeviceId() << "\n";
-        cout << "  Camera device ID: " << Camera::getDeviceId() << "\n";
+        std::println("  Phone device ID: {}", Phone::getDeviceId());
+        std::println("  Camera device ID: {}", Camera::getDeviceId());
     }
 };
 
 void demonstrateDiamondProblem() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: DIAMOND PROBLEM        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: DIAMOND PROBLEM        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- The Diamond Problem ---\n";
-    cout << "       Device\n";
-    cout << "       /    \\\n";
-    cout << "    Phone  Camera\n";
-    cout << "       \\    /\n";
-    cout << "     SmartPhone\n";
-    cout << "\n";
-    cout << "⚠️  SmartPhone contains TWO copies of Device!\n\n";
+    std::println("⚠️  SmartPhone contains TWO copies of Device!");
+    std::println("");
 
-    cout << "--- Creating SmartPhone ---\n";
-    cout << "Notice: TWO Device constructors called!\n";
+    std::println("--- Creating SmartPhone ---");
+    std::println("Notice: TWO Device constructors called!");
     SmartPhone phone("iPhone");
 
-    cout << "\n--- Using SmartPhone ---\n";
+    std::println("");
+    std::println("--- Using SmartPhone ---");
     phone.useFeatures();
+    std::println("");
+    std::println("--- Two Device subobjects ---");
+    std::println("  SmartPhone* converts to Device*: {} (ambiguous)", std::is_convertible_v<SmartPhone*, Device*>);
+    std::println("  sizeof(SmartPhone): {} (GCC x86-64)", sizeof(SmartPhone));
 
-    cout << "\n⚠️  Problems:\n";
-    cout << "   • Two Device objects in SmartPhone\n";
-    cout << "   • Ambiguity accessing Device members\n";
-    cout << "   • Wasted memory\n";
-    cout << "   • Inconsistent state\n";
-    cout << "   • Solution: Virtual Inheritance (next example)\n";
-
-    cout << "\n--- Destruction (reverse order) ---\n";
+    std::println("");
+    std::println("--- Destruction (reverse order) ---");
 }
 
 // ============================================
@@ -325,22 +329,21 @@ void demonstrateDiamondProblem() {
 
 class VDevice {
 protected:
-    string vDeviceName;
+    std::string vDeviceName;
     int vDeviceId;
 
 public:
-    VDevice(string name = "Unknown", int id = 0)
+    explicit VDevice(std::string name = "Unknown", int id = 0)
         : vDeviceName(name), vDeviceId(id) {
-        cout << "  VDevice constructor: " << vDeviceName
-             << " (ID: " << vDeviceId << ")\n";
+        std::println("  VDevice constructor: {} (ID: {})", vDeviceName, vDeviceId);
     }
 
     virtual ~VDevice() {
-        cout << "  VDevice destructor: " << vDeviceName << "\n";
+        std::println("  VDevice destructor: {}", vDeviceName);
     }
 
     void powerOn() {
-        cout << "  VDevice " << vDeviceName << " powered on\n";
+        std::println("  VDevice {} powered on", vDeviceName);
     }
 
     int getVDeviceId() const {
@@ -351,32 +354,32 @@ public:
 // VIRTUAL inheritance - share single Device instance
 class VPhone : virtual public VDevice {
 public:
-    VPhone(string name = "Unknown", int id = 0) : VDevice(name, id) {
-        cout << "  VPhone constructor\n";
+    explicit VPhone(std::string name = "Unknown", int id = 0) : VDevice(name, id) {
+        std::println("  VPhone constructor");
     }
 
     ~VPhone() {
-        cout << "  VPhone destructor\n";
+        std::println("  VPhone destructor");
     }
 
     void makeCall() {
-        cout << "  Making a call on " << vDeviceName << "\n";
+        std::println("  Making a call on {}", vDeviceName);
     }
 };
 
 // VIRTUAL inheritance - share single Device instance
 class VCamera : virtual public VDevice {
 public:
-    VCamera(string name = "Unknown", int id = 0) : VDevice(name, id) {
-        cout << "  VCamera constructor\n";
+    explicit VCamera(std::string name = "Unknown", int id = 0) : VDevice(name, id) {
+        std::println("  VCamera constructor");
     }
 
     ~VCamera() {
-        cout << "  VCamera destructor\n";
+        std::println("  VCamera destructor");
     }
 
     void takePicture() {
-        cout << "  Taking a picture with " << vDeviceName << "\n";
+        std::println("  Taking a picture with {}", vDeviceName);
     }
 };
 
@@ -384,13 +387,13 @@ public:
 class VSmartPhone : public VPhone, public VCamera {
 public:
     // MUST call VDevice constructor explicitly
-    VSmartPhone(string name, int id)
+    VSmartPhone(std::string name, int id)
         : VDevice(name, id), VPhone(), VCamera() {
-        cout << "  VSmartPhone constructor\n";
+        std::println("  VSmartPhone constructor");
     }
 
     ~VSmartPhone() {
-        cout << "  VSmartPhone destructor\n";
+        std::println("  VSmartPhone destructor");
     }
 
     void useFeatures() {
@@ -399,39 +402,35 @@ public:
         powerOn();  // ✅ No ambiguity now!
 
         // Only one device ID!
-        cout << "  Device ID: " << getVDeviceId() << "\n";
+        std::println("  Device ID: {}", getVDeviceId());
     }
 };
 
 void demonstrateVirtualInheritance() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: VIRTUAL INHERITANCE    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: VIRTUAL INHERITANCE    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Virtual Inheritance Solution ---\n";
-    cout << "       VDevice (virtual)\n";
-    cout << "       /    \\\n";
-    cout << "   VPhone  VCamera\n";
-    cout << "       \\    /\n";
-    cout << "    VSmartPhone\n";
-    cout << "\n";
-    cout << "✅ VSmartPhone contains only ONE VDevice!\n\n";
+    std::println("--- Virtual Inheritance Solution ---");
+    std::println("✅ VSmartPhone contains only ONE VDevice!");
+    std::println("");
 
-    cout << "--- Creating VSmartPhone ---\n";
-    cout << "Notice: Only ONE VDevice constructor!\n";
+    std::println("--- Creating VSmartPhone ---");
+    std::println("Notice: Only ONE VDevice constructor!");
     VSmartPhone phone("iPhone", 12345);
 
-    cout << "\n--- Using VSmartPhone ---\n";
+    std::println("");
+    std::println("--- Using VSmartPhone ---");
     phone.useFeatures();
+    std::println("");
+    std::println("--- One shared VDevice ---");
+    std::println("  VSmartPhone* converts to VDevice*: {}", std::is_convertible_v<VSmartPhone*, VDevice*>);
+    std::println("  sizeof(VSmartPhone): {} (GCC x86-64)", sizeof(VSmartPhone));
 
-    cout << "\n✅ Virtual inheritance solves:\n";
-    cout << "   • Only ONE shared base object\n";
-    cout << "   • No ambiguity\n";
-    cout << "   • Consistent state\n";
-    cout << "   • No wasted memory\n";
-    cout << "   • Most derived class calls base constructor\n";
-
-    cout << "\n--- Destruction ---\n";
+    std::println("");
+    std::println("--- Destruction ---");
 }
 
 // ============================================
@@ -447,8 +446,8 @@ public:
 
 class ISerializable {
 public:
-    virtual string serialize() const = 0;
-    virtual void deserialize(const string& data) = 0;
+    virtual std::string serialize() const = 0;
+    virtual void deserialize(const std::string& data) = 0;
     virtual ~ISerializable() = default;
 };
 
@@ -461,57 +460,52 @@ public:
 // Implements multiple interfaces
 class Button : public IDrawable, public ISerializable, public IClickable {
 private:
-    string label;
+    std::string label;
     int x, y;
 
 public:
-    Button(string lbl, int posX, int posY)
+    Button(std::string lbl, int posX, int posY)
         : label(lbl), x(posX), y(posY) { }
 
     // Implement IDrawable
     void draw() const override {
-        cout << "  Drawing button '" << label << "' at ("
-             << x << "," << y << ")\n";
+        std::println("  Drawing button '{}' at ({},{})", label, x, y);
     }
 
     // Implement ISerializable
-    string serialize() const override {
-        return "Button:" + label + ":" + to_string(x) + ":" + to_string(y);
+    std::string serialize() const override {
+        return "Button:" + label + ":" + std::to_string(x) + ":" + std::to_string(y);
     }
 
-    void deserialize(const string& data) override {
-        cout << "  Deserializing: " << data << "\n";
+    void deserialize(const std::string& data) override {
+        std::println("  Deserializing: {}", data);
     }
 
     // Implement IClickable
     void onClick() override {
-        cout << "  Button '" << label << "' clicked!\n";
+        std::println("  Button '{}' clicked!", label);
     }
 };
 
 void demonstrateMultipleInterfaces() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: MULTIPLE INTERFACES    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: MULTIPLE INTERFACES    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Button button("Submit", 100, 200);
 
-    cout << "--- Using as different interfaces ---\n";
+    std::println("--- Using as different interfaces ---");
 
     IDrawable* drawable = &button;
     drawable->draw();
 
     ISerializable* serializable = &button;
-    cout << "  Serialized: " << serializable->serialize() << "\n";
+    std::println("  Serialized: {}", serializable->serialize());
 
     IClickable* clickable = &button;
     clickable->onClick();
-
-    cout << "\n✅ Multiple interface inheritance:\n";
-    cout << "   • Pure virtual functions only\n";
-    cout << "   • No diamond problem (no data)\n";
-    cout << "   • Safe multiple inheritance\n";
-    cout << "   • Common in design patterns\n";
 }
 
 // ============================================
@@ -522,20 +516,20 @@ void demonstrateMultipleInterfaces() {
 template<typename Base>
 class Timestamped : public Base {
 private:
-    string timestamp;
+    std::string timestamp;
 
 public:
     template<typename... Args>
-    Timestamped(Args&&... args) : Base(forward<Args>(args)...) {
+    explicit Timestamped(Args&&... args) : Base(std::forward<Args>(args)...) {
         timestamp = "2024-01-15 10:30:00";  // Simplified
     }
 
-    string getTimestamp() const {
+    std::string getTimestamp() const {
         return timestamp;
     }
 
     void displayWithTimestamp() const {
-        cout << "  [" << timestamp << "] ";
+        std::print("  [{}] ", timestamp);
         Base::display();
     }
 };
@@ -544,55 +538,54 @@ template<typename Base>
 class Loggable : public Base {
 public:
     template<typename... Args>
-    Loggable(Args&&... args) : Base(forward<Args>(args)...) { }
+    explicit Loggable(Args&&... args) : Base(std::forward<Args>(args)...) { }
 
-    void log(const string& message) const {
-        cout << "  LOG: " << message << " - ";
+    void log(const std::string& message) const {
+        std::print("  LOG: {} - ", message);
         Base::display();
     }
 };
 
 class Message {
 protected:
-    string content;
+    std::string content;
 
 public:
-    Message(string msg) : content(msg) { }
+    explicit Message(std::string msg) : content(msg) { }
 
     void display() const {
-        cout << content << "\n";
+        std::println("{}", content);
     }
 
     virtual ~Message() = default;
 };
 
 void demonstrateMixin() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: MIXIN PATTERN          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: MIXIN PATTERN          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Regular message ---\n";
+    std::println("--- Regular message ---");
     Message msg1("Hello World");
     msg1.display();
 
-    cout << "\n--- Message with timestamp ---\n";
+    std::println("");
+    std::println("--- Message with timestamp ---");
     Timestamped<Message> msg2("Important Update");
     msg2.displayWithTimestamp();
 
-    cout << "\n--- Message with logging ---\n";
+    std::println("");
+    std::println("--- Message with logging ---");
     Loggable<Message> msg3("Debug Info");
     msg3.log("System event");
 
-    cout << "\n--- Message with timestamp AND logging ---\n";
+    std::println("");
+    std::println("--- Message with timestamp AND logging ---");
     Loggable<Timestamped<Message>> msg4("Critical Alert");
     msg4.log("High priority");
     msg4.displayWithTimestamp();
-
-    cout << "\n✅ Mixin pattern:\n";
-    cout << "   • Small, reusable functionality\n";
-    cout << "   • Compose features flexibly\n";
-    cout << "   • Template-based mixing\n";
-    cout << "   • Avoid inheritance hierarchy explosion\n";
 }
 
 // ============================================
@@ -601,69 +594,67 @@ void demonstrateMixin() {
 
 class Base1 {
 public:
-    Base1() { cout << "  1. Base1 constructor\n"; }
-    ~Base1() { cout << "  6. Base1 destructor\n"; }
+    Base1() { std::println("  1. Base1 constructor"); }
+    ~Base1() { std::println("  4. Base1 destructor"); }
 };
 
 class Base2 {
 public:
-    Base2() { cout << "  2. Base2 constructor\n"; }
-    ~Base2() { cout << "  5. Base2 destructor\n"; }
+    Base2() { std::println("  2. Base2 constructor"); }
+    ~Base2() { std::println("  3. Base2 destructor"); }
 };
 
 class Base3 {
 public:
-    Base3() { cout << "  3. Base3 constructor\n"; }
-    ~Base3() { cout << "  4. Base3 destructor\n"; }
+    Base3() { std::println("  3. Base3 constructor"); }
+    ~Base3() { std::println("  2. Base3 destructor"); }
 };
 
 class MultipleBase : public Base1, public Base2, public Base3 {
 public:
-    MultipleBase() { cout << "  4. MultipleBase constructor\n"; }
-    ~MultipleBase() { cout << "  3. MultipleBase destructor\n"; }
+    MultipleBase() { std::println("  4. MultipleBase constructor"); }
+    ~MultipleBase() { std::println("  1. MultipleBase destructor"); }
 };
 
 class VBase1 : virtual public Base1 {
 public:
-    VBase1() { cout << "  2. VBase1 constructor\n"; }
-    ~VBase1() { cout << "  5. VBase1 destructor\n"; }
+    VBase1() { std::println("  2. VBase1 constructor"); }
+    ~VBase1() { std::println("  3. VBase1 destructor"); }
 };
 
 class VBase2 : virtual public Base1 {
 public:
-    VBase2() { cout << "  3. VBase2 constructor\n"; }
-    ~VBase2() { cout << "  4. VBase2 destructor\n"; }
+    VBase2() { std::println("  3. VBase2 constructor"); }
+    ~VBase2() { std::println("  2. VBase2 destructor"); }
 };
 
 class VMultiple : public VBase1, public VBase2 {
 public:
-    VMultiple() { cout << "  4. VMultiple constructor\n"; }
-    ~VMultiple() { cout << "  2. VMultiple destructor\n"; }
+    VMultiple() { std::println("  4. VMultiple constructor"); }
+    ~VMultiple() { std::println("  1. VMultiple destructor"); }
 };
 
 void demonstrateConstructorOrder() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: CONSTRUCTOR ORDER      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: CONSTRUCTOR ORDER      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Regular multiple inheritance ---\n";
-    cout << "Construction order (left to right):\n";
+    std::println("--- Regular multiple inheritance ---");
+    std::println("Construction order (left to right):");
     {
         MultipleBase obj;
+        std::println("Destruction order (reverse):");
     }
-    cout << "Destruction order (reverse):\n";
 
-    cout << "\n--- Virtual inheritance ---\n";
-    cout << "Construction order (virtual bases first):\n";
+    std::println("");
+    std::println("--- Virtual inheritance ---");
+    std::println("Construction order (virtual bases first):");
     {
         VMultiple obj;
+        std::println("Destruction order (reverse):");
     }
-    cout << "Destruction order (reverse):\n";
-
-    cout << "\n✅ Order rules:\n";
-    cout << "   Regular: Left to right, then derived\n";
-    cout << "   Virtual: Virtual bases first, then order\n";
-    cout << "   Destruction: Always reverse of construction\n";
 }
 
 // ============================================
@@ -687,7 +678,7 @@ class BadProcessor : public BadLogger, public BadValidator {
 // ✅ GOOD: Multiple interface inheritance
 class ILogger {
 public:
-    virtual void log(const string& msg) = 0;
+    virtual void log(const std::string& msg) = 0;
     virtual ~ILogger() = default;
 };
 
@@ -699,15 +690,15 @@ public:
 
 class GoodProcessor : public ILogger, public IValidator {
 private:
-    string data;
+    std::string data;
 
 public:
-    void log(const string& msg) override {
-        cout << "  Logging: " << msg << "\n";
+    void log(const std::string& msg) override {
+        std::println("  Logging: {}", msg);
     }
 
     bool validate() const override {
-        cout << "  Validating data...\n";
+        std::println("  Validating data...");
         return true;
     }
 };
@@ -715,15 +706,15 @@ public:
 // ✅ BETTER: Composition
 class Logger {
 public:
-    void log(const string& msg) {
-        cout << "  Logging: " << msg << "\n";
+    void log(const std::string& msg) {
+        std::println("  Logging: {}", msg);
     }
 };
 
 class Validator {
 public:
     bool validate() const {
-        cout << "  Validating...\n";
+        std::println("  Validating...");
         return true;
     }
 };
@@ -742,31 +733,21 @@ public:
 };
 
 void demonstrateWhenToUse() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: WHEN TO USE            ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: WHEN TO USE            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using multiple interfaces (GOOD) ---\n";
+    std::println("--- Using multiple interfaces (GOOD) ---");
     GoodProcessor goodProc;
     goodProc.log("Test message");
     goodProc.validate();
 
-    cout << "\n--- Using composition (BETTER) ---\n";
+    std::println("");
+    std::println("--- Using composition (BETTER) ---");
     BestProcessor bestProc;
     bestProc.process();
-
-    cout << "\n✅ Use multiple inheritance when:\n";
-    cout << "   • Implementing multiple INTERFACES (pure virtual)\n";
-    cout << "   • No implementation conflicts\n";
-    cout << "   • Truly IS-A relationships for all bases\n";
-    cout << "\n";
-    cout << "❌ Avoid when:\n";
-    cout << "   • Multiple implementation inheritance\n";
-    cout << "   • Can use composition instead\n";
-    cout << "   • Diamond problem likely\n";
-    cout << "   • Adds unnecessary complexity\n";
-    cout << "\n";
-    cout << "💡 General rule: Prefer composition over inheritance!\n";
 }
 
 // ============================================
@@ -784,30 +765,30 @@ public:
 class IDeveloper {
 public:
     virtual void writeCode() = 0;
-    virtual string getPrimaryLanguage() const = 0;
+    virtual std::string getPrimaryLanguage() const = 0;
     virtual ~IDeveloper() = default;
 };
 
 class IDesigner {
 public:
     virtual void createDesign() = 0;
-    virtual string getDesignTool() const = 0;
+    virtual std::string getDesignTool() const = 0;
     virtual ~IDesigner() = default;
 };
 
 // Base employee class
 class Employee {
 protected:
-    string name;
+    std::string name;
     int employeeId;
 
 public:
-    Employee(string n, int id) : name(n), employeeId(id) { }
+    Employee(std::string n, int id) : name(n), employeeId(id) { }
 
     virtual ~Employee() = default;
 
     void displayInfo() const {
-        cout << "  Employee: " << name << " (ID: " << employeeId << ")\n";
+        std::println("  Employee: {} (ID: {})", name, employeeId);
     }
 };
 
@@ -815,14 +796,14 @@ public:
 class TechLead : public Employee, public IManager, public IDeveloper {
 private:
     int teamSize;
-    string language;
+    std::string language;
 
 public:
-    TechLead(string n, int id, int team, string lang)
+    TechLead(std::string n, int id, int team, std::string lang)
         : Employee(n, id), teamSize(team), language(lang) { }
 
     void manageTeam() override {
-        cout << "  Managing team of " << teamSize << " developers\n";
+        std::println("  Managing team of {} developers", teamSize);
     }
 
     int getTeamSize() const override {
@@ -830,10 +811,10 @@ public:
     }
 
     void writeCode() override {
-        cout << "  Writing " << language << " code\n";
+        std::println("  Writing {} code", language);
     }
 
-    string getPrimaryLanguage() const override {
+    std::string getPrimaryLanguage() const override {
         return language;
     }
 };
@@ -842,14 +823,14 @@ public:
 class DesignManager : public Employee, public IManager, public IDesigner {
 private:
     int teamSize;
-    string tool;
+    std::string tool;
 
 public:
-    DesignManager(string n, int id, int team, string t)
+    DesignManager(std::string n, int id, int team, std::string t)
         : Employee(n, id), teamSize(team), tool(t) { }
 
     void manageTeam() override {
-        cout << "  Managing design team of " << teamSize << "\n";
+        std::println("  Managing design team of {}", teamSize);
     }
 
     int getTeamSize() const override {
@@ -857,43 +838,42 @@ public:
     }
 
     void createDesign() override {
-        cout << "  Creating designs with " << tool << "\n";
+        std::println("  Creating designs with {}", tool);
     }
 
-    string getDesignTool() const override {
+    std::string getDesignTool() const override {
         return tool;
     }
 };
 
 void demonstrateEmployeeSystem() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: EMPLOYEE SYSTEM        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: EMPLOYEE SYSTEM        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     TechLead techLead("Alice", 1001, 5, "C++");
     DesignManager designMgr("Bob", 1002, 3, "Figma");
 
-    cout << "--- Tech Lead (Manager + Developer) ---\n";
+    std::println("--- Tech Lead (Manager + Developer) ---");
     techLead.displayInfo();
     techLead.manageTeam();
     techLead.writeCode();
 
-    cout << "\n--- Design Manager (Manager + Designer) ---\n";
+    std::println("");
+    std::println("--- Design Manager (Manager + Designer) ---");
     designMgr.displayInfo();
     designMgr.manageTeam();
     designMgr.createDesign();
 
-    cout << "\n--- Using as different interfaces ---\n";
-    vector<IManager*> managers = { &techLead, &designMgr };
-    cout << "All managers:\n";
+    std::println("");
+    std::println("--- Using as different interfaces ---");
+    std::vector<IManager*> managers = { &techLead, &designMgr };
+    std::println("All managers:");
     for (IManager* mgr : managers) {
-        cout << "  Team size: " << mgr->getTeamSize() << "\n";
+        std::println("  Team size: {}", mgr->getTeamSize());
     }
-
-    cout << "\n✅ Multiple interfaces enable:\n";
-    cout << "   • Flexible role combinations\n";
-    cout << "   • Interface-based polymorphism\n";
-    cout << "   • Clean separation of concerns\n";
 }
 
 // ============================================
@@ -904,14 +884,14 @@ void demonstrateEmployeeSystem() {
 class AudioPlayer {
 public:
     void playAudio() {
-        cout << "  Playing audio\n";
+        std::println("  Playing audio");
     }
 };
 
 class VideoPlayer {
 public:
     void playVideo() {
-        cout << "  Playing video\n";
+        std::println("  Playing video");
     }
 };
 
@@ -947,29 +927,21 @@ public:
 };
 
 void demonstrateCompositionAlternative() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: COMPOSITION vs MI     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: COMPOSITION vs MI     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Multiple Inheritance approach ---\n";
+    std::println("--- Multiple Inheritance approach ---");
     MediaPlayerInheritance player1;
     player1.playMedia();
 
-    cout << "\n--- Composition approach (BETTER) ---\n";
+    std::println("");
+    std::println("--- Composition approach (BETTER) ---");
     MediaPlayerComposition player2;
     player2.playMedia();
     player2.playAudioOnly();
-
-    cout << "\n✅ Composition advantages:\n";
-    cout << "   • Loose coupling\n";
-    cout << "   • More flexible\n";
-    cout << "   • Easier to test\n";
-    cout << "   • Can swap implementations\n";
-    cout << "   • Avoids diamond problem\n";
-    cout << "   • Runtime flexibility\n";
-    cout << "\n";
-    cout << "💡 \"Prefer composition over inheritance\"\n";
-    cout << "   - Gang of Four, Design Patterns\n";
 }
 
 // ============================================
@@ -977,9 +949,9 @@ void demonstrateCompositionAlternative() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "MULTIPLE INHERITANCE DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("MULTIPLE INHERITANCE DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicMultiple();
     demonstrateAmbiguity();
@@ -992,315 +964,6 @@ int main() {
     demonstrateEmployeeSystem();
     demonstrateCompositionAlternative();
 
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT IS MULTIPLE INHERITANCE?\n";
-    cout << "========================================\n";
-    cout << "Multiple inheritance allows a class to inherit\n";
-    cout << "from TWO OR MORE base classes, combining their\n";
-    cout << "features and functionality.\n";
-    cout << "\n";
-    cout << "Syntax:\n";
-    cout << "  class Derived : public Base1, public Base2 { };\n";
-    cout << "\n";
-    cout << "Key concepts:\n";
-    cout << "  • Inherit from multiple parents\n";
-    cout << "  • Combine functionality\n";
-    cout << "  • Implement multiple interfaces\n";
-    cout << "  • Diamond problem and virtual inheritance\n";
-
-    cout << "\n========================================\n";
-    cout << "BASIC SYNTAX\n";
-    cout << "========================================\n";
-    cout << "SIMPLE MULTIPLE INHERITANCE:\n";
-    cout << "class Base1 {\n";
-    cout << "public:\n";
-    cout << "    void func1() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Base2 {\n";
-    cout << "public:\n";
-    cout << "    void func2() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Derived : public Base1, public Base2 {\n";
-    cout << "public:\n";
-    cout << "    void useBase() {\n";
-    cout << "        func1();  // From Base1\n";
-    cout << "        func2();  // From Base2\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "CONSTRUCTOR:\n";
-    cout << "Derived() : Base1(args1), Base2(args2) {\n";
-    cout << "    // Constructor body\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "CONSTRUCTOR/DESTRUCTOR ORDER\n";
-    cout << "========================================\n";
-    cout << "CONSTRUCTION (left to right):\n";
-    cout << "class D : public A, public B, public C { };\n";
-    cout << "\n";
-    cout << "Order:\n";
-    cout << "  1. A constructor\n";
-    cout << "  2. B constructor\n";
-    cout << "  3. C constructor\n";
-    cout << "  4. D constructor\n";
-    cout << "\n";
-    cout << "DESTRUCTION (reverse order):\n";
-    cout << "  1. D destructor\n";
-    cout << "  2. C destructor\n";
-    cout << "  3. B destructor\n";
-    cout << "  4. A destructor\n";
-    cout << "\n";
-    cout << "WITH VIRTUAL INHERITANCE:\n";
-    cout << "  1. Virtual base constructors first\n";
-    cout << "  2. Then non-virtual bases (left to right)\n";
-    cout << "  3. Then derived constructor\n";
-
-    cout << "\n========================================\n";
-    cout << "AMBIGUITY PROBLEM\n";
-    cout << "========================================\n";
-    cout << "Problem:\n";
-    cout << "class A {\n";
-    cout << "    void func() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class B {\n";
-    cout << "    void func() { }  // Same name!\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class C : public A, public B {\n";
-    cout << "    void use() {\n";
-    cout << "        func();  // ❌ Ambiguous! Which func()?\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "SOLUTION 1: Scope resolution\n";
-    cout << "A::func();  // Explicitly specify\n";
-    cout << "B::func();\n";
-    cout << "\n";
-    cout << "SOLUTION 2: Override in derived\n";
-    cout << "void func() override {\n";
-    cout << "    A::func();  // Choose which to call\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "DIAMOND PROBLEM\n";
-    cout << "========================================\n";
-    cout << "The Problem:\n";
-    cout << "       Base\n";
-    cout << "       /  \\\n";
-    cout << "      A    B\n";
-    cout << "       \\  /\n";
-    cout << "        C\n";
-    cout << "\n";
-    cout << "C inherits from A and B,\n";
-    cout << "A and B both inherit from Base.\n";
-    cout << "Result: C has TWO copies of Base!\n";
-    cout << "\n";
-    cout << "Problems:\n";
-    cout << "  • Duplicate base objects\n";
-    cout << "  • Ambiguity accessing Base members\n";
-    cout << "  • Wasted memory\n";
-    cout << "  • Inconsistent state\n";
-    cout << "\n";
-    cout << "Example:\n";
-    cout << "class Base { int data; };\n";
-    cout << "class A : public Base { };\n";
-    cout << "class B : public Base { };\n";
-    cout << "class C : public A, public B {\n";
-    cout << "    // C has TWO Base::data members!\n";
-    cout << "    void use() {\n";
-    cout << "        data = 10;  // ❌ Ambiguous!\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "VIRTUAL INHERITANCE (Solution)\n";
-    cout << "========================================\n";
-    cout << "Syntax:\n";
-    cout << "class A : virtual public Base { };\n";
-    cout << "class B : virtual public Base { };\n";
-    cout << "class C : public A, public B { };\n";
-    cout << "\n";
-    cout << "Result: C has only ONE Base!\n";
-    cout << "\n";
-    cout << "Key points:\n";
-    cout << "  • Use 'virtual' keyword\n";
-    cout << "  • Shared single base instance\n";
-    cout << "  • No ambiguity\n";
-    cout << "  • Most derived class calls base constructor\n";
-    cout << "\n";
-    cout << "Constructor:\n";
-    cout << "C() : Base(args), A(), B() {\n";
-    cout << "    // C must call Base constructor directly\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "Visual:\n";
-    cout << "       Base (shared)\n";
-    cout << "       /  \\\n";
-    cout << "      A    B (virtual)\n";
-    cout << "       \\  /\n";
-    cout << "        C\n";
-    cout << "Only ONE Base object!\n";
-
-    cout << "\n========================================\n";
-    cout << "MULTIPLE INTERFACES (Best Practice)\n";
-    cout << "========================================\n";
-    cout << "Interfaces = Pure virtual functions only\n";
-    cout << "\n";
-    cout << "class IDrawable {\n";
-    cout << "public:\n";
-    cout << "    virtual void draw() = 0;\n";
-    cout << "    virtual ~IDrawable() = default;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class ISerializable {\n";
-    cout << "public:\n";
-    cout << "    virtual string serialize() = 0;\n";
-    cout << "    virtual ~ISerializable() = default;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "class Widget : public IDrawable, public ISerializable {\n";
-    cout << "    // Implement both interfaces\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Benefits:\n";
-    cout << "  • No diamond problem (no data)\n";
-    cout << "  • Safe multiple inheritance\n";
-    cout << "  • Clear contracts\n";
-    cout << "  • Flexible polymorphism\n";
-    cout << "\n";
-    cout << "✅ This is the RECOMMENDED use of multiple inheritance!\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE MULTIPLE INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "✅ USE FOR:\n";
-    cout << "  1. Multiple INTERFACES (pure virtual)\n";
-    cout << "     class C : public IInterface1, public IInterface2\n";
-    cout << "  \n";
-    cout << "  2. Mixin pattern (small, reusable features)\n";
-    cout << "     template<typename T> class Loggable : public T\n";
-    cout << "  \n";
-    cout << "  3. True multiple IS-A relationships\n";
-    cout << "     (rare in practice)\n";
-    cout << "\n";
-    cout << "❌ AVOID FOR:\n";
-    cout << "  • Multiple implementation inheritance\n";
-    cout << "  • Complex hierarchies\n";
-    cout << "  • When composition works\n";
-    cout << "  • Diamond inheritance\n";
-    cout << "  • Just for code reuse\n";
-    cout << "\n";
-    cout << "⚠️  General rule:\n";
-    cout << "   \"Prefer composition over inheritance\"\n";
-    cout << "   - Gang of Four\n";
-
-    cout << "\n========================================\n";
-    cout << "COMPOSITION vs MULTIPLE INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "MULTIPLE INHERITANCE:\n";
-    cout << "class Logger { };\n";
-    cout << "class Validator { };\n";
-    cout << "class Processor : public Logger, public Validator {\n";
-    cout << "    // IS-A Logger AND IS-A Validator\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "COMPOSITION (BETTER!):\n";
-    cout << "class Processor {\n";
-    cout << "    Logger logger;        // HAS-A Logger\n";
-    cout << "    Validator validator;  // HAS-A Validator\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Composition advantages:\n";
-    cout << "  ✅ Loose coupling\n";
-    cout << "  ✅ More flexible\n";
-    cout << "  ✅ Easier to test\n";
-    cout << "  ✅ Can swap implementations\n";
-    cout << "  ✅ No diamond problem\n";
-    cout << "  ✅ Runtime flexibility\n";
-    cout << "  ✅ Clearer relationships\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use for multiple pure interfaces\n";
-    cout << "  • Make destructors virtual\n";
-    cout << "  • Use virtual inheritance for diamond\n";
-    cout << "  • Document inheritance relationships\n";
-    cout << "  • Keep hierarchies shallow\n";
-    cout << "  • Consider composition first\n";
-    cout << "  • Test thoroughly\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Use for implementation reuse (use composition)\n";
-    cout << "  • Create diamond inheritance without virtual\n";
-    cout << "  • Make deep hierarchies\n";
-    cout << "  • Ignore ambiguity errors\n";
-    cout << "  • Use when single inheritance suffices\n";
-    cout << "  • Forget to call base constructors\n";
-    cout << "  • Use just because you can\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Not using virtual for diamond\n";
-    cout << "class B : public A { };  // Should be virtual!\n";
-    cout << "Fix: class B : virtual public A { };\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Ambiguous function calls\n";
-    cout << "obj.func();  // Which base's func()?\n";
-    cout << "Fix: obj.Base1::func();\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Not calling virtual base constructor\n";
-    cout << "Most derived class must call virtual base!\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Using MI when composition better\n";
-    cout << "class A : public B, public C { };\n";
-    cout << "Fix: class A { B b; C c; };  // HAS-A\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Basic multiple inheritance\n";
-    cout << "class D : public A, public B {\n";
-    cout << "    D() : A(args), B(args) { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Virtual inheritance\n";
-    cout << "class A : virtual public Base { };\n";
-    cout << "class B : virtual public Base { };\n";
-    cout << "class C : public A, public B {\n";
-    cout << "    C() : Base(args), A(), B() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Multiple interfaces (RECOMMENDED)\n";
-    cout << "class W : public IInterface1, public IInterface2 {\n";
-    cout << "    // Implement all pure virtuals\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Resolve ambiguity\n";
-    cout << "Base1::func();  // Explicit scope\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Multiple inheritance = inherit from 2+ bases\n";
-    cout << "2. Can cause ambiguity and diamond problems\n";
-    cout << "3. Use virtual inheritance to solve diamond\n";
-    cout << "4. Best for multiple pure interfaces\n";
-    cout << "5. Constructor order: left to right\n";
-    cout << "6. Virtual bases constructed first\n";
-    cout << "7. Use scope resolution for ambiguity\n";
-    cout << "8. Prefer composition over inheritance\n";
-    cout << "9. Keep hierarchies simple\n";
-    cout << "10. Document and test thoroughly\n";
-
     return 0;
 }
+

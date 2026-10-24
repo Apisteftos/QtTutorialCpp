@@ -344,33 +344,44 @@ Algorithm<SlowPolicy> slow(10);
 
 ### Example 1: The Problem
 Shows tedious manual constructor forwarding.
+- Every base constructor needs a hand-written forwarding constructor; easy to forget one; change the base, update all
 
 ### Example 2: The Solution
 Demonstrates inheriting constructors eliminating boilerplate.
+- One line, `using BaseGood::BaseGood;`, makes all base constructors available; the derived `category` member keeps its default initializer
 
 ### Example 3: Wrapper Class
 Simple wrapper with inherited constructors.
+- Perfect for simple wrappers: minimal code, all base functionality available
+- New in the demo: `NamedContainer c3{5, 10};` creates **two** elements (5 and 10), because braces prefer the `initializer_list` constructor
 
 ### Example 4: Additional Members
 Using default member initializers with inherited constructors.
+- Inherited constructors apply the derived default member initializers (`radius = 1.0`); you can add Circle-specific constructors
 
 ### Example 5: Overriding
 Selectively overriding specific constructors.
+- Inherit most constructors, replace one with the same signature for custom behavior
 
 ### Example 6: Multiple Inheritance
 Inheriting from multiple base classes.
+- Was misleading: the own `MultiDerived(int)` / `MultiDerived(const string&)` hid the inherited ones, so nothing was inherited. Now the two inherited constructors are really used, each leaving the other base default-constructed
 
 ### Example 7: What Isn't Inherited
 Default, copy, move constructors not inherited.
+- The compiler generates the derived default / copy / move constructors, which call the base versions
 
 ### Example 8: Private Constructors
 Only public/protected constructors inherited.
+- Access is that of the base constructor. Was mislabelled: the old demo used the (never inherited) default constructor. Now it uses a public constructor with a parameter and a `Leaf` class that uses the protected one
 
 ### Example 9: Exception Classes
 Real-world exception hierarchy.
+- Minimal code per exception type, all base constructors available, consistent interface; new: thrown as the derived type and caught by base reference
 
 ### Example 10: When Not to Use
 Cases where explicit constructors are better.
+- Was only printed text; now two real demos: an inheriting constructor cannot validate (`UncheckedAccount(-50)` keeps -50), and the initialization order (base first, then derived members)
 
 ---
 
@@ -379,28 +390,32 @@ Cases where explicit constructors are better.
 ### What Gets Inherited?
 
 **✅ INHERITED:**
-- All **public** base constructors (become public in derived)
-- All **protected** base constructors (stay protected in derived)
-- Constructors with any parameter types
-- Constructors with any number of parameters
-- Template constructors
+- All other base constructors, with any parameter types and any number of parameters
+- Template constructors ✅ tested
+- `explicit` stays `explicit`: with `explicit Base(int)`, `Derived d = 1;` is an error ✅ tested
+- `= delete`d base constructors are inherited as deleted ✅ tested
+
+**Access:** the inherited constructor has the **access of the base constructor**; the place of the `using` declaration does not matter (a `using` in a `private:` section still leaves public constructors public ✅ tested).
+- public → usable everywhere
+- protected → not usable from outside (`error: 'B::B(int, bool)' is protected within this context`), but a further derived class can use it in its initializer list (Example 8, `Leaf`) ✅ tested
+- private → unusable (`is private within this context`) ✅ tested
 
 **❌ NOT INHERITED:**
-- **Default constructor** - compiler generates one for derived
+- **Default constructor** - compiler generates one for derived (only if derived declares no constructor of its own)
 - **Copy constructor** - compiler generates one for derived
 - **Move constructor** - compiler generates one for derived
-- **Private constructors** - inaccessible
-- Copy/move assignment operators
+
+Copy/move *assignment* operators are not constructors; `using Base::Base;` does not touch them (the derived class gets its own implicit ones).
 
 ### Critical: Default Member Initializers
 
-**When using inheriting constructors, derived members MUST use default initializers:**
+An inherited constructor only knows about the base class, so the derived members are **default-initialized**: class types call their default constructor (a `string` is empty), but scalars such as `int` stay **indeterminate**. GCC warns `'d.Ds::id' is used uninitialized` when you read one. ✅ tested (the rule is from the standard; no sanitizer for uninitialized reads was available here). Give scalar members default initializers:
 
 ```cpp
 // ❌ BAD - Uninitialized members!
 class Bad : public Base {
-    string name;   // ⚠️  Uninitialized!
-    int id;        // ⚠️  Uninitialized!
+    string name;   // empty string (default-constructed) - fine
+    int id;        // ⚠️  Indeterminate!
 public:
     using Base::Base;
 };
@@ -414,10 +429,12 @@ public:
 };
 ```
 
-**Why this works:**
-- Default member initializers execute before base constructor
-- Ensures all members are properly initialized
-- Works seamlessly with inherited constructors
+**Order of initialization:**
+- The base class is constructed **first** (the inherited `Base(...)`)
+- Then the derived members, in declaration order, using their default member initializers
+- Then the body of a derived constructor, if any
+
+✅ tested: `OrderBase(int)` is printed before `Noisy member: default member initializer` (Example 10).
 
 ### Rules and Restrictions
 
@@ -444,6 +461,8 @@ public:
 };
 ```
 
+A derived constructor with the **same signature hides** the inherited one (Example 5: `Derived(int, bool)` replaces the inherited `Base(int, bool)`). ✅ tested
+
 **RULE 3: Works with multiple inheritance**
 ```cpp
 class Derived : public Base1, public Base2 {
@@ -452,6 +471,11 @@ public:
     using Base2::Base2;  // Inherit from Base2
 };
 ```
+
+Caveats (all ✅ tested, Example 6):
+- An inherited constructor initializes only **its** base; the other base is default-constructed. If that base has no default constructor, the inherited constructor is deleted (`use of deleted function 'M1::M1(int) [inherited from B1]'`).
+- If both bases have a constructor with the same signature, calling it is ambiguous (`call of overloaded 'M2(int)' is ambiguous`).
+- To initialize both bases, write your own constructor.
 
 ---
 
@@ -462,8 +486,8 @@ public:
 **Bad:**
 ```cpp
 class Bad : public Base {
-    string name;  // ⚠️  Uninitialized when using inherited constructors!
-    int id;
+    string name;  // fine: empty string
+    int id;       // ⚠️  Indeterminate when using inherited constructors!
 public:
     using Base::Base;
 };
@@ -508,19 +532,25 @@ public:
 - Copy constructor is NOT inherited
 - Move constructor is NOT inherited
 - These are compiler-generated for derived class
+- If the derived class declares **any** constructor of its own, it gets no implicit default constructor, and the base's default constructor is not inherited either: `Derived d;` fails with `no matching function for call to 'D5::D5()'` ✅ tested
 
 ### ❌ Mistake 4: Complex Initialization Without Default Initializers
 
 **Bad:**
 ```cpp
+class NoDefault { public: NoDefault(int) {} };
+
 class Bad : public Base {
-    vector<int> data;  // ⚠️  Needs size but no default!
+    NoDefault member;  // ⚠️  No default constructor and no initializer!
 public:
     using Base::Base;
 };
-```
 
-**Fix:** Write explicit constructors instead.
+// Bad b(1);  // ❌ error: use of deleted function 'Bad::Bad(int) [inherited from Base]'
+```
+✅ tested
+
+**Fix:** Give the member a default member initializer (`NoDefault member{0};`) or write explicit constructors instead.
 
 ---
 
@@ -547,8 +577,10 @@ Implement policy-based design with inheriting constructors.
 
 ### Compile:
 ```bash
-g++ -std=c++17 inheriting_constructors.cpp -o inheriting_constructors
+g++ -std=c++23 -Wall -Wextra main.cpp -o inheriting_constructors
 ```
+
+(`<print>` / `std::println` needs GCC 14 or newer.)
 
 ### Run:
 ```bash
@@ -644,19 +676,19 @@ Derived d(42);  // Using inherited Base(int)
 
 Execution Order:
 ┌─────────────────────────────────────┐
-│ 1. Derived member default           │
+│ 1. Base(int) constructor executes   │
+│    Base members initialized         │
+├─────────────────────────────────────┤
+│ 2. Derived member default           │
 │    initializers execute             │
 │    string name = "Default";         │
 │    int id = 0;                      │
 ├─────────────────────────────────────┤
-│ 2. Base(int) constructor executes   │
-│    Base members initialized         │
-├─────────────────────────────────────┤
 │ 3. Derived constructor body         │
-│    (if overridden)                  │
+│    (if it has one)                  │
 └─────────────────────────────────────┘
 
-KEY: Default initializers run BEFORE base constructor!
+KEY: The base class is constructed FIRST, then the derived members!
 ```
 
 ---
@@ -664,14 +696,14 @@ KEY: Default initializers run BEFORE base constructor!
 ## 📚 Related Topics
 
 ### Prerequisites:
-- **12_Inheritance** - Inheritance basics
-- **09_Constructors** - Constructor concepts
+- **Inheritance basics** - base and derived classes
+- **02_Constructor** - Constructor concepts
 - **24_DelegatingConstructors** - Constructor delegation
 
 ### Coming Next:
 - **26_CopyConstructor** - Deep copy concepts
-- **27_MoveSemantics** - Move constructors
-- **28_VirtualFunctions** - Polymorphism
+
+Already covered in other folders: **08_MoveSemantics**, **14_VirtualFunctions**.
 
 ### Related Concepts:
 - **using Declaration** - Name introduction
@@ -688,7 +720,7 @@ KEY: Default initializers run BEFORE base constructor!
 ✅ **Eliminates boilerplate** forwarding code  
 ✅ **One line** inherits all base constructors  
 ✅ **Default/copy/move** NOT inherited  
-✅ **Default member initializers** essential  
+✅ **Default member initializers** for derived scalars  
 ✅ **Can override** specific constructors  
 ✅ **Perfect for** wrappers and exceptions  
 ✅ **Available since C++11**  
@@ -755,8 +787,8 @@ public:
 
 // === WITH DEFAULT MEMBERS ===
 class Derived : public Base {
-    string name = "Default";  // Must use default initializer
-    int count = 0;
+    string name = "Default";  // Default initializer
+    int count = 0;              // Required for scalars
 public:
     using Base::Base;
 };
@@ -821,11 +853,9 @@ public:
 
 ### Exception Hierarchies
 ```cpp
-class AppException : public std::exception {
-protected:
-    string msg;
+class AppException : public std::runtime_error {
 public:
-    AppException(const string& m) : msg(m) { }
+    using std::runtime_error::runtime_error;   // what() comes for free
 };
 
 class IOError : public AppException {
@@ -883,10 +913,9 @@ public:
 
 ## 📖 Further Reading
 
-- [cppreference.com - Inheriting constructors](https://en.cppreference.com/w/cpp/language/using_declaration)
-- "Effective Modern C++" by Scott Meyers - Item 42
-- [C++ Core Guidelines - C.52](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting)
-- [MSDN - Inheriting Constructors](https://docs.microsoft.com/en-us/cpp/cpp/constructors-cpp#inheriting_constructors)
+- [cppreference.com - Inheriting constructors](https://en.cppreference.com/cpp/language/using_declaration)
+- [C++ Core Guidelines - C.52: Use inheriting constructors to import constructors into a derived class that does not need further explicit initialization](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-inheriting)
+- [MSDN - Inheriting Constructors](https://learn.microsoft.com/en-us/cpp/cpp/constructors-cpp)
 
 ---
 
@@ -896,7 +925,7 @@ public:
 2. **Eliminates forwarding** boilerplate completely
 3. **Only public/protected** constructors inherited
 4. **Default/copy/move** NOT inherited (special members)
-5. **Must use default initializers** for derived members
+5. **Use default initializers** for derived scalar members
 6. **Can override** specific constructors when needed
 7. **Perfect for** wrappers and exception hierarchies
 8. **Available since C++11**
@@ -909,10 +938,10 @@ public:
 
 ```
 ⚠️  RULE 1: Use default member initializers
-   Derived members MUST be initialized!
+   Derived scalar members need initializers!
    
-   ❌ string name;              // Uninitialized!
-   ✅ string name = "Default";  // Initialized
+   ❌ int count;                // Indeterminate!
+   ✅ int count = 0;            // Initialized
 
 ⚠️  RULE 2: Perfect for simple wrappers
    Best when derived adds minimal/no state
@@ -925,7 +954,7 @@ public:
    Can selectively override specific constructors
    
    using Base::Base;           // Inherit most
-   Derived(int) : Base(int) {} // Override one
+   Derived(int x) : Base(x) {} // Override one
 
 ⚠️  RULE 4: Special members not inherited
    Default, copy, move are compiler-generated
@@ -953,3 +982,35 @@ public:
 *Difficulty: Intermediate*  
 *Prerequisites: Inheritance, constructors*  
 *ESSENTIAL for Clean Inheritance Hierarchies*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Comparison with alternatives:**
+  - *Manual forwarding (pre-C++11):* full control, can customize; but boilerplate and a maintenance burden.
+  - *Inheriting constructors (C++11+):* concise, automatic, maintainable; less control, derived scalars need default initializers.
+  - *Hybrid:* `using Base::Base;` plus own constructors for the special cases; best of both, slightly more complex.
+- **Perfect for:** exception hierarchies, simple wrapper classes, tag/marker classes, derived classes without state, policy-based designs, type-safe wrappers.
+- **Not suitable for:** classes whose extra members need non-trivial initialization, when parameters must be validated, when constructors need different behavior, or when the class manages resources differently.
+- **Decision tree:**
+  - Does the derived class add new data members? No → use inheriting constructors.
+  - Can the members use default initializers? Yes → use inheriting constructors.
+  - Need custom initialization logic or parameter validation? Yes → write explicit constructors. No → use inheriting constructors.
+- **Corrected comparison table:**
+
+| Aspect | Manual | Inheriting |
+|---|---|---|
+| Code amount | High | Minimal |
+| Maintenance | Harder | Easier |
+| Forgetting a constructor | Possible | Not possible |
+| Custom logic | Easy | Write an own constructor |
+| Validation | Easy | Write an own constructor |
+| Flexibility | Full | Good |
+
+  The old table said "Error-prone: Yes / No" and "Scalability: Poor / Excellent"; I toned these down because they are opinions, not measured facts.
+- **Code changes in main.cpp:**
+  - Example 6: the demo did not demonstrate inheriting at all (see above). `Base1` and `Base2` got default constructors, which the inherited constructors need.
+  - Example 8: see above. Example 9 got the throw/catch part. Example 10 is real code now.
+  - Example 7: unused parameter names removed (`-Wunused-parameter`); added `<initializer_list>` and `<utility>`.
+  - Values print with `{:g}`, so they look the same as with `cout`.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer.

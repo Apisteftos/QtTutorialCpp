@@ -35,7 +35,7 @@ This is a powerful but potentially dangerous feature that must be used carefully
 - **Not member functions** - no `this` pointer
 - **Can access private members** - break encapsulation
 - **Declared with `friend` keyword** inside class
-- **Defined outside class** without `friend` keyword
+- **Defined outside class** without `friend` keyword (or defined right inside the class body, see below; it is still a non-member)
 
 ### Real-World Analogy
 ```
@@ -107,6 +107,15 @@ MyClass obj;
 friendFunc(obj);  // Called like regular function
 ```
 
+A friend can also be **defined inside the class body**. It is still a non-member (no `this`, no `obj.friendFunc()`); it is only found through argument-dependent lookup ("hidden friend"):
+```cpp
+class MyClass {
+    int privateData = 0;
+    friend void friendFunc(const MyClass& obj) { std::cout << obj.privateData; }
+};
+```
+Writing `friend` on a definition *outside* the class is an error: *'friend' used outside of class* (tested).
+
 ### Friend Class
 ```cpp
 class MyClass {
@@ -150,6 +159,7 @@ void OtherClass::specificFunc(MyClass& obj) {
     obj.privateData = 10;
 }
 ```
+`OtherClass` must be a **complete** type when `MyClass` names its member, so it has to be defined first. The forward declaration of `MyClass` is only there so `OtherClass` can mention it in a parameter. Only the *definition* of `specificFunc` has to wait until `MyClass` is complete.
 
 ---
 
@@ -208,33 +218,55 @@ distanceBetween(p1, p2);      // Friend (symmetric)
 
 ### Example 1: Basic Friend Function
 Understanding friend function fundamentals.
+- Not a member, no `this`, called like a regular function
+- Can read the private data directly
 
 ### Example 2: Friend vs Member Function
 Clear comparison of both approaches.
+- `point.distanceFromOrigin()` is asymmetric (one object is implicit)
+- `distanceBetween(p1, p2)` treats both points equally
 
 ### Example 3: Friend for Operator Overloading
 Stream operators and symmetric operations.
+- `<<`/`>>` need the stream on the left, so they must be non-member
+- `2.0 * c1` needs a non-member too
+- This is the one example that keeps `std::cout`: our own `operator<<` is the topic. It also reads a `Complex` from an `istringstream`
 
 ### Example 4: Friend Class
 Granting access to entire class.
+- ALL members of `Car` can access `Engine`'s private members
+- For tightly coupled classes
+- Friendship is NOT mutual
 
 ### Example 5: Friend Member Function
 Granting access to specific function.
+- Only ONE specific function is friend (finer control than a friend class)
+- Needs the other class to be complete, plus a forward declaration of the first one
 
 ### Example 6: Friendship is NOT Mutual
 If A friends B, B doesn't friend A.
+- B can access A's private members, but A cannot access B's
+- Grant it in both directions if both need it
 
 ### Example 7: Friendship is NOT Transitive
 A friends B, B friends C ≠ A friends C.
+- Alpha friends Beta, Beta friends Gamma, Gamma is NOT a friend of Alpha
+- Each friendship must be explicit
 
 ### Example 8: Matrix and Vector Multiplication
 Real-world use case with two classes.
+- `Vector` is returned by value, so it has a deep-copy constructor now (see the Rule-of-Three note)
+- Copy assignment is deleted in both classes: nothing here assigns
 
 ### Example 9: When to Use Friend
 Good and bad use cases.
+- A friend transfer between two accounts, then the same transfer through the public API only (`Account::transferViaMethods`)
+- Shows that the public API was enough here
 
 ### Example 10: Testing with Friend
 Using friend for unit testing.
+- A `StackTester` reads capacity and top index to verify invariants
+- White-box testing; see the note on whether to do this
 
 ---
 
@@ -302,6 +334,7 @@ class B {
     }
 };
 
+// (pseudo-code: A has no member tryAccessB in the real example)
 void A::tryAccessB(B& b) {
     // b.secretB = 10;  // ❌ Error!
 }
@@ -327,8 +360,9 @@ class Friend {
     }
     
     void func(Derived& d) {
-        d.secretBase = 10;      // ✅ Works (inherited from Base)
+        d.secretBase = 10;      // ✅ Works: the member belongs to Base, and Friend is Base's friend
         // d.secretDerived = 10; // ❌ Error! Not friend of Derived
+        //                          ('int Derived::secretDerived' is private within this context)
     }
 };
 ```
@@ -368,7 +402,7 @@ class C {
 
 #### 1. Operator Overloading (Stream Operators)
 
-**Stream operators MUST be non-member and need private access:**
+**Stream operators MUST be non-member. They are friends only when they need private access:**
 ```cpp
 class Complex {
     double real, imag;
@@ -386,9 +420,10 @@ cout << c;  // Works perfectly!
 ```
 
 **Why friend?**
-- Must be non-member (left operand is `ostream`)
-- Needs access to private members
-- No other way to achieve natural syntax
+- Must be non-member (left operand is `ostream`), and that is the *only* hard requirement
+- `friend` is needed only because this one reads `real`/`imag` directly
+- With public getters, a plain non-friend `operator<<` works too (tested)
+- The in-class definition above is a "hidden friend": it can only be found through ADL, which keeps the global namespace clean
 
 #### 2. Symmetric Binary Operators
 ```cpp
@@ -401,7 +436,8 @@ public:
         return Vector(x * scalar, y * scalar);
     }
     
-    // Friend: 2 * v (symmetry!)
+    // Non-member: 2 * v (symmetry!). Declared as friend here, but it only calls the
+    // public operator*, so it does not NEED friendship, only to be a non-member.
     friend Vector operator*(double scalar, const Vector& v) {
         return v * scalar;
     }
@@ -409,8 +445,9 @@ public:
 
 Vector v;
 v * 2;  // Works (member)
-2 * v;  // Works (friend)
+2 * v;  // Works (non-member)
 ```
+Tested: the same `operator*(double, const Vector&)` written as an ordinary free function (no `friend`) compiles and works. Use `friend` only if it reads `x`/`y` directly.
 
 #### 3. Tightly Coupled Classes
 ```cpp
@@ -520,7 +557,7 @@ v * 2;    // ✅ Works (v.operator*(2))
 2 * v;    // ❌ Error! (2.operator*(v) - doesn't exist)
 ```
 
-**Solution with Friend:**
+**Solution: a non-member (friend only if it needs private data):**
 ```cpp
 class Vector {
     double x, y;
@@ -530,9 +567,9 @@ public:
         return Vector(x * s, y * s);
     }
     
-    // Friend: 2 * v
+    // Non-member: 2 * v
     friend Vector operator*(double s, const Vector& v) {
-        return v * s;  // Reuse member operator
+        return v * s;  // Reuse member operator, so no private access is needed
     }
 };
 
@@ -541,7 +578,7 @@ v * 2;    // ✅ Works
 2 * v;    // ✅ Works now!
 ```
 
-### Stream Operators (MUST be friend)
+### Stream Operators (MUST be non-member, friend only if they read private data)
 ```cpp
 class MyClass {
     int data;
@@ -566,10 +603,12 @@ cout << obj;  // Natural!
 cin >> obj;   // Natural!
 ```
 
-**Why MUST be non-member (and thus friend)?**
+**Why MUST they be non-member?**
 - Left operand is `ostream`/`istream`, not our class
 - Can't add member function to `ostream`
 - Must be non-member for natural syntax: `cout << obj`
+
+**Why friend, then?** Only because the example above touches `obj.data`. "Non-member" and "friend" are two separate decisions (tested: a non-friend `operator<<` that uses a public getter compiles and works).
 
 ---
 
@@ -587,6 +626,7 @@ friend void func(const MyClass& obj) { }
 // ✅ CORRECT
 void func(const MyClass& obj) { }
 ```
+(Error from GCC: *'friend' used outside of class*, tested. A definition written *inside* the class body does carry `friend`, that is the hidden-friend form.)
 
 ### ❌ Mistake 2: Assuming Mutual Friendship
 ```cpp
@@ -603,7 +643,8 @@ class B {
     }
 };
 
-// Assuming A can access B
+// Assuming A can access B (pseudo-code: this redefines class A, which is not legal C++;
+// in real code the method would be declared in the first class A)
 class A {
     void accessB(B& b) {
         // b.dataB = 10;  // ❌ Error! A is NOT friend of B
@@ -636,7 +677,7 @@ class MyClass {
 };
 ```
 
-**Fix:** Use forward declarations:
+**Fix:** Define `OtherClass` first, with a forward declaration of `MyClass` for its parameter. A forward declaration of `OtherClass` is *not* enough: `friend void B::func(A&)` with `B` only forward-declared gives *invalid use of incomplete type* (tested).
 ```cpp
 // ✅ CORRECT
 class MyClass;  // Forward declare
@@ -708,6 +749,7 @@ Create `Matrix` and `Vector` classes with:
 - Friend operator for matrix * vector
 - Friend operator for vector * matrix
 - Display operators
+- Hint: if they own memory with `new[]`, follow the Rule of Three (see the note below)
 
 ### Exercise 4: Linked List
 Create `Node` and `LinkedList` classes with:
@@ -721,8 +763,10 @@ Create `Node` and `LinkedList` classes with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 friend_functions.cpp -o friend_functions
+g++ -std=c++23 -Wall -Wextra main.cpp -o friend_functions
 ```
+
+(`main.cpp` uses `std::println` from `<print>`, so it needs GCC 14+ (or another compiler with C++23 `<print>`).)
 
 ### Run:
 ```bash
@@ -800,8 +844,8 @@ Definition (outside class):
 
 ### Coming Next:
 - **13_Inheritance** - Friend in inheritance
-- **14_Polymorphism** - Friend with virtual
-- **15_Templates** - Friend templates
+- **16_Polymorphism** - Friend with virtual
+- Friend templates (a later topic)
 
 ### Related Concepts:
 - **Encapsulation** - Friend breaks it
@@ -822,7 +866,7 @@ Definition (outside class):
 ✅ **NOT mutual** - must grant both ways
 ✅ **NOT inherited** - each class grants separately
 ✅ **NOT transitive** - no chain effect
-✅ **Essential for** stream operators
+✅ **Common for** stream operators (they must be non-member; friend only if they read private data)
 ✅ **Use sparingly** - breaks encapsulation
 
 ### The Complete Pattern:
@@ -909,13 +953,13 @@ cout << obj;  // Friend operator
 
 ### ✅ DO:
 
-- **Use friend** for stream operators (<<, >>)
-- **Use friend** for symmetric binary operators
+- **Make stream operators (<<, >>) non-member**; use friend if they read private data
+- **Make symmetric binary operators non-member**; use friend only if they read private data
 - **Document** why friendship is needed
 - **Keep friend count** minimal
 - **Use friend** for tightly coupled classes
 - **Grant friendship explicitly** where needed
-- **Consider friend** for testing access
+- **Think twice** before using friend for testing access (see notes)
 - **Prefer public interface** when possible
 
 ### ❌ DON'T:
@@ -969,8 +1013,8 @@ class MyClass {
 
 ## 📖 Further Reading
 
-- [cppreference.com - Friend Declaration](https://en.cppreference.com/w/cpp/language/friend)
-- "Effective C++" by Scott Meyers - Item 46
+- [cppreference.com - Friend declaration](https://en.cppreference.com/cpp/language/friend)
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 23 "Prefer non-member non-friend functions to member functions" and Item 46 (non-member functions for type conversions)
 - "C++ Primer" by Lippman - Chapter on Friends
 - [C++ Core Guidelines - Friend](https://isocpp.github.io/CppCoreGuidelines/)
 
@@ -985,7 +1029,7 @@ class MyClass {
 5. Friendship is **NOT mutual**
 6. Friendship is **NOT inherited**
 7. Friendship is **NOT transitive**
-8. **Essential** for stream operators
+8. **Common** for stream operators (non-member is required, friend only if they need private data)
 9. **Use sparingly** - breaks encapsulation
 10. **Must be explicitly granted**
 
@@ -1001,3 +1045,17 @@ class MyClass {
 *Difficulty: Intermediate*
 *Prerequisites: 05_Encapsulation, 09_OperatorOverloading*
 *Use Wisely - Breaks Encapsulation*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+The long lecture output at the end of `main()` is gone (it repeated this README). What it said that is not already above:
+
+- **Three kinds of friend:** function (standalone), class (all members), member function (one specific function).
+- **Performance is not a reason.** The old output claimed direct access is faster than getters. A trivial getter is inlined by the compiler, so there is normally no difference (the claim was not benchmarked here). Use friend for design reasons, not speed.
+- **Tests with friend:** `friend class StackTester` gives white-box access, but many teams prefer testing the public behaviour, because tests that read internals break whenever the internals change. Test frameworks provide a helper for it (GoogleTest has `FRIEND_TEST`, not tested here).
+- **Rule of Three in Example 8:** `Vector` owns a `new double[]`, and `operator*` returns it by value. Without a copy constructor, two objects point to the same array and the destructor frees it twice. Tested: the original code crashes with AddressSanitizer (*heap-use-after-free*) when built with `-fno-elide-constructors`. A normal build gets away with it only because the compiler elides the copy (NRVO). The fixed code adds a deep-copy constructor and deletes the assignment.
+- **`transferViaMethods` in Example 9** used to be a friend-style direct access under a "public interface" name. It now uses only `deposit()` so the comparison is honest.
+- **Unused parameter** in `Gamma::tryAccessAlpha` is commented out, so `-Wall -Wextra` is clean.
+- **Don't mix up two ideas:** *non-member* (required for `<<` and `2 * v`) and *friend* (required only for private access).

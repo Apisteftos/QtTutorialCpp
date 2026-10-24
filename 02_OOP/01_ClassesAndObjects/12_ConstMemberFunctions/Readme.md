@@ -224,7 +224,6 @@ void printPoint(const Point& p) {
 - Can't use with const objects
 - Can't pass to functions with const references
 - Poor API design
-- Compiler can't optimize
 
 ### The Solution
 
@@ -258,33 +257,45 @@ void printPoint(const Point& p) {
 
 ### Example 1: Basic Const Functions
 Introduction to const member functions.
+- `display()` and `getBalance()` work on a normal and on a `const` account; `deposit()` would not compile on the const one
 
 ### Example 2: Why Const Matters
 Demonstrates the problem without const.
+- `PointBad` (no const) cannot be read through a `const&`; the function prints a placeholder instead
+- `PointGood` can
 
 ### Example 3: Const Correctness in Action
 Full example with proper const usage.
+- `analyzeRectangle(const Rectangle&)` can call only the const getters; `scale()` changes the original
 
 ### Example 4: What You Can't Do
 Understanding const function restrictions.
+- Legal: read members, call other const functions, use locals
+- Illegal (commented out in the class): modify members, call non-const functions
 
 ### Example 5: Const Overloading
 Two versions of same function.
+- The printed `[Called const version]` / `[Called non-const version]` shows which one the compiler picked
 
 ### Example 6: Mutable Keyword
 Modifying in const functions.
+- A `const` calculator still counts cache hits, because `cacheHits`, `cached` and `cachedResult` are `mutable`
 
 ### Example 7: Const and Pointers/References
 Different const placements.
+- Pointer to const, const pointer, const pointer to const, const reference: what each one allows
 
 ### Example 8: Real-World Example
 Complete Date class.
+- Getters, `isLeapYear()`, `isValid()`, `daysInMonth()` and `display()` are const; setters and `nextDay()` are not
 
 ### Example 9: Const in Containers
 Working with collections.
+- `Classroom` has a const and a non-const `getStudent()`; `displayAll()` works through a `const Classroom&`
 
 ### Example 10: Common Mistakes
 Pitfalls and how to avoid them.
+- The class holds the correct versions; the three mistakes are in comments inside it (see Common Mistakes below)
 
 ---
 
@@ -326,6 +337,19 @@ void constFunc() const {
 }
 ```
 
+**Const is shallow** (tested): a const member function protects the object's *own* members, not what they point to or refer to.
+```cpp
+struct B {
+    int* p;
+    int& r;
+    void f() const {
+        *p = 5;   // ✅ compiles: p itself is unchanged, only its target is modified
+        r = 6;    // ✅ compiles: same for the referenced object
+    }
+};
+```
+Also, a const member function may call anything on *other* objects. The restriction is about `this`. And `const_cast<X*>(this)->v = 99;` inside a const member function compiles and works on a non-const object (tested, prints 99). It is undefined behaviour if the object was *defined* const (from memory, not run here).
+
 ### Const Overloading
 
 You can have **two versions** of the same function:
@@ -360,6 +384,19 @@ string s = cc.getData();  // Calls const version, read-only
 - Getting references to internal data
 - Iterator access (`begin()`, `end()`)
 - When you want read-only and modifiable versions
+
+**Which version is called** (tested):
+- const object → const version; if only a non-const version exists: *error: passing 'const OnlyNon' as 'this' argument discards qualifiers*
+- non-const object → non-const version when both exist; if only the const version exists, it is used
+- A const getter cannot return a non-const reference to a member: *error: binding reference of type 'int&' to 'const int' discards qualifiers*
+
+**Don't duplicate a long body** (Effective C++ Item 3 trick, tested): implement the const version, and let the non-const one call it:
+```cpp
+const std::string& get() const { return d; }
+std::string& get() {
+    return const_cast<std::string&>(static_cast<const C&>(*this).get());
+}
+```
 
 ### Mutable Keyword
 
@@ -403,30 +440,37 @@ public:
 - ❌ As a workaround for missing const
 - ❌ To avoid proper design
 
+**Thread safety:** the standard library expects const member functions to be safe to call from several threads at the same time (from memory, the "const means thread-safe" convention since C++11, not checked here). A `mutable` cache or counter changed inside a const function breaks that. Protect it with a `mutable std::mutex` or make it `std::atomic`. The `cacheHits++` in Example 6 is fine in a single thread but would be a data race in two. More on `mutable` in the `21_MutableKeyword` folder.
+
 ### Const with Pointers
 
 **Four variations:**
 
 ```cpp
+Type a, b;
+Type value;
+
 // 1. Pointer to const
-const Type* ptr;
-ptr = &other;     // ✅ Can change pointer
-*ptr = value;     // ❌ Can't modify data
+const Type* ptr1 = &a;
+ptr1 = &b;        // ✅ Can change pointer
+// *ptr1 = value; // ❌ Can't modify data
 
 // 2. Const pointer
-Type* const ptr;
-ptr = &other;     // ❌ Can't change pointer
-*ptr = value;     // ✅ Can modify data
+Type* const ptr2 = &a;  // must be initialised (see below)
+// ptr2 = &b;     // ❌ Can't change pointer
+*ptr2 = value;    // ✅ Can modify data
 
 // 3. Const pointer to const
-const Type* const ptr;
-ptr = &other;     // ❌ Can't change pointer
-*ptr = value;     // ❌ Can't modify data
+const Type* const ptr3 = &a;
+// ptr3 = &b;     // ❌ Can't change pointer
+// *ptr3 = value; // ❌ Can't modify data
 
 // 4. Reference to const
-const Type& ref = obj;
-ref = value;      // ❌ Can't modify
+const Type& ref = a;
+// ref = value;   // ❌ Can't modify
 ```
+
+A `const` pointer or reference **must be initialised where it is declared**: `Type* const p;` gives *error: uninitialized 'const p'* (tested).
 
 **Memory trick:** Read right to left:
 ```cpp
@@ -466,14 +510,18 @@ string getName() const {  // ✅ Added const
 
 **Bad:**
 ```cpp
-void const display() { }  // ❌ WRONG position!
-const void display() { }  // ❌ Also wrong!
+void const display() { }  // ❌ NOT a const member function!
+const void display() { }  // ❌ Same thing
 ```
+
+**What really happens (tested):** both lines **compile**. They declare an ordinary non-const function whose return type is `const void`. GCC only warns with `-Wextra`: *type qualifiers ignored on function return type*. The mistake stays hidden until you call it on a const object: *error: passing 'const A' as 'this' argument discards qualifiers*.
 
 **Fix:**
 ```cpp
 void display() const { }  // ✅ Correct - after parameters
 ```
+
+**Order of the trailing parts:** `const` comes first, then `noexcept`, then `override`/`final`: `void f() const noexcept override` compiles, `void f() noexcept const` gives *error: expected ';' at end of member declaration* (tested). For a pure virtual: `virtual void f() const = 0;`.
 
 ### ❌ Mistake 3: Modifying in Const Function
 
@@ -483,6 +531,7 @@ void increment() const {
     count++;  // ❌ Compilation error!
 }
 ```
+GCC: *error: increment of member 'Y::count' in read-only object* (tested).
 
 **Fix:**
 ```cpp
@@ -510,6 +559,7 @@ void modify() {  // Not const
     value++;
 }
 ```
+GCC: *error: passing 'const Y' as 'this' argument discards qualifiers* (tested).
 
 **Fix:**
 ```cpp
@@ -533,8 +583,12 @@ class MyClass {
 **Fix:**
 ```cpp
 // Always test:
-const MyClass obj;
+const MyClass obj(42);
 obj.getValue();  // Will catch missing const!
+
+// Careful: 'const MyClass obj;' (no arguments) only compiles if MyClass has a user-provided
+// default constructor or every member has a default initializer. A class with plain
+// 'int value;' members and no constructor gives: error: uninitialized 'const obj' (tested)
 ```
 
 ---
@@ -562,8 +616,9 @@ Design a class hierarchy with proper const correctness throughout.
 
 ### Compile:
 ```bash
-g++ -std=c++17 const_member_functions.cpp -o const_member_functions
+g++ -std=c++23 -Wall -Wextra main.cpp -o const_member_functions
 ```
+(`main.cpp` uses `std::println` from `<print>`, so it needs GCC 14+ or another compiler with C++23 `<print>`.)
 
 ### Run:
 ```bash
@@ -668,11 +723,11 @@ Container c;                    const Container cc;
 ✅ **Required** for const objects to call functions
 ✅ **Syntax**: `return_type func() const { }`
 ✅ **Can read** members but not modify
-✅ **Can call** other const functions only
+✅ **Can call** only other const functions on `this`
 ✅ **Const overloading** provides flexibility
 ✅ **Mutable** allows modification of specific members
 ✅ **Critical** for const correctness
-✅ **Enables** compiler optimizations
+✅ **Compile-time safety** at no runtime cost (it is a correctness feature, not a speed feature)
 ✅ **Mark all read-only** functions const!
 
 ### The Complete Pattern:
@@ -746,8 +801,8 @@ constObj.getValue();      // ✅ const function
 
 class Example {
 private:
-    int value;
-    mutable int counter;
+    int value = 0;           // default initializers, so 'const Example constObj;' compiles
+    mutable int counter = 0;
     
 public:
     // CONST FUNCTION - read only
@@ -871,10 +926,10 @@ public:
 
 ## 📖 Further Reading
 
-- [cppreference.com - const member functions](https://en.cppreference.com/w/cpp/language/member_functions#const-_and_volatile-qualified_member_functions)
+- [cppreference.com - Member functions (const- and volatile-qualified)](https://en.cppreference.com/cpp/language/member_functions)
 - "Effective C++" by Scott Meyers - Item 3
 - "C++ Coding Standards" by Herb Sutter - Item 15
-- [C++ Core Guidelines - Con.1 to Con.5](https://isocpp.github.io/CppCoreGuidelines/)
+- [C++ Core Guidelines - Con.1 to Con.5](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#con-constants-and-immutability) (Con.2: by default, make member functions `const`)
 
 ---
 
@@ -884,7 +939,7 @@ public:
 2. **Essential** for const objects to use methods
 3. Declared with **const after** parameter list
 4. Can **read** members but not **modify** (except mutable)
-5. Can only **call other const** functions
+5. Can only **call other const** functions on `this` (calls on other objects are unrestricted)
 6. **Const overloading** = two versions (const & non-const)
 7. **Mutable** allows modification in const functions
 8. **Test with const objects** to verify correctness
@@ -908,13 +963,13 @@ public:
    Not before, not anywhere else!
    
    void func() const { }    // ✅ CORRECT
-   void const func() { }    // ❌ WRONG
-   const void func() { }    // ❌ WRONG
+   void const func() { }    // ❌ compiles, but is NOT a const member function
+   const void func() { }    // ❌ compiles, but is NOT a const member function
 
 ⚠️  RULE 3: Test with const objects
    Always verify your API works!
    
-   const MyClass obj;
+   const MyClass obj(42);
    obj.getValue();  // Must work!
 
 ⚠️  RULE 4: Use const references
@@ -945,3 +1000,21 @@ public:
 *Difficulty: Intermediate*
 *Prerequisites: Basic class knowledge*
 *CRITICAL for Const Correctness*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+The long lecture output at the end of `main()` (the "COMPREHENSIVE EXPLANATION") and the printed texts inside the examples repeated this README, so they are gone from `main.cpp`. What they said that is not already above:
+
+- **"Enables compiler optimizations / can avoid copies and locks"** was dropped. A const member function does not let the compiler assume the object stays unchanged: `const_cast` and `mutable` are legal, and a const function may modify what a pointer member points to (all tested above). The benefit is correctness and a clear API. Only objects *defined* `const` get extra treatment, for example read-only memory (from memory).
+- **"Const parameters need const functions"** (the "const correctness chain"): `void display(const Person& p)` can call only `p`'s const members, so the getters of `Person` must be const. That is the reason const spreads through a code base. See the diagram "Const Propagation" above.
+- **When a function should be const.** Always: getters, queries (`isEmpty`), calculations (`area`), display, comparisons, conversions. Never: setters, modifiers (`increment`, `clear`), initialisation, resource acquire/release.
+- **Example 10** now runs the correct `MistakeExamples` class on a normal and on a const object. The mistake texts are in the class as comments and in "Common Mistakes" above, since a compile error cannot be shown at runtime.
+- **Code fixes in `main.cpp`:**
+  - `CachedCalculator::cachedResult` was never initialised in the constructor (now `0`).
+  - `Date::daysInMonth()` read `days[month - 1]` even for an invalid month (for example after `setMonth(13)`); it now returns `0` for that case.
+  - The unused `<memory>` include is removed.
+  - The unused parameter of `printPointBad` is commented out, so `-Wall -Wextra` is clean.
+- **Money output** now has two decimals (`$1000.00`) instead of `$1000`.
+- **Floating-point note:** `Rectangle::isSquare()` compares two `double` values with `==`. That is fine for this demo (`10.0` against `10.0`), but in real code compare with a tolerance.

@@ -6,7 +6,7 @@ This folder introduces **Virtual Inheritance** - a specialized form of inheritan
 
 **Virtual Inheritance** = Single shared base class instance in diamond hierarchies
 
-This is **ESSENTIAL** for complex multiple inheritance scenarios and understanding C++ iostream.
+This is the tool you need when a diamond cannot be avoided, and it is how the standard iostream classes are built.
 
 ---
 
@@ -61,6 +61,7 @@ Problem: Bat has TWO Animal instances!
 
 ```cpp
 class Animal {
+protected:
     string name;
 };
 
@@ -74,6 +75,8 @@ class Bat : public Mammal, public Bird {
     }
 };
 ```
+
+✅ tested. In earlier versions of these snippets `name` was private (the default in a `class`), so `Mammal::name = "food"` and `name = "food"` did not compile: `'std::string Animal::name' is private within this context`. Without virtual inheritance `name = "food"` fails with `reference to 'name' is ambiguous`.
 
 **Problems:**
 - ❌ TWO Animal instances in Bat
@@ -96,6 +99,7 @@ Solution: Bat has ONE Animal instance!
 
 ```cpp
 class Animal {
+protected:
     string name;
 };
 
@@ -146,6 +150,7 @@ WITH VIRTUAL (Solution):
 
 ```cpp
 class Animal {
+protected:
     string name;
 };
 
@@ -162,6 +167,7 @@ class Bat : public Mammal, public Bird {
 
 ```cpp
 class Animal {
+protected:
     string name;
 };
 
@@ -258,6 +264,8 @@ WITH VIRTUAL INHERITANCE:
 
 ### Memory Layout Comparison
 
+Typical layout (Itanium C++ ABI, used by GCC and Clang). The C++ standard does not specify it. Example 5 prints the sizes.
+
 ```
 WITHOUT VIRTUAL:
 Bat object:
@@ -311,7 +319,7 @@ How objects are laid out in memory.
 Multiple interfaces with common base.
 
 ### Example 7: Casting
-How upcasting and downcasting work.
+Upcasts, `dynamic_cast` (also across to the other parent), and why `static_cast` cannot go down from a virtual base.
 
 ### Example 8: Real-World Example
 The iostream pattern (std::iostream).
@@ -408,11 +416,14 @@ class Derived : public Left, public Right {
 ### Performance Considerations
 
 **Overhead:**
-- Extra pointer per virtual base (4-8 bytes)
+- A hidden pointer in each object of a class that has virtual bases (8 bytes on 64-bit). ✅ tested with GCC x86-64: `struct X : virtual A, virtual B {}` (two `int`s) is 16 bytes - one pointer, not one per virtual base
 - Indirection through pointer
 - Slightly larger objects
-- Can't inline some operations
+- Can't inline some operations (compiler dependent, not measured here)
 - More complex construction
+- No `static_cast` downcast from a virtual base (use `dynamic_cast`, which needs a polymorphic base): ✅ tested, `cannot convert from pointer to base class 'B' to pointer to derived class 'C' because the base is virtual`
+
+Numbers in this README are for GCC on x86-64. "When it matters" below is rule-of-thumb advice, not a measurement.
 
 **When it matters:**
 - Embedded systems
@@ -440,7 +451,7 @@ public:
 };
 ```
 
-**Error:** Base class requires initialization
+**Error:** `no matching function for call to 'Base::Base()'` - but only if `Base` has no default constructor (✅ tested). If it has one, it is called silently and the `Left(10)` / `Right(20)` calls don't matter. The rule also applies to classes derived *further down*: ✅ tested, a `G : public Derived` whose constructor does not name `Base` fails the same way, because the *most derived* class initializes the virtual base.
 
 **Fix:**
 ```cpp
@@ -460,9 +471,9 @@ class Derived : virtual public Base { };  // ❌ Unnecessary
 ```
 
 **Why it's bad:**
-- Adds overhead for no benefit
+- Adds overhead for no benefit: ✅ Example 9 prints `sizeof` 4 vs 16 bytes (GCC x86-64)
+- Loses `static_cast` downcasts from the base (✅ tested, see Example 7/9)
 - More complex initialization
-- Slower performance
 
 **Fix:**
 ```cpp
@@ -483,7 +494,7 @@ class Derived : public Left, public Right {
 **Why it's bad:**
 - Doesn't solve diamond problem
 - Inconsistent inheritance
-- Still ambiguous
+- Still ambiguous (✅ tested: `x = 1;` in `Derived` is `reference to 'x' is ambiguous`)
 
 **Fix:**
 ```cpp
@@ -541,8 +552,10 @@ Take a virtual inheritance hierarchy and refactor to use composition instead.
 
 ### Compile:
 ```bash
-g++ -std=c++17 virtual_inheritance.cpp -o virtual_inheritance
+g++ -std=c++23 -Wall -Wextra main.cpp -o virtual_inheritance
 ```
+
+`main.cpp` uses `std::println` (`<print>`, GCC 14+ or a recent Clang with `-std=c++23`) and a few C++20 `requires` expressions.
 
 ### Run:
 ```bash
@@ -631,7 +644,8 @@ DESTRUCTION (reverse):
 ### Prerequisites:
 - **13_Inheritance** - Basic inheritance
 - **16_MultipleInheritance** - Multiple inheritance
-- **17_VirtualDestructor** - Virtual functions
+- **14_VirtualFunctions** - Virtual functions
+- **17_VirtualDestructor** - Virtual destructors
 
 ### Coming Next:
 - **22_DefaultDelete** - Special functions control
@@ -764,8 +778,9 @@ d.baseMethod();  // No ambiguity!
 
 // === REAL-WORLD (iostream) ===
 class ios_base { };
-class istream : virtual public ios_base { };
-class ostream : virtual public ios_base { };
+class basic_ios : public ios_base { };
+class istream : virtual public basic_ios { };
+class ostream : virtual public basic_ios { };
 class iostream : public istream, public ostream { };
 ```
 
@@ -779,7 +794,7 @@ class iostream : public istream, public ostream { };
 - **Make both paths** virtual
 - **Initialize in** most derived class
 - **Document usage** clearly
-- **Use for** interface patterns
+- **Use for** interface diamonds (only if two interfaces share a common base; otherwise plain inheritance is enough)
 - **Keep virtual bases** simple
 - **Test thoroughly**
 - **Understand overhead**
@@ -810,27 +825,34 @@ class ios_base {
     // Format state
 };
 
-class istream : virtual public ios_base {
+class basic_ios : public ios_base { };   // note: NOT virtual
+
+class istream : virtual public basic_ios {
     // Input operations
 };
 
-class ostream : virtual public ios_base {
-    // Output operations  
+class ostream : virtual public basic_ios {
+    // Output operations
 };
 
 class iostream : public istream, public ostream {
     // Both input and output
-    // Shares single ios_base state
+    // Shares a single basic_ios (and therefore one ios_base)
 };
 ```
+✅ checked in the libstdc++ headers (GCC 13): `class basic_istream : virtual public basic_ios<_CharT, _Traits>` and `class basic_ios : public ios_base`. Earlier versions of this snippet (and of the program) named `ios_base` as the virtual base, which is not quite right. Example 8 prints `is_base_of_v<basic_ios<char>, istream>` and shows that `static_cast` from `basic_ios*` down to `iostream*` is rejected.
 
 ### Interface Multiple Inheritance
 ```cpp
 class IReadable {
-    virtual string read() = 0;
+public:
+    virtual ~IReadable() = default;
+    virtual string read() const = 0;
 };
 
 class IWritable {
+public:
+    virtual ~IWritable() = default;
     virtual void write(const string&) = 0;
 };
 
@@ -838,6 +860,9 @@ class Storage : virtual public IReadable,
                 virtual public IWritable {
     // Common implementation
 };
+// Note: `virtual` only pays off if two classes derived from IReadable are
+// later combined (a diamond). With a single path, as here, plain
+// `public IReadable` behaves the same (see Example 6).
 ```
 
 ### Component Systems
@@ -858,9 +883,10 @@ class GameObject : public Renderable, public Physical {
 
 ## 📖 Further Reading
 
-- [cppreference.com - Derived classes](https://en.cppreference.com/w/cpp/language/derived_class#Virtual_base_classes)
-- "Effective C++" by Scott Meyers - Item 40
-- "More Effective C++" by Scott Meyers - Item 24
+- [cppreference.com - Derived classes (virtual base classes)](https://en.cppreference.com/cpp/language/derived_class#Virtual_base_classes)
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 40, "Use multiple inheritance judiciously"
+- "More Effective C++" by Scott Meyers - Item 24, on the costs of virtual functions, multiple inheritance, virtual base classes and RTTI
+- C++ Core Guidelines: [C.137 Use virtual bases to avoid overly general base classes](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-vbase)
 - [The Diamond Problem](https://en.wikipedia.org/wiki/Multiple_inheritance#The_diamond_problem)
 
 ---
@@ -927,3 +953,40 @@ class GameObject : public Renderable, public Physical {
 *Difficulty: Advanced*
 *Prerequisites: Multiple inheritance, virtual functions*
 *CRITICAL for Complex Hierarchies*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+Per-example points from the removed `⚠️`/`✅`/`💡` blocks (not repeated where the sections above already say them):
+
+- **Example 1:** `Bat` has two `Animal` subobjects (via `Mammal` and via `Bird`), so there are two `name` members, `bat.eat()` is ambiguous and you must qualify (`bat.Mammal::eat()`). The old program only *printed* "bat.eat() is ambiguous!"; it now prints real compile-time checks: `Bat*` does not convert to `Animal*`, `bat.eat()` does not compile, `sizeof(Bat)` is 64 bytes.
+- **Example 2:** one shared `AnimalVirtual` (✅ `BatVirtual*` converts to `AnimalVirtual*`, `sizeof(BatVirtual)` is 48), no ambiguity.
+- **Example 3:** virtual bases first, then `Left`, `Right`, then `Derived` (✅ now with destructors: `Derived`, `Right`, `Left`, `Base`, the exact reverse).
+- **Example 4:** `IODevice` initializes `Device(42)`; `Input(0)` / `Output(0)` are ignored, so `showId()` prints 42 and `Device` is constructed once.
+- **Example 5:** one shared `BaseA`; `LeftVirtual` adds `left`, `RightVirtual` adds `right`, `BothVirtual` adds `both`; the virtual base usually sits at the end, with an extra hidden pointer. `class X : public BaseA, public BaseA` is the error `duplicate base type 'BaseA' invalid`. Sizes with GCC x86-64: `BaseA` 4, `LeftVirtual` 16, `BothVirtual` 40 bytes.
+- **Example 6:** the interface pattern. In the program `Storage` inherits `IReadable`/`IWritable` virtually, but there is only one path to each, so there is no diamond and `virtual` is not needed there (comment added in the code).
+- **Example 7:** single path to `Grandparent`, no ambiguity, upcasts work. `dynamic_cast` works downwards and sideways (✅ `ParentA*` → `ParentB*`), but `static_cast<Child*>(gp)` is rejected because the base is virtual.
+- **Example 8:** the program's `IOSBase` / `IStream` / `OStream` / `IOStream` copy the iostream shape. In the real library the virtual base is `std::basic_ios`, not `std::ios_base` (the old comment and README said `ios_base`).
+- **Example 9 (was lecture only):** costs and when not to use. It is now a demo: for a hierarchy without a diamond, `virtual` grows the class from 4 to 16 bytes and removes the `static_cast` downcast.
+- **Example 10:** without virtual: `Left::value = 1` and `Right::value = 2` are different objects (8 bytes); with virtual: one `value` seen as 1 via both paths (24 bytes).
+
+Other lecture content that was only in `main.cpp`:
+
+- **Alternatives:** composition over inheritance, redesign to avoid the diamond, interface segregation, multiple interfaces *without* a common base (then no virtual inheritance is needed).
+- **Everything else** (syntax, initialization rules and order, memory layout, when to use, performance, best practices, real-world examples, quick reference, golden rules) is already in the sections above.
+
+**Code changes in `main.cpp`:**
+  - Example 7: unused-variable warnings (`pa`, `pb`) fixed by using them in the cross-cast demo.
+  - Example 3: destructors added so the destruction order is shown, not just claimed.
+  - Examples 1, 2, 7, 8, 9, 10: real demos (`requires` checks, `is_convertible_v`, `sizeof`; sizes are for GCC x86-64) instead of printed claims.
+  - Example 8: comment corrected (`basic_ios`).
+  - One-argument constructors made `explicit` (see 23_ExplicitKeyword); `using namespace std;` and the unused `<vector>`/`<memory>` removed.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer (and Clang `-Wall -Wextra`).
+
+---
+
+## ⚠️ Open points
+
+- Numbering: this folder has no number; the README says Previous = `17_VirtualDestructor` and Next = `22_DefaultDelete`, but your folders `18_HeaderSourceSeparation` ... `21_MutableKeyword` sit in between, and `16_MultipleInheritance` precedes it. Check the order and the "Coming Next" list (22_DefaultDelete, 23_ExplicitKeyword, Templates).
+- Not opened: the cppreference link (the `#Virtual_base_classes` fragment in particular), the Wikipedia link, and the Core Guidelines anchor; "Effective C++ Item 40" and "More Effective C++ Item 24" are from memory.

@@ -1,7 +1,6 @@
 // 02_OOP / 01_ClassesAndObjects / 23_AccessSpecifiers
 // -----------------------------------------------------
-#include <iostream>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE: ACCESS SPECIFIERS
@@ -13,7 +12,7 @@ private:
     int privateData;
 
     void privateMethod() {
-        cout << "   Private method called\n";
+        std::println("   Private method called");
     }
 
 protected:
@@ -21,7 +20,7 @@ protected:
     int protectedData;
 
     void protectedMethod() {
-        cout << "   Protected method called\n";
+        std::println("   Protected method called");
     }
 
 public:
@@ -31,44 +30,64 @@ public:
     AccessSpecifierDemo() : privateData(10), protectedData(20), publicData(30) { }
 
     void publicMethod() {
-        cout << "   Public method called\n";
+        std::println("   Public method called");
 
         // Can access all members inside the class
-        cout << "   Accessing private: " << privateData << "\n";
-        cout << "   Accessing protected: " << protectedData << "\n";
-        cout << "   Accessing public: " << publicData << "\n";
+        std::println("   Accessing private: {}", privateData);
+        std::println("   Accessing protected: {}", protectedData);
+        std::println("   Accessing public: {}", publicData);
 
         privateMethod();
         protectedMethod();
     }
 };
 
+// A derived class sees the protected and public members, but not the private ones
+class DerivedDemo : public AccessSpecifierDemo {
+public:
+    void showInherited() {
+        std::println("   Derived reads protected: {}", protectedData);  // ✅
+        std::println("   Derived reads public: {}", publicData);        // ✅
+        protectedMethod();                                              // ✅
+
+        // std::println("{}", privateData);  // ❌ Error: private in the base class
+        // privateMethod();                  // ❌ Error: private in the base class
+    }
+};
+
 void demonstrateAccessSpecifiers() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE: ACCESS SPECIFIERS        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE: ACCESS SPECIFIERS        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     AccessSpecifierDemo obj;
 
-    cout << "--- From outside the class ---\n\n";
+    std::println("--- From outside the class ---");
+    std::println("");
 
-    cout << "✅ Can access public:\n";
+    std::println("✅ Can access public:");
     obj.publicData = 100;
-    cout << "   Public data: " << obj.publicData << "\n";
+    std::println("   Public data: {}", obj.publicData);
     obj.publicMethod();
 
-    cout << "\n❌ Cannot access private:\n";
-    cout << "   // obj.privateData = 100;  // Error!\n";
-    cout << "   // obj.privateMethod();     // Error!\n";
+    std::println("");
+    std::println("❌ Cannot access private:");
+    std::println("   // obj.privateData = 100;  // Error!");
+    std::println("   // obj.privateMethod();     // Error!");
 
-    cout << "\n❌ Cannot access protected (from outside):\n";
-    cout << "   // obj.protectedData = 100; // Error!\n";
-    cout << "   // obj.protectedMethod();    // Error!\n";
+    std::println("");
+    std::println("❌ Cannot access protected (from outside):");
+    std::println("   // obj.protectedData = 100; // Error!");
+    std::println("   // obj.protectedMethod();    // Error!");
 
-    cout << "\n💡 Access Levels:\n";
-    cout << "   private:   Only this class\n";
-    cout << "   protected: This class + derived classes\n";
-    cout << "   public:    Anywhere\n";
+    std::println("");
+    std::println("--- From a derived class ---");
+    std::println("");
+
+    DerivedDemo derived;
+    derived.showInherited();
 }
 
 int main() {

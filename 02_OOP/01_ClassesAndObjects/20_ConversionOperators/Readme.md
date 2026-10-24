@@ -80,6 +80,8 @@ bool b = num;         // Converts to bool
 int z = num * 2;      // Converts to int, multiplies!
 ```
 
+✅ tested: GCC 13 accepts all four lines, but **clang rejects** `num + 10` and `num * 2` as *ambiguous*, because this class offers two competing implicit conversions (`int` and `bool`). With a single implicit `operator int()` (Example 2 in `main.cpp`) every compiler accepts all of them - which is the actual danger.
+
 **Problems:**
 - Too many automatic conversions
 - Unexpected behavior
@@ -220,11 +222,15 @@ private:
     T* ptr;
     
 public:
-    SmartPtr(T* p = nullptr) : ptr(p) { }
+    explicit SmartPtr(T* p = nullptr) : ptr(p) { }
     
     ~SmartPtr() {
         delete ptr;
     }
+    
+    // Owns a raw pointer: copying would delete it twice
+    SmartPtr(const SmartPtr&) = delete;
+    SmartPtr& operator=(const SmartPtr&) = delete;
     
     // ✅ Explicit bool for validity checking
     explicit operator bool() const {
@@ -247,11 +253,11 @@ if (!p) {  // ✅ Check if null
 }
 ```
 
-This is exactly how `std::unique_ptr`, `std::shared_ptr`, and `std::weak_ptr` work!
+This is how `std::unique_ptr` and `std::shared_ptr` work. (`std::weak_ptr` has **no** `operator bool`: `if (weak)` does not compile - use `expired()` or `lock()` ✅ tested.) The constructor is `explicit` as well, so `SmartPtr<int> p = new int(1);` is rejected ✅ tested.
 
 ### 2. Numeric Wrapper Types
 
-**Strong types with explicit conversion:**
+**Strong types with explicit conversion to the underlying value:**
 
 ```cpp
 class Temperature {
@@ -261,23 +267,27 @@ private:
 public:
     explicit Temperature(double c) : celsius(c) { }
     
-    // ✅ Explicit conversion to Fahrenheit
-    explicit operator double() const {
+    // ✅ Explicit conversion to the underlying type
+    explicit operator double() const { return celsius; }
+    
+    // A UNIT conversion gets a name
+    double toFahrenheit() const {
         return (celsius * 9.0 / 5.0) + 32.0;
     }
-    
-    double getCelsius() const { return celsius; }
 };
 
 // Usage
 Temperature temp(100.0);  // 100°C
 
 // ❌ Prevented:
-// double f = temp;  // Error!
+// double c = temp;  // Error!
 
 // ✅ Must be explicit:
-double f = static_cast<double>(temp);  // 212°F
+double c = static_cast<double>(temp);  // 100.0 (Celsius)
+double f = temp.toFahrenheit();        // 212.0
 ```
+
+The earlier version of this lesson made `explicit operator double()` return **Fahrenheit** while the object stores Celsius. That is a surprising conversion - exactly what the Best Practices tell you not to do - so a unit conversion is now a named function (same for the "Meters → feet" idea in the old pattern list).
 
 ### 3. String Representation
 
@@ -308,6 +318,8 @@ Person p("Alice", "Smith", 30);
 string str = static_cast<string>(p);
 cout << str << "\n";  // "Alice Smith (age 30)"
 ```
+
+✅ tested: `string s = p;` and `"Name: " + p` do **not** compile with an explicit operator - write `"Name: " + static_cast<string>(p)`.
 
 ### 4. File/Stream State Checking
 
@@ -378,39 +390,51 @@ if (opt) {  // ✅ Check if has value
 }
 ```
 
+⚠️ This teaching class needs a default-constructible `T` (the `value` member is default-initialized even when empty; for `int` it stays uninitialized) and `<stdexcept>` for `runtime_error`. The real `std::optional` has neither limitation.
+
 ---
 
 ## 📋 Examples in This Folder
 
 ### Example 1: Basic Conversion
 Simple conversion operator to double.
+- `operator Type() const`, no return type; called automatically here (implicit), e.g. in `f + 0.5`
 
 ### Example 2: The Problem
 Dangerous implicit conversions causing issues.
+- Was NOT a demo of the problem: the class was already `explicit`, the comments claimed otherwise. Now `IntegerBad` has a real implicit `operator int()` (`num + 10`, `num * 2` compile) and `FlagBad` a real implicit `operator bool()` (`flag + 5`, `flag == other` compile)
 
 ### Example 3: Explicit Conversions
 Safe explicit conversions with static_cast.
+- `explicit` blocks implicit use; `if (num)` still works (contextual conversion)
 
 ### Example 4: Smart Pointer Bool
 operator bool for pointer validity.
+- Works in `if`, `!`, `&&`; same pattern as `std::unique_ptr` / `std::shared_ptr`; constructor made `explicit`, copy deleted (raw pointer)
 
 ### Example 5: Multiple Conversions
 Multiple conversion operators in one class.
+- Each converts to a different type, all explicit, each with a clear purpose
 
 ### Example 6: String Conversion
 Converting objects to string representation.
+- Useful for logging/display; must be explicit - `static_cast<string>(p)`
 
 ### Example 7: Numeric Conversions
 Unit conversions (Celsius to Fahrenheit).
+- Changed: `operator double()` now returns the stored Celsius value; the unit conversion is the named `toFahrenheit()`
 
 ### Example 8: Contextual Conversions
 Using explicit bool in boolean contexts.
+- Works in `if`, `while`, `!`, `||`; ideal for validity checks
 
 ### Example 9: Conversion Ambiguity
 Multiple conversions causing ambiguity.
+- Was only printed text. Now shows which conversion is picked (`double d = amb`, `int i = amb`); the ambiguous `long l = amb` and `amb + 5` stay as comments because they do not compile
 
 ### Example 10: Best Practices
 Guidelines for safe conversion operators.
+- Was only printed text. Now real: explicit `operator bool` of `unique_ptr`, `shared_ptr`, `optional`, `ifstream`; and const-correct conversions
 
 ---
 
@@ -438,10 +462,19 @@ obj && other
 obj || other
 
 // ❌ These don't work:
-// bool b = obj;  // Error
+// bool b = obj;  // Error (copy-initialization)
 // int x = obj;   // Error
 // obj + 5;       // Error
+// cout << obj;   // Error
+// return obj;    // Error in a function returning bool
+
+// ✅ Direct-initialization is fine:
+bool b1(obj);
+bool b2{obj};
+bool b3 = static_cast<bool>(obj);
 ```
+
+All lines above ✅ tested with GCC 13.
 
 This is called **contextual conversion** and is critical for modern C++!
 
@@ -545,6 +578,8 @@ int x = obj;       // ⚠️ Converts to int!
 obj + 5;           // ⚠️ Arithmetic!
 ```
 
+✅ tested: both compile, and so do `obj == other` (compares two `bool`s, not two objects) and `obj < 5`; `cout << obj` prints `1`.
+
 **Fix:**
 ```cpp
 class Good {
@@ -573,6 +608,8 @@ Bad b;
 auto x = b + 5;  // ⚠️ Ambiguous! int or double?
 ```
 
+✅ tested: GCC: `ambiguous overload for 'operator+'`, clang: `use of overloaded operator '+' is ambiguous`. Simple initializations are fine: `double d = b;` picks `operator double`, `int i = b;` picks `operator int`, but `long l = b;` is ambiguous.
+
 **Fix:**
 ```cpp
 class Good {
@@ -600,6 +637,8 @@ const Bad obj;
 // int x = obj;  // ❌ Error! Can't call non-const
 ```
 
+GCC: `passing 'const Bad' as 'this' argument discards qualifiers` ✅ tested.
+
 **Fix:**
 ```cpp
 class Good {
@@ -614,26 +653,24 @@ public:
 
 **Bad:**
 ```cpp
-class UserId {
-    int id;
-public:
-    operator int() const { return id; }  // ❌ Implicit!
-};
+struct UserId    { int id; operator int() const { return id; } };  // ❌ Implicit!
+struct ProductId { int id; operator int() const { return id; } };  // ❌ Implicit!
 
-void processUser(UserId uid);
-void processProduct(ProductId pid);
-
-UserId user(123);
-processProduct(user);  // ⚠️ Might compile if ProductId(int)!
+UserId user{1};
+ProductId product{1};
+bool same = (user == product);  // ⚠️ Compiles! Compares two ints - meaningless
 ```
+✅ tested: this compiles and silently compares the underlying numbers.
+
+(An earlier version of this example claimed `processProduct(user)` might compile via `ProductId(int)`. It does **not**: that would need two user-defined conversions in a row (`UserId → int → ProductId`), which C++ never chains - GCC: `could not convert 'u' from 'UserId' to 'ProductId'` ✅ tested.)
 
 **Fix:**
 ```cpp
-class UserId {
+struct UserId {
     int id;
-public:
     explicit operator int() const { return id; }  // ✅ Explicit!
 };
+// user == product  -> compile error: the types stay different
 ```
 
 ---
@@ -661,8 +698,10 @@ Convert implicit conversions to explicit.
 
 ### Compile:
 ```bash
-g++ -std=c++17 conversion_operators.cpp -o conversion_operators
+g++ -std=c++23 -Wall -Wextra main.cpp -o conversion_operators
 ```
+
+(`<print>` / `std::println` needs GCC 14 or newer.)
 
 ### Run:
 ```bash
@@ -771,14 +810,12 @@ Implicit conversions should be extremely rare.
 ## 📚 Related Topics
 
 ### Prerequisites:
-- **09_Constructors** - Constructor conversions
+- **02_Constructor** - Constructors
+- **19_ConstMemberFunctions** - Const correctness
 - **23_ExplicitKeyword** - Explicit constructors
-- **08_AccessModifiers** - Const correctness
 
 ### Coming Next:
-- **28_OperatorOverloading** - Other operators
-- **29_FriendFunctions** - Friend declarations
-- **30_TypeCasting** - Cast operators
+- **28_OperatorOverloading** - Other operators (your existing folder for this is 09_OperatorOverloading)
 
 ### Related Concepts:
 - **Type Safety** - Strong typing
@@ -847,7 +884,7 @@ public:
     T* get() const { return ptr; }
 };
 
-// Usage - safe and natural
+// Usage - safe and natural (this class compiled and ran ✅ tested)
 SmartPointer<int> p(new int(42));
 
 if (p) {  // ✅ Check validity
@@ -974,10 +1011,9 @@ public:
 
 ## 📖 Further Reading
 
-- [cppreference.com - User-defined conversion](https://en.cppreference.com/w/cpp/language/cast_operator)
-- "Effective C++" by Scott Meyers - Item 15
-- "Effective Modern C++" by Scott Meyers - Item 18
-- [C++ Core Guidelines - C.164](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-explicit)
+- [cppreference.com - User-defined conversion](https://en.cppreference.com/cpp/language/cast_operator) (found via search, page not opened)
+- "Effective C++" by Scott Meyers - Item 15 (Provide access to raw resources in resource-managing classes; from memory, not checked)
+- [C++ Core Guidelines - C.164: Avoid implicit conversion operators](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#ro-conversion) ✅ anchor checked in the guidelines text (the old `#Rc-explicit` anchor is C.46, about constructors)
 
 ---
 
@@ -1041,3 +1077,30 @@ public:
 *Difficulty: Intermediate to Advanced*  
 *Prerequisites: Constructors, const correctness, type casting*  
 *CRITICAL for Type Safety*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Syntax details:** `operator Type() const`; no return type is written, no parameters are allowed; usually `const`. A conversion operator can even be `virtual` (a derived class overrides it) ✅ tested.
+- **Not to be confused with converting constructors:** the old lecture listed `std::string from const char*` as an implicit-conversion example. That is a *converting constructor* (a one-argument constructor in the target class, see 23_ExplicitKeyword), not a conversion operator. Both are "user-defined conversions".
+- **Overload resolution with several conversion operators** ✅ tested (GCC and clang): for a class with implicit `operator int()` and `operator double()`: `double d = obj;` and `int i = obj;` pick the exact match, but `long l = obj;` and `obj + 5` are ambiguous.
+- **Only one user-defined conversion per implicit conversion sequence:** `A → int → B` (conversion operator, then converting constructor) is never chained ✅ tested.
+- **Where explicit `operator bool` works without a cast** (contextual conversion): `if`, `while`, `for (;cond;)`, the condition of `?:`, `!`, `&&`, `||`. It does not work in copy-initialization (`bool b = obj;`, `return obj;` from a `bool` function) or with `<<` ✅ tested.
+- **Comparison table (implicit vs explicit):**
+
+| Feature | Implicit | Explicit |
+|---|---|---|
+| Automatic | Yes | No |
+| Requires cast | No | Yes |
+| Boolean context (`if`, `while`, `!`, `&&`) | Yes | Yes |
+| Safety | Lower | Higher |
+| Surprises | More | Fewer |
+| Recommended | Rare | Default |
+| `operator bool` | Avoid | Use |
+
+- **Decision tree / DO-DON'T / Best practices / Quick reference / Real-world list** from the old `main()` were already in this README (Decision Tree, Best Practices, Quick Reference Card, Real-World Applications); the only extra standard-library fact: `std::string` deliberately has no bool conversion - use `.empty()`.
+- **Code changes in main.cpp:**
+  - Example 2 rewritten (see above); Example 7 `Temperature` redesigned (no Fahrenheit hidden in `operator double`); Example 9 and 10 turned into real demos.
+  - One-argument constructors made `explicit` (`IntegerBad`, `IntegerGood`, `Ambiguous`, `File`, `SmartPointer`), following 23_ExplicitKeyword; `SmartPointer` copy deleted.
+  - Removed "Enable polymorphic behavior" from the top comment (conversion operators do not do that); added `<memory>`, `<optional>`, `<fstream>`.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer.

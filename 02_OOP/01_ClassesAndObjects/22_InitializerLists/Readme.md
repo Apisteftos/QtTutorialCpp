@@ -44,11 +44,12 @@ process({1, 2, 3, 4, 5});
 ```
 
 **Key Properties:**
-- Lightweight proxy (no ownership)
-- Points to array of const T
-- Size known at compile time
-- Efficient (no allocation)
+- Lightweight proxy (no ownership): a pointer plus a size
+- Points to an array of `const T` - the elements cannot be modified, and **cannot be moved out**: they are *copied* into the container, so `vector<unique_ptr<int>> v{make_unique<int>(1)};` does not compile ✅ tested
+- The size is fixed when the list is created but is not part of the type (inside a function it is a runtime value)
+- No allocation for the list itself
 - Works with range-based for loops
+- ⚠️ Copying an `initializer_list` copies only the pointer and size. The backing array lives as long as the *original* list; storing one in a member (`initializer_list<int> l; H(initializer_list<int> x) : l(x) {}`) and reading it later is a use-after-scope bug - AddressSanitizer reports `stack-use-after-scope` ✅ tested
 
 ### Uniform Initialization
 
@@ -173,6 +174,8 @@ char d{1000000};     // ❌ Compilation error!
 
 **This catches bugs at compile time!**
 
+✅ tested: with *constants* (`int y{3.14}`, `char d{1000000}`, `float f{1e100}`, `int i{4000000000u}`, `unsigned u{-1}`) both GCC 13 and clang give an error. A floating constant to integer is rejected even when the value fits (`int e{3.0}`). With *variables* (`int x = 300; char c{x};`, `double dd; float f{dd};`, `bool b{ptr};`) **clang gives an error, but GCC 13 only warns** (`narrowing conversion of 'x' from 'int' to 'char' [-Wnarrowing]`) and still compiles - add `-Werror=narrowing` to make GCC strict.
+
 ### 2. Most Vexing Parse
 
 C++ has a famous ambiguity problem:
@@ -246,39 +249,51 @@ Widget w{};           // Default construction
 Widget w;             // ✅ Default construction
 ```
 
+✅ tested: empty braces and a class that has a default constructor *and* an `initializer_list` constructor -> the **default constructor** is called, not the list one. If the class has *only* an `initializer_list` constructor (no default constructor), `T t{};` calls it with an empty list (Example 10, `IntList emptyList{}`). GCC also warns about `Widget w();` by default: `empty parentheses were disambiguated as a function declaration [-Wvexing-parse]`.
+
 ---
 
 ## 📋 Examples in This Folder
 
 ### Example 1: Basic Usage
 Function parameters and direct usage.
+- The list is a lightweight view: size(), begin(), end(); `processNumbers({})` passes an empty list
 
 ### Example 2: Uniform Initialization
 Same syntax for all types.
+- Added: prints the element counts, so the difference between `vector<int> v1(3, 100)` (3 elements) and `v2{3, 100}` (2 elements) is visible
 
 ### Example 3: Constructor
 Class with initializer_list constructor.
+- `IntList list3{3, 100}` takes the initializer_list constructor (2 elements), `list2(3, 100)` the regular one (3 elements)
 
 ### Example 4: Narrowing Prevention
 Compile-time safety.
+- The error lines stay as comments (they do not compile); added a *constant* that fits: `const int k = 42; char kc{k};` is fine
 
 ### Example 5: Most Vexing Parse
 Solving the ambiguity problem.
+- `Widget w1();` is a function declaration; `Widget w{}` / `Widget w;` create objects. Unused `createWidget()` removed, `Widget(int)` made `explicit`
 
 ### Example 6: Containers
 Vector and container initialization.
+- Nested braces for `vector<vector<int>>`
 
 ### Example 7: Custom Class
 Nested initializer_lists.
+- `initializer_list<initializer_list<int>>`; added: rows of different sizes are rejected (the old class silently accepted them)
 
 ### Example 8: Return Values
 Using with return statements.
+- `return {1, 2, 3};` builds the vector directly in the return value
 
 ### Example 9: STL Functions
 min/max with initializer_list.
+- Bug fixed: `std::min({"zebra", "apple", ...})` deduces `initializer_list<const char*>` and compares POINTERS, not texts. It only printed the right answer by luck of the string-literal layout (my test of the same call returned `zebra` as the minimum). Now `std::min<string>({...})`
 
 ### Example 10: Best Practices
 When to use what.
+- Was only printed text. Now real output: `auto` with braces (`auto a = {1,2,3}`, `auto b{1}`, `auto c = {1}`), braces falling back to other constructors, empty braces
 
 ---
 
@@ -376,13 +391,13 @@ Widget w;    // ✅ Also works
 **Beware:**
 ```cpp
 int x{42};
-char c{x};  // ❌ Error - narrowing
+char c{x};  // ❌ Narrowing: error in clang, only a warning in GCC 13 (tested)
 
 const int y = 42;
 char d{y};  // ✅ OK if constant fits
 ```
 
-Narrowing checks work differently for constants vs variables.
+Narrowing checks work differently for constants vs variables: a constant is checked against its *value* (`char d{y}` is fine because 42 fits), a variable only by its *type* (an `int` variable never fits a `char`).
 
 ### ❌ Mistake 4: Mixing Styles Randomly
 
@@ -427,10 +442,10 @@ Write code demonstrating when braces call different constructors.
 
 ### Compile:
 ```bash
-g++ -std=c++11 initializer_lists.cpp -o initializer_lists
+g++ -std=c++23 -Wall -Wextra main.cpp -o initializer_lists
 ```
 
-Note: Requires C++11 or later
+(`<print>` / `std::println` needs GCC 14 or newer; the topic itself only needs C++11, but `auto b{1}` means `int` from C++17 on - see Example 10.)
 
 ### Run:
 ```bash
@@ -520,8 +535,8 @@ Caught at compile time ✅
 ## 📚 Related Topics
 
 ### Prerequisites:
-- **01_ClassBasics** - Basic class syntax
-- **02_Constructors** - Constructor concepts
+- **01_BasicClass** - Basic class syntax
+- **02_Constructor** - Constructor concepts
 - **STL Containers** - Vector, map, etc.
 
 ### Coming Next:
@@ -566,7 +581,7 @@ string s{"Hello"};
 // 2. CONTAINERS
 vector<int> v{1, 2, 3, 4, 5};
 map<string, int> m{{"one", 1}, {"two", 2}};
-set<int> s{10, 20, 30};
+set<int> primes{10, 20, 30};
 
 // 3. CUSTOM CLASS
 class MyClass {
@@ -576,6 +591,8 @@ public:
 };
 
 MyClass obj{1, 2, 3, 4, 5};
+
+// (needs <vector>, <map>, <set>, <string>)
 
 // 4. FUNCTION PARAMETERS
 void process(initializer_list<int> numbers) {
@@ -708,7 +725,8 @@ vector<vector<int>> matrix{
 class Config {
     map<string, string> settings;
 public:
-    Config(initializer_list<pair<string, string>> list)
+    // pair<const string, string> is map's value_type
+    Config(initializer_list<pair<const string, string>> list)
         : settings(list) { }
 };
 
@@ -718,6 +736,8 @@ Config cfg{
     {"timeout", "30"}
 };
 ```
+
+❌ The earlier version of this snippet used `initializer_list<pair<string, string>>`. That does **not** compile: `map<string,string>` has a constructor from `initializer_list<pair<const string, string>>`, and `pair<string,string>` is a different type (`no matching function for call to 'std::map<...>::map(std::initializer_list<std::pair<...>>&)'`) ✅ tested. Simplest alternative: `Config(initializer_list<map<string, string>::value_type> list)`.
 
 ### Factory Functions
 ```cpp
@@ -734,10 +754,10 @@ vector<Widget> createWidgets() {
 
 ## 📖 Further Reading
 
-- [cppreference.com - List initialization](https://en.cppreference.com/w/cpp/language/list_initialization)
-- [cppreference.com - std::initializer_list](https://en.cppreference.com/w/cpp/utility/initializer_list)
-- "Effective Modern C++" by Scott Meyers - Items 7, 8
-- [C++11 FAQ - Uniform Initialization](https://isocpp.org/wiki/faq/cpp11-language#uniform-init)
+- [cppreference.com - List initialization](https://en.cppreference.com/cpp/language/list_initialization) (not opened; mirror pages found via search)
+- [cppreference.com - std::initializer_list](https://en.cppreference.com/cpp/utility/initializer_list) (not opened)
+- "Effective Modern C++" by Scott Meyers - Item 7: Distinguish between () and {} when creating objects (from memory; Item 8 is about nullptr and does not belong here)
+- [C++11 FAQ - Uniform Initialization](https://isocpp.org/wiki/faq/cpp11-language) (page found by name only, anchor not verified)
 
 ---
 
@@ -800,3 +820,18 @@ vector<Widget> createWidgets() {
 *Difficulty: Intermediate*
 *Prerequisites: Constructors, containers*
 *CRITICAL for Modern C++ Style*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Narrowing rules, corrected** (✅ tested): a conversion is narrowing if it loses range or precision *by type*, unless the source is a constant whose value fits. Floating → integer is always narrowing (even `3.0`). `double → float` is narrowing for a variable, and for a constant only if the value is out of range (the old text said "ERROR (if out of range)" for both). `int → char` is fine for `42`, not for a variable. Constants give an error in GCC and clang; variables give an error in clang but only a warning in GCC 13.
+- **`std::min` / `std::max` with string literals:** write `std::min<string>({"a", "b"})` (or build `string` objects), otherwise pointers are compared (Example 9).
+- **`auto` and braces** ✅ tested: `auto a = {1,2,3}` is `initializer_list<int>`; `auto b{1}` is `int` (C++17); `auto c = {1}` is `initializer_list<int>`; `auto d{1,2}` is an error.
+- **Braces fall back when the initializer_list constructor is not viable** ✅ tested: `vector<string> s{2, "x"}` makes 2 elements `"x"`, because `2` cannot be a `string`; `vector<int> v{3, 7}` makes the 2 elements 3 and 7.
+- **Braces as default is a style choice:** C++ Core Guidelines ES.23 recommends `{}` initialization (✅ rule exists in the guidelines text); Meyers (Item 7) lists both the benefits and the pitfalls above. "Always braces" is not a rule - use parentheses where the constructor choice matters (`vector<int> v(100, 0)`).
+- **Lecture list that was already in this README:** syntax, uniform initialization, narrowing, most vexing parse, constructor priority, properties, when to use which, best practices, quick reference, golden rules - the `main()` copies are removed.
+- **Code changes in main.cpp:**
+  - Example 9 bug (pointer comparison) fixed; Example 7 validates the row sizes; Example 10 is a real demo.
+  - Example 2/4/5 print more (counts, the constant `kc`); `(int)c` became `static_cast<int>(c)`; `Widget(int)` is `explicit`; unused `createWidget()` removed; `(void)w5;` silences the unused-variable warning.
+  - Added `<stdexcept>` and `<type_traits>`.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer.

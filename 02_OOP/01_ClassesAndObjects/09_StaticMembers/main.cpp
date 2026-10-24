@@ -1,7 +1,9 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 #include <memory>
+#include <cctype>
+#include <utility>
 using namespace std;
 
 // ============================================
@@ -17,13 +19,13 @@ using namespace std;
  *
  * STATIC DATA MEMBERS:
  * - Shared variable across all objects
- * - Must be initialized outside class definition
+ * - Must be defined outside the class (or be 'static inline' / constexpr, C++17)
  * - Accessed via ClassName::member or object.member
  *
  * STATIC MEMBER FUNCTIONS:
  * - Can be called without an object
  * - No 'this' pointer
- * - Can only access static members
+ * - Cannot access instance members directly (only through an object they are given)
  * - Accessed via ClassName::function()
  *
  * COMMON USES:
@@ -46,21 +48,21 @@ private:
 public:
     Counter(int value) : instanceValue(value) {
         objectCount++;  // Increment shared counter
-        cout << "  Counter created. Total objects: " << objectCount << "\n";
+        std::println("  Counter created. Total objects: {}", objectCount);
     }
 
     ~Counter() {
         objectCount--;  // Decrement shared counter
-        cout << "  Counter destroyed. Remaining objects: " << objectCount << "\n";
+        std::println("  Counter destroyed. Remaining objects: {}", objectCount);
     }
 
     void displayInstance() const {
-        cout << "  Instance value: " << instanceValue << "\n";
+        std::println("  Instance value: {}", instanceValue);
     }
 
     static void displayCount() {
-        cout << "  Total Counter objects: " << objectCount << "\n";
-        // cout << instanceValue;  // ❌ Error! Can't access instance members
+        std::println("  Total Counter objects: {}", objectCount);
+        // std::println("{}", instanceValue);  // ❌ Error! Can't access instance members
     }
 
     static int getCount() {
@@ -72,31 +74,32 @@ public:
 int Counter::objectCount = 0;  // Initialize static member
 
 void demonstrateBasicStatic() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC STATIC MEMBERS   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC STATIC MEMBERS   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Initial state ---\n";
+    std::println("--- Initial state ---");
     Counter::displayCount();  // Can call without object!
 
-    cout << "\n--- Creating objects ---\n";
+    std::println("");
+    std::println("--- Creating objects ---");
     Counter c1(10);
     Counter c2(20);
     Counter c3(30);
 
-    cout << "\n--- Checking count ---\n";
+    std::println("");
+    std::println("--- Checking count ---");
     Counter::displayCount();  // Via class name
     c1.displayCount();        // Via object (also works)
 
-    cout << "\n--- Using getCount() ---\n";
-    cout << "  Count via static function: " << Counter::getCount() << "\n";
+    std::println("");
+    std::println("--- Using getCount() ---");
+    std::println("  Count via static function: {}", Counter::getCount());
 
-    cout << "\n💡 Static members:\n";
-    cout << "   • Shared by ALL objects\n";
-    cout << "   • Only ONE copy exists\n";
-    cout << "   • Accessible via ClassName::member\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
 }
 
 // ============================================
@@ -121,16 +124,14 @@ public:
 
     // Instance function - has 'this', can access all members
     void displayStudent() const {
-        cout << "  Student: " << name
-             << ", Grade: " << grade
-             << ", School: " << schoolName << "\n";
+        std::println("  Student: {}, Grade: {}, School: {}", name, grade, schoolName);
     }
 
     // Static function - no 'this', can only access static members
     static void displaySchoolInfo() {
-        cout << "  School: " << schoolName << "\n";
-        cout << "  Total Students: " << totalStudents << "\n";
-        // cout << name;  // ❌ Error! No 'this' pointer
+        std::println("  School: {}", schoolName);
+        std::println("  Total Students: {}", totalStudents);
+        // std::println("{}", name);  // ❌ Error! No 'this' pointer
     }
 
     static void setSchoolName(const string& name) {
@@ -147,38 +148,34 @@ int Student::totalStudents = 0;
 string Student::schoolName = "Unknown School";
 
 void demonstrateStaticVsInstance() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: STATIC vs INSTANCE     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: STATIC vs INSTANCE     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Setting school name (no objects yet) ---\n";
+    std::println("--- Setting school name (no objects yet) ---");
     Student::setSchoolName("MIT");
     Student::displaySchoolInfo();
 
-    cout << "\n--- Creating students ---\n";
+    std::println("");
+    std::println("--- Creating students ---");
     Student s1("Alice", 95);
     Student s2("Bob", 87);
     Student s3("Charlie", 92);
 
-    cout << "\n--- Display individual students ---\n";
+    std::println("");
+    std::println("--- Display individual students ---");
     s1.displayStudent();
     s2.displayStudent();
     s3.displayStudent();
 
-    cout << "\n--- Display school info ---\n";
+    std::println("");
+    std::println("--- Display school info ---");
     Student::displaySchoolInfo();
 
-    cout << "\n--- Memory visualization ---\n";
-    cout << "  INSTANCE MEMBERS (each object has own):\n";
-    cout << "    s1.name = \"Alice\"\n";
-    cout << "    s2.name = \"Bob\"\n";
-    cout << "    s3.name = \"Charlie\"\n";
-    cout << "\n";
-    cout << "  STATIC MEMBERS (shared by all):\n";
-    cout << "    Student::schoolName = \"MIT\" (ONE copy)\n";
-    cout << "    Student::totalStudents = 3 (ONE copy)\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
 }
 
 // ============================================
@@ -196,27 +193,28 @@ public:
     Tracker(const string& n) : name(n) {
         activeObjects++;
         totalCreated++;
-        cout << "  [" << name << "] created. Active: " << activeObjects << "\n";
+        std::println("  [{}] created. Active: {}", name, activeObjects);
     }
 
     // Copy constructor
     Tracker(const Tracker& other) : name(other.name + "_Copy") {
         activeObjects++;
         totalCreated++;
-        cout << "  [" << name << "] copied. Active: " << activeObjects << "\n";
+        std::println("  [{}] copied. Active: {}", name, activeObjects);
     }
 
     ~Tracker() {
         activeObjects--;
         totalDestroyed++;
-        cout << "  [" << name << "] destroyed. Active: " << activeObjects << "\n";
+        std::println("  [{}] destroyed. Active: {}", name, activeObjects);
     }
 
     static void displayStats() {
-        cout << "\n  === Statistics ===\n";
-        cout << "  Currently active: " << activeObjects << "\n";
-        cout << "  Total created:    " << totalCreated << "\n";
-        cout << "  Total destroyed:  " << totalDestroyed << "\n";
+        std::println("");
+        std::println("  === Statistics ===");
+        std::println("  Currently active: {}", activeObjects);
+        std::println("  Total created:    {}", totalCreated);
+        std::println("  Total destroyed:  {}", totalDestroyed);
     }
 
     static int getActiveCount() { return activeObjects; }
@@ -228,30 +226,37 @@ int Tracker::totalCreated = 0;
 int Tracker::totalDestroyed = 0;
 
 void demonstrateObjectCounting() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: OBJECT COUNTING        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: OBJECT COUNTING        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Initial statistics ---\n";
+    std::println("--- Initial statistics ---");
     Tracker::displayStats();
 
-    cout << "\n--- Creating objects in scope ---\n";
+    std::println("");
+    std::println("--- Creating objects in scope ---");
     {
         Tracker t1("First");
         Tracker t2("Second");
         Tracker::displayStats();
 
-        cout << "\n--- Creating copy ---\n";
+        std::println("");
+        std::println("--- Creating copy ---");
         Tracker t3 = t1;
         Tracker::displayStats();
 
-        cout << "\n--- Exiting scope ---\n";
+        std::println("");
+        std::println("--- Exiting scope ---");
     }
 
-    cout << "\n--- After scope exit ---\n";
+    std::println("");
+    std::println("--- After scope exit ---");
     Tracker::displayStats();
 
-    cout << "\n✅ Static members track objects across their lifetime!\n";
+    std::println("");
+    std::println("✅ Static members track objects across their lifetime!");
 }
 
 // ============================================
@@ -261,25 +266,30 @@ void demonstrateObjectCounting() {
 class DatabaseConnection {
 private:
     string connectionId;
+    bool connected;           // false if the limit was reached (then there is nothing to close)
     static string serverAddress;
     static int serverPort;
     static int maxConnections;
     static int currentConnections;
 
 public:
-    DatabaseConnection(const string& id) : connectionId(id) {
+    DatabaseConnection(const string& id) : connectionId(id), connected(false) {
         if (currentConnections >= maxConnections) {
-            cout << "  ❌ Cannot create connection: limit reached\n";
+            std::println("  ❌ Cannot create connection [{}]: limit reached", connectionId);
             return;
         }
         currentConnections++;
-        cout << "  ✅ Connection [" << connectionId << "] established to "
-             << serverAddress << ":" << serverPort << "\n";
+        connected = true;
+        std::println("  ✅ Connection [{}] established to {}:{}", connectionId, serverAddress, serverPort);
     }
 
     ~DatabaseConnection() {
+        if (!connected) {
+            std::println("  Connection [{}] was never established (nothing to close)", connectionId);
+            return;
+        }
         currentConnections--;
-        cout << "  Connection [" << connectionId << "] closed\n";
+        std::println("  Connection [{}] closed", connectionId);
     }
 
     // Static configuration methods
@@ -287,14 +297,13 @@ public:
         serverAddress = addr;
         serverPort = port;
         maxConnections = maxConn;
-        cout << "  Database configured: " << addr << ":" << port
-             << " (max: " << maxConn << ")\n";
+        std::println("  Database configured: {}:{} (max: {})", addr, port, maxConn);
     }
 
     static void displayConfig() {
-        cout << "  Server: " << serverAddress << ":" << serverPort << "\n";
-        cout << "  Max connections: " << maxConnections << "\n";
-        cout << "  Current connections: " << currentConnections << "\n";
+        std::println("  Server: {}:{}", serverAddress, serverPort);
+        std::println("  Max connections: {}", maxConnections);
+        std::println("  Current connections: {}", currentConnections);
     }
 
     static int getAvailableConnections() {
@@ -309,32 +318,36 @@ int DatabaseConnection::maxConnections = 5;
 int DatabaseConnection::currentConnections = 0;
 
 void demonstrateSharedConfiguration() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: SHARED CONFIGURATION   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: SHARED CONFIGURATION   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Default configuration ---\n";
+    std::println("--- Default configuration ---");
     DatabaseConnection::displayConfig();
 
-    cout << "\n--- Changing configuration (affects ALL connections) ---\n";
+    std::println("");
+    std::println("--- Changing configuration (affects ALL connections) ---");
     DatabaseConnection::configure("db.example.com", 5432, 3);
     DatabaseConnection::displayConfig();
 
-    cout << "\n--- Creating connections ---\n";
+    std::println("");
+    std::println("--- Creating connections ---");
     DatabaseConnection conn1("App-1");
     DatabaseConnection conn2("App-2");
     DatabaseConnection conn3("App-3");
 
-    cout << "\n--- Trying to exceed limit ---\n";
+    std::println("");
+    std::println("--- Trying to exceed limit ---");
     DatabaseConnection conn4("App-4");  // Should fail
 
-    cout << "\n--- Current status ---\n";
+    std::println("");
+    std::println("--- Current status ---");
     DatabaseConnection::displayConfig();
 
-    cout << "\n💡 Static members = shared configuration!\n";
-    cout << "   All objects use same settings\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
 }
 
 // ============================================
@@ -343,20 +356,23 @@ void demonstrateSharedConfiguration() {
 
 class MathConstants {
 private:
-    // Static const can be initialized in class (integral types)
-    static const int MAX_ITERATIONS = 1000;
-    static const int BUFFER_SIZE = 256;
+    // Integral constants can be initialized in the class. Use constexpr: a plain
+    // 'static const int' needs an extra definition outside the class as soon as it is
+    // bound to a reference (std::println does that), otherwise: linker error.
+    // (C++17: static constexpr members are implicitly inline, no outside definition needed.)
+    static constexpr int MAX_ITERATIONS = 1000;
+    static constexpr int BUFFER_SIZE = 256;
 
-    // Non-integral static const must be initialized outside
+    // Old rule: a non-integral 'static const' must be initialized outside the class
     static const double PI;
     static const double E;
 
 public:
     static void displayConstants() {
-        cout << "  MAX_ITERATIONS: " << MAX_ITERATIONS << "\n";
-        cout << "  BUFFER_SIZE:    " << BUFFER_SIZE << "\n";
-        cout << "  PI:             " << PI << "\n";
-        cout << "  E:              " << E << "\n";
+        std::println("  MAX_ITERATIONS: {}", MAX_ITERATIONS);
+        std::println("  BUFFER_SIZE:    {}", BUFFER_SIZE);
+        std::println("  PI:             {:g}", PI);
+        std::println("  E:              {:g}", E);
     }
 
     static double circleArea(double radius) {
@@ -375,25 +391,20 @@ const double MathConstants::PI = 3.14159265359;
 const double MathConstants::E = 2.71828182846;
 
 void demonstrateStaticConst() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: STATIC CONST MEMBERS   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: STATIC CONST MEMBERS   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Math constants ---\n";
+    std::println("--- Math constants ---");
     MathConstants::displayConstants();
 
-    cout << "\n--- Using constants ---\n";
+    std::println("");
+    std::println("--- Using constants ---");
     double radius = 5.0;
-    cout << "  Circle area (r=" << radius << "): "
-         << MathConstants::circleArea(radius) << "\n";
-    cout << "  Sphere volume (r=" << radius << "): "
-         << MathConstants::sphereVolume(radius) << "\n";
-
-    cout << "\n💡 Static const members:\n";
-    cout << "   • Shared constants for all objects\n";
-    cout << "   • Integral types can be initialized in-class\n";
-    cout << "   • Non-integral must be initialized outside\n";
-    cout << "   • Common for configuration constants\n";
+    std::println("  Circle area (r={}): {:g}", radius, MathConstants::circleArea(radius));
+    std::println("  Sphere volume (r={}): {:g}", radius, MathConstants::sphereVolume(radius));
 }
 
 // ============================================
@@ -410,19 +421,19 @@ public:
 
     // Non-static function - can access everything
     void nonStaticFunction() {
-        cout << "  Non-static function:\n";
-        cout << "    Can access instanceVar: " << instanceVar << " ✅\n";
-        cout << "    Can access staticVar: " << staticVar << " ✅\n";
-        cout << "    Has 'this' pointer ✅\n";
+        std::println("  Non-static function:");
+        std::println("    Can access instanceVar: {} ✅", instanceVar);
+        std::println("    Can access staticVar: {} ✅", staticVar);
+        std::println("    Has 'this' pointer ✅");
     }
 
     // Static function - restricted access
     static void staticFunction() {
-        cout << "  Static function:\n";
-        // cout << instanceVar;  // ❌ Error! No 'this' pointer
-        cout << "    Can access staticVar: " << staticVar << " ✅\n";
-        cout << "    Cannot access instanceVar ❌\n";
-        cout << "    No 'this' pointer ❌\n";
+        std::println("  Static function:");
+        // std::println("{}", instanceVar);  // ❌ Error! No 'this' pointer
+        std::println("    Can access staticVar: {} ✅", staticVar);
+        std::println("    Cannot access instanceVar ❌");
+        std::println("    No 'this' pointer ❌");
 
         // Can call other static functions
         helperStaticFunction();
@@ -432,40 +443,36 @@ public:
     }
 
     static void helperStaticFunction() {
-        cout << "    Helper static function called\n";
+        std::println("    Helper static function called");
     }
 
     // Static function can work with objects passed as parameters
     static void processObject(const RestrictionsDemo& obj) {
-        cout << "  Static processing object with instanceVar: "
-             << obj.instanceVar << "\n";
+        std::println("  Static processing object with instanceVar: {}", obj.instanceVar);
     }
 };
 
 int RestrictionsDemo::staticVar = 100;
 
 void demonstrateStaticRestrictions() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: STATIC RESTRICTIONS    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: STATIC RESTRICTIONS    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     RestrictionsDemo obj(42);
 
-    cout << "--- Non-static function ---\n";
+    std::println("--- Non-static function ---");
     obj.nonStaticFunction();
 
-    cout << "\n--- Static function ---\n";
+    std::println("");
+    std::println("--- Static function ---");
     RestrictionsDemo::staticFunction();
 
-    cout << "\n--- Static function with object parameter ---\n";
+    std::println("");
+    std::println("--- Static function with object parameter ---");
     RestrictionsDemo::processObject(obj);
-
-    cout << "\n💡 Static function restrictions:\n";
-    cout << "   ❌ No 'this' pointer\n";
-    cout << "   ❌ Cannot access instance members directly\n";
-    cout << "   ✅ Can access static members\n";
-    cout << "   ✅ Can call other static functions\n";
-    cout << "   ✅ Can work with objects passed as parameters\n";
 }
 
 // ============================================
@@ -480,7 +487,7 @@ private:
 
     // Private constructor - can only be created via factory
     Product(const string& n) : name(n), id(nextId++) {
-        cout << "  Product created: " << name << " (ID: " << id << ")\n";
+        std::println("  Product created: {} (ID: {})", name, id);
     }
 
 public:
@@ -498,7 +505,7 @@ public:
     }
 
     void display() const {
-        cout << "  Product: " << name << " (ID: " << id << ")\n";
+        std::println("  Product: {} (ID: {})", name, id);
     }
 
     static int getNextId() {
@@ -507,35 +514,33 @@ public:
 
     static void resetIdCounter() {
         nextId = 1;
-        cout << "  ID counter reset to 1\n";
+        std::println("  ID counter reset to 1");
     }
 };
 
 int Product::nextId = 1;
 
 void demonstrateFactoryPattern() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: FACTORY PATTERN        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: FACTORY PATTERN        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating products via factory methods ---\n";
+    std::println("--- Creating products via factory methods ---");
     Product p1 = Product::createBasic();
     Product p2 = Product::createPremium();
     Product p3 = Product::createCustom("Special Edition");
 
-    cout << "\n--- Displaying products ---\n";
+    std::println("");
+    std::println("--- Displaying products ---");
     p1.display();
     p2.display();
     p3.display();
 
-    cout << "\n--- Next ID ---\n";
-    cout << "  Next product will have ID: " << Product::getNextId() << "\n";
-
-    cout << "\n✅ Factory pattern benefits:\n";
-    cout << "   • Controlled object creation\n";
-    cout << "   • Auto-incrementing IDs\n";
-    cout << "   • Named constructors\n";
-    cout << "   • Private constructor ensures factory use\n";
+    std::println("");
+    std::println("--- Next ID ---");
+    std::println("  Next product will have ID: {}", Product::getNextId());
 }
 
 // ============================================
@@ -549,7 +554,7 @@ private:
 
     // Private constructor - prevents direct instantiation
     Logger(const string& file) : filename(file) {
-        cout << "  Logger initialized with file: " << filename << "\n";
+        std::println("  Logger initialized with file: {}", filename);
     }
 
     // Delete copy constructor and assignment
@@ -566,14 +571,14 @@ public:
     }
 
     void log(const string& message) {
-        cout << "  [LOG to " << filename << "]: " << message << "\n";
+        std::println("  [LOG to {}]: {}", filename, message);
     }
 
     static void cleanup() {
         if (instance != nullptr) {
             delete instance;
             instance = nullptr;
-            cout << "  Logger cleaned up\n";
+            std::println("  Logger cleaned up");
         }
     }
 };
@@ -581,30 +586,29 @@ public:
 Logger* Logger::instance = nullptr;
 
 void demonstrateSingleton() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: SINGLETON PATTERN      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: SINGLETON PATTERN      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Getting logger instance ---\n";
+    std::println("--- Getting logger instance ---");
     Logger* logger1 = Logger::getInstance();
     logger1->log("First message");
 
-    cout << "\n--- Getting logger instance again ---\n";
+    std::println("");
+    std::println("--- Getting logger instance again ---");
     Logger* logger2 = Logger::getInstance();
     logger2->log("Second message");
 
-    cout << "\n--- Checking if same instance ---\n";
-    cout << "  logger1 address: " << logger1 << "\n";
-    cout << "  logger2 address: " << logger2 << "\n";
-    cout << "  Same instance? " << (logger1 == logger2 ? "Yes ✅" : "No ❌") << "\n";
+    std::println("");
+    std::println("--- Checking if same instance ---");
+    std::println("  logger1 address: {}", static_cast<const void*>(logger1));
+    std::println("  logger2 address: {}", static_cast<const void*>(logger2));
+    std::println("  Same instance? {}", (logger1 == logger2 ? "Yes ✅" : "No ❌"));
 
-    cout << "\n✅ Singleton pattern:\n";
-    cout << "   • Only ONE instance exists\n";
-    cout << "   • Global access point\n";
-    cout << "   • Private constructor\n";
-    cout << "   • Static instance pointer\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
     Logger::cleanup();
 }
 
@@ -663,32 +667,27 @@ public:
 };
 
 void demonstrateUtilityClass() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: UTILITY CLASS          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: UTILITY CLASS          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     string text = "Hello World";
 
-    cout << "--- String utilities (all static) ---\n";
-    cout << "  Original:     " << text << "\n";
-    cout << "  Upper case:   " << StringUtils::toUpper(text) << "\n";
-    cout << "  Lower case:   " << StringUtils::toLower(text) << "\n";
-    cout << "  Reversed:     " << StringUtils::reverse(text) << "\n";
-    cout << "  Word count:   " << StringUtils::countWords(text) << "\n";
+    std::println("--- String utilities (all static) ---");
+    std::println("  Original:     {}", text);
+    std::println("  Upper case:   {}", StringUtils::toUpper(text));
+    std::println("  Lower case:   {}", StringUtils::toLower(text));
+    std::println("  Reversed:     {}", StringUtils::reverse(text));
+    std::println("  Word count:   {}", StringUtils::countWords(text));
 
-    cout << "\n--- Palindrome check ---\n";
+    std::println("");
+    std::println("--- Palindrome check ---");
     string word1 = "radar";
     string word2 = "hello";
-    cout << "  \"" << word1 << "\" is palindrome? "
-         << (StringUtils::isPalindrome(word1) ? "Yes" : "No") << "\n";
-    cout << "  \"" << word2 << "\" is palindrome? "
-         << (StringUtils::isPalindrome(word2) ? "Yes" : "No") << "\n";
-
-    cout << "\n✅ Utility class pattern:\n";
-    cout << "   • All methods static\n";
-    cout << "   • No instance needed\n";
-    cout << "   • Constructor deleted\n";
-    cout << "   • Pure functionality\n";
+    std::println("  \"{}\" is palindrome? {}", word1, (StringUtils::isPalindrome(word1) ? "Yes" : "No"));
+    std::println("  \"{}\" is palindrome? {}", word2, (StringUtils::isPalindrome(word2) ? "Yes" : "No"));
 }
 
 // ============================================
@@ -713,10 +712,10 @@ public:
         if (!availableIds.empty()) {
             id = availableIds.back();
             availableIds.pop_back();
-            cout << "  Recycled ID " << id << " for " << name << "\n";
+            std::println("  Recycled ID {} for {}", id, name);
         } else {
             id = nextId++;
-            cout << "  Assigned new ID " << id << " to " << name << "\n";
+            std::println("  Assigned new ID {} to {}", id, name);
         }
 
         totalEmployees++;
@@ -725,24 +724,25 @@ public:
     ~Employee() {
         totalEmployees--;
         availableIds.push_back(id);  // Recycle ID
-        cout << "  Employee " << name << " (ID: " << id << ") removed. ID recycled.\n";
+        std::println("  Employee {} (ID: {}) removed. ID recycled.", name, id);
     }
 
     void display() const {
-        cout << "  [" << id << "] " << name << " - " << department << "\n";
+        std::println("  [{}] {} - {}", id, name, department);
     }
 
     static void displayStatistics() {
-        cout << "\n  === Employee Statistics ===\n";
-        cout << "  Total employees: " << totalEmployees << "\n";
-        cout << "  Next new ID: " << nextId << "\n";
-        cout << "  Recycled IDs available: " << availableIds.size() << "\n";
+        std::println("");
+        std::println("  === Employee Statistics ===");
+        std::println("  Total employees: {}", totalEmployees);
+        std::println("  Next new ID: {}", nextId);
+        std::println("  Recycled IDs available: {}", availableIds.size());
         if (!availableIds.empty()) {
-            cout << "  Recycled IDs: ";
+            std::print("  Recycled IDs: ");
             for (int id : availableIds) {
-                cout << id << " ";
+                std::print("{} ", id);
             }
-            cout << "\n";
+            std::println("");
         }
     }
 
@@ -756,41 +756,41 @@ int Employee::totalEmployees = 0;
 vector<int> Employee::availableIds;
 
 void demonstrateIdGenerator() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: ID GENERATOR          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: ID GENERATOR          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating employees ---\n";
+    std::println("--- Creating employees ---");
     Employee* e1 = new Employee("Alice", "Engineering");
     Employee* e2 = new Employee("Bob", "Marketing");
     Employee* e3 = new Employee("Charlie", "Sales");
 
     Employee::displayStatistics();
 
-    cout << "\n--- Removing some employees ---\n";
+    std::println("");
+    std::println("--- Removing some employees ---");
     delete e1;
     delete e3;
 
     Employee::displayStatistics();
 
-    cout << "\n--- Creating new employees (will reuse IDs) ---\n";
+    std::println("");
+    std::println("--- Creating new employees (will reuse IDs) ---");
     Employee* e4 = new Employee("David", "HR");
     Employee* e5 = new Employee("Eve", "Finance");
 
     Employee::displayStatistics();
 
-    cout << "\n--- Current employees ---\n";
+    std::println("");
+    std::println("--- Current employees ---");
     e2->display();
     e4->display();
     e5->display();
 
-    cout << "\n✅ Static members enable:\n";
-    cout << "   • Auto-incrementing IDs\n";
-    cout << "   • ID recycling\n";
-    cout << "   • Global statistics\n";
-    cout << "   • Resource management\n";
-
-    cout << "\n--- Cleanup ---\n";
+    std::println("");
+    std::println("--- Cleanup ---");
     delete e2;
     delete e4;
     delete e5;
@@ -801,9 +801,9 @@ void demonstrateIdGenerator() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "STATIC MEMBERS DEMONSTRATION\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("STATIC MEMBERS DEMONSTRATION");
+    std::println("========================================");
 
     demonstrateBasicStatic();
     demonstrateStaticVsInstance();
@@ -815,308 +815,6 @@ int main() {
     demonstrateSingleton();
     demonstrateUtilityClass();
     demonstrateIdGenerator();
-
-    // ============================================
-    // Comprehensive Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "WHAT ARE STATIC MEMBERS?\n";
-    cout << "========================================\n";
-    cout << "Static members belong to the CLASS, not individual objects.\n";
-    cout << "\n";
-    cout << "Key characteristics:\n";
-    cout << "  • Shared by ALL objects of the class\n";
-    cout << "  • Only ONE copy exists (class-level)\n";
-    cout << "  • Exist even if no objects created\n";
-    cout << "  • Can be accessed without an object\n";
-    cout << "\n";
-    cout << "Two types:\n";
-    cout << "  1. Static data members (variables)\n";
-    cout << "  2. Static member functions\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC DATA MEMBERS\n";
-    cout << "========================================\n";
-    cout << "Declaration in class:\n";
-    cout << "  class MyClass {\n";
-    cout << "      static int count;  // Declaration\n";
-    cout << "  };\n";
-    cout << "\n";
-    cout << "Definition outside class (REQUIRED):\n";
-    cout << "  int MyClass::count = 0;  // Definition & initialization\n";
-    cout << "\n";
-    cout << "Access:\n";
-    cout << "  MyClass::count = 10;     // Via class name\n";
-    cout << "  obj.count = 10;          // Via object (also works)\n";
-    cout << "\n";
-    cout << "Special case - static const integral:\n";
-    cout << "  class MyClass {\n";
-    cout << "      static const int MAX = 100;  // Can initialize in class\n";
-    cout << "  };\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC MEMBER FUNCTIONS\n";
-    cout << "========================================\n";
-    cout << "Declaration:\n";
-    cout << "  class MyClass {\n";
-    cout << "  public:\n";
-    cout << "      static void func() {\n";
-    cout << "          // Implementation\n";
-    cout << "      }\n";
-    cout << "  };\n";
-    cout << "\n";
-    cout << "Call without object:\n";
-    cout << "  MyClass::func();  // No object needed!\n";
-    cout << "\n";
-    cout << "Call with object (also works):\n";
-    cout << "  MyClass obj;\n";
-    cout << "  obj.func();       // Via object\n";
-    cout << "\n";
-    cout << "Restrictions:\n";
-    cout << "  • No 'this' pointer\n";
-    cout << "  • Can only access static members\n";
-    cout << "  • Cannot access instance members directly\n";
-    cout << "  • Cannot be const (no 'this' to be const)\n";
-
-    cout << "\n========================================\n";
-    cout << "INSTANCE vs STATIC\n";
-    cout << "========================================\n";
-    cout << "┌─────────────────────┬─────────────────────┐\n";
-    cout << "│ INSTANCE MEMBERS    │ STATIC MEMBERS      │\n";
-    cout << "├─────────────────────┼─────────────────────┤\n";
-    cout << "│ Each object has own │ One copy for class  │\n";
-    cout << "│ Requires object     │ No object needed    │\n";
-    cout << "│ Has 'this' pointer  │ No 'this' pointer   │\n";
-    cout << "│ Can access all      │ Only static members │\n";
-    cout << "│ Object-level        │ Class-level         │\n";
-    cout << "└─────────────────────┴─────────────────────┘\n";
-
-    cout << "\n========================================\n";
-    cout << "MEMORY LAYOUT\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    int instanceVar;      // Each object has own\n";
-    cout << "    static int staticVar; // Shared by all\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Memory:\n";
-    cout << "┌──────────────┐\n";
-    cout << "│ obj1         │\n";
-    cout << "│ instanceVar  │ ──┐\n";
-    cout << "└──────────────┘   │\n";
-    cout << "┌──────────────┐   │\n";
-    cout << "│ obj2         │   │  Each object has\n";
-    cout << "│ instanceVar  │ ──┤  its own copy\n";
-    cout << "└──────────────┘   │\n";
-    cout << "┌──────────────┐   │\n";
-    cout << "│ obj3         │   │\n";
-    cout << "│ instanceVar  │ ──┘\n";
-    cout << "└──────────────┘\n";
-    cout << "\n";
-    cout << "┌──────────────┐\n";
-    cout << "│ staticVar    │ ◄─── Only ONE copy\n";
-    cout << "│ (shared)     │      for ALL objects\n";
-    cout << "└──────────────┘\n";
-
-    cout << "\n========================================\n";
-    cout << "INITIALIZATION\n";
-    cout << "========================================\n";
-    cout << "Static data members MUST be initialized outside class:\n";
-    cout << "\n";
-    cout << "// In header (.h):\n";
-    cout << "class MyClass {\n";
-    cout << "    static int count;\n";
-    cout << "    static double rate;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// In source (.cpp):\n";
-    cout << "int MyClass::count = 0;      // Required!\n";
-    cout << "double MyClass::rate = 1.5;  // Required!\n";
-    cout << "\n";
-    cout << "Exception - static const integral:\n";
-    cout << "class MyClass {\n";
-    cout << "    static const int MAX = 100;  // ✅ OK in class\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON USE CASES\n";
-    cout << "========================================\n";
-    cout << "1. Object counting:\n";
-    cout << "   static int objectCount;\n";
-    cout << "   Constructor: objectCount++;\n";
-    cout << "   Destructor: objectCount--;\n";
-    cout << "\n";
-    cout << "2. Shared configuration:\n";
-    cout << "   static string serverAddress;\n";
-    cout << "   All objects use same server\n";
-    cout << "\n";
-    cout << "3. Factory methods:\n";
-    cout << "   static MyClass create();\n";
-    cout << "   Controlled object creation\n";
-    cout << "\n";
-    cout << "4. Singleton pattern:\n";
-    cout << "   static MyClass* instance;\n";
-    cout << "   static MyClass* getInstance();\n";
-    cout << "\n";
-    cout << "5. Utility functions:\n";
-    cout << "   static int max(int a, int b);\n";
-    cout << "   No state, pure functionality\n";
-    cout << "\n";
-    cout << "6. Constants:\n";
-    cout << "   static const double PI;\n";
-    cout << "   Shared constants\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC MEMBER FUNCTION RESTRICTIONS\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    int instanceVar;\n";
-    cout << "    static int staticVar;\n";
-    cout << "    \n";
-    cout << "    void instanceFunc() {\n";
-    cout << "        instanceVar = 10;  // ✅ OK\n";
-    cout << "        staticVar = 20;    // ✅ OK\n";
-    cout << "        this->instanceVar; // ✅ Has 'this'\n";
-    cout << "    }\n";
-    cout << "    \n";
-    cout << "    static void staticFunc() {\n";
-    cout << "        // instanceVar = 10;  // ❌ Error! No 'this'\n";
-    cout << "        staticVar = 20;       // ✅ OK\n";
-    cout << "        // this->instanceVar; // ❌ No 'this'\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "What static functions CAN do:\n";
-    cout << "  ✅ Access static data members\n";
-    cout << "  ✅ Call other static functions\n";
-    cout << "  ✅ Work with parameters\n";
-    cout << "  ✅ Be called without object\n";
-    cout << "\n";
-    cout << "What static functions CANNOT do:\n";
-    cout << "  ❌ Access instance members directly\n";
-    cout << "  ❌ Call non-static functions directly\n";
-    cout << "  ❌ Use 'this' pointer\n";
-    cout << "  ❌ Be const (no 'this' to be const)\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use static for class-wide data\n";
-    cout << "  • Initialize static members outside class\n";
-    cout << "  • Use static for utility functions\n";
-    cout << "  • Use static const for constants\n";
-    cout << "  • Document thread-safety for static data\n";
-    cout << "  • Use static for factory methods\n";
-    cout << "  • Access via ClassName:: for clarity\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Forget to initialize static members\n";
-    cout << "  • Try to access instance members from static\n";
-    cout << "  • Use static when instance member better\n";
-    cout << "  • Overuse static (breaks encapsulation)\n";
-    cout << "  • Forget thread-safety for mutable static\n";
-    cout << "  • Initialize static in constructor\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON PATTERNS\n";
-    cout << "========================================\n";
-    cout << "1. OBJECT COUNTING:\n";
-    cout << "class MyClass {\n";
-    cout << "    static int count;\n";
-    cout << "public:\n";
-    cout << "    MyClass() { count++; }\n";
-    cout << "    ~MyClass() { count--; }\n";
-    cout << "    static int getCount() { return count; }\n";
-    cout << "};\n";
-    cout << "int MyClass::count = 0;\n";
-    cout << "\n";
-    cout << "2. SINGLETON:\n";
-    cout << "class Singleton {\n";
-    cout << "    static Singleton* instance;\n";
-    cout << "    Singleton() { }  // Private\n";
-    cout << "public:\n";
-    cout << "    static Singleton* getInstance() {\n";
-    cout << "        if (!instance) instance = new Singleton();\n";
-    cout << "        return instance;\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "Singleton* Singleton::instance = nullptr;\n";
-    cout << "\n";
-    cout << "3. FACTORY:\n";
-    cout << "class Product {\n";
-    cout << "    Product() { }  // Private\n";
-    cout << "public:\n";
-    cout << "    static Product create() {\n";
-    cout << "        return Product();\n";
-    cout << "    }\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Forgetting to initialize\n";
-    cout << "class Bad {\n";
-    cout << "    static int count;  // Declared\n";
-    cout << "};\n";
-    cout << "// Missing: int Bad::count = 0;\n";
-    cout << "// Result: Linker error!\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Initializing in constructor\n";
-    cout << "class Bad {\n";
-    cout << "    static int count;\n";
-    cout << "    Bad() { count = 0; }  // ❌ Wrong!\n";
-    cout << "};\n";
-    cout << "// Resets count for EVERY object created!\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Accessing instance from static\n";
-    cout << "class Bad {\n";
-    cout << "    int value;\n";
-    cout << "    static void func() {\n";
-    cout << "        value = 10;  // ❌ Error! No 'this'\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Wrong access method\n";
-    cout << "// Declaration\n";
-    cout << "static void func();\n";
-    cout << "// Definition - DON'T repeat 'static'\n";
-    cout << "void MyClass::func() { }  // ✅ Correct\n";
-    cout << "// static void MyClass::func() { }  // ❌ Wrong!\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// DECLARATION\n";
-    cout << "class MyClass {\n";
-    cout << "    static int count;           // Static data\n";
-    cout << "    static void display();      // Static function\n";
-    cout << "    static const int MAX = 100; // Static const (integral)\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// DEFINITION (outside class)\n";
-    cout << "int MyClass::count = 0;\n";
-    cout << "void MyClass::display() { }\n";
-    cout << "\n";
-    cout << "// USAGE\n";
-    cout << "MyClass::count = 10;     // Via class\n";
-    cout << "MyClass::display();      // Via class\n";
-    cout << "obj.count = 10;          // Via object (works too)\n";
-    cout << "obj.display();           // Via object (works too)\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Static members belong to CLASS, not objects\n";
-    cout << "2. Only ONE copy exists (shared by all)\n";
-    cout << "3. Static data must be initialized outside class\n";
-    cout << "4. Static functions have NO 'this' pointer\n";
-    cout << "5. Static functions can only access static members\n";
-    cout << "6. Can be accessed without creating object\n";
-    cout << "7. Access via ClassName::member\n";
-    cout << "8. Used for counting, configuration, factories\n";
-    cout << "9. Essential for Singleton pattern\n";
-    cout << "10. Perfect for utility classes\n";
 
     return 0;
 }

@@ -1,9 +1,11 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 #include <initializer_list>
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
+#include <type_traits>
 using namespace std;
 
 // ============================================
@@ -55,37 +57,34 @@ using namespace std;
 // ============================================
 
 void processNumbers(initializer_list<int> numbers) {
-    cout << "  Processing " << numbers.size() << " numbers: ";
+    std::print("  Processing {} numbers: ", numbers.size());
     for (int n : numbers) {
-        cout << n << " ";
+        std::print("{} ", n);
     }
-    cout << "\n";
+    std::println("");
 }
 
 void demonstrateBasic() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC USAGE            ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC USAGE            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Calling function with initializer_list ---\n";
+    std::println("--- Calling function with initializer_list ---");
     processNumbers({1, 2, 3, 4, 5});
     processNumbers({10, 20, 30});
     processNumbers({});  // Empty list
 
-    cout << "\n--- Creating initializer_list directly ---\n";
+    std::println("");
+    std::println("--- Creating initializer_list directly ---");
     initializer_list<double> values = {1.1, 2.2, 3.3, 4.4};
-    cout << "  Size: " << values.size() << "\n";
-    cout << "  Values: ";
+    std::println("  Size: {}", values.size());
+    std::print("  Values: ");
     for (double v : values) {
-        cout << v << " ";
+        std::print("{} ", v);
     }
-    cout << "\n";
-
-    cout << "\n💡 INITIALIZER_LIST:\n";
-    cout << "   • Lightweight proxy\n";
-    cout << "   • Points to array of const T\n";
-    cout << "   • No ownership (shallow copy)\n";
-    cout << "   • Used with braced init { }\n";
+    std::println("");
 }
 
 // ============================================
@@ -99,46 +98,47 @@ private:
 public:
     // Regular constructor
     Point(int x, int y) : x(x), y(y) {
-        cout << "  Point(" << x << ", " << y << ")\n";
+        std::println("  Point({}, {})", x, y);
     }
 
     void display() const {
-        cout << "  Point: (" << x << ", " << y << ")\n";
+        std::println("  Point: ({}, {})", x, y);
     }
 };
 
 void demonstrateUniform() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: UNIFORM INIT           ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: UNIFORM INIT           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Old style (parentheses) ---\n";
+    std::println("--- Old style (parentheses) ---");
     int a(5);
     Point p1(10, 20);
     vector<int> v1(3, 100);  // 3 elements, each 100
 
-    cout << "\n--- New style (braces) ---\n";
+    std::println("");
+    std::println("--- New style (braces) ---");
     int b{5};
     Point p2{10, 20};
     vector<int> v2{3, 100};  // 2 elements: 3 and 100
+    std::println("  a = {}, b = {}", a, b);
+    std::println("  v1 (parentheses): {} elements, v2 (braces): {} elements", v1.size(), v2.size());
 
-    cout << "\n--- Works everywhere! ---\n";
+    std::println("");
+    std::println("--- Works everywhere! ---");
     int c{42};
     double d{3.14};
     string s{"Hello"};
     vector<int> v{1, 2, 3, 4, 5};
 
-    cout << "  c = " << c << "\n";
-    cout << "  d = " << d << "\n";
-    cout << "  s = " << s << "\n";
-    cout << "  v = {";
-    for (int x : v) cout << x << " ";
-    cout << "}\n";
-
-    cout << "\n✅ UNIFORM INITIALIZATION:\n";
-    cout << "   • Same syntax for all types\n";
-    cout << "   • Consistent and predictable\n";
-    cout << "   • Modern C++ style\n";
+    std::println("  c = {}", c);
+    std::println("  d = {}", d);
+    std::println("  s = {}", s);
+    std::print("  v = {{");
+    for (int x : v) std::print("{} ", x);
+    std::println("}}");
 }
 
 // ============================================
@@ -152,19 +152,19 @@ private:
 public:
     // Constructor taking initializer_list
     IntList(initializer_list<int> list) : data(list) {
-        cout << "  IntList with " << list.size() << " elements\n";
+        std::println("  IntList with {} elements", list.size());
     }
 
     // Regular constructor
     IntList(int count, int value) {
         data.resize(count, value);
-        cout << "  IntList: " << count << " elements of " << value << "\n";
+        std::println("  IntList: {} elements of {}", count, value);
     }
 
     void display() const {
-        cout << "  Data: {";
-        for (int x : data) cout << x << " ";
-        cout << "}\n";
+        std::print("  Data: {{");
+        for (int x : data) std::print("{} ", x);
+        std::println("}}");
     }
 
     int sum() const {
@@ -173,29 +173,28 @@ public:
 };
 
 void demonstrateConstructor() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: CONSTRUCTOR            ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: CONSTRUCTOR            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using initializer_list constructor ---\n";
+    std::println("--- Using initializer_list constructor ---");
     IntList list1{1, 2, 3, 4, 5};
     list1.display();
-    cout << "  Sum: " << list1.sum() << "\n";
+    std::println("  Sum: {}", list1.sum());
 
-    cout << "\n--- Using regular constructor ---\n";
+    std::println("");
+    std::println("--- Using regular constructor ---");
     IntList list2(3, 100);  // Parentheses call regular constructor
     list2.display();
-    cout << "  Sum: " << list2.sum() << "\n";
+    std::println("  Sum: {}", list2.sum());
 
-    cout << "\n--- Braces prefer initializer_list! ---\n";
+    std::println("");
+    std::println("--- Braces prefer initializer_list! ---");
     IntList list3{3, 100};  // Calls initializer_list constructor!
     list3.display();  // Two elements: 3 and 100
-    cout << "  Sum: " << list3.sum() << "\n";
-
-    cout << "\n⚠️  IMPORTANT:\n";
-    cout << "   • Braces {} prefer initializer_list constructor\n";
-    cout << "   • Parentheses () call other constructors\n";
-    cout << "   • Can be confusing!\n";
+    std::println("  Sum: {}", list3.sum());
 }
 
 // ============================================
@@ -203,36 +202,37 @@ void demonstrateConstructor() {
 // ============================================
 
 void demonstrateNarrowing() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: NARROWING              ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: NARROWING              ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Old style allows narrowing ---\n";
+    std::println("--- Old style allows narrowing ---");
     int a = 3.14;  // ✅ Compiles (truncates to 3)
     int b = 1000000;
     char c = b;    // ✅ Compiles (data loss!)
-    cout << "  a = " << a << " (truncated from 3.14)\n";
-    cout << "  c = " << (int)c << " (data loss from " << b << ")\n";
+    std::println("  a = {} (truncated from 3.14)", a);
+    std::println("  c = {} (data loss from {})", static_cast<int>(c), b);
 
-    cout << "\n--- New style prevents narrowing ---\n";
+    std::println("");
+    std::println("--- New style prevents narrowing ---");
     // int d{3.14};     // ❌ ERROR: narrowing conversion
     // char e{1000000}; // ❌ ERROR: narrowing conversion
-    cout << "  int d{3.14};     // ❌ Compilation error\n";
-    cout << "  char e{1000000}; // ❌ Compilation error\n";
+    std::println("  int d{{3.14}};     // ❌ Compilation error");
+    std::println("  char e{{1000000}}; // ❌ Compilation error");
 
-    cout << "\n--- Safe conversions OK ---\n";
+    std::println("");
+    std::println("--- Safe conversions OK ---");
     int f{42};        // ✅ OK
     double g{42};     // ✅ OK (widening)
     long h{42};       // ✅ OK
-    cout << "  f = " << f << "\n";
-    cout << "  g = " << g << "\n";
-    cout << "  h = " << h << "\n";
-
-    cout << "\n✅ NARROWING PREVENTION:\n";
-    cout << "   • Braced init prevents data loss\n";
-    cout << "   • Compile-time safety\n";
-    cout << "   • Catches bugs early\n";
-    cout << "   • Type safe!\n";
+    const int k = 42;
+    char kc{k};       // ✅ OK: a CONSTANT that fits is not narrowing
+    std::println("  f = {}", f);
+    std::println("  g = {}", g);
+    std::println("  h = {}", h);
+    std::println("  kc = {}", static_cast<int>(kc));
 }
 
 // ============================================
@@ -242,44 +242,42 @@ void demonstrateNarrowing() {
 class Widget {
 public:
     Widget() {
-        cout << "  Widget default constructor\n";
+        std::println("  Widget default constructor");
     }
 
-    Widget(int x) {
-        cout << "  Widget(" << x << ")\n";
+    explicit Widget(int x) {
+        std::println("  Widget({})", x);
     }
 };
 
-Widget createWidget() {
-    return Widget();
-}
-
 void demonstrateMostVexingParse() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: MOST VEXING PARSE      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: MOST VEXING PARSE      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- The problem with parentheses ---\n";
+    std::println("--- The problem with parentheses ---");
     // Widget w1();  // ❌ NOT a default construction!
     //               // It's a FUNCTION DECLARATION!
-    cout << "  Widget w1();  // ❌ Function declaration, not object!\n";
+    std::println("  Widget w1();  // ❌ Function declaration, not object!");
 
-    cout << "\n--- Solution 1: No parentheses ---\n";
+    std::println("");
+    std::println("--- Solution 1: No parentheses ---");
     Widget w2;  // ✅ Default construction
 
-    cout << "\n--- Solution 2: Braces (C++11) ---\n";
+    std::println("");
+    std::println("--- Solution 2: Braces (C++11) ---");
     Widget w3{};  // ✅ Default construction (uniform init)
 
-    cout << "\n--- With arguments ---\n";
+    std::println("");
+    std::println("--- With arguments ---");
     Widget w4{42};  // ✅ Clear initialization
 
-    cout << "\n--- Function-style initialization ---\n";
+    std::println("");
+    std::println("--- Function-style initialization ---");
     Widget w5 = Widget();  // ✅ Works but verbose
-
-    cout << "\n💡 MOST VEXING PARSE:\n";
-    cout << "   • Widget w();  → function declaration\n";
-    cout << "   • Widget w{};  → object creation\n";
-    cout << "   • Braces solve the ambiguity!\n";
+    (void)w5;
 }
 
 // ============================================
@@ -287,46 +285,50 @@ void demonstrateMostVexingParse() {
 // ============================================
 
 void demonstrateContainers() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: CONTAINERS             ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: CONTAINERS             ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Vector initialization ---\n";
+    std::println("--- Vector initialization ---");
     vector<int> v1{1, 2, 3, 4, 5};
     vector<string> v2{"apple", "banana", "cherry"};
 
-    cout << "  v1: ";
-    for (int x : v1) cout << x << " ";
-    cout << "\n";
+    std::print("  v1: ");
+    for (int x : v1) std::print("{} ", x);
+    std::println("");
 
-    cout << "  v2: ";
-    for (const auto& s : v2) cout << s << " ";
-    cout << "\n";
+    std::print("  v2: ");
+    for (const auto& s : v2) std::print("{} ", s);
+    std::println("");
 
-    cout << "\n--- Note the difference! ---\n";
+    std::println("");
+    std::println("--- Note the difference! ---");
     vector<int> v3(3, 100);  // 3 elements, each 100
     vector<int> v4{3, 100};  // 2 elements: 3 and 100
 
-    cout << "  v3 (parentheses): ";
-    for (int x : v3) cout << x << " ";
-    cout << "\n";
+    std::print("  v3 (parentheses): ");
+    for (int x : v3) std::print("{} ", x);
+    std::println("");
 
-    cout << "  v4 (braces): ";
-    for (int x : v4) cout << x << " ";
-    cout << "\n";
+    std::print("  v4 (braces): ");
+    for (int x : v4) std::print("{} ", x);
+    std::println("");
 
-    cout << "\n--- Nested initialization ---\n";
+    std::println("");
+    std::println("--- Nested initialization ---");
     vector<vector<int>> matrix{
         {1, 2, 3},
         {4, 5, 6},
         {7, 8, 9}
     };
 
-    cout << "  Matrix:\n";
+    std::println("  Matrix:");
     for (const auto& row : matrix) {
-        cout << "    ";
-        for (int x : row) cout << x << " ";
-        cout << "\n";
+        std::print("    ");
+        for (int x : row) std::print("{} ", x);
+        std::println("");
     }
 }
 
@@ -345,7 +347,13 @@ public:
         rows = list.size();
         cols = rows > 0 ? list.begin()->size() : 0;
 
-        cout << "  Matrix(" << rows << "×" << cols << ")\n";
+        for (const auto& row : list) {
+            if (row.size() != static_cast<size_t>(cols)) {
+                throw invalid_argument("all rows must have the same size");
+            }
+        }
+
+        std::println("  Matrix({}×{})", rows, cols);
 
         for (const auto& row : list) {
             data.push_back(vector<int>(row));
@@ -353,14 +361,14 @@ public:
     }
 
     void display() const {
-        cout << "  Matrix " << rows << "×" << cols << ":\n";
+        std::println("  Matrix {}×{}:", rows, cols);
         for (const auto& row : data) {
-            cout << "    [";
+            std::print("    [");
             for (size_t i = 0; i < row.size(); ++i) {
-                cout << row[i];
-                if (i < row.size() - 1) cout << ", ";
+                std::print("{}", row[i]);
+                if (i < row.size() - 1) std::print(", ");
             }
-            cout << "]\n";
+            std::println("]");
         }
     }
 
@@ -374,20 +382,23 @@ public:
 };
 
 void demonstrateCustomClass() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: CUSTOM CLASS           ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: CUSTOM CLASS           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating matrix with initializer_list ---\n";
+    std::println("--- Creating matrix with initializer_list ---");
     Matrix m1{
         {1, 2, 3},
         {4, 5, 6},
         {7, 8, 9}
     };
     m1.display();
-    cout << "  Sum: " << m1.sum() << "\n";
+    std::println("  Sum: {}", m1.sum());
 
-    cout << "\n--- Different sized matrix ---\n";
+    std::println("");
+    std::println("--- Different sized matrix ---");
     Matrix m2{
         {10, 20},
         {30, 40},
@@ -395,12 +406,15 @@ void demonstrateCustomClass() {
         {70, 80}
     };
     m2.display();
-    cout << "  Sum: " << m2.sum() << "\n";
+    std::println("  Sum: {}", m2.sum());
 
-    cout << "\n✅ CUSTOM INITIALIZER_LIST:\n";
-    cout << "   • Natural syntax for construction\n";
-    cout << "   • Works with nested lists\n";
-    cout << "   • Flexible initialization\n";
+    std::println("");
+    std::println("--- Rows of different sizes are rejected ---");
+    try {
+        Matrix bad{{1, 2, 3}, {4, 5}};
+    } catch (const invalid_argument& e) {
+        std::println("  Caught: {}", e.what());
+    }
 }
 
 // ============================================
@@ -416,25 +430,22 @@ vector<string> getNames() {
 }
 
 void demonstrateReturn() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: RETURN VALUES          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: RETURN VALUES          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Returning with initializer_list ---\n";
+    std::println("--- Returning with initializer_list ---");
     auto numbers = createVector();
-    cout << "  Numbers: ";
-    for (int n : numbers) cout << n << " ";
-    cout << "\n";
+    std::print("  Numbers: ");
+    for (int n : numbers) std::print("{} ", n);
+    std::println("");
 
     auto names = getNames();
-    cout << "  Names: ";
-    for (const auto& name : names) cout << name << " ";
-    cout << "\n";
-
-    cout << "\n💡 RETURN INITIALIZATION:\n";
-    cout << "   • Clean return syntax\n";
-    cout << "   • Type deduction works\n";
-    cout << "   • Efficient (move/copy elision)\n";
+    std::print("  Names: ");
+    for (const auto& name : names) std::print("{} ", name);
+    std::println("");
 }
 
 // ============================================
@@ -442,27 +453,28 @@ void demonstrateReturn() {
 // ============================================
 
 void demonstrateMinMax() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: MIN/MAX                ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: MIN/MAX                ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using std::min and std::max ---\n";
+    std::println("--- Using std::min and std::max ---");
     int minimum = std::min({5, 2, 8, 1, 9, 3});
     int maximum = std::max({5, 2, 8, 1, 9, 3});
 
-    cout << "  Min of {5, 2, 8, 1, 9, 3}: " << minimum << "\n";
-    cout << "  Max of {5, 2, 8, 1, 9, 3}: " << maximum << "\n";
+    std::println("  Min of {{5, 2, 8, 1, 9, 3}}: {}", minimum);
+    std::println("  Max of {{5, 2, 8, 1, 9, 3}}: {}", maximum);
 
-    cout << "\n--- With strings ---\n";
-    string first = std::min({"zebra", "apple", "banana", "cherry"});
-    string last = std::max({"zebra", "apple", "banana", "cherry"});
+    std::println("");
+    std::println("--- With strings ---");
+    // Without <string> the list would be initializer_list<const char*> and min/max would
+    // compare the POINTERS (unspecified result). <string> makes it compare the texts.
+    string first = std::min<string>({"zebra", "apple", "banana", "cherry"});
+    string last = std::max<string>({"zebra", "apple", "banana", "cherry"});
 
-    cout << "  First alphabetically: " << first << "\n";
-    cout << "  Last alphabetically: " << last << "\n";
-
-    cout << "\n💡 STL FUNCTIONS:\n";
-    cout << "   • Many STL functions accept initializer_list\n";
-    cout << "   • Convenient for multiple arguments\n";
+    std::println("  First alphabetically: {}", first);
+    std::println("  Last alphabetically: {}", last);
 }
 
 // ============================================
@@ -470,40 +482,36 @@ void demonstrateMinMax() {
 // ============================================
 
 void demonstrateBestPractices() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: BEST PRACTICES        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: BEST PRACTICES        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "✅ PREFER BRACES FOR:\n";
-    cout << "   • Variable initialization\n";
-    cout << "   • Container creation\n";
-    cout << "   • Return values\n";
-    cout << "   • When you want narrowing prevention\n";
-    cout << "\n";
-    cout << "   int x{42};           // ✅ Recommended\n";
-    cout << "   vector<int> v{1,2};  // ✅ Clear intent\n";
-    cout << "\n";
+    std::println("--- auto and braces ---");
+    auto a = {1, 2, 3};  // std::initializer_list<int>
+    auto b{1};           // int (C++17 rules)
+    auto c = {1};        // std::initializer_list<int>
+    // auto d{1, 2};     // ❌ Error: direct-list-initialization of 'auto' requires exactly one element
+    std::println("  auto a = {{1, 2, 3}} is initializer_list<int>: {}", is_same_v<decltype(a), initializer_list<int>>);
+    std::println("  auto b{{1}}          is int:                   {}", is_same_v<decltype(b), int>);
+    std::println("  auto c = {{1}}       is initializer_list<int>: {}", is_same_v<decltype(c), initializer_list<int>>);
 
-    cout << "✅ USE PARENTHESES FOR:\n";
-    cout << "   • When you need specific constructor\n";
-    cout << "   • When braces would be ambiguous\n";
-    cout << "   • Traditional function calls\n";
-    cout << "\n";
-    cout << "   vector<int> v(100, 0);  // ✅ 100 zeros\n";
-    cout << "   Widget w(42);           // ✅ Clear\n";
-    cout << "\n";
+    std::println("");
+    std::println("--- Braces fall back to other constructors ---");
+    vector<string> s1(2, "x");  // 2 elements
+    vector<string> s2{2, "x"};  // 2 cannot become a string -> the initializer_list constructor is not viable
+    std::println("  vector<string>(2, \"x\"): {} elements, vector<string>{{2, \"x\"}}: {} elements", s1.size(), s2.size());
 
-    cout << "⚠️  WATCH OUT FOR:\n";
-    cout << "   • vector<int> v{100, 0};  // 2 elements!\n";
-    cout << "   • vector<int> v(100, 0);  // 100 elements!\n";
-    cout << "   • Braces prefer initializer_list constructor\n";
-    cout << "\n";
+    vector<int> i1(3, 7);
+    vector<int> i2{3, 7};  // here 3 and 7 ARE ints: the initializer_list constructor wins
+    std::println("  vector<int>(3, 7):     {} elements, vector<int>{{3, 7}}:     {} elements", i1.size(), i2.size());
 
-    cout << "💡 GENERAL GUIDELINES:\n";
-    cout << "   • Use braces as default\n";
-    cout << "   • Use parentheses when needed\n";
-    cout << "   • Be aware of initializer_list priority\n";
-    cout << "   • Test with both if unsure\n";
+    std::println("");
+    std::println("--- Empty braces ---");
+    int zero{};          // value-initialized: 0
+    IntList emptyList{}; // no default constructor: the initializer_list constructor gets an empty list
+    std::println("  int zero{{}} = {}", zero);
 }
 
 // ============================================
@@ -511,13 +519,13 @@ void demonstrateBestPractices() {
 // ============================================
 
 int main() {
-    cout << "\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║          INITIALIZER LISTS IN C++                        ║\n";
-    cout << "║          Uniform Initialization (C++11)                   ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════════╗");
+    std::println("║                                                           ║");
+    std::println("║          INITIALIZER LISTS IN C++                        ║");
+    std::println("║          Uniform Initialization (C++11)                   ║");
+    std::println("║                                                           ║");
+    std::println("╚═══════════════════════════════════════════════════════════╝");
 
     demonstrateBasic();
     demonstrateUniform();
@@ -529,276 +537,6 @@ int main() {
     demonstrateReturn();
     demonstrateMinMax();
     demonstrateBestPractices();
-
-    // ============================================
-    // COMPREHENSIVE EXPLANATION
-    // ============================================
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║              COMPREHENSIVE EXPLANATION                    ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
-
-    cout << "\n========================================\n";
-    cout << "WHAT IS INITIALIZER_LIST?\n";
-    cout << "========================================\n";
-    cout << "std::initializer_list<T>:\n";
-    cout << "  • Lightweight proxy to array of const T\n";
-    cout << "  • Added in C++11\n";
-    cout << "  • Enables uniform initialization\n";
-    cout << "  • Used with braced init { }\n";
-    cout << "\n";
-    cout << "SYNTAX:\n";
-    cout << "// Function parameter\n";
-    cout << "void func(initializer_list<int> list) {\n";
-    cout << "    for (int x : list) { }\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "// Constructor\n";
-    cout << "class MyClass {\n";
-    cout << "    MyClass(initializer_list<int> list) { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Usage\n";
-    cout << "func({1, 2, 3, 4, 5});\n";
-    cout << "MyClass obj{1, 2, 3};\n";
-    cout << "vector<int> v{1, 2, 3, 4, 5};\n";
-
-    cout << "\n========================================\n";
-    cout << "UNIFORM INITIALIZATION\n";
-    cout << "========================================\n";
-    cout << "Before C++11 (inconsistent):\n";
-    cout << "  int x = 5;              // Assignment\n";
-    cout << "  int y(10);              // Direct init\n";
-    cout << "  vector<int> v;          // Default\n";
-    cout << "  Point p(1, 2);          // Constructor\n";
-    cout << "  int arr[] = {1,2,3};    // Array\n";
-    cout << "\n";
-    cout << "C++11+ (uniform with braces):\n";
-    cout << "  int x{5};               // ✅ Same syntax\n";
-    cout << "  int y{10};              // ✅ Same syntax\n";
-    cout << "  vector<int> v{1,2,3};   // ✅ Same syntax\n";
-    cout << "  Point p{1, 2};          // ✅ Same syntax\n";
-    cout << "  int arr[]{1,2,3};       // ✅ Same syntax\n";
-    cout << "\n";
-    cout << "BENEFITS:\n";
-    cout << "  • Uniform syntax everywhere\n";
-    cout << "  • Prevents narrowing conversions\n";
-    cout << "  • Solves most vexing parse\n";
-    cout << "  • Type safe\n";
-    cout << "  • Modern C++ style\n";
-
-    cout << "\n========================================\n";
-    cout << "NARROWING CONVERSIONS\n";
-    cout << "========================================\n";
-    cout << "Old style allows data loss:\n";
-    cout << "  int x = 3.14;      // ✅ Compiles, truncates\n";
-    cout << "  char c = 1000000;  // ✅ Compiles, overflow\n";
-    cout << "  // Silent data loss! 💥\n";
-    cout << "\n";
-    cout << "Braced init prevents:\n";
-    cout << "  int x{3.14};       // ❌ Compilation error\n";
-    cout << "  char c{1000000};   // ❌ Compilation error\n";
-    cout << "  // Catches bugs at compile time! ✅\n";
-    cout << "\n";
-    cout << "NARROWING RULES:\n";
-    cout << "  • Floating to integer → ERROR\n";
-    cout << "  • Integer to narrower type → ERROR (if overflow)\n";
-    cout << "  • Double to float → ERROR (if out of range)\n";
-    cout << "  • Widening conversions → OK\n";
-
-    cout << "\n========================================\n";
-    cout << "MOST VEXING PARSE\n";
-    cout << "========================================\n";
-    cout << "THE PROBLEM:\n";
-    cout << "class Widget {\n";
-    cout << "    Widget() { }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Widget w();  // What is this?\n";
-    cout << "\n";
-    cout << "// Is it:\n";
-    cout << "// A) Default construction of Widget?\n";
-    cout << "// B) Function declaration?\n";
-    cout << "\n";
-    cout << "// Answer: B! It's a function declaration!\n";
-    cout << "// Widget w() declares a function named w\n";
-    cout << "// that takes no parameters and returns Widget\n";
-    cout << "\n";
-    cout << "SOLUTIONS:\n";
-    cout << "Widget w1;     // ✅ No parentheses\n";
-    cout << "Widget w2{};   // ✅ Braces (C++11)\n";
-    cout << "Widget w3 = Widget();  // ✅ Verbose but works\n";
-    cout << "\n";
-    cout << "Braces solve the ambiguity!\n";
-
-    cout << "\n========================================\n";
-    cout << "CONSTRUCTOR PRIORITY\n";
-    cout << "========================================\n";
-    cout << "class MyClass {\n";
-    cout << "    MyClass(int a, int b) { }  // Regular\n";
-    cout << "    MyClass(initializer_list<int> list) { }  // List\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "MyClass obj1(3, 5);    // Calls regular constructor\n";
-    cout << "MyClass obj2{3, 5};    // Calls initializer_list! ⚠️\n";
-    cout << "\n";
-    cout << "PRIORITY RULE:\n";
-    cout << "  • Braces {} prefer initializer_list constructor\n";
-    cout << "  • Even if other constructors match better\n";
-    cout << "  • To avoid, use parentheses ()\n";
-    cout << "\n";
-    cout << "EXAMPLE:\n";
-    cout << "vector<int> v1(100, 0);  // 100 zeros\n";
-    cout << "vector<int> v2{100, 0};  // 2 elements: 100, 0\n";
-    cout << "// Different results! ⚠️\n";
-
-    cout << "\n========================================\n";
-    cout << "INITIALIZER_LIST PROPERTIES\n";
-    cout << "========================================\n";
-    cout << "CHARACTERISTICS:\n";
-    cout << "  • Lightweight proxy\n";
-    cout << "  • Points to const array\n";
-    cout << "  • No ownership (shallow copy)\n";
-    cout << "  • Size known at compile time\n";
-    cout << "  • Efficient (no allocation)\n";
-    cout << "\n";
-    cout << "MEMBERS:\n";
-    cout << "  • size()   → number of elements\n";
-    cout << "  • begin()  → iterator to first\n";
-    cout << "  • end()    → iterator past last\n";
-    cout << "\n";
-    cout << "USAGE:\n";
-    cout << "void func(initializer_list<int> list) {\n";
-    cout << "    cout << list.size();  // Number of elements\n";
-    cout << "    for (int x : list) {  // Range-for works\n";
-    cout << "        // Process x\n";
-    cout << "    }\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE WHICH\n";
-    cout << "========================================\n";
-    cout << "USE BRACES { } FOR:\n";
-    cout << "  • Default (uniform initialization)\n";
-    cout << "  • Container initialization\n";
-    cout << "  • When you want narrowing prevention\n";
-    cout << "  • Most modern C++ code\n";
-    cout << "\n";
-    cout << "  int x{42};              // ✅ Default choice\n";
-    cout << "  vector<int> v{1,2,3};   // ✅ Clear intent\n";
-    cout << "  string s{\"hello\"};     // ✅ Uniform\n";
-    cout << "\n";
-    cout << "USE PARENTHESES ( ) FOR:\n";
-    cout << "  • When braces would call wrong constructor\n";
-    cout << "  • Traditional constructor calls\n";
-    cout << "  • Function calls\n";
-    cout << "  • When you need specific overload\n";
-    cout << "\n";
-    cout << "  vector<int> v(100, 0);  // ✅ 100 zeros\n";
-    cout << "  Widget w(arg);          // ✅ Specific ctor\n";
-    cout << "\n";
-    cout << "USE ASSIGNMENT = FOR:\n";
-    cout << "  • Copy initialization\n";
-    cout << "  • Traditional style\n";
-    cout << "  • Legacy code\n";
-    cout << "\n";
-    cout << "  int x = 42;             // ✅ Traditional\n";
-    cout << "  string s = \"hello\";    // ✅ Readable\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use braces as default\n";
-    cout << "  • Provide initializer_list constructors\n";
-    cout << "  • Be aware of constructor priority\n";
-    cout << "  • Use uniform initialization style\n";
-    cout << "  • Take advantage of narrowing prevention\n";
-    cout << "  • Use for container initialization\n";
-    cout << "  • Use for return values\n";
-    cout << "  • Document constructor choices\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Mix initialization styles randomly\n";
-    cout << "  • Forget initializer_list priority\n";
-    cout << "  • Assume braces always better\n";
-    cout << "  • Use when parentheses clearer\n";
-    cout << "  • Forget about narrowing\n";
-    cout << "  • Use old-style arrays\n";
-    cout << "  • Ignore most vexing parse\n";
-    cout << "  • Be dogmatic about style\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Uniform initialization\n";
-    cout << "int x{42};              // Variable\n";
-    cout << "vector<int> v{1,2,3};   // Container\n";
-    cout << "Point p{10, 20};        // Class\n";
-    cout << "int arr[]{1,2,3};       // Array\n";
-    cout << "\n";
-    cout << "// Function with initializer_list\n";
-    cout << "void func(initializer_list<int> list) {\n";
-    cout << "    for (int x : list) { }\n";
-    cout << "}\n";
-    cout << "func({1, 2, 3, 4, 5});\n";
-    cout << "\n";
-    cout << "// Constructor\n";
-    cout << "class MyClass {\n";
-    cout << "    MyClass(initializer_list<int> list) { }\n";
-    cout << "};\n";
-    cout << "MyClass obj{1, 2, 3};\n";
-    cout << "\n";
-    cout << "// Return value\n";
-    cout << "vector<int> create() {\n";
-    cout << "    return {1, 2, 3, 4, 5};\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. initializer_list enables uniform initialization\n";
-    cout << "2. Braces { } work for all types uniformly\n";
-    cout << "3. Prevents narrowing conversions\n";
-    cout << "4. Solves most vexing parse problem\n";
-    cout << "5. Braces prefer initializer_list constructor\n";
-    cout << "6. Use braces as default, parentheses when needed\n";
-    cout << "7. Be aware of constructor priority\n";
-    cout << "8. Modern C++ style uses braces\n";
-    cout << "9. Safer than old-style initialization\n";
-    cout << "10. Test when behavior unclear\n";
-
-    cout << "\n========================================\n";
-    cout << "GOLDEN RULES\n";
-    cout << "========================================\n";
-    cout << "⚠️  RULE 1: Prefer braces as default\n";
-    cout << "   Modern uniform initialization!\n";
-    cout << "   \n";
-    cout << "   int x{42};  // Not int x = 42;\n";
-    cout << "\n";
-    cout << "⚠️  RULE 2: Watch constructor priority\n";
-    cout << "   Braces prefer initializer_list!\n";
-    cout << "   \n";
-    cout << "   vector<int> v{3, 5};  // 2 elements\n";
-    cout << "   vector<int> v(3, 5);  // 3 elements of 5\n";
-    cout << "\n";
-    cout << "⚠️  RULE 3: Use for narrowing prevention\n";
-    cout << "   Catches bugs at compile time!\n";
-    cout << "   \n";
-    cout << "   int x{3.14};  // ❌ Error\n";
-    cout << "\n";
-    cout << "⚠️  RULE 4: Provide initializer_list constructors\n";
-    cout << "   For container-like classes!\n";
-    cout << "   \n";
-    cout << "   MyClass(initializer_list<T> list) { }\n";
-    cout << "\n";
-    cout << "⚠️  RULE 5: Be pragmatic\n";
-    cout << "   Use parentheses when clearer!\n";
-    cout << "   \n";
-    cout << "   vector<int> v(100, 0);  // Clearer intent\n";
 
     return 0;
 }

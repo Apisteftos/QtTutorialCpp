@@ -150,6 +150,13 @@ public:
 
 **When to use:** Large objects, avoid copying
 
+⚠️ **Caution:** the reference points into the object. If the object is destroyed first, the reference dangles:
+```cpp
+const string& n = Person("Alice", 25).getName();  // the temporary Person dies at the ;
+cout << n;                                         // ❌ use-after-free (AddressSanitizer reports it)
+```
+Use the result only while the object is alive, or copy it (`string n = ...`).
+
 ### Pattern 3: Return Pointer (Nullable Values)
 
 When the value might not exist:
@@ -224,6 +231,8 @@ public:
 ```
 
 **When to use:** Expensive computations
+
+⚠️ By convention a `const` function is safe to call from several threads at once. A `mutable` cache breaks that: two threads calling `getValue()` can write `cachedValue` at the same time (a data race). If the object is shared between threads, protect the cache with a `mutex` or use `std::atomic`.
 
 ---
 
@@ -354,34 +363,64 @@ void setPersonInfo(const string& n, int a, const string& e) {
 ## 📋 Examples in This Folder
 
 ### Example 1: Basic Getters and Setters
-The fundamental pattern with validation.
+The fundamental pattern. `setName("")`, `setAge(-5)` and `setAge(200)` are rejected, so the data stays valid.
 
 ### Example 2: Different Getter Patterns
-Five different ways to return values.
+Five ways to return values: by value, by const reference, as a pointer, computed, and cached with `mutable`. The cache is discarded when `addData()` changes the data.
 
 ### Example 3: Different Setter Patterns
-Seven different validation and setting strategies.
+Seven strategies: plain validation, exception, `bool` result, clamping, normalizing (trim and capitalize), method chaining and a batch setter. `setAgeClamp(200)` leaves the age at 150, and `setName` capitalizes only the *first* letter ("Alice johnson").
 
 ### Example 4: Read-Only and Write-Only Properties
 Controlling access levels (no setter, no getter).
 
 ### Example 5: Validation Strategies
-Email, phone, zip code validation.
+Email, phone and zip code validation. The phone setter also reformats the number to `(123) 456-7890`.
 
 ### Example 6: Computed Properties
-Values calculated from other data (area, perimeter).
+Area, perimeter, diagonal and `isSquare()` are calculated from width and height, so they have no setters and cannot get out of sync.
 
 ### Example 7: Dependent Properties
-Multiple views of same data (Celsius/Fahrenheit/Kelvin).
+Only Celsius is stored. Fahrenheit and Kelvin are computed, and their setters convert back to Celsius (anything below -273.15 °C is rejected).
 
 ### Example 8: Range-Based Properties
-Percentage class with clamping (0-100).
+`Percentage` stores 0.0 to 1.0, can be read and written as 0 to 100, and clamps out-of-range values. The constructor goes through the setter, so even a bad initial value is clamped.
 
 ### Example 9: Real-World User Profile
-Complete profile with username, email, age validation.
+Username (3-20 chars), email, age (13-120) and bio (truncated at 500) with validation. `isVerified` has no setter; only `verify()` changes it.
 
 ### Example 10: Real-World Product Inventory
-Stock management with price, quantity validation.
+Price and quantity validation, `addStock()`/`removeStock()`, a computed total value and low-stock warnings. Money is printed with `{:.2f}`.
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+### Validation strategies (Examples 5, 9, 10)
+1. **Range check:** `age >= 0 && age <= 150`
+2. **Format check:** `email.find('@') != string::npos` (`string::contains` exists only from C++23)
+3. **Length check:** `username.length() >= 3 && username.length() <= 20`
+4. **Pattern matching:** `regex_match(phone, phonePattern)`
+5. **Business rules:** `price >= 0 && quantity >= 0`
+
+### Two more property types
+4. **Validated properties:** the setter enforces rules and rejects invalid values (email, phone, age).
+5. **Lazy properties:** calculated once on first use, then cached (file content, database query). See getter Pattern 5.
+
+### When NOT to use getters/setters
+For a pure data container with no rules, public data is fine:
+```cpp
+struct Point {   // simple container, no invariant to protect
+    int x, y;
+};
+```
+Use public data when there is no behavior, no validation and no computed properties; otherwise use getters/setters. The C++ Core Guidelines (rule C.131) go further: *avoid trivial getters and setters*. A pair that only copies a value in and out protects nothing that a public member would not. A setter earns its place by validating, converting, notifying or keeping other members in sync.
+
+### Small things to know about the examples
+- **Owning raw pointer (Example 2):** `GetterPatterns` owns an `int*` but has no copy constructor or assignment operator, so copying an object would delete the same pointer twice. In real code use `std::unique_ptr<int>` or a plain `int`.
+- **`<cctype>` functions (Examples 3, 5, 9):** `toupper`, `isdigit` and `isalnum` take an `int` that must be representable as `unsigned char` (or `EOF`). A plain `char` holding a non-ASCII byte can be negative, which is undefined behavior. Cast first: `isdigit(static_cast<unsigned char>(c))`.
+- **`invalid_argument` (Example 3)** is declared in `<stdexcept>`.
+- **`verify()` in Example 9** is public only to keep the demo short. In real code only the system should be able to call it.
 
 ---
 
@@ -466,11 +505,13 @@ public:
     }
     // No getter!
     
-    bool verifyPassword(const string& p) {
+    bool verifyPassword(const string& p) const {  // const: it only reads
         return hash(p) == password;
     }
 };
 ```
+
+`hash()` is a placeholder. Real passwords need a salted password-hashing function (bcrypt, scrypt, Argon2), not a plain hash.
 
 **Use cases:** Passwords, secure tokens, secrets
 
@@ -575,9 +616,11 @@ public:
     }
 };
 
-const Bad b;
-// b.getValue();  // ❌ Error!
+const Bad b(42);
+// b.getValue();  // ❌ Error: 'this' argument discards qualifiers
 ```
+
+(The class needs a constructor here, because a `const` object must be initialized. With the original `const Bad b;` the compiler already fails on that line and never reaches the getter.)
 
 **Fix:**
 ```cpp
@@ -649,6 +692,8 @@ void setX(int val) {
 }
 ```
 
+Not every side effect is a mistake. Updating a dependent value (Example 7: `setFahrenheit` changes the stored Celsius) or notifying listeners is expected, as long as the name and documentation make it obvious. Changing an *unrelated* member is the problem.
+
 ### ❌ Mistake 5: Complex Logic in Getter
 ```cpp
 class Bad {
@@ -664,6 +709,24 @@ public:
 ```
 
 **Fix:** Keep getters simple, move complex logic elsewhere
+
+### ❌ Mistake 6: Constructor Bypasses the Setter's Validation
+```cpp
+class Person {
+    int age;
+public:
+    Person(int a) : age(a) { }        // ❌ no validation here
+    void setAge(int a) { if (a >= 0 && a <= 150) age = a; }
+};
+
+Person p(-5);   // accepted: the object starts in an invalid state (tested)
+```
+
+**Fix:** let the constructor call the setter (or share one private `isValid()`), as `Percentage` and `Product` do in Examples 8 and 10:
+```cpp
+Person(int a) : age(0) { setAge(a); }
+```
+(Example 1's `Person` has this gap: its constructor stores the values unchecked.)
 
 ---
 
@@ -706,12 +769,13 @@ Create a `Color` class with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 getter_setter.cpp -o getter_setter
+g++ -std=c++23 -Wall -Wextra main.cpp -o getters_setters
 ```
+`main.cpp` uses `std::println`, so it needs GCC 14 or newer (or another compiler with `<print>`).
 
 ### Run:
 ```bash
-./getter_setter
+./getters_setters
 ```
 
 ### Expected Output:
@@ -997,7 +1061,9 @@ public:
 ## 📖 Further Reading
 
 - [C++ Core Guidelines - Getters and Setters](https://isocpp.github.io/CppCoreGuidelines/)
-- "Effective C++" by Scott Meyers - Item 20: Prefer pass-by-reference-to-const
+- [C++ Core Guidelines, rule C.131](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines) - "Avoid trivial getters and setters"
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 22: Declare data members private
+- "Effective C++" (3rd ed.) by Scott Meyers - Item 20: Prefer pass-by-reference-to-const
 - "Clean Code" by Robert C. Martin - Chapter on Objects and Data Structures
 
 ---

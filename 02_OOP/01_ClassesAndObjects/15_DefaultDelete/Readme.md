@@ -2,7 +2,7 @@
 
 ## 📚 Overview
 
-This folder introduces the **= default** and **= delete** keywords - powerful C++11 features that give you explicit control over special member functions. These keywords allow you to explicitly request compiler-generated implementations or prevent function usage entirely, enabling better const-correctness, type safety, and clearer design intent.
+This folder introduces the **= default** and **= delete** keywords - powerful C++11 features that give you explicit control over special member functions. These keywords allow you to explicitly request compiler-generated implementations or prevent function usage entirely, enabling better type safety, and clearer design intent.
 
 **= default** = Request compiler-generated implementation  
 **= delete** = Explicitly prevent function usage
@@ -34,7 +34,7 @@ These are **ESSENTIAL** for modern C++ resource management and API design.
 - Used for special member functions
 - Makes your intent clear
 - Can restore functions that were suppressed
-- May produce better optimized code
+- Keeps types trivial where possible (see *Trivial Types*)
 
 **= delete:**
 - Explicitly deletes a function
@@ -181,12 +181,14 @@ private:
     unique_ptr<int> data;  // Use RAII
 public:
     ~RuleOfFiveEasy() = default;
-    RuleOfFiveEasy(const RuleOfFiveEasy&) = default;
-    RuleOfFiveEasy& operator=(const RuleOfFiveEasy&) = default;
+    RuleOfFiveEasy(const RuleOfFiveEasy&) = delete;   // a unique_ptr member cannot be copied
+    RuleOfFiveEasy& operator=(const RuleOfFiveEasy&) = delete;
     RuleOfFiveEasy(RuleOfFiveEasy&&) = default;
     RuleOfFiveEasy& operator=(RuleOfFiveEasy&&) = default;
 };
 ```
+
+> `= default` on a copy operation does not make an uncopyable member copyable: with a `unique_ptr` member the defaulted copy is silently defined as deleted, and you only get an error when you use it (GCC accepts the declaration without a warning; clang warns with `-Wdefaulted-function-deleted`). Writing `= delete` says what is really happening. ✅ tested
 
 ### Real-World Analogy
 
@@ -328,7 +330,6 @@ MoveOnly obj3 = move(obj1);    // ✅ OK - can move
 ```cpp
 class Singleton {
 private:
-    static Singleton* instance;
     Singleton() = default;
     
 public:
@@ -338,14 +339,16 @@ public:
     Singleton(Singleton&&) = delete;
     Singleton& operator=(Singleton&&) = delete;
     
-    static Singleton* getInstance() {
-        if (!instance) {
-            instance = new Singleton();
-        }
+    // Meyers singleton: created on first call, destroyed at program exit.
+    // Since C++11 the initialization of a function-local static is thread-safe.
+    static Singleton& getInstance() {
+        static Singleton instance;
         return instance;
     }
 };
 ```
+
+> The old version (`static Singleton* instance` + `new`) is never deleted, so its destructor never runs, and its lazy `if (!instance)` check is a data race when two threads call it at once (TSan reported it; the function-local static version was clean). ✅ tested
 
 ### 4. Preventing Implicit Conversions
 
@@ -361,7 +364,16 @@ SafeInteger num;
 num.setValue(42);      // ✅ OK
 // num.setValue(3.14);    // ❌ Error - double deleted
 // num.setValue(nullptr); // ❌ Error - pointer deleted
+// num.setValue(5L);      // ❌ Error - but only as 'ambiguous' (long -> int or double?)
 ```
+
+Deleted overloads take part in overload resolution, so `long` is equally good for `int` and `double` and the call is ambiguous (still an error, just a vaguer message). To block *every* other type, delete a template:
+
+```cpp
+void setValue(int value);
+template <class T> void setValue(T) = delete;   // blocks long, double, char, nullptr_t, ...
+```
+✅ tested
 
 ### 5. Interface Base Class
 
@@ -384,33 +396,54 @@ protected:
 
 ### Example 1: Default Constructor
 Shows explicit vs implicit default constructors.
+- Makes intent explicit and documents the code
+- Restores the default constructor after another constructor was declared
+- Members get default member initializers (`int value = 0;`); without them a defaulted constructor leaves an `int` indeterminate
 
 ### Example 2: Deleting Copy Operations
 Non-copyable class with deleted copy operations.
+- Prevents accidental copies; unique ownership (like `unique_ptr`); clear compiler errors
+- The hand-written move operations must nullify the source
 
 ### Example 3: Singleton Pattern
 Implementing singleton with deleted operations.
+- Only one instance, no copy or move, one global access point, controlled instantiation
+- Implemented as a Meyers singleton (function-local static)
 
 ### Example 4: Rule of Five - All Defaults
 Using = default for all five operations.
+- Rule of Zero: use RAII types (`string`, `vector`), no raw pointers, let the compiler generate everything
+- Spelling all five as `= default` is explicit, but it is the Rule of Five with defaults, not the Rule of Zero
 
 ### Example 5: Rule of Five - Custom
 Manual implementation of all five operations.
+- If you manage a resource, define all five (or use `= default` / `= delete`)
+- Destructor cleans up, copy makes a deep copy, move transfers ownership
 
 ### Example 6: Deleting Specific Overloads
 Type safety by deleting specific function overloads.
+- Prevents implicit conversions; errors at compile time instead of runtime checks
+- The constructor `SafeInteger(double)` is deleted as well, otherwise `SafeInteger(3.14)` would silently truncate
 
 ### Example 7: Move-Only Type
 Creating a move-only resource class.
+- Unique ownership, no accidental copies, efficient transfers, clear semantics
+- `createResource()` returns by value: since C++17 the object is built in place (guaranteed elision), no move happens
 
 ### Example 8: Default on Declaration
 Separating declaration and definition.
+- Declare in the header, define `= default` in the source file
+- Separates interface from implementation; useful for the pimpl idiom
 
 ### Example 9: When NOT to Use
 Anti-patterns and common mistakes.
+- Don't use `= default` when the function would be generated anyway (noise), and don't over-document
+- The demo uses a `Probe` member that prints when copied or moved to show that `~X() = default` plus defaulted copy operations turns a move into a copy
 
 ### Example 10: Real-World - File Handle
 RAII file handle with proper resource management.
+- Unique resource ownership, no accidental copies, safe transfer of ownership; similar to `unique_ptr`
+- The demo creates `test.txt` first, so the open / move / close path really runs, and removes it at the end
 
 ---
 
@@ -420,7 +453,7 @@ RAII file handle with proper resource management.
 
 **✅ USE = DEFAULT:**
 
-1. **Restoring deleted functions:**
+1. **Restoring suppressed functions** (declaring any constructor suppresses the implicit default constructor):
 ```cpp
 class A {
     A(int);           // Custom constructor
@@ -446,7 +479,7 @@ C::C() = default;  // Define outside
 4. **Rule of Five (with RAII types):**
 ```cpp
 class D {
-    unique_ptr<int> data;
+    string name;           // copyable AND movable member
 public:
     ~D() = default;
     D(const D&) = default;
@@ -454,6 +487,7 @@ public:
     D(D&&) = default;
     D& operator=(D&&) = default;
 };
+// With a unique_ptr member, the defaulted copy would be implicitly deleted - write = delete instead.
 ```
 
 ### When to Use = delete
@@ -493,10 +527,11 @@ A type is **trivial** if:
 - All base classes and members are trivial
 
 **Why it matters:**
-- Can use `memcpy` safely
-- Can use in unions
-- Better performance
+- Can be used in unions (without custom special members)
+- Can be created without running a constructor (e.g. in raw storage)
 - POD-like behavior
+
+`memcpy` safety is about **trivially copyable** (trivial copy/move/destructor), not about a trivial default constructor. ✅ tested: both `Trivial` and `NonTrivial` below are trivially copyable.
 
 ```cpp
 // Trivial type
@@ -512,13 +547,24 @@ class NonTrivial {
 public:
     NonTrivial() : x(0), y(0) {}  // Not trivial
 };
+
+class OutOfLine {
+    int x, y;
+public:
+    OutOfLine();
+};
+OutOfLine::OutOfLine() = default;  // Also NOT trivial: defaulting outside the class makes it user-provided
 ```
+
+✅ tested (`is_trivially_default_constructible`): in-class `= default` → true; manual `: x(0)` → false; out-of-line `= default` → false.
+
+Also note: since C++20 a class with a user-*declared* constructor (even `= default`) is no longer an aggregate, so `Agg a{1};` compiles in C++17 but not in C++20. ✅ tested
 
 ### Compiler-Generated vs Manual
 
 **Compiler-Generated (= default):**
-- May be faster (compiler optimizations)
 - Produces trivial types when possible
+- Leaves members uninitialized (`int x;` stays indeterminate) - the manual `: x(0)` version does not
 - Less code to maintain
 - Consistent behavior
 
@@ -528,7 +574,7 @@ public:
 - Required for complex resource management
 - More verbose
 
-**Rule of Thumb:** Use = default unless you need custom behavior.
+**Rule of Thumb:** Use = default unless you need custom behavior. Better: give members default member initializers (`int x = 0;`) so even a defaulted constructor starts from a known value.
 
 ---
 
@@ -547,7 +593,7 @@ public:
 };
 ```
 
-**Why it's bad:** Over-documenting, adds noise
+**Why it's bad:** Over-documenting, adds noise - and worse, declaring the destructor or the copy operations (even as `= default`) **suppresses the implicit move operations**, so every "move" silently becomes a copy. With a member that prints when copied/moved: the plain class printed "Probe moved", the class with `~X() = default` + defaulted copy printed "Probe copied". ✅ tested (see Example 9)
 
 **Fix:**
 ```cpp
@@ -609,12 +655,14 @@ public:
     ~Bad() = delete;  // ❌ Can't destroy objects!
 };
 
-// Bad obj;  // ❌ Can't destroy when goes out of scope!
+// Bad obj;              // ❌ Error: use of deleted function 'Bad::~Bad()'
+// Bad* p = new Bad;     // ✅ compiles - creating is fine...
+// delete p;             // ❌ Error - ...destroying is not
 ```
 
-**Why it's bad:** Objects can't be destroyed, memory leaks
+**Why it's bad:** Such an object can never be destroyed (this is a compile error, not a leak). ✅ tested
 
-**Fix:** Don't delete destructors (except in very special cases)
+**Fix:** Don't delete destructors. The rare legitimate use is to forbid objects that can be destroyed normally, e.g. to prevent stack objects (not tested here).
 
 ### ❌ Mistake 4: Forgetting noexcept on Move
 
@@ -626,19 +674,18 @@ public:
 };
 ```
 
-**Why it's bad:** 
-- Move operations should be noexcept
-- Containers won't use move operations
-- Performance impact
+**Correction:** this is *not* a problem for `= default`. A defaulted move constructor is automatically `noexcept` when all members' moves are (`is_nothrow_move_constructible` was true with and without the keyword). ✅ tested
 
-**Fix:**
+It matters for **user-written** moves: if you write `Bad(Bad&&) { ... }` without `noexcept`, `vector` reallocation copies the elements instead of moving them. ✅ tested
+
 ```cpp
 class Good {
 public:
-    Good(Good&&) noexcept = default;
-    Good& operator=(Good&&) noexcept = default;
+    Good(Good&&) noexcept { /* hand-written move */ }
+    Good& operator=(Good&&) = default;   // already noexcept if the members' moves are
 };
 ```
+(`noexcept = default` is allowed and harmless; GCC 13 even accepts it when a member's move may throw.)
 
 ### ❌ Mistake 5: Using Private Instead of Delete
 
@@ -647,8 +694,9 @@ public:
 class Old {
 private:
     Old(const Old&);  // Declared but not defined
-    // ❌ Link error, not compile error
     // ❌ Not clear intent
+    // Outside the class: compile error ('is private within this context')
+    // Only inside members/friends does it become a link error ('undefined reference')
 };
 ```
 
@@ -687,8 +735,10 @@ Take a class with manual resource management and refactor to use RAII types.
 
 ### Compile:
 ```bash
-g++ -std=c++17 default_delete.cpp -o default_delete
+g++ -std=c++23 -Wall -Wextra main.cpp -o default_delete
 ```
+
+(`<print>` / `std::println` needs GCC 14 or newer.)
 
 ### Run:
 ```bash
@@ -821,7 +871,7 @@ MoveOnly obj3 = move(obj1);  // ✅ OK!
 ✅ **Non-copyable** types with deleted copy operations  
 ✅ **Move-only** types for unique ownership  
 ✅ **Type safety** by deleting specific overloads  
-✅ **Trivial types** for better performance  
+✅ **Trivial types** stay memcpy-friendly  
 ✅ **Explicit intent** makes code clearer  
 ✅ **Better errors** than old-style private + undefined
 
@@ -846,8 +896,8 @@ public:
     MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
     
-    MoveOnly(MoveOnly&&) noexcept = default;
-    MoveOnly& operator=(MoveOnly&&) noexcept = default;
+    MoveOnly(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 
 // RULE OF FIVE (When necessary)
@@ -859,16 +909,17 @@ public:
     ~RuleOfFive() { delete[] data; }
     
     RuleOfFive(const RuleOfFive& other)
-        : size(other.size), data(new int[size]) {
+        : data(new int[other.size]), size(other.size) {   // same order as the declarations
         memcpy(data, other.data, size * sizeof(int));
     }
     
     RuleOfFive& operator=(const RuleOfFive& other) {
         if (this != &other) {
+            int* newData = new int[other.size];   // allocate first, so a throw leaves *this intact
+            memcpy(newData, other.data, other.size * sizeof(int));
             delete[] data;
+            data = newData;
             size = other.size;
-            data = new int[size];
-            memcpy(data, other.data, size * sizeof(int));
         }
         return *this;
     }
@@ -930,8 +981,8 @@ class MoveOnly {
 public:
     MoveOnly(const MoveOnly&) = delete;
     MoveOnly& operator=(const MoveOnly&) = delete;
-    MoveOnly(MoveOnly&&) noexcept = default;
-    MoveOnly& operator=(MoveOnly&&) noexcept = default;
+    MoveOnly(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
 };
 
 // === RESTORING DEFAULT ===
@@ -953,7 +1004,7 @@ public:
 - **Use = default** when restoring suppressed functions
 - **Use = delete** to prevent operations
 - **Define all five** if you define one
-- **Make move operations** noexcept
+- **Make hand-written move operations** noexcept
 - **Use = delete** for type safety
 - **Keep it simple** - avoid manual resource management
 - **Document intent** - explicit is better
@@ -965,7 +1016,7 @@ public:
 - **Don't forget** the Rule of Five
 - **Don't delete** destructors (except special cases)
 - **Don't mix** RAII and manual management
-- **Don't forget** noexcept on move operations
+- **Don't forget** noexcept on hand-written move operations (defaulted ones get it automatically)
 - **Don't use** private + undefined (old style)
 - **Don't manage** raw resources without need
 - **Don't define** special members when not needed
@@ -979,6 +1030,7 @@ public:
 ### Unique Resource Ownership
 ```cpp
 class DatabaseConnection {
+    unique_ptr<Handle> handle;   // the reason this class is move-only
 public:
     DatabaseConnection(const DatabaseConnection&) = delete;
     DatabaseConnection& operator=(const DatabaseConnection&) = delete;
@@ -1012,17 +1064,22 @@ public:
     void process(char*) = delete;         // Force string
     void process(const char*) = delete;   // Force string
 };
+// api.process(string("x"));  // ✅ OK
+// api.process("x");          // ❌ Error - a string literal is a const char[], so it hits the deleted overload too
 ```
+✅ tested
 
 ---
 
 ## 📖 Further Reading
 
-- [cppreference.com - default specifier](https://en.cppreference.com/w/cpp/language/function#Function_definition)
-- [cppreference.com - delete specifier](https://en.cppreference.com/w/cpp/language/function#Deleted_functions)
+- [cppreference.com - default specifier](https://en.cppreference.com/cpp/language/function)
+- [cppreference.com - delete specifier](https://en.cppreference.com/cpp/language/function)
 - "Effective Modern C++" by Scott Meyers - Items 11, 17
-- [C++ Core Guidelines - C.21](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-zero)
-- [Rule of Zero on FLorian's Blog](https://foonathan.net/2019/02/special-member-functions/)
+- [C++ Core Guidelines - C.20 (Rule of Zero)](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-zero)
+- [C++ Core Guidelines - C.21 (Rule of Five)](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-five)
+- [Tutorial: When to Write Which Special Member (foonathan)](https://foonathan.net/2019/02/special-member-functions/)
+- [cppreference.com - Rule of three/five/zero](https://en.cppreference.com/cpp/language/rule_of_three)
 
 ---
 
@@ -1067,11 +1124,12 @@ public:
    A(const A&) = delete;        // ✅ Clear
    private: A(const A&);        // ❌ Old style
 
-⚠️  RULE 4: Move operations should be noexcept
-   Containers won't use them otherwise
+⚠️  RULE 4: Hand-written move operations should be noexcept
+   vector reallocation copies otherwise
    
-   A(A&&) noexcept = default;   // ✅ Good
-   A(A&&) = default;            // ⚠️  Missing noexcept
+   A(A&&) noexcept { ... }      // ✅ Good
+   A(A&&) { ... }               // ⚠️  Missing noexcept
+   A(A&&) = default;            // ✅ Already noexcept if the members' moves are
 
 ⚠️  RULE 5: Don't overthink it
    If you don't need special handling, don't define anything!
@@ -1090,3 +1148,23 @@ public:
 *Difficulty: Intermediate to Advanced*  
 *Prerequisites: Constructors, destructors, pointers*  
 *ESSENTIAL for Resource Management*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Default vs manual implementation:** `class Default { int x, y; Default() = default; }` leaves `x` and `y` uninitialized; `Manual() : x(0), y(0) {}` initializes them. So the difference is not only speed (see *Compiler-Generated vs Manual*).
+- **Deleting inherited functions:** `Derived` can delete an overload (`void func(double) = delete;`) so `d.func(1.5)` is a compile error. But through a `Base&`, `b.func(1.5)` still compiles and silently converts to `int`; the deleted overload only exists in `Derived`. ✅ tested
+- **Decision tree:**
+  - Managing resources? No → Rule of Zero (declare nothing). Yes → can `unique_ptr` / `string` / `vector` do it? Yes → Rule of Zero. No → Rule of Five.
+  - Prevent copying? Delete the copy operations; allow move → `= default`, otherwise `= delete` the move operations too.
+  - Custom constructor defined and you also want a default constructor? Add `ClassName() = default;`.
+- **Rule of Five (from main.cpp):** the destructor, copy constructor, copy assignment, move constructor and move assignment together; the `Interface` base class pattern (`virtual ~Interface() = default; protected: Interface() = default;`) is covered in *Common Use Cases #5*.
+- **Mistake 2 (partial Rule of Five):** `~Good();` plus `Good(const Good&) = delete;` and defaulted moves is a valid fix only when the members really can be moved; with a raw pointer you must write them by hand.
+- **Code changes in main.cpp:**
+  - `SimpleClass` / `ExplicitDefault`: `int value = 0;` (the old code read an uninitialized `int`, which is undefined behavior; the original printed `Value: 1`, now `Value: 0`). The comment `// SimpleClass() : value(0), name() {}` was wrong for a defaulted constructor.
+  - `Singleton`: raw `new`, never deleted → Meyers singleton; "Singleton destroyed" now prints at exit.
+  - `RuleOfFiveCustom`, `MoveOnlyResource`: initializer lists reordered to match the declaration order (`-Wreorder`); `memcpy` on a possibly-null pointer → `std::copy`; copy assignment allocates before deleting.
+  - `SafeInteger`: added `SafeInteger(double) = delete;`.
+  - Example 9 had only lecture text, now a real demo; Example 10 now creates and removes `test.txt` (the original always printed "Failed to open"); `#include <cstdio>` added.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer; the uninitialized-`int` claim rests on the standard plus the original output (no MemorySanitizer available).
+

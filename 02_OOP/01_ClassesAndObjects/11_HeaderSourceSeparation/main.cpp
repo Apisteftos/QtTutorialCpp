@@ -1,8 +1,6 @@
-#include <iostream>
+#include <print>
 #include <string>
-#include <vector>
-#include <memory>
-using namespace std;
+using namespace std;  // fine in a .cpp, but NEVER in a header
 
 // ============================================
 // WHAT IS HEADER/SOURCE SEPARATION?
@@ -38,7 +36,7 @@ using namespace std;
  * SOURCE FILE CONTAINS:
  * - Function implementations
  * - Member function definitions
- * - Static member initialization
+ * - Static member initialization (or `static inline` in the header, C++17)
  * - Non-inline code
  *
  * INCLUDE GUARDS:
@@ -53,7 +51,7 @@ using namespace std;
  * 4. Creates final executable
  *
  * BEST PRACTICES:
- * - Use #pragma once (simpler than include guards)
+ * - Use include guards or #pragma once (pick ONE style per project)
  * - Forward declarations to reduce dependencies
  * - Include what you use (IWYU principle)
  * - Minimize includes in headers
@@ -73,17 +71,17 @@ private:
 public:
     // Constructor
     PersonSingleFile(const string& n, int a) : name(n), age(a) {
-        cout << "  PersonSingleFile constructor: " << name << "\n";
+        std::println("  PersonSingleFile constructor: {}", name);
     }
 
     // Destructor
     ~PersonSingleFile() {
-        cout << "  PersonSingleFile destructor: " << name << "\n";
+        std::println("  PersonSingleFile destructor: {}", name);
     }
 
     // Methods
     void display() const {
-        cout << "  Name: " << name << ", Age: " << age << "\n";
+        std::println("  Name: {}, Age: {}", name, age);
     }
 
     void setAge(int a) {
@@ -96,26 +94,23 @@ public:
 };
 
 void demonstrateSingleFile() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: SINGLE FILE (Before)   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: SINGLE FILE (Before)   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating person ---\n";
+    std::println("--- Creating person ---");
     PersonSingleFile person("Alice", 30);
 
-    cout << "\n--- Using person ---\n";
+    std::println("");
+    std::println("--- Using person ---");
     person.display();
 
-    cout << "\n--- Modifying person ---\n";
+    std::println("");
+    std::println("--- Modifying person ---");
     person.setAge(31);
     person.display();
-
-    cout << "\n⚠️  PROBLEMS WITH SINGLE FILE:\n";
-    cout << "   • Changes to implementation require recompilation\n";
-    cout << "   • No separation of interface and implementation\n";
-    cout << "   • Difficult to maintain in large projects\n";
-    cout << "   • Harder to create libraries\n";
-    cout << "   • Implementation details exposed\n";
 }
 
 // ============================================
@@ -147,17 +142,17 @@ public:
 // Constructor implementation
 PersonSeparated::PersonSeparated(const string& n, int a)
     : name(n), age(a) {
-    cout << "  PersonSeparated constructor: " << name << "\n";
+    std::println("  PersonSeparated constructor: {}", name);
 }
 
 // Destructor implementation
 PersonSeparated::~PersonSeparated() {
-    cout << "  PersonSeparated destructor: " << name << "\n";
+    std::println("  PersonSeparated destructor: {}", name);
 }
 
 // Method implementations
 void PersonSeparated::display() const {
-    cout << "  Name: " << name << ", Age: " << age << "\n";
+    std::println("  Name: {}, Age: {}", name, age);
 }
 
 void PersonSeparated::setAge(int a) {
@@ -173,71 +168,55 @@ string PersonSeparated::getName() const {
 }
 
 void demonstrateSeparation() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: SEPARATED (Better)     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: SEPARATED (Better)     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating person ---\n";
+    std::println("--- Creating person ---");
     PersonSeparated person("Bob", 25);
 
-    cout << "\n--- Using person ---\n";
+    std::println("");
+    std::println("--- Using person ---");
     person.display();
 
-    cout << "\n--- Modifying person ---\n";
+    std::println("");
+    std::println("--- Modifying person ---");
     person.setAge(26);
     person.display();
-
-    cout << "\n✅ BENEFITS OF SEPARATION:\n";
-    cout << "   • Change implementation without recompiling users\n";
-    cout << "   • Clear interface in header file\n";
-    cout << "   • Implementation details hidden\n";
-    cout << "   • Better organization\n";
-    cout << "   • Faster incremental compilation\n";
 }
 
 // ============================================
 // EXAMPLE 3: INCLUDE GUARDS (Traditional)
 // ============================================
 
+// Simulate "the same header included twice" inside this one file.
+// The guard makes the second copy disappear in the preprocessor.
+
+// --- first inclusion of "guard_demo.h" ---
+#ifndef GUARD_DEMO_H
+#define GUARD_DEMO_H
+inline int guardDemoValue() { return 42; }
+#endif // GUARD_DEMO_H
+
+// --- second inclusion of the SAME text (skipped: GUARD_DEMO_H is already defined) ---
+#ifndef GUARD_DEMO_H
+#define GUARD_DEMO_H
+inline int guardDemoValue() { return 42; }
+#endif // GUARD_DEMO_H
+
 void demonstrateIncludeGuards() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: INCLUDE GUARDS         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: INCLUDE GUARDS         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "TRADITIONAL INCLUDE GUARD:\n";
-    cout << "\n";
-    cout << "// Person.h\n";
-    cout << "#ifndef PERSON_H\n";
-    cout << "#define PERSON_H\n";
-    cout << "\n";
-    cout << "#include <string>\n";
-    cout << "\n";
-    cout << "class Person {\n";
-    cout << "private:\n";
-    cout << "    std::string name;\n";
-    cout << "    int age;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    Person(const std::string& n, int a);\n";
-    cout << "    ~Person();\n";
-    cout << "    \n";
-    cout << "    void display() const;\n";
-    cout << "    void setAge(int a);\n";
-    cout << "    int getAge() const;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "#endif // PERSON_H\n";
-
-    cout << "\n✅ BENEFITS:\n";
-    cout << "   • Prevents multiple inclusion\n";
-    cout << "   • Avoids redefinition errors\n";
-    cout << "   • Standard C++ practice\n";
-    cout << "   • Works on all compilers\n";
-
-    cout << "\n⚠️  DRAWBACKS:\n";
-    cout << "   • More boilerplate code\n";
-    cout << "   • Easy to make mistakes\n";
-    cout << "   • Must match guard names carefully\n";
+    std::println("--- The same 'header' text pasted twice ---");
+    std::println("  guardDemoValue() = {}", guardDemoValue());
+    std::println("  The 2nd copy was skipped by the preprocessor (GUARD_DEMO_H already defined)");
+    std::println("  Without the guard: error: redefinition of 'int guardDemoValue()'");
 }
 
 // ============================================
@@ -245,41 +224,16 @@ void demonstrateIncludeGuards() {
 // ============================================
 
 void demonstratePragmaOnce() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: #pragma once (Modern)  ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: #pragma once (Modern)  ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "MODERN #pragma once:\n";
-    cout << "\n";
-    cout << "// Person.h\n";
-    cout << "#pragma once\n";
-    cout << "\n";
-    cout << "#include <string>\n";
-    cout << "\n";
-    cout << "class Person {\n";
-    cout << "private:\n";
-    cout << "    std::string name;\n";
-    cout << "    int age;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    Person(const std::string& n, int a);\n";
-    cout << "    ~Person();\n";
-    cout << "    \n";
-    cout << "    void display() const;\n";
-    cout << "    void setAge(int a);\n";
-    cout << "    int getAge() const;\n";
-    cout << "};\n";
-
-    cout << "\n✅ BENEFITS:\n";
-    cout << "   • Simpler syntax (one line!)\n";
-    cout << "   • No naming conflicts\n";
-    cout << "   • Faster compilation\n";
-    cout << "   • Less error-prone\n";
-    cout << "   • Supported by all modern compilers\n";
-
-    cout << "\n💡 RECOMMENDATION:\n";
-    cout << "   Use #pragma once for new projects!\n";
-    cout << "   Only use include guards if you need C++98 compatibility\n";
+    std::println("  #pragma once works per FILE, so it cannot be shown inside this single main.cpp");
+    std::println("  (GCC even warns: '#pragma once in main file')");
+    std::println("");
+    std::println("✅ Either style is fine: use ONE of them consistently per project");
 }
 
 // ============================================
@@ -321,23 +275,17 @@ void Calculator::complexOperation() {
 }
 
 void demonstrateInlineFunctions() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: INLINE FUNCTIONS       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: INLINE FUNCTIONS       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using calculator ---\n";
+    std::println("--- Using calculator ---");
     Calculator calc;
     calc.setValue(10);
-    cout << "  Value: " << calc.getValue() << "\n";
-    cout << "  Compute: " << calc.compute(5, 3) << "\n";
-
-    cout << "\n💡 GUIDELINE:\n";
-    cout << "   • INLINE (in header): Simple getters/setters\n";
-    cout << "   • IN SOURCE: Complex logic, loops, algorithms\n";
-    cout << "\n";
-    cout << "RULE OF THUMB:\n";
-    cout << "   If function > 3 lines → put in .cpp\n";
-    cout << "   If function ≤ 3 lines → can inline in .h\n";
+    std::println("  Value: {}", calc.getValue());
+    std::println("  Compute: {}", calc.compute(5, 3));
 }
 
 // ============================================
@@ -356,6 +304,10 @@ public:
     Car(const string& m);
     ~Car();
 
+    // Car owns the raw Engine*, so a copy would delete it twice
+    Car(const Car&) = delete;
+    Car& operator=(const Car&) = delete;
+
     void start();
     void display() const;
 };
@@ -367,58 +319,48 @@ private:
 
 public:
     Engine(int hp) : horsepower(hp) {
-        cout << "  Engine created: " << hp << " HP\n";
+        std::println("  Engine created: {} HP", hp);
     }
 
     ~Engine() {
-        cout << "  Engine destroyed\n";
+        std::println("  Engine destroyed");
     }
 
     int getHorsepower() const { return horsepower; }
 };
 
 // Car implementation (would be in Car.cpp)
-Car::Car(const string& m) : model(m), engine(new Engine(200)) {
-    cout << "  Car created: " << model << "\n";
+Car::Car(const string& m) : engine(new Engine(200)), model(m) {
+    std::println("  Car created: {}", model);
 }
 
 Car::~Car() {
     delete engine;
-    cout << "  Car destroyed: " << model << "\n";
+    std::println("  Car destroyed: {}", model);
 }
 
 void Car::start() {
-    cout << "  Starting " << model << " with "
-         << engine->getHorsepower() << " HP engine\n";
+    std::println("  Starting {} with {} HP engine", model, engine->getHorsepower());
 }
 
 void Car::display() const {
-    cout << "  Model: " << model
-         << ", Engine: " << engine->getHorsepower() << " HP\n";
+    std::println("  Model: {}, Engine: {} HP", model, engine->getHorsepower());
 }
 
 void demonstrateForwardDeclarations() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: FORWARD DECLARATIONS   ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: FORWARD DECLARATIONS   ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating car ---\n";
+    std::println("--- Creating car ---");
     Car car("Tesla Model S");
 
-    cout << "\n--- Using car ---\n";
+    std::println("");
+    std::println("--- Using car ---");
     car.start();
     car.display();
-
-    cout << "\n✅ BENEFITS:\n";
-    cout << "   • Reduces header dependencies\n";
-    cout << "   • Faster compilation\n";
-    cout << "   • Breaks circular dependencies\n";
-    cout << "   • Car.h doesn't need #include \"Engine.h\"\n";
-    cout << "\n";
-    cout << "💡 WHEN TO USE:\n";
-    cout << "   • When using pointers/references only\n";
-    cout << "   • No need for full definition\n";
-    cout << "   • Reduces coupling between files\n";
 }
 
 // ============================================
@@ -435,6 +377,10 @@ public:
     BankAccount(const string& o, double b);
     ~BankAccount();
 
+    // A copy would not increment accountCount, but its destructor would decrement it
+    BankAccount(const BankAccount&) = delete;
+    BankAccount& operator=(const BankAccount&) = delete;
+
     static int getAccountCount();
     void display() const;
 };
@@ -445,14 +391,12 @@ int BankAccount::accountCount = 0;
 BankAccount::BankAccount(const string& o, double b)
     : owner(o), balance(b) {
     accountCount++;
-    cout << "  Account created for " << owner
-         << " (Total accounts: " << accountCount << ")\n";
+    std::println("  Account created for {} (Total accounts: {})", owner, accountCount);
 }
 
 BankAccount::~BankAccount() {
     accountCount--;
-    cout << "  Account closed for " << owner
-         << " (Remaining: " << accountCount << ")\n";
+    std::println("  Account closed for {} (Remaining: {})", owner, accountCount);
 }
 
 int BankAccount::getAccountCount() {
@@ -460,36 +404,35 @@ int BankAccount::getAccountCount() {
 }
 
 void BankAccount::display() const {
-    cout << "  Owner: " << owner << ", Balance: $" << balance << "\n";
+    std::println("  Owner: {}, Balance: ${:.2f}", owner, balance);
 }
 
 void demonstrateStaticMembers() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: STATIC MEMBERS         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: STATIC MEMBERS         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating accounts ---\n";
+    std::println("--- Creating accounts ---");
     BankAccount* acc1 = new BankAccount("Alice", 1000.0);
     BankAccount* acc2 = new BankAccount("Bob", 2000.0);
     BankAccount* acc3 = new BankAccount("Charlie", 3000.0);
 
-    cout << "\n--- Account count ---\n";
-    cout << "  Total accounts: " << BankAccount::getAccountCount() << "\n";
+    std::println("");
+    std::println("--- Account count ---");
+    std::println("  Total accounts: {}", BankAccount::getAccountCount());
 
-    cout << "\n--- Closing accounts ---\n";
+    std::println("");
+    std::println("--- Closing accounts ---");
     delete acc1;
     delete acc2;
 
-    cout << "\n--- Account count after closing ---\n";
-    cout << "  Remaining accounts: " << BankAccount::getAccountCount() << "\n";
+    std::println("");
+    std::println("--- Account count after closing ---");
+    std::println("  Remaining accounts: {}", BankAccount::getAccountCount());
 
     delete acc3;
-
-    cout << "\n💡 KEY POINTS:\n";
-    cout << "   • Static members declared in header\n";
-    cout << "   • Static members initialized in .cpp\n";
-    cout << "   • Only ONE copy shared by all objects\n";
-    cout << "   • Must be defined outside class\n";
 }
 
 // ============================================
@@ -504,42 +447,34 @@ private:
 
 public:
     Box(T v) : value(v) {
-        cout << "  Box created with value\n";
+        std::println("  Box created with value");
     }
 
     T getValue() const { return value; }
     void setValue(T v) { value = v; }
 
     void display() const {
-        cout << "  Box contains: " << value << "\n";
+        std::println("  Box contains: {}", value);
     }
 };
 
 void demonstrateTemplates() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: TEMPLATES (Special)    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: TEMPLATES (Special)    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating boxes ---\n";
+    std::println("--- Creating boxes ---");
     Box<int> intBox(42);
     Box<string> strBox("Hello");
     Box<double> dblBox(3.14);
 
-    cout << "\n--- Using boxes ---\n";
+    std::println("");
+    std::println("--- Using boxes ---");
     intBox.display();
     strBox.display();
     dblBox.display();
-
-    cout << "\n⚠️  IMPORTANT:\n";
-    cout << "   • Templates CANNOT be separated into .h and .cpp!\n";
-    cout << "   • Full template definition must be in header\n";
-    cout << "   • This is a limitation of how templates work\n";
-    cout << "   • Compiler needs full code to instantiate\n";
-    cout << "\n";
-    cout << "WORKAROUND (if needed):\n";
-    cout << "   • Use .hpp extension\n";
-    cout << "   • Or include .cpp at end of .h file\n";
-    cout << "   • Or explicit template instantiation (advanced)\n";
 }
 
 // ============================================
@@ -557,22 +492,20 @@ public:
 };
 
 // Must be in .cpp file
+// (C++17 alternative that needs no .cpp: static inline const string VERSION = "1.0.0";)
 const string Constants::VERSION = "1.0.0";
 
 void demonstrateConstants() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: CONSTANTS              ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: CONSTANTS              ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using constants ---\n";
-    cout << "  PI: " << Constants::PI << "\n";
-    cout << "  MAX_SIZE: " << Constants::MAX_SIZE << "\n";
-    cout << "  VERSION: " << Constants::VERSION << "\n";
-
-    cout << "\n💡 RULES:\n";
-    cout << "   • static constexpr: Can initialize in header\n";
-    cout << "   • static const (non-integral): Must initialize in .cpp\n";
-    cout << "   • static const (integral): Can initialize in header (C++11)\n";
+    std::println("--- Using constants ---");
+    std::println("  PI: {:g}", Constants::PI);
+    std::println("  MAX_SIZE: {}", Constants::MAX_SIZE);
+    std::println("  VERSION: {}", Constants::VERSION);
 }
 
 // ============================================
@@ -580,53 +513,15 @@ void demonstrateConstants() {
 // ============================================
 
 void demonstrateFileOrganization() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: FILE ORGANIZATION     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: FILE ORGANIZATION     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "PROPER PROJECT STRUCTURE:\n";
-    cout << "\n";
-    cout << "project/\n";
-    cout << "├── include/              (Header files)\n";
-    cout << "│   ├── Person.h\n";
-    cout << "│   ├── Car.h\n";
-    cout << "│   └── Engine.h\n";
-    cout << "├── src/                  (Source files)\n";
-    cout << "│   ├── Person.cpp\n";
-    cout << "│   ├── Car.cpp\n";
-    cout << "│   └── Engine.cpp\n";
-    cout << "└── main.cpp              (Main program)\n";
-
-    cout << "\nCOMPILATION:\n";
-    cout << "\n";
-    cout << "# Compile each .cpp to object file\n";
-    cout << "g++ -c -Iinclude src/Person.cpp -o obj/Person.o\n";
-    cout << "g++ -c -Iinclude src/Car.cpp -o obj/Car.o\n";
-    cout << "g++ -c -Iinclude src/Engine.cpp -o obj/Engine.o\n";
-    cout << "g++ -c -Iinclude main.cpp -o obj/main.o\n";
-    cout << "\n";
-    cout << "# Link all object files\n";
-    cout << "g++ obj/*.o -o program\n";
-
-    cout << "\n✅ BENEFITS:\n";
-    cout << "   • Clear separation of interface and implementation\n";
-    cout << "   • Easy to find files\n";
-    cout << "   • Better modularity\n";
-    cout << "   • Scalable to large projects\n";
-
-    cout << "\nALTERNATIVE STRUCTURE (Single directory):\n";
-    cout << "\n";
-    cout << "project/\n";
-    cout << "├── Person.h\n";
-    cout << "├── Person.cpp\n";
-    cout << "├── Car.h\n";
-    cout << "├── Car.cpp\n";
-    cout << "├── Engine.h\n";
-    cout << "├── Engine.cpp\n";
-    cout << "└── main.cpp\n";
-    cout << "\n";
-    cout << "# Simpler for small projects\n";
-    cout << "g++ *.cpp -o program\n";
+    std::println("  Small project:   Person.h Person.cpp main.cpp    ->  g++ *.cpp -o program");
+    std::println("  Medium project:  include/*.h src/*.cpp main.cpp  ->  g++ -Iinclude src/*.cpp main.cpp -o program");
+    std::println("  (all layouts and the separate compile + link steps: see the README)");
 }
 
 // ============================================
@@ -634,13 +529,13 @@ void demonstrateFileOrganization() {
 // ============================================
 
 int main() {
-    cout << "\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║         HEADER/SOURCE SEPARATION IN C++                  ║\n";
-    cout << "║         Separating Interface from Implementation          ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════════╗");
+    std::println("║                                                           ║");
+    std::println("║         HEADER/SOURCE SEPARATION IN C++                  ║");
+    std::println("║         Separating Interface from Implementation          ║");
+    std::println("║                                                           ║");
+    std::println("╚═══════════════════════════════════════════════════════════╝");
 
     demonstrateSingleFile();
     demonstrateSeparation();
@@ -652,483 +547,6 @@ int main() {
     demonstrateTemplates();
     demonstrateConstants();
     demonstrateFileOrganization();
-
-    // ============================================
-    // COMPREHENSIVE EXPLANATION
-    // ============================================
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║              COMPREHENSIVE EXPLANATION                    ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
-
-    cout << "\n========================================\n";
-    cout << "WHAT IS HEADER/SOURCE SEPARATION?\n";
-    cout << "========================================\n";
-    cout << "Header/Source separation is the practice of:\n";
-    cout << "  • Putting class DECLARATIONS in header files (.h/.hpp)\n";
-    cout << "  • Putting class IMPLEMENTATIONS in source files (.cpp)\n";
-    cout << "\n";
-    cout << "HEADER FILE (.h/.hpp):\n";
-    cout << "  • Class declarations\n";
-    cout << "  • Function prototypes\n";
-    cout << "  • Inline functions (small ones)\n";
-    cout << "  • Constants and enums\n";
-    cout << "  • Template definitions\n";
-    cout << "  • The 'WHAT' (interface)\n";
-    cout << "\n";
-    cout << "SOURCE FILE (.cpp):\n";
-    cout << "  • Function implementations\n";
-    cout << "  • Member function definitions\n";
-    cout << "  • Static member initialization\n";
-    cout << "  • Complex logic\n";
-    cout << "  • The 'HOW' (implementation)\n";
-
-    cout << "\n========================================\n";
-    cout << "WHY SEPARATE?\n";
-    cout << "========================================\n";
-    cout << "1. FASTER COMPILATION:\n";
-    cout << "   • Change .cpp → recompile only that file\n";
-    cout << "   • Change .h → recompile all files that include it\n";
-    cout << "   • Keep headers minimal!\n";
-    cout << "\n";
-    cout << "2. INFORMATION HIDING:\n";
-    cout << "   • Users see interface (header)\n";
-    cout << "   • Implementation details hidden (.cpp)\n";
-    cout << "   • Encapsulation at file level\n";
-    cout << "\n";
-    cout << "3. REUSABILITY:\n";
-    cout << "   • One header, multiple implementations\n";
-    cout << "   • Platform-specific .cpp files\n";
-    cout << "   • Different algorithms, same interface\n";
-    cout << "\n";
-    cout << "4. MODULARITY:\n";
-    cout << "   • Clear module boundaries\n";
-    cout << "   • Easy to create libraries\n";
-    cout << "   • Better code organization\n";
-    cout << "\n";
-    cout << "5. TEAM COLLABORATION:\n";
-    cout << "   • Multiple people work on different .cpp files\n";
-    cout << "   • Less merge conflicts\n";
-    cout << "   • Clearer responsibilities\n";
-
-    cout << "\n========================================\n";
-    cout << "BASIC STRUCTURE\n";
-    cout << "========================================\n";
-    cout << "// Person.h (Header file)\n";
-    cout << "#pragma once\n";
-    cout << "#include <string>\n";
-    cout << "\n";
-    cout << "class Person {\n";
-    cout << "private:\n";
-    cout << "    std::string name;\n";
-    cout << "    int age;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    // Declarations only\n";
-    cout << "    Person(const std::string& n, int a);\n";
-    cout << "    ~Person();\n";
-    cout << "    \n";
-    cout << "    void display() const;\n";
-    cout << "    int getAge() const;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Person.cpp (Source file)\n";
-    cout << "#include \"Person.h\"\n";
-    cout << "#include <iostream>\n";
-    cout << "\n";
-    cout << "// Implementations\n";
-    cout << "Person::Person(const std::string& n, int a) \n";
-    cout << "    : name(n), age(a) { }\n";
-    cout << "\n";
-    cout << "Person::~Person() { }\n";
-    cout << "\n";
-    cout << "void Person::display() const {\n";
-    cout << "    std::cout << name << \", \" << age << std::endl;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "int Person::getAge() const {\n";
-    cout << "    return age;\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "INCLUDE GUARDS vs #pragma once\n";
-    cout << "========================================\n";
-    cout << "TRADITIONAL (Include Guards):\n";
-    cout << "#ifndef PERSON_H\n";
-    cout << "#define PERSON_H\n";
-    cout << "// ... class definition ...\n";
-    cout << "#endif // PERSON_H\n";
-    cout << "\n";
-    cout << "MODERN (#pragma once):\n";
-    cout << "#pragma once\n";
-    cout << "// ... class definition ...\n";
-    cout << "\n";
-    cout << "COMPARISON:\n";
-    cout << "Include Guards:\n";
-    cout << "  ✅ Standard C++\n";
-    cout << "  ✅ Works everywhere\n";
-    cout << "  ❌ More code\n";
-    cout << "  ❌ Easy to make mistakes\n";
-    cout << "\n";
-    cout << "#pragma once:\n";
-    cout << "  ✅ Simpler (1 line!)\n";
-    cout << "  ✅ Faster compilation\n";
-    cout << "  ✅ No naming conflicts\n";
-    cout << "  ✅ Supported by all modern compilers\n";
-    cout << "  ❌ Not in C++ standard (but universally supported)\n";
-    cout << "\n";
-    cout << "RECOMMENDATION: Use #pragma once for new projects!\n";
-
-    cout << "\n========================================\n";
-    cout << "FORWARD DECLARATIONS\n";
-    cout << "========================================\n";
-    cout << "Forward declarations reduce dependencies:\n";
-    cout << "\n";
-    cout << "// Car.h\n";
-    cout << "#pragma once\n";
-    cout << "#include <string>\n";
-    cout << "\n";
-    cout << "class Engine;  // Forward declaration\n";
-    cout << "\n";
-    cout << "class Car {\n";
-    cout << "private:\n";
-    cout << "    Engine* engine;  // Pointer - forward decl OK\n";
-    cout << "    std::string model;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    Car(const std::string& m);\n";
-    cout << "    ~Car();\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Car.cpp\n";
-    cout << "#include \"Car.h\"\n";
-    cout << "#include \"Engine.h\"  // Full definition here\n";
-    cout << "\n";
-    cout << "BENEFITS:\n";
-    cout << "  • Car.h doesn't need Engine.h\n";
-    cout << "  • Reduces compilation dependencies\n";
-    cout << "  • Faster builds\n";
-    cout << "  • Breaks circular dependencies\n";
-    cout << "\n";
-    cout << "WHEN TO USE:\n";
-    cout << "  ✅ Pointers to class\n";
-    cout << "  ✅ References to class\n";
-    cout << "  ❌ Class members by value (need full definition)\n";
-    cout << "  ❌ Inheritance (need full definition)\n";
-
-    cout << "\n========================================\n";
-    cout << "INLINE FUNCTIONS\n";
-    cout << "========================================\n";
-    cout << "Small functions can be inline in header:\n";
-    cout << "\n";
-    cout << "class Person {\n";
-    cout << "private:\n";
-    cout << "    int age;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    // Simple getter - inline in header\n";
-    cout << "    int getAge() const { return age; }\n";
-    cout << "    \n";
-    cout << "    // Simple setter - inline in header\n";
-    cout << "    void setAge(int a) { age = a; }\n";
-    cout << "    \n";
-    cout << "    // Complex function - declare only\n";
-    cout << "    void complexCalculation();\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "RULE OF THUMB:\n";
-    cout << "  ≤ 3 lines → Can inline in header\n";
-    cout << "  > 3 lines → Put in .cpp file\n";
-    cout << "\n";
-    cout << "BENEFITS OF INLINE:\n";
-    cout << "  • Faster execution (no function call overhead)\n";
-    cout << "  • Simple getters/setters\n";
-    cout << "\n";
-    cout << "DRAWBACKS:\n";
-    cout << "  • Code in header → slower compilation\n";
-    cout << "  • Changes require recompilation\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC MEMBERS\n";
-    cout << "========================================\n";
-    cout << "Static members need special handling:\n";
-    cout << "\n";
-    cout << "// BankAccount.h\n";
-    cout << "class BankAccount {\n";
-    cout << "private:\n";
-    cout << "    static int accountCount;  // Declaration\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    BankAccount();\n";
-    cout << "    static int getCount();\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// BankAccount.cpp\n";
-    cout << "#include \"BankAccount.h\"\n";
-    cout << "\n";
-    cout << "// Definition - MUST be in .cpp!\n";
-    cout << "int BankAccount::accountCount = 0;\n";
-    cout << "\n";
-    cout << "BankAccount::BankAccount() {\n";
-    cout << "    accountCount++;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "int BankAccount::getCount() {\n";
-    cout << "    return accountCount;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "EXCEPTION (C++17):\n";
-    cout << "static inline int accountCount = 0;  // Can be in header\n";
-
-    cout << "\n========================================\n";
-    cout << "TEMPLATES (SPECIAL CASE)\n";
-    cout << "========================================\n";
-    cout << "Templates MUST be fully defined in headers:\n";
-    cout << "\n";
-    cout << "// Box.h\n";
-    cout << "#pragma once\n";
-    cout << "\n";
-    cout << "template<typename T>\n";
-    cout << "class Box {\n";
-    cout << "private:\n";
-    cout << "    T value;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    Box(T v) : value(v) { }  // Must be here\n";
-    cout << "    \n";
-    cout << "    T getValue() const {     // Must be here\n";
-    cout << "        return value;\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "WHY?\n";
-    cout << "  • Compiler needs full code to instantiate\n";
-    cout << "  • Templates are NOT compiled until used\n";
-    cout << "  • Each instantiation needs the full code\n";
-    cout << "\n";
-    cout << "WORKAROUNDS (if separation needed):\n";
-    cout << "  1. Include .cpp at end of .h\n";
-    cout << "  2. Use .hpp extension\n";
-    cout << "  3. Explicit template instantiation (advanced)\n";
-
-    cout << "\n========================================\n";
-    cout << "COMPILATION PROCESS\n";
-    cout << "========================================\n";
-    cout << "Step-by-step:\n";
-    cout << "\n";
-    cout << "1. PREPROCESSING:\n";
-    cout << "   • #include copies header contents\n";
-    cout << "   • Macros expanded\n";
-    cout << "   • Conditional compilation\n";
-    cout << "\n";
-    cout << "2. COMPILATION:\n";
-    cout << "   Person.cpp → Person.o (object file)\n";
-    cout << "   Car.cpp → Car.o\n";
-    cout << "   main.cpp → main.o\n";
-    cout << "\n";
-    cout << "3. LINKING:\n";
-    cout << "   Person.o + Car.o + main.o → program (executable)\n";
-    cout << "\n";
-    cout << "COMMANDS:\n";
-    cout << "# Compile to object files\n";
-    cout << "g++ -c Person.cpp -o Person.o\n";
-    cout << "g++ -c Car.cpp -o Car.o\n";
-    cout << "g++ -c main.cpp -o main.o\n";
-    cout << "\n";
-    cout << "# Link object files\n";
-    cout << "g++ Person.o Car.o main.o -o program\n";
-    cout << "\n";
-    cout << "# Or all at once\n";
-    cout << "g++ Person.cpp Car.cpp main.cpp -o program\n";
-
-    cout << "\n========================================\n";
-    cout << "FILE ORGANIZATION PATTERNS\n";
-    cout << "========================================\n";
-    cout << "PATTERN 1: Small Projects\n";
-    cout << "project/\n";
-    cout << "├── MyClass.h\n";
-    cout << "├── MyClass.cpp\n";
-    cout << "└── main.cpp\n";
-    cout << "\n";
-    cout << "PATTERN 2: Medium Projects\n";
-    cout << "project/\n";
-    cout << "├── include/\n";
-    cout << "│   └── MyClass.h\n";
-    cout << "├── src/\n";
-    cout << "│   └── MyClass.cpp\n";
-    cout << "└── main.cpp\n";
-    cout << "\n";
-    cout << "PATTERN 3: Large Projects\n";
-    cout << "project/\n";
-    cout << "├── include/\n";
-    cout << "│   └── myproject/\n";
-    cout << "│       ├── MyClass.h\n";
-    cout << "│       └── Utils.h\n";
-    cout << "├── src/\n";
-    cout << "│   ├── MyClass.cpp\n";
-    cout << "│   └── Utils.cpp\n";
-    cout << "├── tests/\n";
-    cout << "│   └── test_MyClass.cpp\n";
-    cout << "└── main.cpp\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use #pragma once (simpler than guards)\n";
-    cout << "  • Forward declare when possible\n";
-    cout << "  • Keep headers minimal\n";
-    cout << "  • Include what you use (IWYU)\n";
-    cout << "  • Put complex code in .cpp\n";
-    cout << "  • Organize by module/feature\n";
-    cout << "  • Use consistent naming\n";
-    cout << "  • Document headers well\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Put implementations in headers (except templates)\n";
-    cout << "  • Use 'using namespace' in headers\n";
-    cout << "  • Forget include guards/#pragma once\n";
-    cout << "  • Include unnecessary headers\n";
-    cout << "  • Mix declarations and implementations\n";
-    cout << "  • Forget to initialize static members\n";
-    cout << "  • Put large functions inline\n";
-    cout << "  • Create circular dependencies\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON MISTAKES\n";
-    cout << "========================================\n";
-    cout << "❌ Mistake 1: Implementation in Header\n";
-    cout << "// Bad.h\n";
-    cout << "class Bad {\n";
-    cout << "    void complexFunction() {\n";
-    cout << "        // 50 lines of code here!\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Fix: Move to .cpp!\n";
-    cout << "\n";
-    cout << "❌ Mistake 2: Forgetting Include Guard\n";
-    cout << "// Person.h (missing guard)\n";
-    cout << "class Person { };\n";
-    cout << "// Results in multiple definition errors!\n";
-    cout << "\n";
-    cout << "Fix: Add #pragma once\n";
-    cout << "\n";
-    cout << "❌ Mistake 3: Not Initializing Static Members\n";
-    cout << "// Person.h\n";
-    cout << "class Person {\n";
-    cout << "    static int count;\n";
-    cout << "};\n";
-    cout << "// Forgot: int Person::count = 0; in .cpp\n";
-    cout << "\n";
-    cout << "❌ Mistake 4: Circular Dependencies\n";
-    cout << "// A.h includes B.h\n";
-    cout << "// B.h includes A.h\n";
-    cout << "// Compilation fails!\n";
-    cout << "\n";
-    cout << "Fix: Use forward declarations\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE WHAT\n";
-    cout << "========================================\n";
-    cout << "IN HEADER (.h/.hpp):\n";
-    cout << "  ✅ Class declarations\n";
-    cout << "  ✅ Function prototypes\n";
-    cout << "  ✅ Small inline functions (≤3 lines)\n";
-    cout << "  ✅ Template definitions (must!)\n";
-    cout << "  ✅ constexpr constants\n";
-    cout << "  ✅ Enums\n";
-    cout << "  ✅ Forward declarations\n";
-    cout << "\n";
-    cout << "IN SOURCE (.cpp):\n";
-    cout << "  ✅ Function implementations\n";
-    cout << "  ✅ Member function definitions\n";
-    cout << "  ✅ Static member initialization\n";
-    cout << "  ✅ Complex algorithms\n";
-    cout << "  ✅ Private helper functions\n";
-    cout << "  ✅ File-local utilities\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// MyClass.h\n";
-    cout << "#pragma once\n";
-    cout << "#include <string>\n";
-    cout << "\n";
-    cout << "class MyClass {\n";
-    cout << "private:\n";
-    cout << "    int value;\n";
-    cout << "    static int count;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    MyClass(int v);\n";
-    cout << "    ~MyClass();\n";
-    cout << "    \n";
-    cout << "    // Inline (simple)\n";
-    cout << "    int getValue() const { return value; }\n";
-    cout << "    \n";
-    cout << "    // In .cpp (complex)\n";
-    cout << "    void complexOperation();\n";
-    cout << "    \n";
-    cout << "    static int getCount();\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// MyClass.cpp\n";
-    cout << "#include \"MyClass.h\"\n";
-    cout << "\n";
-    cout << "// Static member initialization\n";
-    cout << "int MyClass::count = 0;\n";
-    cout << "\n";
-    cout << "MyClass::MyClass(int v) : value(v) {\n";
-    cout << "    count++;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "MyClass::~MyClass() {\n";
-    cout << "    count--;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "void MyClass::complexOperation() {\n";
-    cout << "    // Implementation here\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "int MyClass::getCount() {\n";
-    cout << "    return count;\n";
-    cout << "}\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Separate interface (header) from implementation (source)\n";
-    cout << "2. Use #pragma once (modern and simpler)\n";
-    cout << "3. Forward declare to reduce dependencies\n";
-    cout << "4. Keep headers minimal for faster compilation\n";
-    cout << "5. Inline only simple functions (≤3 lines)\n";
-    cout << "6. Initialize static members in .cpp\n";
-    cout << "7. Templates must be in headers\n";
-    cout << "8. Never 'using namespace' in headers\n";
-    cout << "9. Include what you use (IWYU principle)\n";
-    cout << "10. Organize by feature/module for clarity\n";
-
-    cout << "\n========================================\n";
-    cout << "GOLDEN RULES\n";
-    cout << "========================================\n";
-    cout << "⚠️  RULE 1: Always use include guards or #pragma once\n";
-    cout << "   Without them, you'll get multiple definition errors!\n";
-    cout << "\n";
-    cout << "⚠️  RULE 2: Keep implementation in .cpp files\n";
-    cout << "   Headers should be declarations, not definitions!\n";
-    cout << "\n";
-    cout << "⚠️  RULE 3: Forward declare whenever possible\n";
-    cout << "   Reduces compilation time and dependencies!\n";
-    cout << "\n";
-    cout << "⚠️  RULE 4: Templates are the exception\n";
-    cout << "   They MUST be fully defined in headers!\n";
-    cout << "\n";
-    cout << "⚠️  RULE 5: Initialize static members in .cpp\n";
-    cout << "   (Except static constexpr in C++11+)\n";
 
     return 0;
 }

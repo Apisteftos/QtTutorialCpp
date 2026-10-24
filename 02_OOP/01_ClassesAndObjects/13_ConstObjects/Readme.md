@@ -50,15 +50,16 @@ const Config settings("app.conf");
 
 **2. Express Intent**
 ```cpp
-const double PI = 3.14159;  // "This never changes"
+const double PI = 3.14159;  // "This never changes" (for compile-time constants prefer constexpr)
 ```
 
 **3. Thread Safety**
 ```cpp
 const SharedData data(42);
-// Multiple threads can safely read simultaneously
-// No race conditions possible!
+// Multiple threads can read it at the same time:
+// nothing can write to it, so there is no data race
 ```
+**Careful:** this holds for an object that is *defined* `const` and has no `mutable` members. A `const&` to a **non-const** object gives no such guarantee, because another thread can still change the original. Tested with ThreadSanitizer: two threads reading a really const object → no report; one thread calling `set()` on the original while another reads it through a `const S&` → *data race* reported.
 
 **4. Enable Const References**
 ```cpp
@@ -204,39 +205,56 @@ process(bigString);  // No copy, can't modify
 **Golden Rule:**
 > Use `const Type&` for ALL function parameters unless you need to modify or it's cheap to copy (like int, char, bool)
 
+**Things worth knowing (all tested):**
+- A non-const reference cannot take a temporary: *cannot bind non-const lvalue reference of type 'T&' to an rvalue of type 'T'*. `const T&` can.
+- `const T& r = T("x");` keeps the temporary alive until `r` goes out of scope (the destructor runs at the end of the block, not at the end of the statement).
+- `const&` is a read-only **view**, not immutability: `int x = 1; const int& r = x; x = 7;` makes `r` read `7`.
+- If the function needs its own copy anyway, taking the parameter by value (and moving) is the usual alternative (from memory, Core Guidelines F.16/F.18).
+
 ---
 
 ## 📋 Examples in This Folder
 
 ### Example 1: Basic Const Objects
 Introduction to const objects and their restrictions.
+- A normal `Point` can be read and changed; a `const Point` can only be read through const functions
 
 ### Example 2: Const Object Initialization
 Different ways to initialize const objects.
+- `()`, `= Point(...)` and `{}` all work; with C++17 the `=` form builds the object in place without a copy
+- A const object can't be left uninitialized and can't be modified afterwards
 
 ### Example 3: Const References
 The most common usage pattern in C++.
+- `printBook(const Book&)` accepts a variable and a temporary; the by-value and non-const-reference versions are there for comparison only
 
 ### Example 4: Const Objects in Containers
 Working with const vectors and collections.
+- A `const vector<Color>`: no `push_back`, elements are const; loop with `const Color&`
 
 ### Example 5: Const Pointers
 Four variations of const with pointers.
+- Pointer to const, const pointer, const pointer to const, and what each allows
 
 ### Example 6: Const Objects and Constructors
 How constructors work with const objects.
+- A `const` data member (`maxConnections`) must be set in the initializer list; this is different from a const object
 
 ### Example 7: Const Objects and Lifetime
 Understanding scope and destruction.
+- Constructors and destructors run as for any object; the temporary `Timer("TempTimer")` is destroyed at the end of the statement
 
 ### Example 8: Const Objects in Functions
 Parameters, returns, and local objects.
+- `const Rectangle&` parameter, a `const` local object, and a function that returns by value (not `const Rectangle`, see Notes)
 
 ### Example 9: Const Objects and Thread Safety
 How const enables safe concurrent access.
+- Two `std::thread`s read one `const SharedData`; each stores what it read. (This demo is new and replaces the printed explanation.)
 
 ### Example 10: Real-World Example
 Immutable Date class pattern.
+- `nextDay()` returns a NEW `ImmutableDate`; the original stays unchanged
 
 ---
 
@@ -253,11 +271,11 @@ Immutable Date class pattern.
 - ❌ Be modified after initialization
 - ❌ Call non-const member functions
 - ❌ Have members changed
-- ❌ Be default-initialized (usually)
+- ❌ Be default-initialized, unless the class has a user-provided default constructor (or default member initializers)
 
 ```cpp
 const Point p(10, 20);  // ✅ Must initialize
-const Point p;          // ❌ Error - not initialized
+const Point p;          // ❌ Error - Point has no default constructor
 p.getX();              // ✅ OK - const function
 p.setX(30);            // ❌ Error - non-const function
 ```
@@ -373,6 +391,16 @@ const ImmutablePoint p2 = p1.move(5, 5);
 - Functional programming style
 - No side effects
 
+**Caveat (tested):** a class with `const` data members cannot be assigned.
+```cpp
+struct D { const int y; D(int v) : y(v) {} };
+D a(1), b(2);
+a = b;                          // ❌ use of deleted function 'D& D::operator=(const D&)'
+std::vector<D> v;               // push_back works, but v.erase(...) fails:
+                                // use of deleted function 'D& D::operator=(D&&)'
+```
+Moving also degrades to copying for const members. The C++ Core Guidelines (C.12) advise against const data members for this reason (from memory, not checked here). A simpler way to get an immutable class: keep the members private and non-const, offer no setters, and make the operations const functions that return new objects. Then `const ImmutableDate d(...)` gives you the constness.
+
 ---
 
 ## ⚠️ Common Mistakes
@@ -381,8 +409,9 @@ const ImmutablePoint p2 = p1.move(5, 5);
 
 **Bad:**
 ```cpp
-const Point p;  // ❌ Error - const must be initialized
+const Point p;  // ❌ Error
 ```
+GCC (tested): *no matching function for call to 'P::P()'* when the class has constructors but no default one; *uninitialized 'const x'* for a class with plain `int` members and no constructor. `const X x;` compiles if the class has a user-provided default constructor or every member has a default initializer.
 
 **Fix:**
 ```cpp
@@ -429,8 +458,9 @@ void process(const string& s) {  // ✅ No copy
 ```cpp
 const Point p(10, 20);
 Point& p2 = const_cast<Point&>(p);  // ❌ Dangerous!
-p2.setX(30);  // Undefined behavior!
+p2.setX(30);  // Undefined behavior! p was DEFINED const
 ```
+(`const_cast` on an object that was defined non-const is legal; see 19_ConstMemberFunctions. The undefined behaviour is about modifying an object that is itself const.)
 
 **Fix:**
 ```cpp
@@ -480,8 +510,9 @@ Given code with const errors, identify and fix them.
 
 ### Compile:
 ```bash
-g++ -std=c++17 const_objects.cpp -o const_objects
+g++ -std=c++23 -Wall -Wextra -pthread main.cpp -o const_objects
 ```
+(`main.cpp` uses `std::println` from `<print>`, so it needs GCC 14+ or another compiler with C++23 `<print>`. `-pthread` is for Example 9; newer glibc versions don't need it.)
 
 ### Run:
 ```bash
@@ -588,11 +619,11 @@ PASS BY VALUE                    PASS BY CONST REF
 ✅ **Can only call** const member functions
 ✅ **Const references** are the most common usage
 ✅ **No copying** with const& parameters
-✅ **Thread-safe** for reading
+✅ **Safe to read** from several threads (for a really const object without `mutable` members)
 ✅ **Four types** of const pointers
 ✅ **Compile-time safety** (no runtime cost)
 ✅ **Express intent** clearly
-✅ **Enable optimizations** by compiler
+✅ **Not a speed feature**: const is about correctness
 
 ### The Complete Pattern:
 
@@ -629,9 +660,11 @@ process(p1);                // Regular object
 process(Point(30, 40));     // Temporary
 
 // Const pointers
-const Point* ptr1 = &p1;    // Pointer to const
-Point* const ptr2 = &p1;    // Const pointer
-const Point* const ptr3;    // Both const
+Point q(1, 2);                 // a NON-const object
+const Point* ptr1 = &p1;       // Pointer to const (may point to a const object)
+Point* const ptr2 = &q;        // Const pointer (needs a non-const object)
+const Point* const ptr3 = &p1; // Both const (must be initialised)
+// Point* ptr4 = &p1;          // ❌ invalid conversion from 'const Point*' to 'Point*' (tested)
 
 // Const in containers
 const vector<Point> points = {
@@ -757,9 +790,9 @@ void processImage(const Image& img) {
 
 ## 📖 Further Reading
 
-- [cppreference.com - const objects](https://en.cppreference.com/w/cpp/language/cv)
+- [cppreference.com - cv (const and volatile) type qualifiers](https://en.cppreference.com/cpp/language/cv)
 - "Effective C++" by Scott Meyers - Item 3
-- "C++ Core Guidelines" - Con.1 to Con.5
+- [C++ Core Guidelines - Con.1 to Con.5](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#con-constants-and-immutability)
 - [Const Correctness - Wikipedia](https://en.wikipedia.org/wiki/Const_(computer_programming))
 
 ---
@@ -771,7 +804,7 @@ void processImage(const Image& img) {
 3. **Only call const** member functions
 4. **Const references** are THE most common usage
 5. **No copying** with const& (efficient)
-6. **Thread-safe** for reading
+6. **Safe to read** from several threads (really const object, nothing `mutable`)
 7. **Four types** of const pointers
 8. **Compile-time** enforcement (no cost)
 9. **Immutability** pattern for functional style
@@ -792,7 +825,7 @@ void processImage(const Image& img) {
    Can't exist uninitialized!
    
    const Point p(10, 20);  // ✅ Initialized
-   const Point p;          // ❌ ERROR
+   const Point p;          // ❌ ERROR (no default constructor)
 
 ⚠️  RULE 3: Make objects const when they won't change
    Express intent, prevent bugs!
@@ -800,7 +833,7 @@ void processImage(const Image& img) {
    const Config settings("app.conf");  // ✅ Won't change
    Config settings("app.conf");        // ❌ Might change?
 
-⚠️  RULE 4: All member functions should be const
+⚠️  RULE 4: All READ-ONLY member functions should be const
    For const objects to be useful!
    
    class Point {
@@ -829,3 +862,22 @@ void processImage(const Image& img) {
 *Difficulty: Intermediate*
 *Prerequisites: Const member functions*
 *CRITICAL for Const Correctness*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+The long lecture output at the end of `main()` (the "COMPREHENSIVE EXPLANATION") and the printed texts inside the examples repeated this README, so they are gone from `main.cpp`. What they said that is not already above:
+
+- **"Better optimization / compiler can optimize better / avoid defensive copies"** was dropped. A `const&` or `const*` says nothing about whether the object changes through another path (see the `const int& r` test above). Extra treatment is possible only for objects *defined* const (for example placing them in read-only memory, from memory). Const is about correctness.
+- **"Return: const Type (rare, prevents modification)"** was wrong advice for class types. Tested with a small class that counts copies and moves, pushed into a `vector`: `const R make()` gave **1 copy + 1 move**, plain `R make()` gave **0 copies + 1 move**, because a const temporary cannot be moved from. For built-in types GCC warns *type qualifiers ignored on function return type* (`-Wignored-qualifiers`, tested). So `createSquare` in `main.cpp` now returns `Rectangle` by value. The *caller* can still write `const Rectangle square = createSquare(10);`, which is the useful part.
+- **"Have const constructor (implicitly)"** (old lecture text) made no sense: constructors are never const. A const object is constructed by an ordinary constructor, and it becomes const once the constructor has finished.
+- **"Const members vs const objects"**: a const *member* makes one field unchangeable (and the class non-assignable, see the caveat above); a const *object* makes the whole object read-only, so only const member functions can be called.
+- **Example 7 comment** said "Temporary const object". `Timer("TempTimer")` is a temporary of a non-const type; calling the const `tick()` on it is just allowed.
+- **Where the old text said** "Use const& for ALL function parameters": the usual wording is "for parameters that are expensive to copy and only read". Cheap types (`int`, `double`, pointers) go by value.
+- **Code changes in `main.cpp`:**
+  - Example 9 now starts two threads that read one `const SharedData`. It is clean under ThreadSanitizer. A writer plus a `const&` reader on a non-const object is not (see above).
+  - `ImmutableDate::daysInMonth()` returns `0` for an invalid month instead of reading outside its array.
+  - The unused `<memory>` include is removed and `<thread>` is added.
+  - `createSquare` no longer returns `const Rectangle`.
+- **Output formatting:** `GPA`, distances and areas are printed with `{:g}` to match the original `cout` output; the date uses `{:02}`.

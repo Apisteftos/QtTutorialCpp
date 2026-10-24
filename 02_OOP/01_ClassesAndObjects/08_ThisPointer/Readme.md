@@ -32,8 +32,7 @@ This is a fundamental C++ concept that enables many important patterns and techn
 **`this`** is a hidden pointer that exists in every non-static member function and points to the object that called the function.
 
 **Characteristics:**
-- **Type:** `ClassName* const` (constant pointer to object)
-- **In const functions:** `const ClassName* const` (constant pointer to constant object)
+- **Type:** `ClassName*` (in const functions: `const ClassName*`). It is a *prvalue* (a temporary pointer value), so you cannot assign to it or take its address. In practice it behaves like a `ClassName* const`, which is how it is usually described.
 - **Automatically available** - compiler passes it
 - **Not available in static functions**
 
@@ -84,7 +83,7 @@ void MyClass::setX(int value) {
     x = value;
 }
 
-// What compiler sees:
+// What compiler sees (pseudo-code: you cannot really declare a parameter named 'this'):
 void MyClass::setX(MyClass* const this, int value) {
     this->x = value;
 }
@@ -101,6 +100,8 @@ MyClass::setX(&obj, 10);
 ## 🔍 Common Uses of `this`
 
 ### 1. Resolve Name Conflicts
+
+(`this->` is one way to do it. Better still, avoid the conflict: name members `m_value` or `value_`. GCC's `-Wshadow` flags parameters that hide a member.)
 
 **The Problem:**
 ```cpp
@@ -123,6 +124,9 @@ public:
     }
 };
 ```
+Tested: with the `Bad` version, `c.setValue(1)` leaves `value` unchanged, and GCC gave **no warning** with `-Wall -Wextra` (only `-Wshadow` mentions the shadowing).
+
+In a constructor's member initializer list no `this->` is needed, even with identical names: `Point(int x, int y) : x(x), y(y) { }`. The name *outside* the parentheses is always the member, the name *inside* is the parameter (Example 4 does this).
 
 ### 2. Method Chaining (Fluent Interface)
 ```cpp
@@ -150,7 +154,7 @@ b.setData("test").setCount(10).setData("done");
 **Key Points:**
 - Return `*this` (not `this`)
 - Return by reference (`Builder&`)
-- Enables fluent, jQuery-style APIs
+- Enables fluent APIs (the style jQuery made popular in JavaScript)
 
 ### 3. Self-Assignment Check
 ```cpp
@@ -228,40 +232,56 @@ public:
     }
 };
 ```
+⚠️ Be careful what you do with a `this` that you hand out. If the receiver stores it, the object must outlive the receiver (the same dangling-pointer risk as any raw pointer), and registering `this` inside a constructor exposes a half-built object. If the object is owned by a `shared_ptr`, use `std::enable_shared_from_this` and `shared_from_this()` instead of passing `this`.
 
 ---
 
 ## 📋 Examples in This Folder
 
 ### Example 1: Basic `this` Pointer
-Understanding what `this` is and how it works.
+`this` inside the constructor and `display()`, and `getPointer()` returning `this`. `showAddress()` prints the address as `this` and as `&*this` (dereference, then take the address): both give the same value.
 
 ### Example 2: Resolving Name Conflicts
-Using `this->` when parameter names match member names.
+Using `this->` when parameter names match member names (`setWidth(double width)`).
 
 ### Example 3: Method Chaining
-Building fluent interfaces with `return *this`.
+`Builder` with `return *this`, used chained and unchained.
 
 ### Example 4: Comparing Objects
-Using `this` to compare current object with another.
+`equals()`, `isCloserToOrigin()` and `distanceTo()` with `this` and `other`.
 
 ### Example 5: Copy Constructor and Assignment
-Critical use of `this` for self-assignment checks.
+Copy assignment with the `this == &other` check. `d1 = d1` prints "Self-assignment detected! Skipping."
 
 ### Example 6: Calling Other Member Functions
-How `this` enables calling other methods.
+`this->logTransaction(...)` is the same as `logTransaction(...)`.
 
 ### Example 7: `this` with Const Members
-How `this` pointer type changes with const.
+`static_assert`s check the type of `this` (`ConstDemo*` and `const ConstDemo*`), and `getValue() const` still increments the `mutable` counter: after two calls `accessCount` is 2.
 
 ### Example 8: Static vs Non-Static
-Why static functions don't have `this`.
+A non-static function has `this`; a static function does not (the lines that would not compile are commented out).
 
 ### Example 9: Linked List Node
-Real-world recursive use of `this`.
+Recursive `this->next->contains(...)`. The first `n1.setNext(&n2).setNext(&n3)` line shows a chaining trap: both calls act on `n1`, so `n1.next` ends up as `n3`. The next two lines link the list correctly.
 
 ### Example 10: Builder Pattern
-Complete HTTP request builder using `this`.
+An HTTP request built with chained calls ending in `execute()`.
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+### `this`, `*this` and `&*this`
+| Expression | Meaning | Type in a non-const member function |
+|-----------|---------|-------------------------------------|
+| `this` | Pointer to the current object | `ClassName*` |
+| `*this` | The current object (lvalue) | `ClassName&` when returned |
+| `&*this` | The address again (same value as `this`) | `ClassName*` |
+| `&this` | ❌ does not compile, `this` is not an lvalue | |
+
+### Static functions
+Static functions have no `this`, so they cannot use instance members directly. They can use static members (`staticVar`) and instance members of objects they are given as parameters.
 
 ---
 
@@ -275,15 +295,13 @@ class MyClass {
 public:
     // Non-const member function
     void nonConstFunc() {
-        // 'this' has type: MyClass* const
-        // (constant pointer to non-constant object)
+        // 'this' has type: MyClass*
         this->value = 10;  // ✅ Can modify
     }
     
     // Const member function
     void constFunc() const {
-        // 'this' has type: const MyClass* const
-        // (constant pointer to constant object)
+        // 'this' has type: const MyClass*
         // this->value = 10;  // ❌ Error! Cannot modify
         int x = this->value;  // ✅ Can read
     }
@@ -291,9 +309,11 @@ public:
 ```
 
 **Summary:**
-- **Non-const function:** `ClassName* const` - can modify members
-- **Const function:** `const ClassName* const` - cannot modify members
-- **Pointer itself always const** - cannot point to different object
+- **Non-const function:** `ClassName*` - can modify members
+- **Const function:** `const ClassName*` - cannot modify members (except `mutable` ones)
+- **You cannot change what `this` points to** (`this = &other;` does not compile). That is why it is often written as `ClassName* const`.
+
+Checked in Example 7 with `static_assert(is_same_v<decltype(this), ConstDemo*>)` (and `const ConstDemo*` in the const function), and `&this` fails with `lvalue required as unary '&' operand`.
 
 ### `this` in Different Contexts
 
@@ -334,7 +354,7 @@ class MyClass {
     
 public:
     void constFunc() const {
-        // 'this' is const ClassName* const
+        // 'this' is const ClassName*
         // this->data = 10;     // ❌ Cannot modify
         int x = this->data;     // ✅ Can read
         this->cache = 10;       // ✅ Mutable can be modified
@@ -448,16 +468,18 @@ MyClass& operator=(const MyClass& other) {
 - `&other` = address of right operand (parameter)
 - If equal, they're the same object
 
+Note that the check only protects against self-assignment. If `new int[other.size]` throws *after* `delete[] data`, the object is left with a dangling pointer. The **copy-and-swap idiom** (copy `other` first, then swap) is safe in both cases and needs no check. (Example 5 uses the plain check on purpose, to show `this == &other`.)
+
 ---
 
 ## 🔧 When to Use vs Not Use `this`
 
-### When You MUST Use `this`
+### When You Need `this`
 
-1. **Name conflict:**
+1. **Name conflict inside a function body** (unless you rename the parameter):
 ```cpp
 void setX(int x) {
-    this->x = x;  // MUST use this->
+    this->x = x;  // needs this-> (or rename the parameter)
 }
 ```
 
@@ -508,13 +530,12 @@ class Bad {
 public:
     Bad setValue(int v) {
         value = v;
-        return this;  // ❌ Wrong! Returns pointer
+        return this;  // ❌ 'this' is a Bad*, but the function returns a Bad
     }
 };
-
-// Won't compile:
-// Bad().setValue(10).setValue(20);
+// error: could not convert 'this' from 'Bad*' to 'Bad'   (tested)
 ```
+If you change the return type to `Bad*` it compiles, but chaining then needs `->` and is awkward (`p.setValue(1).setValue(2)` fails with "maybe you meant to use '->'", tested).
 
 **Fix:**
 ```cpp
@@ -531,24 +552,24 @@ public:
 ```cpp
 class Bad {
 public:
-    Bad setValue(int v) {  // ❌ Returns copy
-        value = v;
-        return *this;
-    }
+    Bad setA(int v) { a = v; return *this; }  // ❌ returns a COPY
+    Bad setB(int v) { b = v; return *this; }
 };
 
-// Compiles but inefficient (copies)
+Bad x;
+x.setA(1).setB(2);   // setB is applied to the temporary COPY, not to x!
+// x.a == 1, x.b == 0   (tested)
 ```
+It compiles, it is slower, and worse, **the later calls silently modify a temporary**, so the original object loses them.
 
 **Fix:**
 ```cpp
 class Good {
 public:
-    Good& setValue(int v) {  // ✅ Returns reference
-        value = v;
-        return *this;
-    }
+    Good& setA(int v) { a = v; return *this; }  // ✅ Returns reference
+    Good& setB(int v) { b = v; return *this; }
 };
+// x.setA(1).setB(2) -> x.a == 1, x.b == 2   (tested)
 ```
 
 ### ❌ Mistake 3: Missing Self-Assignment Check
@@ -602,7 +623,8 @@ class Good {
     
 public:
     static void func() {
-        count = 10;  // ✅ Can only access static members
+        count = 10;  // ✅ Static members can be used directly
+                     // (instance members only through an object you are given)
     }
 };
 ```
@@ -663,8 +685,9 @@ Create a `Node` class with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 this_pointer.cpp -o this_pointer
+g++ -std=c++23 -Wall -Wextra main.cpp -o this_pointer
 ```
+`main.cpp` uses `std::println`, so it needs GCC 14 or newer (or another compiler with `<print>`). The addresses in the output are different on every run.
 
 ### Run:
 ```bash
@@ -738,7 +761,7 @@ Each method operates on the same object!
 ### Coming Next:
 - **11_StaticMembers** - Static members (no `this`)
 - **13_Inheritance** - `this` in derived classes
-- **14_Polymorphism** - Virtual functions and `this`
+- **16_Polymorphism** - Virtual functions and `this`
 
 ### Related Concepts:
 - **References** - `*this` returns reference
@@ -752,7 +775,7 @@ Each method operates on the same object!
 ### What We Learned:
 
 ✅ **`this`** = pointer to current object
-✅ **Type**: `ClassName* const` (or `const ClassName* const`)
+✅ **Type**: `ClassName*` (or `const ClassName*` in const functions), cannot be reassigned
 ✅ **Available** in non-static member functions only
 ✅ **Use for** name conflicts, chaining, self-check
 ✅ **Return `*this`** for method chaining (by reference!)
@@ -828,10 +851,10 @@ MyClass& func() {
 if (this == &other)  // Compare addresses
 
 // TYPE IN NON-CONST FUNCTION
-MyClass* const
+MyClass*          // (behaves like MyClass* const: cannot be reassigned)
 
 // TYPE IN CONST FUNCTION
-const MyClass* const
+const MyClass*
 
 // USAGE
 obj.func()
@@ -907,7 +930,7 @@ Config()
 
 ## 📖 Further Reading
 
-- [cppreference.com - this pointer](https://en.cppreference.com/w/cpp/language/this)
+- [cppreference.com - The this pointer](https://en.cppreference.com/cpp/language/this)
 - "Effective C++" by Scott Meyers - Item 11: Handle assignment to self
 - "C++ Primer" by Lippman - Section on this pointer
 - [C++ Core Guidelines - this pointer](https://isocpp.github.io/CppCoreGuidelines/)
@@ -917,7 +940,7 @@ Config()
 ## 🎯 Key Takeaways
 
 1. `this` is a **pointer to the current object**
-2. Type: **`ClassName* const`** (or `const` version)
+2. Type: **`ClassName*`** (`const ClassName*` in const functions), cannot be reassigned
 3. **Automatically available** in non-static functions
 4. Use **`this->`** to resolve name conflicts
 5. Return **`*this`** for method chaining (by reference!)

@@ -177,19 +177,24 @@ rect.area();       // Calculate area
 rect.perimeter();  // Calculate perimeter
 rect.isSquare();   // Check if square
 ```
+- `display()` calls the other member functions (`area()`, `perimeter()`) of the same object
 
 ### Example 2: Const Member Functions
 Read-only functions that don't modify the object.
 ```cpp
-double bal = account.getBalance() const;  // ✅ Read-only
-account.deposit(100);                     // Modifies object
+double bal = account.getBalance();  // ✅ const function: read-only
+account.deposit(100);               // non-const function: modifies the object
 ```
+- A `const BankAccount` object can only call the const functions (`getBalance()`); `deposit()` on it would not compile
+- A const function may call other const functions (`displayInfo()` calls two getters)
 
 ### Example 3: Definition Styles
 Three ways to define member functions:
 1. Inside class (inline)
 2. Outside class (ClassName::functionName)
 3. Explicit inline keyword
+
+- All three behave the same; see "Inline member functions" below
 
 ### Example 4: Function Overloading
 Multiple functions with same name, different parameters.
@@ -198,6 +203,8 @@ calc.add(5, 3);          // Calls int version
 calc.add(5.5, 3.2);      // Calls double version
 calc.add(1, 2, 3);       // Calls 3-parameter version
 ```
+- Four overloads: `(int,int)`, `(int,int,int)`, `(double,double)`, `(const vector<int>&)`
+- Pitfall (tested): `calc.add(5, 3.2)` does **not compile** — `error: call of overloaded 'add(int, double)' is ambiguous`, because each overload needs one conversion
 
 ### Example 5: Static Member Functions
 Class-level functions shared by all objects.
@@ -205,12 +212,14 @@ Class-level functions shared by all objects.
 Counter::getCount();     // Call on class
 Counter::resetCount();   // Call on class
 ```
+- Output detail: after the three counters are destroyed the count is **still 3**, because the destructor does not decrement it — the counter means "objects created so far", not "objects alive". Add `count--` to the destructor if you want "alive"
 
 ### Example 6: This Pointer
 Pointer to current object for disambiguation and chaining.
 ```cpp
-obj.setValue(10).setName("Test");  // Method chaining
+obj1.setValue(100).setName("Modified");  // Method chaining
 ```
+- `getPointer()` returns `this`; the printed pointer and `&obj1` are the same address (the address itself differs on every run)
 
 ### Example 7: Getters and Setters
 Controlled access to private members with validation.
@@ -218,6 +227,7 @@ Controlled access to private members with validation.
 student.setAge(21);      // Setter with validation
 int age = student.getAge();  // Getter (const)
 ```
+- Invalid values (`setAge(-5)`, `setGpa(5.0)`) are rejected with a warning and the old value stays
 
 ### Example 8: Default Arguments
 Functions with optional parameters.
@@ -229,9 +239,24 @@ printer.print("Flyer", 100, true);   // Overrides all
 
 ### Example 9: Bank Account (Real-World)
 Complete banking system with transactions and history.
+- Private helper `logTransaction()` is only usable inside the class
+- `transfer()` is built from `withdraw()` + `deposit()`
 
 ### Example 10: Game Character (Real-World)
 Character with health, attacks, and interactions.
+- Private helper `checkAlive()`; a defeated character cannot attack or be healed
+
+## 🧾 Notes moved from `main.cpp`
+
+The lecture-style printouts were removed from `main.cpp` (the demos now only print what they do). What they said that the sections above do not already cover:
+
+**Inline member functions**
+- A function defined inside the class body is **implicitly inline**.
+- The `inline` keyword is only a hint for optimization — compilers decide on their own. Its real effect is that the function may be defined in a header without "multiple definition" errors.
+
+**Rules of thumb:** inside the class for short functions (getters/setters), outside (`ClassName::func`) for long ones; default arguments go in the declaration only; keep functions short (the old text suggested under ~50 lines) and focused.
+
+**Class-level reference** (the printed "Quick Reference", "Common Patterns", "Access control with functions" and "Key Takeaways" repeated the Quick Reference Card, Design Principles and Key Takeaways sections of this README).
 
 ---
 
@@ -267,7 +292,7 @@ obj.setValueChain(10).setValueChain(20).setValueChain(30);
 4. **Compare with other objects**
 5. **Get pointer to current object**
 
-**Type:** `ClassName* const this`
+**Type:** `ClassName* const this` in a normal member function; in a `const` member function it is `const ClassName* const` (tested with `decltype(this)`) — which is exactly why a const function cannot modify members.
 
 ### Getters and Setters
 
@@ -618,8 +643,10 @@ Create a `Temperature` class with:
 
 ### Compile:
 ```bash
-g++ -std=c++17 member_functions.cpp -o member_functions
+g++ -std=c++23 -Wall -Wextra main.cpp -o member_functions
 ```
+
+> `main.cpp` uses `std::println` (`<print>`), which needs **GCC 14+**.
 
 ### Run:
 ```bash

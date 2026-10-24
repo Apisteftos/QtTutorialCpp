@@ -278,6 +278,8 @@ public:
 // Perfect encapsulation - users can't access Node!
 ```
 
+This shortened snippet owns raw pointers, so a copy would delete the nodes twice. `main.cpp` (Example 2) therefore deletes the copy constructor and copy assignment (rule of three/five).
+
 ### 3. Builder Pattern
 
 **Public nested builder for fluent construction:**
@@ -288,41 +290,45 @@ private:
     string dough;
     string sauce;
     vector<string> toppings;
-    
+
     Pizza() { }  // Private constructor
-    
+
 public:
-    // ✅ Public nested Builder
-    class Builder {
-    private:
-        Pizza pizza;
-        
-    public:
-        Builder& setDough(const string& d) {
-            pizza.dough = d;
-            return *this;
-        }
-        
-        Builder& setSauce(const string& s) {
-            pizza.sauce = s;
-            return *this;
-        }
-        
-        Builder& addTopping(const string& t) {
-            pizza.toppings.push_back(t);
-            return *this;
-        }
-        
-        Pizza build() {
-            return pizza;
-        }
-    };
-    
+    // ✅ Public nested Builder - only DECLARED here
+    class Builder;
+
     void display() const {
         cout << "Pizza: " << dough << ", " << sauce << "\n";
         cout << "Toppings: ";
         for (const auto& t : toppings) cout << t << " ";
         cout << "\n";
+    }
+};
+
+// Defined after Pizza, because inside Pizza the type is still incomplete
+// and a member "Pizza pizza;" would not compile there.
+class Pizza::Builder {
+private:
+    Pizza pizza;  // ✅ nested class may use Pizza's private constructor
+
+public:
+    Builder& setDough(const string& d) {
+        pizza.dough = d;
+        return *this;
+    }
+
+    Builder& setSauce(const string& s) {
+        pizza.sauce = s;
+        return *this;
+    }
+
+    Builder& addTopping(const string& t) {
+        pizza.toppings.push_back(t);
+        return *this;
+    }
+
+    Pizza build() {
+        return pizza;
     }
 };
 
@@ -334,6 +340,8 @@ Pizza pizza = Pizza::Builder()
     .addTopping("Mushrooms")
     .build();
 ```
+
+❌ The earlier version of this snippet put `class Builder { Pizza pizza; ... };` directly inside `Pizza`. That does **not** compile (GCC: `field 'pizza' has incomplete type 'Pizza'`, clang: `field has incomplete type 'Pizza'`) ✅ tested. The alternatives are a `Pizza*` / `unique_ptr<Pizza>` member (then no leak: use `unique_ptr`, not a raw `new` that is never deleted) or the forward declaration shown above.
 
 ### 4. Exception Hierarchies
 
@@ -418,33 +426,45 @@ Application app(config, logger);
 
 ### Example 1: Basic Nested Class
 Simple nested class with access to outer's private members.
+- Created as `OuterBasic::Inner`; an `Inner` object does not contain an `OuterBasic`, it only sees one if you pass it in
 
 ### Example 2: Private Nested Class
 Stack with hidden Node implementation.
+- Users cannot name `Stack::Node`; added: popping an empty stack throws (caught), and the copy operations are deleted (raw pointer ownership)
 
 ### Example 3: Iterator Pattern
 Container with public Iterator nested class.
+- Controlled access to the container's data; range-for also works because `begin()`/`end()` return something with `!=`, `++` and `*` ✅ tested
 
 ### Example 4: Builder Pattern
 Pizza with fluent Builder interface.
+- Fluent interface; `Pizza` has a private constructor that only the nested `Builder` may call
+- Fixed: the old `Builder` did `new Pizza()` and never deleted it (LeakSanitizer: 120 bytes leaked). It now holds a `Pizza` value and is defined after `Pizza` (see Common Use Cases, Builder)
 
 ### Example 5: Static Members
 Nested classes with static member variables.
+- Independent static storage; the nested class reads the outer's `outerCount` directly, no object needed ✅ tested
 
 ### Example 6: Multiple Nested Classes
 Binary tree with Node and Iterator.
+- `Node` private (implementation), `Iterator` public (interface); `insertHelper` is now private, copy operations deleted
 
 ### Example 7: Local Class
 Helper class defined inside a function.
+- Only visible in that function; added a `static` local used by the class (allowed) - see the restriction list under Local Classes
 
 ### Example 8: Access Rules
 Demonstrating access between nested and outer.
+- Nested → outer: private, protected and public members through an object, and a static member without one
+- Added `Locker`/`Key`: outer → nested private access works only with `friend class Locker;`
 
 ### Example 9: Forward Declaration
 Forward declaring nested classes.
+- Declare `class Inner;` inside the outer class, use `Inner*` in a signature, define `Inner` later (this is also how the Builder fix works)
 
 ### Example 10: Best Practices
 When to use (and when not to use) nested classes.
+- Was only printed text; now a real demo: a nested exception hierarchy (`Database::Exception`) and `sizeof` showing that a nested class adds nothing to the outer object
 
 ---
 
@@ -452,7 +472,7 @@ When to use (and when not to use) nested classes.
 
 ### Access Rules
 
-**CRITICAL: Nested class needs object reference to access outer's members!**
+**CRITICAL: a nested class needs an object to use outer's NON-static members.** It has the same access as a member function of the outer class (private and protected included), but it has no outer object of its own. Static members, types and enumerators of the outer class can be used directly ✅ tested.
 
 ```cpp
 class Outer {
@@ -473,7 +493,7 @@ public:
 };
 ```
 
-**Outer can access nested's private:**
+**The other direction: the outer class has NO special access to the nested class's private members.** The nesting works in one direction only:
 
 ```cpp
 class Outer {
@@ -481,15 +501,17 @@ public:
     class Inner {
     private:
         int secret = 42;
-        friend class Outer;  // Or make Outer a friend
+        friend class Outer;  // ✅ needed - without it the line below is an error
     };
-    
+
     void access() {
         Inner inner;
-        int x = inner.secret;  // ✅ OK - Outer can access
+        int x = inner.secret;  // ✅ OK only because of the friend declaration
     }
 };
 ```
+
+Without the `friend` line GCC reports `'int Outer::Inner::secret' is private within this context` ✅ tested. (The old heading "Outer can access nested's private", the takeaway list and the diagram in this README, and the comments in `main.cpp`, said this works without `friend` - that is wrong.)
 
 ### Visibility Control
 
@@ -499,7 +521,7 @@ public:
     class PublicNested { };    // ✅ Anyone can use Outer::PublicNested
     
 protected:
-    class ProtectedNested { }; // ✅ Only Outer and derived classes
+    class ProtectedNested { }; // ✅ Only Outer and derived classes (tested)
     
 private:
     class PrivateNested { };   // ✅ Only Outer can use
@@ -557,17 +579,18 @@ void function() {
 // LocalHelper obj;  // ❌ Error - not visible outside function
 ```
 
-**Restrictions on local classes:**
-- ❌ Can't have static data members
-- ❌ Can't access function's local variables (pre-C++11)
-- ✅ Can access function parameters
-- ✅ Can be used in vectors, etc.
+**Restrictions on local classes** (all ✅ tested with GCC 13, `-std=c++17`):
+- ❌ No static data members (`local class shall not have static data member`)
+- ❌ Cannot use the function's **parameters** or **automatic local variables** (`use of parameter from containing function`, `use of local variable with automatic storage from containing function`) - this is still true in C++17; it was not changed by C++11
+- ✅ Can use the function's `static` locals, types and enumerators; static member *functions* are fine
+- ❌ No member templates; member functions must be defined inside the class (an out-of-line definition is an error)
+- ✅ Can be used as a template argument since C++11 (`vector<LocalHelper>` works); with `-std=c++03` GCC rejects it
 
 ---
 
 ## ⚠️ Common Mistakes
 
-### ❌ Mistake 1: Assuming Automatic Access to Outer
+### ❌ Mistake 1: Assuming Automatic Access to Outer's Non-static Members
 
 **Bad:**
 ```cpp
@@ -644,6 +667,8 @@ void func() {
 }
 ```
 
+Other things a local class cannot do: use the function's parameters / automatic variables, declare member templates (see "Restrictions on local classes" above).
+
 ---
 
 ## 🎯 Practice Exercises
@@ -669,8 +694,10 @@ Given code with separate helper classes, refactor to use nested classes.
 
 ### Compile:
 ```bash
-g++ -std=c++17 nested_classes.cpp -o nested_classes
+g++ -std=c++23 -Wall -Wextra main.cpp -o nested_classes
 ```
+
+(`<print>` / `std::println` needs GCC 14 or newer.)
 
 ### Run:
 ```bash
@@ -743,14 +770,15 @@ ACCESS BETWEEN NESTED AND OUTER
 │                                      │
 │ useNested() {                        │
 │   Nested n;                          │
-│   n.privateData ✅  // Can access!    │
+│   n.privateData ❌ unless Nested has │
+│         friend class Outer;          │
 │ }                                    │
 │ ┌────────────────────────────────┐   │
 │ │ Nested Class                   │   │
 │ │ ├─ private: int privateData    │   │
 │ └────────────────────────────────┘   │
 │         ↑                            │
-│  Outer has special access!           │
+│  No special access in this direction │
 └──────────────────────────────────────┘
 ```
 
@@ -795,14 +823,11 @@ Builder Pattern
 ## 📚 Related Topics
 
 ### Prerequisites:
+- **05_Encapsulation** - Access control
 - **06_GettersSetters** - Member access
-- **08_AccessModifiers** - Public/private/protected
-- **12_Inheritance** - Class relationships
 
 ### Coming Next:
-- **27_FriendClasses** - Friend relationships
-- **28_VirtualFunctions** - Polymorphism
-- **29_AbstractClasses** - Pure virtual functions
+- **27_FriendClasses** - Friend relationships (needed for outer → nested private access)
 
 ### Related Concepts:
 - **Encapsulation** - Information hiding
@@ -992,18 +1017,20 @@ int Outer::Inner::count = 0;
 
 ### Standard Library Examples
 ```cpp
-// std::string::iterator
+// std::string::iterator (a member TYPE of string - but not necessarily a nested class)
 string s = "hello";
 for (string::iterator it = s.begin(); it != s.end(); ++it) {
-    // Iterator is nested in string
+    // string::iterator is a typedef in libstdc++
 }
 
 // std::vector::iterator
 vector<int> v{1, 2, 3};
 for (vector<int>::iterator it = v.begin(); it != v.end(); ++it) {
-    // Iterator is nested in vector
+    // vector<int>::iterator is a typedef for __gnu_cxx::__normal_iterator<int*, vector<int>>
 }
 ```
+
+✅ tested (GCC 13 / libstdc++): `std::vector<int>::iterator` and `std::string::iterator` are **typedefs** for `__gnu_cxx::__normal_iterator<...>`, a class template outside of `vector`/`string`. The standard only requires that the member type names exist; it does not say they are nested classes. They are *used* like the nested `Iterator` of this lesson, but they are not examples of it.
 
 ### Custom Container
 ```cpp
@@ -1030,10 +1057,8 @@ public:
 
 ## 📖 Further Reading
 
-- [cppreference.com - Nested classes](https://en.cppreference.com/w/cpp/language/nested_types)
-- "Effective C++" by Scott Meyers - Item 22
-- [C++ Core Guidelines - C.120](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-nested)
-- [MSDN - Nested Classes](https://docs.microsoft.com/en-us/cpp/cpp/nested-class-declarations)
+- [cppreference.com - Nested types](https://en.cppreference.com/cpp/language/nested_types) (found via search, page not opened)
+- [learncpp.com - 15.3 Nested types (member types)](https://www.learncpp.com/cpp-tutorial/nested-types-in-classes/) (found via search, page not opened)
 
 ---
 
@@ -1042,7 +1067,7 @@ public:
 1. **Nested classes** defined inside other classes
 2. **Access with** `Outer::Inner` syntax
 3. **Can access** outer's private with object reference
-4. **Outer can access** nested's private
+4. **Outer can NOT access** nested's private (unless `friend class Outer;`)
 5. **Private nested** for implementation details
 6. **Public nested** for interfaces
 7. **Perfect for** iterators, nodes, builders
@@ -1062,8 +1087,8 @@ public:
    ✅ LinkedList::Node
    ❌ Unrelated helper classes
 
-⚠️  RULE 2: Nested needs object reference
-   Can't access outer's members automatically!
+⚠️  RULE 2: Nested needs an object for non-static members
+   Can't use outer's data members as plain names!
    
    ❌ int x = outerData;           // Error!
    ✅ int x = outer.outerData;     // OK with object
@@ -1100,3 +1125,59 @@ public:
 *Difficulty: Intermediate*  
 *Prerequisites: Classes, access modifiers, pointers*  
 *ESSENTIAL for Proper Encapsulation*
+---
+
+## 🧾 Notes moved from main.cpp
+
+- **Access rules, corrected** (all ✅ tested with GCC 13):
+
+| Question | Answer |
+|---|---|
+| Nested class uses outer's private/protected non-static member | Yes, through an object (`outer.privateData`); the plain name `privateData` is an error |
+| Nested class uses outer's static member | Yes, directly, no object needed |
+| Outer class uses nested class's private member | **No**, unless the nested class declares `friend class Outer;` |
+| Outside code uses a private/protected nested *type* | No (`'class Outer::PrivNested' is private within this context`) |
+| Derived class of outer uses a protected nested type | Yes |
+
+- **Nested vs inheritance:** a nested class is *scoping/containment of a type* (`Outer::Inner i;` is an independent object); inheritance is IS-A (`Derived` contains a `Base` part). Nesting a type does not add a data member: `sizeof` of a struct with a nested class is the same as without ✅ tested (Example 10).
+- **Templates and nested classes** ✅ compiled:
+
+```cpp
+template<typename T>
+class Outer {                      // nested class in a class template
+public:
+    class Inner { T data; public: Inner(T d) : data(d) {} };
+};
+Outer<int>::Inner a(42);
+
+class Plain {                      // member template: the NESTED class is the template
+public:
+    template<typename T>
+    class Inner { T data; public: Inner(T d) : data(d) {} };
+};
+Plain::Inner<int> b(42);
+```
+
+- **Naming and design principles** (from Example 10): write `OuterClass::InnerClass`, use descriptive names that make the relationship clear; aim for high cohesion (the nested class really belongs to the outer one) and low coupling. Do not nest a class that several other classes use. (The remaining DO/DON'T lists are already in "Best Practices" above.)
+- **Decision tree:** tightly coupled to another class? No → separate class. Implementation detail? → private nested class. Part of the public interface (Iterator, Builder)? → public nested class. Reused elsewhere? → separate class. Used in one function only? → local class.
+- **Corrected comparison table:**
+
+| Feature | Nested | Separate | Local |
+|---|---|---|---|
+| Scope | Outer class | Namespace / global | Function |
+| Access to outer's members | Yes (like a member function) | No | Only the function's statics, types and enumerators - not its parameters or automatic variables |
+| Reusability | Low | High | None |
+| Encapsulation | High | Low | High |
+| Coupling | High | Low | High |
+| Visibility | Controlled by public/protected/private | Public | Function only |
+| Static data members | Yes | Yes | **No** |
+| Member templates | Yes | Yes | **No** |
+
+  The old table said "Access outer: Limited" for local classes and did not mention the member-template restriction.
+- **Code changes in main.cpp:**
+  - Top comment ("Outer class can access nested's private members") and the Example 8 lecture text corrected; the friend case is a real demo now (`Locker`).
+  - Example 4: `Builder` no longer leaks; it holds a `Pizza` value and is defined after `Pizza`.
+  - Examples 2 and 6: copy operations deleted (raw pointers); `insertHelper` private.
+  - Example 3: range-for demo; Example 7: static local; Example 8: static member without object; Example 10: real demo.
+  - `#include <stdexcept>` / `<initializer_list>` added (they were used but not included); unused `<memory>` removed.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer (the original printed a leak report).

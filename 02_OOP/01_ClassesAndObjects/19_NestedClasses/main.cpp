@@ -1,7 +1,8 @@
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
-#include <memory>
+#include <stdexcept>
+#include <initializer_list>
 using namespace std;
 
 // ============================================
@@ -13,7 +14,7 @@ using namespace std;
  * - Class defined inside another class
  * - Also called "inner classes"
  * - Member of the enclosing class
- * - Can access enclosing class's private members (with object)
+ * - Has the same access as a member function of the enclosing class
  * - Helps organize related classes
  *
  * TYPES OF NESTED CLASSES:
@@ -29,9 +30,11 @@ using namespace std;
  * - Helper classes that only make sense with outer class
  *
  * ACCESS RULES:
- * - Nested class can access outer's private members (with object)
- * - Outer class can access nested's private members
- * - Nested class doesn't have special access without object
+ * - Nested class can access outer's private/protected members (needs an object for
+ *   non-static ones; static members can be used directly)
+ * - Outer class can NOT access nested's private members, unless the nested class
+ *   says "friend class Outer;" (Example 8)
+ * - The nested class is not "inside" the outer object: it has no outer object of its own
  * - Public/private/protected apply to nested class visibility
  *
  * COMMON USES:
@@ -60,7 +63,7 @@ private:
 
 public:
     OuterBasic(int v, const string& n) : outerValue(v), outerName(n) {
-        cout << "  OuterBasic created: " << outerName << "\n";
+        std::println("  OuterBasic created: {}", outerName);
     }
 
     // ✅ Nested class definition
@@ -70,46 +73,44 @@ public:
 
     public:
         Inner(int v) : innerValue(v) {
-            cout << "    Inner created with value: " << v << "\n";
+            std::println("    Inner created with value: {}", v);
         }
 
         void display() const {
-            cout << "    Inner value: " << innerValue << "\n";
+            std::println("    Inner value: {}", innerValue);
         }
 
         // Can access outer's private members if given object
         void showOuter(const OuterBasic& outer) const {
-            cout << "    Outer value: " << outer.outerValue << "\n";
-            cout << "    Outer name: " << outer.outerName << "\n";
+            std::println("    Outer value: {}", outer.outerValue);
+            std::println("    Outer name: {}", outer.outerName);
         }
     };
 
     void display() const {
-        cout << "  Outer: " << outerName << ", value: " << outerValue << "\n";
+        std::println("  Outer: {}, value: {}", outerName, outerValue);
     }
 };
 
 void demonstrateBasic() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BASIC NESTED CLASS    ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BASIC NESTED CLASS    ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating outer object ---\n";
+    std::println("--- Creating outer object ---");
     OuterBasic outer(42, "MainOuter");
     outer.display();
 
-    cout << "\n--- Creating nested class object ---\n";
+    std::println("");
+    std::println("--- Creating nested class object ---");
     OuterBasic::Inner inner(100);  // Note the scope: OuterBasic::Inner
     inner.display();
 
-    cout << "\n--- Inner accessing outer's private members ---\n";
+    std::println("");
+    std::println("--- Inner accessing outer's private members ---");
     inner.showOuter(outer);
-
-    cout << "\n💡 KEY POINTS:\n";
-    cout << "   • Nested class defined inside outer class\n";
-    cout << "   • Access with OuterBasic::Inner\n";
-    cout << "   • Can access outer's private members (with object)\n";
-    cout << "   • Independent objects (nested doesn't contain outer)\n";
 }
 
 // ============================================
@@ -125,7 +126,7 @@ private:
         Node* next;
 
         Node(int d) : data(d), next(nullptr) {
-            cout << "    Node created with data: " << d << "\n";
+            std::println("    Node created with data: {}", d);
         }
     };
 
@@ -134,7 +135,7 @@ private:
 
 public:
     Stack() : top(nullptr), count(0) {
-        cout << "  Stack created\n";
+        std::println("  Stack created");
     }
 
     ~Stack() {
@@ -143,15 +144,19 @@ public:
             top = top->next;
             delete temp;
         }
-        cout << "  Stack destroyed\n";
+        std::println("  Stack destroyed");
     }
+
+    // Raw pointer ownership: copying would double-delete the nodes
+    Stack(const Stack&) = delete;
+    Stack& operator=(const Stack&) = delete;
 
     void push(int value) {
         Node* newNode = new Node(value);
         newNode->next = top;
         top = newNode;
         count++;
-        cout << "  Pushed: " << value << "\n";
+        std::println("  Pushed: {}", value);
     }
 
     int pop() {
@@ -163,7 +168,7 @@ public:
         top = top->next;
         delete temp;
         count--;
-        cout << "  Popped: " << value << "\n";
+        std::println("  Popped: {}", value);
         return value;
     }
 
@@ -177,29 +182,35 @@ public:
 };
 
 void demonstratePrivateNested() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: PRIVATE NESTED CLASS  ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: PRIVATE NESTED CLASS  ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using Stack (Node is hidden) ---\n";
+    std::println("--- Using Stack (Node is hidden) ---");
     Stack s;
 
     s.push(10);
     s.push(20);
     s.push(30);
 
-    cout << "\n--- Stack size: " << s.size() << " ---\n";
+    std::println("");
+    std::println("--- Stack size: {} ---", s.size());
 
-    cout << "\n--- Popping values ---\n";
+    std::println("");
+    std::println("--- Popping values ---");
     while (!s.isEmpty()) {
         s.pop();
     }
 
-    cout << "\n💡 PRIVATE NESTED CLASS:\n";
-    cout << "   • Node is implementation detail\n";
-    cout << "   • Hidden from users\n";
-    cout << "   • Perfect encapsulation\n";
-    cout << "   • Users can't access Stack::Node\n";
+    std::println("");
+    std::println("--- Popping from an empty stack throws ---");
+    try {
+        s.pop();
+    } catch (const runtime_error& e) {
+        std::println("  Caught: {}", e.what());
+    }
 }
 
 // ============================================
@@ -212,7 +223,7 @@ private:
 
 public:
     Container(initializer_list<int> init) : data(init) {
-        cout << "  Container created with " << data.size() << " elements\n";
+        std::println("  Container created with {} elements", data.size());
     }
 
     // ✅ Public nested Iterator class
@@ -249,35 +260,38 @@ public:
     }
 
     void display() const {
-        cout << "  Container: ";
+        std::print("  Container: ");
         for (int val : data) {
-            cout << val << " ";
+            std::print("{} ", val);
         }
-        cout << "\n";
+        std::println("");
     }
 };
 
 void demonstrateIterator() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: ITERATOR PATTERN      ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: ITERATOR PATTERN      ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating container ---\n";
+    std::println("--- Creating container ---");
     Container c{10, 20, 30, 40, 50};
     c.display();
 
-    cout << "\n--- Using nested Iterator ---\n";
-    cout << "  Elements: ";
+    std::println("");
+    std::println("--- Using nested Iterator ---");
+    std::print("  Elements: ");
     for (Container::Iterator it = c.begin(); it != c.end(); ++it) {
-        cout << *it << " ";
+        std::print("{} ", *it);
     }
-    cout << "\n";
+    std::println("");
 
-    cout << "\n💡 ITERATOR PATTERN:\n";
-    cout << "   • Iterator is public nested class\n";
-    cout << "   • Provides controlled access to container\n";
-    cout << "   • Follows standard iterator pattern\n";
-    cout << "   • Encapsulates iteration logic\n";
+    std::print("  Range-for works too (begin/end + !=, ++, *): ");
+    for (int v : c) {
+        std::print("{} ", v);
+    }
+    std::println("");
 }
 
 // ============================================
@@ -293,70 +307,75 @@ private:
 
     // Private constructor - only Builder can create Pizza
     Pizza() {
-        cout << "  Pizza object created\n";
+        std::println("  Pizza object created");
     }
 
 public:
-    // ✅ Public nested Builder class
-    class Builder {
-    private:
-        Pizza* pizza;
-
-    public:
-        Builder() {
-            pizza = new Pizza();
-            cout << "  Pizza Builder created\n";
-        }
-
-        Builder& setDough(const string& d) {
-            pizza->dough = d;
-            cout << "    Dough set: " << d << "\n";
-            return *this;
-        }
-
-        Builder& setSauce(const string& s) {
-            pizza->sauce = s;
-            cout << "    Sauce set: " << s << "\n";
-            return *this;
-        }
-
-        Builder& setCheese(const string& c) {
-            pizza->cheese = c;
-            cout << "    Cheese set: " << c << "\n";
-            return *this;
-        }
-
-        Builder& addTopping(const string& t) {
-            pizza->toppings.push_back(t);
-            cout << "    Topping added: " << t << "\n";
-            return *this;
-        }
-
-        Pizza build() {
-            cout << "  Pizza built!\n";
-            return *pizza;
-        }
-    };
+    // ✅ Public nested Builder class (defined below, after Pizza is complete)
+    class Builder;
 
     void display() const {
-        cout << "  Pizza Details:\n";
-        cout << "    Dough: " << dough << "\n";
-        cout << "    Sauce: " << sauce << "\n";
-        cout << "    Cheese: " << cheese << "\n";
-        cout << "    Toppings: ";
+        std::println("  Pizza Details:");
+        std::println("    Dough: {}", dough);
+        std::println("    Sauce: {}", sauce);
+        std::println("    Cheese: {}", cheese);
+        std::print("    Toppings: ");
         for (const auto& t : toppings) {
-            cout << t << " ";
+            std::print("{} ", t);
         }
-        cout << "\n";
+        std::println("");
+    }
+};
+
+// Defined AFTER Pizza: inside Pizza the type is still incomplete, so a member
+// "Pizza pizza;" would not compile there. A nested class may still use Pizza's private constructor.
+class Pizza::Builder {
+private:
+    Pizza pizza;  // ✅ a value member: no new/delete, no leak
+
+public:
+    Builder() {
+        std::println("  Pizza Builder created");
+    }
+
+    Builder& setDough(const string& d) {
+        pizza.dough = d;
+        std::println("    Dough set: {}", d);
+        return *this;
+    }
+
+    Builder& setSauce(const string& s) {
+        pizza.sauce = s;
+        std::println("    Sauce set: {}", s);
+        return *this;
+    }
+
+    Builder& setCheese(const string& c) {
+        pizza.cheese = c;
+        std::println("    Cheese set: {}", c);
+        return *this;
+    }
+
+    Builder& addTopping(const string& t) {
+        pizza.toppings.push_back(t);
+        std::println("    Topping added: {}", t);
+        return *this;
+    }
+
+    Pizza build() {
+        std::println("  Pizza built!");
+        return pizza;
     }
 };
 
 void demonstrateBuilder() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: BUILDER PATTERN       ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: BUILDER PATTERN       ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Building pizza with nested Builder ---\n";
+    std::println("--- Building pizza with nested Builder ---");
     Pizza pizza = Pizza::Builder()
                       .setDough("Thin crust")
                       .setSauce("Marinara")
@@ -366,14 +385,9 @@ void demonstrateBuilder() {
                       .addTopping("Olives")
                       .build();
 
-    cout << "\n--- Final pizza ---\n";
+    std::println("");
+    std::println("--- Final pizza ---");
     pizza.display();
-
-    cout << "\n💡 BUILDER PATTERN:\n";
-    cout << "   • Builder is public nested class\n";
-    cout << "   • Provides fluent interface\n";
-    cout << "   • Simplifies complex object creation\n";
-    cout << "   • Main class has private constructor\n";
 }
 
 // ============================================
@@ -399,7 +413,7 @@ public:
     public:
         Inner(int d) : innerData(d) {
             innerCount++;
-            cout << "  Inner created (count: " << innerCount << ")\n";
+            std::println("  Inner created (count: {})", innerCount);
         }
 
         static int getInnerCount() {
@@ -412,7 +426,7 @@ public:
         }
 
         void display() const {
-            cout << "  Inner data: " << innerData << "\n";
+            std::println("  Inner data: {}", innerData);
         }
     };
 
@@ -426,11 +440,13 @@ int Outer::outerCount = 0;
 int Outer::Inner::innerCount = 0;
 
 void demonstrateStatic() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: STATIC MEMBERS        ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: STATIC MEMBERS        ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating objects ---\n";
+    std::println("--- Creating objects ---");
     Outer o1(10);
     Outer o2(20);
 
@@ -438,15 +454,11 @@ void demonstrateStatic() {
     Outer::Inner i2(200);
     Outer::Inner i3(300);
 
-    cout << "\n--- Accessing static members ---\n";
-    cout << "Outer count: " << Outer::getOuterCount() << "\n";
-    cout << "Inner count: " << Outer::Inner::getInnerCount() << "\n";
-    cout << "Outer count (from Inner): " << Outer::Inner::getOuterCount() << "\n";
-
-    cout << "\n💡 STATIC MEMBERS:\n";
-    cout << "   • Nested class can have static members\n";
-    cout << "   • Can access outer's static members directly\n";
-    cout << "   • Independent static storage\n";
+    std::println("");
+    std::println("--- Accessing static members ---");
+    std::println("Outer count: {}", Outer::getOuterCount());
+    std::println("Inner count: {}", Outer::Inner::getInnerCount());
+    std::println("Outer count (from Inner): {}", Outer::Inner::getOuterCount());
 }
 
 // ============================================
@@ -463,7 +475,7 @@ private:
         Node* right;
 
         Node(int d) : data(d), left(nullptr), right(nullptr) {
-            cout << "    Node created: " << d << "\n";
+            std::println("    Node created: {}", d);
         }
     };
 
@@ -472,7 +484,7 @@ private:
     void inorderHelper(Node* node) const {
         if (node) {
             inorderHelper(node->left);
-            cout << node->data << " ";
+            std::print("{} ", node->data);
             inorderHelper(node->right);
         }
     }
@@ -487,13 +499,16 @@ private:
 
 public:
     BinaryTree() : root(nullptr) {
-        cout << "  BinaryTree created\n";
+        std::println("  BinaryTree created");
     }
 
     ~BinaryTree() {
         deleteTree(root);
-        cout << "  BinaryTree destroyed\n";
+        std::println("  BinaryTree destroyed");
     }
+
+    BinaryTree(const BinaryTree&) = delete;
+    BinaryTree& operator=(const BinaryTree&) = delete;
 
     void insert(int value) {
         if (!root) {
@@ -503,6 +518,7 @@ public:
         }
     }
 
+private:
     void insertHelper(Node* node, int value) {
         if (value < node->data) {
             if (!node->left) {
@@ -519,10 +535,11 @@ public:
         }
     }
 
+public:
     void display() const {
-        cout << "  Tree (inorder): ";
+        std::print("  Tree (inorder): ");
         inorderHelper(root);
-        cout << "\n";
+        std::println("");
     }
 
     // Public nested Iterator class
@@ -575,11 +592,13 @@ public:
 };
 
 void demonstrateMultipleNested() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: MULTIPLE NESTED       ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 6: MULTIPLE NESTED       ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Creating binary tree ---\n";
+    std::println("--- Creating binary tree ---");
     BinaryTree tree;
     tree.insert(50);
     tree.insert(30);
@@ -589,23 +608,19 @@ void demonstrateMultipleNested() {
     tree.insert(60);
     tree.insert(80);
 
-    cout << "\n--- Displaying tree ---\n";
+    std::println("");
+    std::println("--- Displaying tree ---");
     tree.display();
 
-    cout << "\n--- Using iterator ---\n";
-    cout << "  Iterator: ";
+    std::println("");
+    std::println("--- Using iterator ---");
+    std::print("  Iterator: ");
     BinaryTree::Iterator it = tree.getIterator();
     while (it.hasNext()) {
-        cout << *it << " ";
+        std::print("{} ", *it);
         ++it;
     }
-    cout << "\n";
-
-    cout << "\n💡 MULTIPLE NESTED CLASSES:\n";
-    cout << "   • Node is private (implementation)\n";
-    cout << "   • Iterator is public (interface)\n";
-    cout << "   • Both nested in BinaryTree\n";
-    cout << "   • Perfect encapsulation\n";
+    std::println("");
 }
 
 // ============================================
@@ -613,54 +628,60 @@ void demonstrateMultipleNested() {
 // ============================================
 
 void demonstrateLocalClass() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: LOCAL CLASS           ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 7: LOCAL CLASS           ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
+
+    static int base = 1000;
 
     // ✅ Local class - defined inside function!
+    // It may use types, constants and STATIC locals of the function, but not its
+    // parameters or automatic variables; no static data members, no member templates
     class LocalHelper {
     private:
         int value;
 
     public:
         LocalHelper(int v) : value(v) {
-            cout << "  LocalHelper created with value: " << v << "\n";
+            std::println("  LocalHelper created with value: {}", v);
         }
 
         void display() const {
-            cout << "  LocalHelper value: " << value << "\n";
+            std::println("  LocalHelper value: {}", value);
         }
 
         int getValue() const {
             return value;
         }
+
+        int shifted() const {
+            return base + value;  // ✅ a static local of the function is allowed
+        }
     };
 
-    cout << "--- Using local class ---\n";
+    std::println("--- Using local class ---");
     LocalHelper helper1(100);
     LocalHelper helper2(200);
 
     helper1.display();
     helper2.display();
+    std::println("  helper1.shifted() = {}", helper1.shifted());
 
-    cout << "\n--- Processing with local class ---\n";
+    std::println("");
+    std::println("--- Processing with local class ---");
     vector<LocalHelper> helpers;
     helpers.push_back(LocalHelper(10));
     helpers.push_back(LocalHelper(20));
     helpers.push_back(LocalHelper(30));
 
-    cout << "  Sum: ";
+    std::print("  Sum: ");
     int sum = 0;
     for (const auto& h : helpers) {
         sum += h.getValue();
     }
-    cout << sum << "\n";
-
-    cout << "\n💡 LOCAL CLASS:\n";
-    cout << "   • Defined inside function\n";
-    cout << "   • Only visible in that function\n";
-    cout << "   • Can't have static members\n";
-    cout << "   • Useful for function-specific helpers\n";
+    std::println("{}", sum);
 }
 
 // ============================================
@@ -673,6 +694,7 @@ private:
 
 protected:
     int protectedData = 20;
+    static inline int instances = 3;
 
 public:
     int publicData = 30;
@@ -682,9 +704,14 @@ public:
     public:
         void accessOuter(const AccessDemo& outer) {
             // ✅ Can access ALL members with object reference
-            cout << "  Private: " << outer.privateData << "\n";
-            cout << "  Protected: " << outer.protectedData << "\n";
-            cout << "  Public: " << outer.publicData << "\n";
+            std::println("  Private: {}", outer.privateData);
+            std::println("  Protected: {}", outer.protectedData);
+            std::println("  Public: {}", outer.publicData);
+        }
+
+        void accessStatic() const {
+            // ✅ A static member needs no object
+            std::println("  Static (no object needed): {}", instances);
         }
     };
 
@@ -694,39 +721,58 @@ private:
     public:
         void accessOuter(const AccessDemo& outer) {
             // ✅ Can still access all outer members
-            cout << "  Private: " << outer.privateData << "\n";
-            cout << "  Protected: " << outer.protectedData << "\n";
-            cout << "  Public: " << outer.publicData << "\n";
+            std::println("  Private: {}", outer.privateData);
+            std::println("  Protected: {}", outer.protectedData);
+            std::println("  Public: {}", outer.publicData);
         }
     };
 
 public:
     void usePrivateNested() {
         PrivateNested nested;
-        cout << "--- Private nested accessing outer ---\n";
+        std::println("--- Private nested accessing outer ---");
         nested.accessOuter(*this);
     }
 };
 
+// The other direction: the OUTER class has no special access to the nested class
+class Locker {
+public:
+    class Key {
+    private:
+        int code;
+        friend class Locker;  // ✅ without this line Locker::open() does not compile
+
+    public:
+        explicit Key(int c) : code(c) {}
+    };
+
+    void open(const Key& key) const {
+        std::println("  Locker reads Key::code = {} (allowed by friend)", key.code);
+    }
+};
+
 void demonstrateAccess() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: ACCESS RULES          ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 8: ACCESS RULES          ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
     AccessDemo outer;
 
-    cout << "--- Public nested accessing outer ---\n";
+    std::println("--- Public nested accessing outer ---");
     AccessDemo::PublicNested publicNested;
     publicNested.accessOuter(outer);
+    publicNested.accessStatic();
 
-    cout << "\n";
+    std::println("");
     outer.usePrivateNested();
 
-    cout << "\n💡 ACCESS RULES:\n";
-    cout << "   • Nested can access outer's private (with object)\n";
-    cout << "   • Outer can access nested's private\n";
-    cout << "   • Public/private controls nested visibility\n";
-    cout << "   • Nested needs object reference to access members\n";
+    std::println("");
+    std::println("--- Outer reading the nested class's private member: needs friend ---");
+    Locker locker;
+    locker.open(Locker::Key(1234));
 }
 
 // ============================================
@@ -748,7 +794,7 @@ public:
         Inner(int v) : value(v) {}
 
         void display() const {
-            cout << "  Inner value: " << value << "\n";
+            std::println("  Inner value: {}", value);
         }
 
         int getValue() const {
@@ -758,63 +804,87 @@ public:
 };
 
 void OuterForward::useInner(Inner* inner) {
-    cout << "  Using inner object: ";
+    std::print("  Using inner object: ");
     inner->display();
 }
 
 void demonstrateForward() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: FORWARD DECLARATION   ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 9: FORWARD DECLARATION   ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using forward-declared nested class ---\n";
+    std::println("--- Using forward-declared nested class ---");
     OuterForward outer;
     OuterForward::Inner inner(42);
 
     outer.useInner(&inner);
-
-    cout << "\n💡 FORWARD DECLARATION:\n";
-    cout << "   • Can forward declare nested classes\n";
-    cout << "   • Useful for breaking circular dependencies\n";
-    cout << "   • Define later in same class\n";
 }
 
 // ============================================
 // EXAMPLE 10: WHEN (NOT) TO USE NESTED CLASSES
 // ============================================
 
-void demonstrateBestPractices() {
-    cout << "\n╔═══════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: BEST PRACTICES       ║\n";
-    cout << "╚═══════════════════════════════════╝\n\n";
+// Good use case 1: an exception hierarchy that belongs to one class
+class Database {
+public:
+    class Exception : public runtime_error {
+    public:
+        using runtime_error::runtime_error;
+    };
 
-    cout << "✅ USE NESTED CLASSES WHEN:\n";
-    cout << "   • Class is tightly coupled to outer class\n";
-    cout << "   • Implementation detail (private nested)\n";
-    cout << "   • Iterator for container\n";
-    cout << "   • Builder pattern\n";
-    cout << "   • Node classes in data structures\n";
-    cout << "   • Helper classes only used by outer\n";
-    cout << "   • Logical grouping improves organization\n";
-    cout << "\n";
-    cout << "❌ DON'T USE NESTED CLASSES WHEN:\n";
-    cout << "   • Class is independent and reusable\n";
-    cout << "   • Nesting makes code harder to read\n";
-    cout << "   • Class is used by multiple classes\n";
-    cout << "   • Deep nesting (nested in nested in nested...)\n";
-    cout << "   • Class is complex and large\n";
-    cout << "   • Just to group unrelated classes\n";
-    cout << "\n";
-    cout << "📋 NAMING CONVENTION:\n";
-    cout << "   • OuterClass::InnerClass\n";
-    cout << "   • Use descriptive names\n";
-    cout << "   • Make relationship clear\n";
-    cout << "\n";
-    cout << "💡 DESIGN PRINCIPLES:\n";
-    cout << "   • High cohesion - nested class belongs to outer\n";
-    cout << "   • Low coupling - limit dependencies\n";
-    cout << "   • Encapsulation - hide implementation details\n";
-    cout << "   • Keep nested classes small and focused\n";
+    class ConnectionError : public Exception {
+    public:
+        using Exception::Exception;
+    };
+
+    class QueryError : public Exception {
+    public:
+        using Exception::Exception;
+    };
+
+    void connect(bool ok) const {
+        if (!ok) throw ConnectionError("cannot connect to server");
+    }
+
+    void query(const string& sql) const {
+        if (sql.empty()) throw QueryError("empty query");
+    }
+};
+
+// A nested CLASS TYPE is not a data member: it adds nothing to the outer object
+struct WithoutNested { int x; };
+struct WithNested {
+    class Helper { int a, b, c; };
+    int x;
+};
+static_assert(sizeof(WithNested) == sizeof(WithoutNested));
+
+void demonstrateBestPractices() {
+    std::println("");
+    std::println("╔═══════════════════════════════════╗");
+    std::println("║  EXAMPLE 10: BEST PRACTICES       ║");
+    std::println("╚═══════════════════════════════════╝");
+    std::println("");
+
+    std::println("--- Nested exception hierarchy: Database::Exception ---");
+    Database db;
+    try {
+        db.connect(false);
+    } catch (const Database::Exception& e) {
+        std::println("  Caught as Database::Exception: {}", e.what());
+    }
+
+    try {
+        db.query("");
+    } catch (const Database::QueryError& e) {
+        std::println("  Caught as Database::QueryError: {}", e.what());
+    }
+
+    std::println("");
+    std::println("--- A nested class does not make the outer object bigger ---");
+    std::println("  sizeof(WithoutNested) = {}, sizeof(WithNested) = {}", sizeof(WithoutNested), sizeof(WithNested));
 }
 
 // ============================================
@@ -822,13 +892,13 @@ void demonstrateBestPractices() {
 // ============================================
 
 int main() {
-    cout << "\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║              NESTED CLASSES IN C++                        ║\n";
-    cout << "║           Organizing Related Classes                      ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════════╗");
+    std::println("║                                                           ║");
+    std::println("║              NESTED CLASSES IN C++                        ║");
+    std::println("║           Organizing Related Classes                      ║");
+    std::println("║                                                           ║");
+    std::println("╚═══════════════════════════════════════════════════════════╝");
 
     demonstrateBasic();
     demonstratePrivateNested();
@@ -840,449 +910,6 @@ int main() {
     demonstrateAccess();
     demonstrateForward();
     demonstrateBestPractices();
-
-    // ============================================
-    // COMPREHENSIVE EXPLANATION
-    // ============================================
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                           ║\n";
-    cout << "║              COMPREHENSIVE EXPLANATION                    ║\n";
-    cout << "║                                                           ║\n";
-    cout << "╚═══════════════════════════════════════════════════════════╝\n";
-
-    cout << "\n========================================\n";
-    cout << "WHAT ARE NESTED CLASSES?\n";
-    cout << "========================================\n";
-    cout << "Definition:\n";
-    cout << "  A nested class (or inner class) is a class defined\n";
-    cout << "  within another class. It's a member of the enclosing class.\n";
-    cout << "\n";
-    cout << "BASIC SYNTAX:\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner {  // Nested class\n";
-    cout << "    public:\n";
-    cout << "        void method() { }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Usage:\n";
-    cout << "Outer::Inner inner;  // Note the scope resolution\n";
-    cout << "\n";
-    cout << "TYPES:\n";
-    cout << "  • Member nested classes (in class definition)\n";
-    cout << "  • Local classes (in function)\n";
-    cout << "  • Anonymous classes (unnamed)\n";
-
-    cout << "\n========================================\n";
-    cout << "WHY USE NESTED CLASSES?\n";
-    cout << "========================================\n";
-    cout << "BENEFITS:\n";
-    cout << "1. Logical Grouping\n";
-    cout << "   • Classes belong together conceptually\n";
-    cout << "   • Clear relationship in code\n";
-    cout << "   • Example: Container::Iterator\n";
-    cout << "\n";
-    cout << "2. Encapsulation\n";
-    cout << "   • Hide implementation details\n";
-    cout << "   • Private nested class invisible outside\n";
-    cout << "   • Example: LinkedList::Node\n";
-    cout << "\n";
-    cout << "3. Namespace Management\n";
-    cout << "   • Avoid name pollution\n";
-    cout << "   • Clear ownership\n";
-    cout << "   • Example: Pizza::Builder\n";
-    cout << "\n";
-    cout << "4. Access to Outer Members\n";
-    cout << "   • Can access outer's private members\n";
-    cout << "   • Tight coupling when needed\n";
-    cout << "   • Clean design\n";
-
-    cout << "\n========================================\n";
-    cout << "ACCESS RULES\n";
-    cout << "========================================\n";
-    cout << "NESTED TO OUTER ACCESS:\n";
-    cout << "class Outer {\n";
-    cout << "private:\n";
-    cout << "    int privateData;\n";
-    cout << "    \n";
-    cout << "    void access() {\n";
-    cout << "        Inner inner;\n";
-    cout << "        // ✅ Can access Inner's private!\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "VISIBILITY CONTROL:\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class PublicNested { };   // Anyone can use\n";
-    cout << "    \n";
-    cout << "private:\n";
-    cout << "    class PrivateNested { };  // Only Outer can use\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON PATTERNS\n";
-    cout << "========================================\n";
-    cout << "PATTERN 1: Iterator\n";
-    cout << "class Container {\n";
-    cout << "public:\n";
-    cout << "    class Iterator {\n";
-    cout << "    private:\n";
-    cout << "        Container* container;\n";
-    cout << "        size_t index;\n";
-    cout << "    public:\n";
-    cout << "        // Iterator methods...\n";
-    cout << "    };\n";
-    cout << "    \n";
-    cout << "    Iterator begin() { return Iterator(this, 0); }\n";
-    cout << "    Iterator end() { return Iterator(this, size()); }\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "PATTERN 2: Private Implementation (Node)\n";
-    cout << "class LinkedList {\n";
-    cout << "private:\n";
-    cout << "    class Node {  // Hidden from users!\n";
-    cout << "    public:\n";
-    cout << "        int data;\n";
-    cout << "        Node* next;\n";
-    cout << "    };\n";
-    cout << "    \n";
-    cout << "    Node* head;\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "PATTERN 3: Builder\n";
-    cout << "class Product {\n";
-    cout << "private:\n";
-    cout << "    Product() { }  // Private constructor\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    class Builder {\n";
-    cout << "    private:\n";
-    cout << "        Product product;\n";
-    cout << "    public:\n";
-    cout << "        Builder& setProp(int val) {\n";
-    cout << "            product.prop = val;\n";
-    cout << "            return *this;\n";
-    cout << "        }\n";
-    cout << "        Product build() { return product; }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "PATTERN 4: Exception Hierarchy\n";
-    cout << "class Database {\n";
-    cout << "public:\n";
-    cout << "    class Exception : public std::exception { };\n";
-    cout << "    class ConnectionError : public Exception { };\n";
-    cout << "    class QueryError : public Exception { };\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "LOCAL CLASSES\n";
-    cout << "========================================\n";
-    cout << "Definition:\n";
-    cout << "  A local class is defined inside a function.\n";
-    cout << "\n";
-    cout << "EXAMPLE:\n";
-    cout << "void function() {\n";
-    cout << "    class LocalClass {  // Only visible in this function\n";
-    cout << "    public:\n";
-    cout << "        void method() { }\n";
-    cout << "    };\n";
-    cout << "    \n";
-    cout << "    LocalClass obj;\n";
-    cout << "    obj.method();\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "RESTRICTIONS:\n";
-    cout << "  • Can't have static members\n";
-    cout << "  • Can only access function's parameters and local variables\n";
-    cout << "  • Only visible within function\n";
-    cout << "  • Can't be used as template arguments (pre-C++11)\n";
-    cout << "\n";
-    cout << "USE CASES:\n";
-    cout << "  • Function-specific helper classes\n";
-    cout << "  • One-time use classes\n";
-    cout << "  • Callbacks or functors\n";
-
-    cout << "\n========================================\n";
-    cout << "NESTED CLASS VS INHERITANCE\n";
-    cout << "========================================\n";
-    cout << "NESTED CLASS:\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner { };  // Inner is MEMBER of Outer\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "Outer o;\n";
-    cout << "Outer::Inner i;  // Separate objects!\n";
-    cout << "\n";
-    cout << "INHERITANCE:\n";
-    cout << "class Base { };\n";
-    cout << "class Derived : public Base { };  // Derived IS-A Base\n";
-    cout << "\n";
-    cout << "Derived d;  // Contains Base part\n";
-    cout << "\n";
-    cout << "KEY DIFFERENCES:\n";
-    cout << "  • Nested: HAS-A relationship (containment)\n";
-    cout << "  • Inheritance: IS-A relationship\n";
-    cout << "  • Nested: Independent objects\n";
-    cout << "  • Inheritance: Derived contains base\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "✅ DO:\n";
-    cout << "  • Use for tightly coupled classes\n";
-    cout << "  • Hide implementation details with private nested\n";
-    cout << "  • Use for iterators\n";
-    cout << "  • Use for builder patterns\n";
-    cout << "  • Keep nested classes small\n";
-    cout << "  • Document relationship clearly\n";
-    cout << "  • Use descriptive names\n";
-    cout << "  • Consider forward declaration if needed\n";
-    cout << "\n";
-    cout << "❌ DON'T:\n";
-    cout << "  • Nest just to group unrelated classes\n";
-    cout << "  • Create deep nesting hierarchies\n";
-    cout << "  • Use for independent, reusable classes\n";
-    cout << "  • Make large, complex nested classes\n";
-    cout << "  • Forget about access requirements\n";
-    cout << "  • Overuse - keep it simple\n";
-
-    cout << "\n========================================\n";
-    cout << "STATIC MEMBERS IN NESTED CLASSES\n";
-    cout << "========================================\n";
-    cout << "Nested classes CAN have static members:\n";
-    cout << "\n";
-    cout << "class Outer {\n";
-    cout << "private:\n";
-    cout << "    static int outerStatic;\n";
-    cout << "    \n";
-    cout << "public:\n";
-    cout << "    class Inner {\n";
-    cout << "    private:\n";
-    cout << "        static int innerStatic;  // ✅ Allowed!\n";
-    cout << "        \n";
-    cout << "    public:\n";
-    cout << "        static void method() {\n";
-    cout << "            // Can access outer's static directly\n";
-    cout << "            int x = outerStatic;  // ✅ OK\n";
-    cout << "        }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Define static members\n";
-    cout << "int Outer::outerStatic = 0;\n";
-    cout << "int Outer::Inner::innerStatic = 0;\n";
-    cout << "\n";
-    cout << "NOTE: Local classes CAN'T have static members!\n";
-
-    cout << "\n========================================\n";
-    cout << "FORWARD DECLARATION\n";
-    cout << "========================================\n";
-    cout << "Can forward declare nested classes:\n";
-    cout << "\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner;  // Forward declaration\n";
-    cout << "    \n";
-    cout << "    void useInner(Inner* ptr);  // Can use pointer\n";
-    cout << "    \n";
-    cout << "    class Inner {  // Definition\n";
-    cout << "    public:\n";
-    cout << "        void method();\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "BENEFITS:\n";
-    cout << "  • Break circular dependencies\n";
-    cout << "  • Organize class definition\n";
-    cout << "  • Defer implementation\n";
-
-    cout << "\n========================================\n";
-    cout << "TEMPLATES AND NESTED CLASSES\n";
-    cout << "========================================\n";
-    cout << "Nested classes in template classes:\n";
-    cout << "\n";
-    cout << "template<typename T>\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner {\n";
-    cout << "        T data;  // Can use template parameter\n";
-    cout << "    public:\n";
-    cout << "        Inner(T d) : data(d) { }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Usage:\n";
-    cout << "Outer<int>::Inner inner(42);\n";
-    cout << "\n";
-    cout << "Template nested classes:\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    template<typename T>\n";
-    cout << "    class Inner {\n";
-    cout << "        T data;\n";
-    cout << "    public:\n";
-    cout << "        Inner(T d) : data(d) { }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Usage:\n";
-    cout << "Outer::Inner<int> inner(42);\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "EXAMPLE 1: std::string::iterator\n";
-    cout << "  • Iterator is nested in string class\n";
-    cout << "  • Provides iteration over string\n";
-    cout << "  • Hidden implementation details\n";
-    cout << "\n";
-    cout << "EXAMPLE 2: std::vector::iterator\n";
-    cout << "  • Vector's iterator is nested class\n";
-    cout << "  • Standard pattern for containers\n";
-    cout << "  • Type-safe iteration\n";
-    cout << "\n";
-    cout << "EXAMPLE 3: Tree::Node\n";
-    cout << "  • Node is private implementation\n";
-    cout << "  • Only tree can manipulate nodes\n";
-    cout << "  • Perfect encapsulation\n";
-    cout << "\n";
-    cout << "EXAMPLE 4: Builder patterns\n";
-    cout << "  • StringBuilder, HttpRequestBuilder, etc.\n";
-    cout << "  • Builder is public nested class\n";
-    cout << "  • Fluent interface for construction\n";
-
-    cout << "\n========================================\n";
-    cout << "COMPARISON WITH ALTERNATIVES\n";
-    cout << "========================================\n";
-    cout << "NESTED CLASS:\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner { };\n";
-    cout << "};\n";
-    cout << "Pros: Logical grouping, access to outer's private\n";
-    cout << "Cons: Tight coupling, harder to reuse\n";
-    cout << "\n";
-    cout << "SEPARATE CLASS:\n";
-    cout << "class Outer { };\n";
-    cout << "class Inner { };\n";
-    cout << "Pros: Independent, reusable, simpler\n";
-    cout << "Cons: No special relationship, separate namespaces\n";
-    cout << "\n";
-    cout << "NAMESPACE:\n";
-    cout << "namespace MyLib {\n";
-    cout << "    class Outer { };\n";
-    cout << "    class Inner { };\n";
-    cout << "}\n";
-    cout << "Pros: Grouping, no coupling\n";
-    cout << "Cons: No special access privileges\n";
-    cout << "\n";
-    cout << "CHOOSE BASED ON:\n";
-    cout << "  • Coupling: How tightly related?\n";
-    cout << "  • Reusability: Used elsewhere?\n";
-    cout << "  • Encapsulation: Hide implementation?\n";
-    cout << "  • Clarity: What's clearest?\n";
-
-    cout << "\n========================================\n";
-    cout << "QUICK REFERENCE\n";
-    cout << "========================================\n";
-    cout << "// Basic nested class\n";
-    cout << "class Outer {\n";
-    cout << "public:\n";
-    cout << "    class Inner {\n";
-    cout << "        int data;\n";
-    cout << "    public:\n";
-    cout << "        Inner(int d) : data(d) { }\n";
-    cout << "        void method() { }\n";
-    cout << "    };\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Usage\n";
-    cout << "Outer::Inner inner(42);\n";
-    cout << "inner.method();\n";
-    cout << "\n";
-    cout << "// Private nested class\n";
-    cout << "class Outer {\n";
-    cout << "private:\n";
-    cout << "    class Inner { };  // Only Outer can use\n";
-    cout << "};\n";
-    cout << "\n";
-    cout << "// Local class\n";
-    cout << "void func() {\n";
-    cout << "    class Local { };  // Only in this function\n";
-    cout << "    Local obj;\n";
-    cout << "}\n";
-    cout << "\n";
-    cout << "// Accessing outer's members\n";
-    cout << "class Outer {\n";
-    cout << "    int data;\n";
-    cout << "public:\n";
-    cout << "    class Inner {\n";
-    cout << "        void access(Outer& o) {\n";
-    cout << "            o.data;  // ✅ Can access private\n";
-    cout << "        }\n";
-    cout << "    };\n";
-    cout << "};\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY TAKEAWAYS\n";
-    cout << "========================================\n";
-    cout << "1. Nested classes are defined inside another class\n";
-    cout << "2. Use Outer::Inner to access nested class\n";
-    cout << "3. Nested can access outer's private (with object)\n";
-    cout << "4. Outer can access nested's private\n";
-    cout << "5. Perfect for iterators and implementation details\n";
-    cout << "6. Private nested classes hide implementation\n";
-    cout << "7. Public nested classes provide interfaces\n";
-    cout << "8. Local classes defined in functions\n";
-    cout << "9. Use for tightly coupled classes only\n";
-    cout << "10. Keep nested classes small and focused\n";
-
-    cout << "\n========================================\n";
-    cout << "DECISION TREE\n";
-    cout << "========================================\n";
-    cout << "Is class tightly coupled to another class?\n";
-    cout << "  NO  → Use separate class\n";
-    cout << "  YES → Continue...\n";
-    cout << "\n";
-    cout << "Is it an implementation detail?\n";
-    cout << "  YES → Private nested class ✅\n";
-    cout << "  NO  → Continue...\n";
-    cout << "\n";
-    cout << "Is it part of the public interface?\n";
-    cout << "  YES → Public nested class ✅\n";
-    cout << "        (e.g., Iterator, Builder)\n";
-    cout << "  NO  → Continue...\n";
-    cout << "\n";
-    cout << "Will it be reused elsewhere?\n";
-    cout << "  YES → Separate class\n";
-    cout << "  NO  → Nested class ✅\n";
-    cout << "\n";
-    cout << "Is it only used in one function?\n";
-    cout << "  YES → Local class ✅\n";
-    cout << "  NO  → Nested class ✅\n";
-
-    cout << "\n========================================\n";
-    cout << "COMPARISON TABLE\n";
-    cout << "========================================\n";
-    cout << "┌──────────────────┬─────────┬──────────┬───────────┐\n";
-    cout << "│ Feature          │ Nested  │ Separate │ Local     │\n";
-    cout << "├──────────────────┼─────────┼──────────┼───────────┤\n";
-    cout << "│ Scope            │ Outer   │ Global   │ Function  │\n";
-    cout << "│ Access outer     │ Yes*    │ No       │ Limited   │\n";
-    cout << "│ Reusability      │ Low     │ High     │ None      │\n";
-    cout << "│ Encapsulation    │ High    │ Low      │ High      │\n";
-    cout << "│ Coupling         │ High    │ Low      │ High      │\n";
-    cout << "│ Visibility       │ Control │ Public   │ Private   │\n";
-    cout << "│ Static members   │ Yes     │ Yes      │ No        │\n";
-    cout << "│ Use case         │ Related │ General  │ Helper    │\n";
-    cout << "└──────────────────┴─────────┴──────────┴───────────┘\n";
-    cout << "* With object reference\n";
 
     return 0;
 }

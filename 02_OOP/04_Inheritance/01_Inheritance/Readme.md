@@ -2,7 +2,7 @@
 
 ## 📚 Overview
 
-This folder introduces **Inheritance** - one of the fundamental pillars of Object-Oriented Programming. Inheritance allows you to create new classes from existing classes, promoting code reuse, establishing hierarchical relationships, and enabling polymorphism.
+This folder introduces **Inheritance** - one of the fundamental pillars of Object-Oriented Programming. Inheritance allows you to create new classes from existing classes, promoting code reuse and establishing hierarchical relationships. Together with `virtual` functions it is also the foundation for polymorphism.
 
 **Inheritance** = Creating new classes from existing ones (IS-A relationship)
 
@@ -36,7 +36,7 @@ This is a crucial concept for building maintainable, organized, and scalable C++
 - **Code reuse** - Don't repeat yourself
 - **Hierarchical classification** - Natural organization
 - **Extensibility** - Add new features easily
-- **Polymorphism** - Foundation for dynamic behavior
+- **Polymorphism** - inheritance plus `virtual` functions makes dynamic behavior possible (inheritance alone does not)
 
 ### Real-World Analogy
 ```
@@ -65,8 +65,8 @@ but each adds its own specialized features.
 ┌─────────────────┐
 │     Animal      │  (Base Class)
 │  ─────────────  │
-│  + name: string │
-│  + age: int     │
+│  # name: string │
+│  # age: int     │
 │  + eat()        │
 │  + sleep()      │
 └─────────────────┘
@@ -77,10 +77,11 @@ but each adds its own specialized features.
 ┌───▼──────┐  ┌───▼──────┐
 │   Dog    │  │   Cat    │  (Derived Classes)
 │  ──────  │  │  ──────  │
-│  + breed │  │  + color │
+│  - breed │  │  - color │
 │  + bark()│  │  + meow()│
 └──────────┘  └──────────┘
 ```
+`+` public, `#` protected, `-` private (as in `main.cpp`: `name` and `age` are protected).
 
 ---
 
@@ -230,8 +231,8 @@ How public/protected/private inheritance works.
 ### Example 3: Constructor and Destructor Calls
 Order of construction and destruction.
 
-### Example 4: Function Overriding
-Derived class providing new implementation.
+### Example 4: Function Hiding
+Derived class providing a new implementation of a non-virtual function (hiding, not overriding).
 
 ### Example 5: Protected Access Modifier
 When and why to use protected members.
@@ -278,7 +279,7 @@ d.pub = 10;   // ✅ Still public
 // d.priv = 10;  // ❌ Private
 ```
 
-**Use 99% of the time - represents IS-A relationship.**
+**The default choice - represents an IS-A relationship** (opinion: in practice almost all inheritance in real code is public).
 
 #### Protected Inheritance (Rarely Used)
 ```cpp
@@ -293,7 +294,7 @@ Derived d;
 // d.pub = 10;  // ❌ Now protected!
 ```
 
-**Rarely used - breaks IS-A relationship.**
+**Rarely used.** Outside code (and anything that is not a member or friend of `Derived`) cannot convert `Derived*` to `Base*`, so there is no substitutability - it is not an IS-A relationship. ✅ tested: `is_convertible_v<PublicDerived*, Base*>` is `true`, for `ProtectedDerived*` and `PrivateDerived*` it is `false` (Example 2 prints this); `Base* b = &protectedDerived;` outside the class is the error `'Base' is an inaccessible base`.
 
 #### Private Inheritance (Use Composition Instead)
 ```cpp
@@ -308,7 +309,9 @@ Derived d;
 // d.pub = 10;  // ❌ Now private!
 ```
 
-**Better to use composition (HAS-A) instead.**
+**Usually composition (HAS-A) is the better tool** - private inheritance is mainly useful to reuse a base's implementation or override its virtual functions without exposing it.
+
+**`class` vs `struct` default:** `class D : Base` inherits privately, `struct D : Base` inherits publicly. ✅ tested: `is_convertible_v<D*, Base*>` is `false` for the `class`, `true` for the `struct`; `cd.x` on the `class` version is the error `'int Base::x' is inaccessible`. Always write the access specifier.
 
 ### Summary Table
 ```
@@ -379,6 +382,7 @@ savings.addInterest();      // ✅ OK! Public method
 **Avoid protected for:**
 - Everything (breaks encapsulation)
 - Public interface (use public methods)
+- Data members in general: the C++ Core Guidelines advise against protected *data* ([C.133](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-protected)) because it spreads the class invariant over the whole hierarchy. The examples here use it to show the mechanism; protected *functions* are the safer extension point.
 
 ---
 
@@ -447,17 +451,21 @@ public:
     Derived(int d, int dd) : Base(d), derivedData(dd) { }
     
     // ❌ Wrong: Derived(int d, int dd) { Base(d); }
-    // This creates temporary object, doesn't initialize base!
+    // Does NOT compile here: Base has no default constructor, so the base
+    // subobject cannot be built before the body runs.
+    // (And even if Base had one, "Base(d);" in the body would only create
+    // a separate object / declare a variable named d, never initialize the base.)
 };
 ```
+✅ tested: `Derived(int d, int dd) { Base(d); }` fails with `no matching function for call to 'Base::Base()'`, and so does a constructor that simply omits `Base(d)` from the initializer list.
 
 **Key Rule:** Base constructor is called FIRST, before derived constructor body executes.
 
 ---
 
-## 💡 Function Overriding
+## 💡 Function Hiding vs. Overriding
 
-### Basic Overriding
+### Hiding (no `virtual`)
 ```cpp
 class Shape {
 public:
@@ -468,7 +476,7 @@ public:
 
 class Circle : public Shape {
 public:
-    // Override base class function
+    // Hides Shape::draw (not virtual -> this is hiding, not overriding)
     void draw() {
         cout << "Drawing circle\n";
     }
@@ -479,7 +487,30 @@ Circle c;
 
 s.draw();  // "Drawing generic shape"
 c.draw();  // "Drawing circle"
+
+Shape* p = &c;
+p->draw(); // "Drawing generic shape" - the static type decides!
 ```
+✅ tested; Example 4 in `main.cpp` shows the last call.
+
+### Overriding (`virtual` + `override`)
+```cpp
+class Shape {
+public:
+    virtual ~Shape() = default;
+    virtual void draw() { cout << "Drawing generic shape\n"; }
+};
+
+class Circle : public Shape {
+public:
+    void draw() override { cout << "Drawing circle\n"; }
+};
+
+Shape* p = new Circle;
+p->draw();  // "Drawing circle" - chosen at run time
+delete p;
+```
+`override` makes the compiler check that a base function really is overridden. ✅ tested: `override` on a function that is not virtual in the base is the error `marked 'override', but does not override`.
 
 ### Calling Base Version
 ```cpp
@@ -492,7 +523,7 @@ public:
 };
 ```
 
-**Note:** Without `virtual` keyword, this is NOT polymorphism (yet)! See polymorphism chapter for that.
+**Note:** Without the `virtual` keyword the derived function only hides the base one and there is no polymorphism. See 14_VirtualFunctions for that.
 
 ---
 
@@ -575,6 +606,7 @@ public:
     }
 };
 ```
+✅ tested: `sm.powerOn()` gives `request for member 'powerOn' is ambiguous`, and `Device* p = &sm;` gives `'Device' is an ambiguous base of 'SmartPhone'`. Example 7 prints the same fact with `is_convertible_v<SmartPhone*, Device*>` (`false`) and `sizeof(SmartPhone)` (64 with GCC on x86-64: two `Device` objects).
 
 **Problem:** SmartPhone has **TWO copies** of Device!
 ```
@@ -637,9 +669,11 @@ SmartPhone contains:
 ### Virtual Inheritance Rules
 
 1. Use `virtual` keyword: `class B : virtual public A`
-2. Most derived class calls base constructor
+2. The most derived class initializes the virtual base (`SmartPhone` above); the `Device(n)` calls in `Phone`/`Camera` are ignored when a `SmartPhone` is built
 3. Only one copy of base class exists
 4. Resolves diamond problem
+
+✅ tested: with `Device("S")` in `SmartPhone` only one `Device` is constructed (`Dv(S)`, not `Dv(S-pv)` or `Dv(S-cv)`). If `SmartPhone` omits `Device(n)` and `Device` has no default constructor, it does not compile (`no matching function for call to 'Device::Device()'`).
 
 ---
 
@@ -740,11 +774,12 @@ public:
     // Constructor
     Base() { }
     
-    // Virtual destructor (important!)
+    // Virtual destructor: needed when objects are deleted through a Base*
+    // (if the class is not meant for that, make it protected and non-virtual - C.35)
     virtual ~Base() { }
     
-    // Public interface
-    void publicMethod() { }
+    // Public interface (virtual, so Derived can override it)
+    virtual void publicMethod() { }
     
 protected:
     // Protected methods for derived classes
@@ -762,7 +797,7 @@ public:
     // Constructor (calls base constructor)
     Derived() : Base() { }
     
-    // Override methods
+    // Override methods (publicMethod must be virtual in Base)
     void publicMethod() override {
         Base::publicMethod();  // Call base if needed
         // Add derived behavior
@@ -807,8 +842,10 @@ Create a `BankAccount` base class:
 
 ### Compile:
 ```bash
-g++ -std=c++17 inheritance.cpp -o inheritance
+g++ -std=c++23 -Wall -Wextra main.cpp -o inheritance
 ```
+
+`main.cpp` uses `std::println` (`<print>`), so it needs GCC 14+ or a recent Clang with `-std=c++23`.
 
 ### Run:
 ```bash
@@ -820,12 +857,12 @@ The program demonstrates:
 1. Basic inheritance
 2. Access specifiers
 3. Constructor/destructor order
-4. Function overriding
+4. Function hiding (non-virtual `draw`)
 5. Protected members
 6. Multiple inheritance
 7. Diamond problem
 8. Virtual inheritance
-9. Employee hierarchy
+9. Employee hierarchy (virtual `displayInfo` with `override`)
 10. IS-A vs HAS-A
 
 ---
@@ -837,8 +874,8 @@ The program demonstrates:
 ┌────────────────────────┐
 │       Vehicle          │  Base Class
 │  ─────────────────     │
-│  + brand: string       │
-│  + year: int           │
+│  # brand: string       │
+│  # year: int           │
 │  + start()             │
 └────────────────────────┘
            ▲
@@ -848,7 +885,7 @@ The program demonstrates:
 ┌───▼────┐   ┌───▼────┐  ┌──▼─────┐
 │  Car   │   │  Bike  │  │ Truck  │  Derived
 │ ────── │   │ ────── │  │ ────── │  Classes
-│ +doors │   │ +type  │  │ +cargo │
+│ -doors │   │ -type  │  │ -cargo │
 │ +drive()│   │ +pedal()│  │+haul() │
 └────────┘   └────────┘  └────────┘
 ```
@@ -908,9 +945,9 @@ Contains ONE Device copy ✅
 - **07_CopyConstructor** - Constructors
 
 ### Coming Next:
-- **14_Polymorphism** - Dynamic binding
-- **15_VirtualFunctions** - Virtual dispatch
-- **16_AbstractClasses** - Pure virtual functions
+- **14_VirtualFunctions** - Virtual dispatch
+- **15_AbstractClasses** - Pure virtual functions
+- **16_Polymorphism** - Dynamic binding
 
 ### Related Concepts:
 - **Composition** - HAS-A relationships
@@ -925,13 +962,13 @@ Contains ONE Device copy ✅
 
 ✅ **Inheritance** creates IS-A relationships
 ✅ **Derived class** inherits base class members
-✅ **Public inheritance** most common (99%)
+✅ **Public inheritance** is the common case
 ✅ **Protected** members accessible to derived
 ✅ **Construction** order: base → derived
 ✅ **Destruction** order: derived → base
 ✅ **Multiple inheritance** possible but complex
 ✅ **Diamond problem** solved with virtual
-✅ **Function overriding** provides specialization
+✅ **Overriding** (with `virtual`) provides specialization; without it a derived function only hides the base one
 ✅ **Prefer composition** over inheritance
 
 ### The Complete Pattern:
@@ -943,9 +980,9 @@ protected:
     
 public:
     Base(int data) : sharedData(data) { }
-    virtual ~Base() { }  // Virtual destructor!
+    virtual ~Base() { }  // Virtual destructor (for deletion through Base*)
     
-    void baseMethod() {
+    virtual void baseMethod() {
         cout << "Base method\n";
     }
 };
@@ -967,7 +1004,7 @@ public:
     }
     
     // Override base method
-    void baseMethod() {
+    void baseMethod() override {
         Base::baseMethod();  // Call base version
         cout << "Derived method\n";
     }
@@ -975,9 +1012,10 @@ public:
 
 // Usage
 Derived obj(5, 10);
-obj.baseMethod();    // Calls Derived version
+obj.baseMethod();    // Calls Derived version (also through a Base&)
 obj.derivedMethod(); // Derived's own method
 ```
+✅ tested (compiles; `Base& r = obj; r.baseMethod();` prints `Base method` then `Derived method`). Earlier versions of this snippet and of the two patterns above did not compile or only hid the base function, because `baseMethod` / `publicMethod` were not virtual.
 
 ---
 
@@ -990,7 +1028,7 @@ protected:
 public:
     Base(int d) : data(d) { }
     virtual ~Base() { }
-    void method() { }
+    virtual void method() { }
 };
 
 class Derived : public Base {
@@ -1000,9 +1038,10 @@ public:
         data = 10;  // Access protected
         method();   // Call inherited
     }
+    void method() override;
 };
 
-// MULTIPLE INHERITANCE
+// MULTIPLE INHERITANCE (Base1, Base2 are any two classes)
 class Multi : public Base1, public Base2 {
 public:
     Multi() : Base1(), Base2() { }
@@ -1013,7 +1052,7 @@ class B : virtual public A { };
 class C : virtual public A { };
 class D : public B, public C { };
 
-// CALLING BASE METHODS
+// CALLING BASE METHODS (method is virtual in Base)
 void Derived::method() {
     Base::method();  // Call base version
     // Add derived behavior
@@ -1027,11 +1066,11 @@ void Derived::method() {
 ### ✅ DO:
 
 - **Use public inheritance** for IS-A relationships
-- **Make base destructors virtual** (always!)
+- **Make a base destructor virtual** if objects may be deleted through a `Base*` (or protected and non-virtual if not - [C.35](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rc-dtor-virtual))
 - **Call base constructors** explicitly
-- **Use protected** for shared data
-- **Keep hierarchies shallow** (2-3 levels max)
-- **Override with same signature**
+- **Use protected** for shared functionality (protected *data* is discouraged, C.133)
+- **Keep hierarchies shallow** (rule of thumb, not a language limit)
+- **Override with the same signature and write `override`**
 - **Document relationships** clearly
 - **Prefer composition** when in doubt
 - **Test IS-A relationship** ("Dog IS-A Animal?")
@@ -1040,12 +1079,12 @@ void Derived::method() {
 
 - **Overuse inheritance** (composition often better)
 - **Use multiple inheritance** without good reason
-- **Forget base constructors** (will get default)
+- **Forget base constructors** (the base *default* constructor is called implicitly; if there is none, it does not compile)
 - **Make everything public** to inherit it
 - **Create deep hierarchies** (hard to maintain)
 - **Use private/protected** inheritance (use composition)
 - **Ignore diamond problem** in multiple inheritance
-- **Inherit for code reuse** alone (use composition)
+- **Inherit for code reuse** alone (use composition; Core Guidelines [C.120](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rh-domain): use hierarchies for concepts with inherent hierarchical structure)
 
 ---
 
@@ -1085,10 +1124,10 @@ class Enemy : public GameObject { };
 
 ## 📖 Further Reading
 
-- [cppreference.com - Derived Classes](https://en.cppreference.com/w/cpp/language/derived_class)
-- "Effective C++" by Scott Meyers - Items 32-40
-- "C++ Primer" by Lippman - Chapter on Inheritance
-- [C++ Core Guidelines - Inheritance](https://isocpp.github.io/CppCoreGuidelines/)
+- [cppreference.com - Derived classes](https://en.cppreference.com/cpp/language/derived_class)
+- "Effective C++" (3rd ed.) by Scott Meyers - Items 32-40 (public vs private inheritance, multiple inheritance)
+- "C++ Primer" (5th ed.) by Lippman et al. - Chapter 15 (Object-Oriented Programming) and the section on virtual inheritance
+- [C++ Core Guidelines - C.hier: Class hierarchies (OOP)](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#ss-hier)
 
 ---
 
@@ -1096,11 +1135,11 @@ class Enemy : public GameObject { };
 
 1. Inheritance creates **IS-A relationships**
 2. **Derived class inherits** base members
-3. Use **public inheritance** (99% of time)
+3. Use **public inheritance** for IS-A
 4. **Protected** accessible to derived classes
 5. **Construction**: base before derived
 6. **Destruction**: derived before base
-7. **Always** make base destructor virtual
+7. Make the base destructor **virtual** if you delete through a `Base*`
 8. **Diamond problem** solved with virtual inheritance
 9. **Prefer composition** over inheritance
 10. **Keep hierarchies simple** and shallow
@@ -1109,7 +1148,7 @@ class Enemy : public GameObject { };
 
 **Previous Topic:** [12_FriendFunctions](../12_FriendFunctions/) - Friend Functions
 
-**Next Topic:** [14_Polymorphism](../14_Polymorphism/) - Dynamic Binding (coming next)
+**Next Topic:** [14_VirtualFunctions](../14_VirtualFunctions/) - Virtual Functions
 
 ---
 
@@ -1117,3 +1156,42 @@ class Enemy : public GameObject { };
 *Difficulty: Intermediate*
 *Prerequisites: 05_Encapsulation, 07_CopyConstructor*
 *Foundation for Polymorphism*
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+Per-example points from the removed `💡` blocks (not repeated where the sections above already say them):
+
+- **Example 1:** benefits are code reuse (`eat`, `sleep`), hierarchical organization and specialized behavior (`bark`). Destruction runs in reverse order of construction (`~Dog`, then `~Animal`), visible after the `--- Destruction order ---` line.
+- **Example 2:** protected members stay accessible inside all three derived classes; what changes is what *outside* code can do with the object (see the table and the `is_convertible_v` output).
+- **Example 4:** `draw()` is not virtual, so `Circle::draw` and `Rectangle::draw` **hide** `Shape::draw`. Called through a `Shape*` the base version runs. The example was titled "Function Overriding" before; it is now "Function Hiding".
+- **Example 5:** protected = accessible to derived classes, not to outside code, "between private and public".
+- **Example 6:** `Duck` IS-A `Flyer` and IS-A `Swimmer`. Bases are constructed in the order they are *listed in the class head* (`Flyer`, then `Swimmer`), not in the order of the member-initializer list.
+- **Example 7/8:** two `Device` subobjects (ambiguous) vs one shared `VDevice` constructed by the most derived class.
+- **Example 9:** `displayInfo` is now `virtual` in `Employee` and `override` in `Manager`/`Developer`, so the loop over `Employee*` prints the full derived output. Before, the derived versions only hid the base one, although the base class had a virtual destructor "for polymorphism".
+- **Example 10:** IS-A: Dog/Animal, Student/Person → inheritance. HAS-A: Car/Engine, Book/Author → composition. ✅ `Car*` converts to `Vehicle*`, `Motorcycle*` does not convert to `Engine*`.
+
+Other lecture content that was only in `main.cpp`:
+
+- **What is inherited?** Member functions, static members (✅ tested: `SD::count` and `sd.count` are the same static `B0::count`), and public/protected members according to the access table. Constructors, destructors and assignment operators are not inherited as such: each class has its own (the derived class gets implicitly generated ones that call the base's). ✅ tested: a defaulted `Derived` copy constructor calls `Base`'s copy constructor (`Base copy` is printed). Inheriting constructors explicitly is the topic of 25_InheritingConstructors. Private base members exist in the object but are not accessible.
+- **Order with member objects:** base class constructor → member objects (in declaration order) → derived constructor body; destruction in exactly the reverse order. ✅ tested with `A` (member `Tag`) and `B : A` (member `Tag`): `Tag A.member`, `A()`, `Tag B.member`, `B()`, then `~B()`, `~Tag`, `~A()`, `~Tag`.
+- **Common mistakes (corrected):**
+  1. *Not calling the base constructor.* Only a problem if the base has no default constructor - then it is a compile error (tested above); otherwise the default constructor runs silently. The old note "Base() called implicitly" shown as an error was misleading.
+  2. *Accessing private base members:* error; give the base a protected/public interface.
+  3. *Non-virtual base destructor:* only a bug if an object is deleted through a `Base*` (undefined behavior, see 17_VirtualDestructor and 28_ObjectSlicing); for a class never deleted that way it is fine.
+- **Best-practice summary** (public for IS-A, call base constructors, shallow hierarchies, composition when in doubt) is already in the *Best Practices* section above.
+
+**Code changes in `main.cpp`:**
+  - Example 4: titled "Function Hiding", comments corrected (non-virtual `draw` hides) and a `Shape*` demo added.
+  - Example 9: `displayInfo` virtual + `override`, demo through `Employee*`.
+  - Examples 2, 7, 8, 10: real `is_convertible_v` / `sizeof` demos instead of lecture text (sizes are for GCC on x86-64).
+  - One-argument constructors made `explicit` (see 23_ExplicitKeyword); `using namespace std;` and the unused `<vector>` removed.
+  - ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer; output identical to the original apart from the changes listed.
+
+---
+
+## ⚠️ Open points
+
+- Numbering: this README's "Prerequisites" mention `07_CopyConstructor` and the footer says "Prerequisites: 05_Encapsulation, 07_CopyConstructor"; check that name against your actual folder. "Coming Next" was changed to 14_VirtualFunctions, 15_AbstractClasses, 16_Polymorphism to match the other folders (it listed 14_Polymorphism, 15_VirtualFunctions, 16_AbstractClasses).
+- Not tested / not opened: the cppreference and Core Guidelines links (the cppreference URL comes from a search result; the Core Guidelines anchors are taken from the guidelines text), "Effective C++ Items 32-40" and the "C++ Primer" chapter number (from memory). The "2-3 levels" and "almost all inheritance is public" statements are rules of thumb.

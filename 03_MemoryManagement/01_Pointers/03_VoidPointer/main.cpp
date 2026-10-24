@@ -1,5 +1,8 @@
-#include <iostream>
-#include <cstring>   // memcpy
+#include <print>
+#include <bit>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 // =============================================================
 // void* — a pointer that can point to ANY type
@@ -10,22 +13,28 @@
 void printValue(void* ptr, char type)
 {
     switch (type) {
-    case 'i': std::cout << "int:    " << *(static_cast<int*>(ptr))    << '\n'; break;
-    case 'd': std::cout << "double: " << *(static_cast<double*>(ptr)) << '\n'; break;
-    case 'c': std::cout << "char:   " << *(static_cast<char*>(ptr))   << '\n'; break;
-    case 'f': std::cout << "float:  " << *(static_cast<float*>(ptr))  << '\n'; break;
-    default:  std::cout << "Unknown type\n"; break;
+    case 'i': std::println("int:    {}", *(static_cast<int*>(ptr))); break;
+    case 'd': std::println("double: {}", *(static_cast<double*>(ptr))); break;
+    case 'c': std::println("char:   {}", *(static_cast<char*>(ptr))); break;
+    case 'f': std::println("float:  {}", *(static_cast<float*>(ptr))); break;
+    default:  std::println("Unknown type"); break;
     }
 }
 
 // Generic swap using void* and memcpy (like C's qsort internals)
-void genericSwap(void* a, void* b, size_t size)
+// Only valid for trivially copyable types (int, double, plain structs...),
+// NOT for std::string, std::vector, ... (their bytes contain internal pointers)
+void genericSwap(void* a, void* b, std::size_t size)
 {
     // Temporary buffer on stack
     unsigned char temp[256];
-    memcpy(temp, a, size);
-    memcpy(a, b, size);
-    memcpy(b, temp, size);
+    if (size > sizeof(temp)) {
+        std::println("genericSwap: size {} does not fit the {}-byte buffer", size, sizeof(temp));
+        return;
+    }
+    std::memcpy(temp, a, size);
+    std::memcpy(a, b, size);
+    std::memcpy(b, temp, size);
 }
 
 
@@ -34,9 +43,9 @@ int main()
     // =================================================
     // BASIC void* — point to anything
     // =================================================
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: void* Basic Usage\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: void* Basic Usage");
+    std::println("=====================================================");
 
     int    i = 42;
     double d = 3.14;
@@ -46,39 +55,44 @@ int main()
     void* vptr;   // can point to any type
 
     vptr = &i;
-    std::cout << "vptr points to int,    address: " << vptr << '\n';
+    std::println("vptr points to int,    address: {}", vptr);
 
     vptr = &d;
-    std::cout << "vptr points to double, address: " << vptr << '\n';
+    std::println("vptr points to double, address: {}", vptr);
 
     vptr = &c;
-    std::cout << "vptr points to char,   address: " << vptr << '\n';
+    std::println("vptr points to char,   address: {}", vptr);
+
+    vptr = &f;
+    std::println("vptr points to float,  address: {}", vptr);
 
 
     // =================================================
     // MUST CAST BEFORE DEREFERENCING
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Must Cast Before Dereferencing\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Must Cast Before Dereferencing");
+    std::println("=====================================================");
 
     int number = 100;
     void* vp = &number;
 
-    // std::cout << *vp;                         // ERROR — cannot dereference void*
-    std::cout << *(static_cast<int*>(vp)) << '\n';  // OK — cast first, then dereference
+    // std::println("{}", *vp);                         // ERROR — cannot dereference void*
+    std::println("{}", *(static_cast<int*>(vp)));  // OK — cast first, then dereference
 
     // Assign through void pointer
     *(static_cast<int*>(vp)) = 999;
-    std::cout << "After assign through void*: number = " << number << '\n';
+    std::println("After assign through void*: number = {}", number);
 
 
     // =================================================
     // VOID* AS GENERIC FUNCTION PARAMETER
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: void* as Generic Function Parameter\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: void* as Generic Function Parameter");
+    std::println("=====================================================");
 
     int    myInt    = 42;
     double myDouble = 9.81;
@@ -94,82 +108,93 @@ int main()
     // =================================================
     // GENERIC SWAP WITH void*
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Generic Swap Using void*\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Generic Swap Using void*");
+    std::println("=====================================================");
 
     int x = 10, y = 20;
-    std::cout << "Before swap: x = " << x << ", y = " << y << '\n';
+    std::println("Before swap: x = {}, y = {}", x, y);
     genericSwap(&x, &y, sizeof(int));
-    std::cout << "After swap:  x = " << x << ", y = " << y << '\n';
+    std::println("After swap:  x = {}, y = {}", x, y);
 
     double da = 1.11, db = 9.99;
-    std::cout << "\nBefore swap: da = " << da << ", db = " << db << '\n';
+    std::println("");
+    std::println("Before swap: da = {}, db = {}", da, db);
     genericSwap(&da, &db, sizeof(double));
-    std::cout << "After swap:  da = " << da << ", db = " << db << '\n';
+    std::println("After swap:  da = {}, db = {}", da, db);
 
 
     // =================================================
     // VOID* FOR MEMORY OPERATIONS (like malloc/memcpy)
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: void* in Memory Operations\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: void* in Memory Operations");
+    std::println("=====================================================");
 
     // malloc returns void* — must cast in C++
     // (use new/delete in modern C++, but good to understand for C interop)
-    void* rawMemory = malloc(sizeof(int) * 4);
+    void* rawMemory = std::malloc(sizeof(int) * 4);
 
     if (rawMemory != nullptr) {
         int* intArray = static_cast<int*>(rawMemory);
         for (int idx = 0; idx < 4; ++idx)
             intArray[idx] = (idx + 1) * 10;
 
-        std::cout << "Array via void* + malloc: ";
+        std::print("Array via void* + malloc: ");
         for (int idx = 0; idx < 4; ++idx)
-            std::cout << intArray[idx] << " ";
-        std::cout << '\n';
+            std::print("{} ", intArray[idx]);
+        std::println("");
 
-        free(rawMemory);   // use free() with malloc()
+        std::free(rawMemory);   // use free() with malloc()
         rawMemory = nullptr;
     }
 
     // memcpy uses void* — copies raw bytes regardless of type
     int   src[3]  = {1, 2, 3};
     int   dst[3]  = {0, 0, 0};
-    memcpy(dst, src, sizeof(src));   // internally uses void*
-    std::cout << "After memcpy: dst = ";
-    for (int v : dst) std::cout << v << " ";
-    std::cout << '\n';
+    std::memcpy(dst, src, sizeof(src));   // internally uses void*
+    std::print("After memcpy: dst = ");
+    for (int v : dst) std::print("{} ", v);
+    std::println("");
 
 
     // =================================================
     // void* LIMITATIONS vs modern C++ alternatives
     // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: void* Limitations\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: void* Limitations");
+    std::println("=====================================================");
 
     void* voidPtr = &myInt;
 
     // No arithmetic on void* (unlike int*)
-    // voidPtr++;         // ERROR — compiler doesn't know element size
+    // voidPtr++;         // ERROR in ISO C++ — compiler doesn't know element size
     // voidPtr + 1;       // ERROR — same reason
+    // (GCC accepts both as an extension and only warns with -Wpointer-arith;
+    //  -pedantic-errors turns it into an error.)
 
     // No dereference without cast
     // *voidPtr;          // ERROR
 
     // No type safety — you can cast to wrong type (dangerous!)
-    double* wrongCast = static_cast<double*>(voidPtr);   // compiles but WRONG
-    std::cout << "Wrong cast result (undefined behavior): " << *wrongCast << '\n';
+    // (Casting to double* would read 8 bytes from a 4-byte int: a stack buffer overflow.
+    //  float has the same size as int, so the damage stays small - but it is still UB.)
+    float* wrongCast = static_cast<float*>(voidPtr);   // compiles but WRONG
+    std::println("Wrong cast result (undefined behavior): {}", *wrongCast);
+    // The well-defined way to reinterpret the bytes:
+    std::println("std::bit_cast<float>(myInt) (well-defined): {}", std::bit_cast<float>(myInt));
 
-    std::cout << "\nvoid* summary:\n";
-    std::cout << "  ✅ Can point to any type\n";
-    std::cout << "  ✅ Useful for C interop (malloc, memcpy, callbacks)\n";
-    std::cout << "  ❌ Cannot dereference without cast\n";
-    std::cout << "  ❌ No pointer arithmetic\n";
-    std::cout << "  ❌ No type safety\n";
-    std::cout << "  → Prefer templates or std::any in modern C++\n";
+    std::println("");
+    std::println("void* summary:");
+    std::println("  ✅ Can point to any type");
+    std::println("  ✅ Useful for C interop (malloc, memcpy, callbacks)");
+    std::println("  ❌ Cannot dereference without cast");
+    std::println("  ❌ No pointer arithmetic");
+    std::println("  ❌ No type safety");
+    std::println("  → Prefer templates or std::any in modern C++");
 
     return 0;
 }
