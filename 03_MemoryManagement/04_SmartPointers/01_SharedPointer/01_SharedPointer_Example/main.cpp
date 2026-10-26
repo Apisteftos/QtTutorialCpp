@@ -1,5 +1,6 @@
-#include <iostream>
 #include <memory>
+#include <print>
+#include <string>
 #include <vector>
 
 class Document {
@@ -10,15 +11,15 @@ private:
 public:
     Document(const std::string& name, const std::string& content)
         : name(name), content(content) {
-        std::cout << "Document '" << name << "' created\n";
+        std::println("Document '{}' created", this->name);
     }
 
     ~Document() {
-        std::cout << "Document '" << name << "' destroyed\n";
+        std::println("Document '{}' destroyed", name);
     }
 
     void display() const {
-        std::cout << "Document: " << name << " - " << content << "\n";
+        std::println("Document: {} - {}", name, content);
     }
 
     std::string getName() const { return name; }
@@ -34,56 +35,60 @@ public:
 
     void addDocument(std::shared_ptr<Document> doc) {
         documents.push_back(doc);
-        std::cout << username << " now has access to '"
-                  << doc->getName() << "'\n";
+        std::println("{} now has access to '{}'", username, doc->getName());
     }
 
     void viewDocuments() const {
-        std::cout << username << "'s documents:\n";
+        std::println("{}'s documents:", username);
         for (const auto& doc : documents) {
-            std::cout << "  - ";
+            std::print("  - ");
             doc->display();
-            std::cout << "    (ref count: " << doc.use_count() << ")\n";
+            std::println("    (ref count: {})", doc.use_count());
         }
     }
 };
 
 int main() {
-    // Create a shared document
+    // === EXAMPLE 1: Create a shared document ===
     auto doc1 = std::make_shared<Document>("Report.pdf", "Q4 Sales Report");
-    std::cout << "Reference count: " << doc1.use_count() << "\n\n";
+    std::println("Reference count: {}", doc1.use_count());
+    std::println("");
 
-    // Multiple users share the same document
+    // === EXAMPLE 2: Multiple users share the same document ===
     {
         User alice("Alice");
         User bob("Bob");
 
         alice.addDocument(doc1);
-        std::cout << "Reference count: " << doc1.use_count() << "\n";
+        std::println("Reference count: {}", doc1.use_count());
 
         bob.addDocument(doc1);
-        std::cout << "Reference count: " << doc1.use_count() << "\n\n";
+        std::println("Reference count: {}", doc1.use_count());
+        std::println("");
 
         // Another shared document
         auto doc2 = std::make_shared<Document>("Presentation.pptx", "Project Overview");
         alice.addDocument(doc2);
 
-        std::cout << "\n";
+        std::println("");
         alice.viewDocuments();
-        std::cout << "\n";
+        std::println("");
         bob.viewDocuments();
 
-        std::cout << "\n--- Leaving scope (users destroyed) ---\n";
+        std::println("");
+        std::println("--- Leaving scope (users destroyed) ---");
     } // alice and bob destroyed, but doc1 still exists
 
-    std::cout << "\nReference count after users destroyed: "
-              << doc1.use_count() << "\n";
+    // === EXAMPLE 3: The document outlives its users ===
+    std::println("");
+    std::println("Reference count after users destroyed: {}", doc1.use_count());
     doc1->display();
 
     // Create another reference
     std::shared_ptr<Document> doc1_copy = doc1;
-    std::cout << "Reference count after copy: " << doc1.use_count() << "\n";
+    std::println("Reference count after copy: {}", doc1.use_count());
 
-    std::cout << "\n--- Exiting main ---\n";
+    std::println("");
+    std::println("--- Exiting main ---");
     return 0;
 }

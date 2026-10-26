@@ -1,9 +1,15 @@
-#include <iostream>
+#include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <string>
+#include <cstdio>
+#include <cstdlib>
 #include <print>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <vector>
 
 // ============================================================
 // cassert / static_assert — Assertions in C++23
@@ -17,8 +23,7 @@
 //   6.  Asserting function preconditions/postconditions
 //   7.  static_assert with type traits
 //   8.  static_assert with constexpr
-//   9.  assert vs exceptions vs if
-//  10.  C++23 [[assume]] attribute
+//   9.  C++23 [[assume]] attribute
 // ============================================================
 
 // ============================================================
@@ -26,13 +31,11 @@
 // ============================================================
 static_assert(sizeof(int) >= 4, "int must be at least 4 bytes");
 static_assert(sizeof(void*) == 8, "this code requires 64-bit platform");
-static_assert(sizeof(uint32_t) == 4, "uint32_t must be exactly 4 bytes");
+static_assert(sizeof(std::uint32_t) == 4, "uint32_t must be exactly 4 bytes");
 
 // ============================================================
 // Example 7 — static_assert with type traits
 // ============================================================
-#include <type_traits>
-
 template<typename T>
 T safeAdd(T a, T b) {
     static_assert(std::is_arithmetic_v<T>,
@@ -105,17 +108,19 @@ double safeSqrt(double x) {
             result = 0.5 * (result + x / result);
     }
 
-    // Postcondition: result * result ≈ x
+    // Postcondition: result is non-negative and result * result ≈ x
     assert(result >= 0.0 && "safeSqrt: result must be non-negative");
+    assert(std::abs(result * result - x) <= 1e-9 * (1.0 + x)
+           && "safeSqrt: result * result must be close to x");
     return result;
 }
 
 int binarySearch(const std::vector<int>& v, int target) {
-    // Precondition: vector must be sorted
+    // Precondition: vector must be sorted (O(n) check, removed with NDEBUG)
     assert(std::is_sorted(v.begin(), v.end())
            && "binarySearch: input must be sorted!");
 
-    int lo = 0, hi = (int)v.size() - 1;
+    int lo = 0, hi = static_cast<int>(v.size()) - 1;
     while (lo <= hi) {
         int mid = lo + (hi - lo) / 2;
         if (v[mid] == target) return mid;
@@ -125,188 +130,156 @@ int binarySearch(const std::vector<int>& v, int target) {
     return -1;
 }
 
+namespace
+{
+    void banner(std::string_view title)
+    {
+        std::println("=====================================================");
+        std::println("{}", title);
+        std::println("=====================================================");
+    }
+}
+
 
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: assert() — Runtime Assertion\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: assert() — Runtime Assertion ===
+    banner("Example 1: assert() — Runtime Assertion");
 
-    int x = 42;
+    [[maybe_unused]] int x = 42;   // only used inside assert(): silences -Wunused-variable with NDEBUG
     assert(x == 42);   // passes — does nothing
-    std::cout << "assert(x == 42): passed\n";
+    std::println("assert(x == 42): passed");
 
     assert(x > 0);     // passes
-    std::cout << "assert(x > 0):   passed\n";
+    std::println("assert(x > 0):   passed");
 
     // assert(x == 0);  // would FAIL — prints message and calls abort()
 
     // With message (common idiom)
     assert(x > 0 && "x must be positive");
-    std::cout << "assert with message: passed\n";
-
-    std::cout << "\nassert behavior:\n";
-    std::cout << "  DEBUG build:   assert fires → prints error + aborts program\n";
-    std::cout << "  RELEASE build: assert is removed → zero overhead\n";
+    std::println("assert with message: passed");
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: NDEBUG — Disabling Assertions\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: NDEBUG — Disabling Assertions ===
+    banner("Example 2: NDEBUG — Disabling Assertions");
 
 #ifdef NDEBUG
-    std::cout << "NDEBUG is defined — assertions are DISABLED\n";
-    std::cout << "assert() compiles to nothing — zero overhead\n";
+    std::println("NDEBUG is defined — assertions are DISABLED");
+    std::println("assert() compiles to nothing — zero overhead");
 #else
-    std::cout << "NDEBUG is NOT defined — assertions are ENABLED\n";
-    std::cout << "assert() is active — checking conditions\n";
+    std::println("NDEBUG is NOT defined — assertions are ENABLED");
+    std::println("assert() is active — checking conditions");
 #endif
-
-    std::cout << "\nTo disable in CMake (Release build):\n";
-    std::cout << "  set(CMAKE_BUILD_TYPE Release)  — sets NDEBUG automatically\n";
-    std::cout << "  or: add_compile_definitions(NDEBUG)\n";
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: static_assert — Compile-Time\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: static_assert — Compile-Time ===
+    banner("Example 3: static_assert — Compile-Time");
 
     // These were declared at file scope above — if they fail, compilation stops
-    std::cout << "static_assert(sizeof(int) >= 4): passed\n";
-    std::cout << "static_assert(sizeof(void*) == 8): passed (64-bit)\n";
-    std::cout << "static_assert(sizeof(uint32_t) == 4): passed\n";
+    std::println("static_assert(sizeof(int) >= 4): passed");
+    std::println("static_assert(sizeof(void*) == 8): passed (64-bit)");
+    std::println("static_assert(sizeof(uint32_t) == 4): passed");
 
     // Local static_assert
     constexpr int SIZE = 64;
     static_assert(SIZE > 0,   "SIZE must be positive");
     static_assert(SIZE <= 256,"SIZE must fit in a byte");
-    std::cout << "local static_assert(SIZE): passed\n";
+    std::println("local static_assert(SIZE): passed");
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Custom Assert Messages\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Custom Assert Messages ===
+    banner("Example 4: Custom Assert Messages");
 
-    // C++23 style — cleaner messages with [[assume]] or custom macro
+    // A hand-written check that, unlike assert(), stays active in release builds
+    // and prints its own message.
     auto verify = [](bool condition, const std::string& msg) {
         if (!condition) {
-            std::cerr << "ASSERTION FAILED: " << msg << '\n';
+            std::println(stderr, "ASSERTION FAILED: {}", msg);
             std::abort();
         }
     };
 
-    int port = 5060;
+    int port = 8080;
     verify(port > 0 && port <= 65535, "port must be in valid range [1, 65535]");
-    std::cout << "verify(port valid): passed\n";
+    std::println("verify(port valid): passed");
 
     std::string name = "Kostas";
     verify(!name.empty(), "name must not be empty");
-    std::cout << "verify(name not empty): passed\n";
+    std::println("verify(name not empty): passed");
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Class Invariant Assertions\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Class Invariant Assertions ===
+    banner("Example 5: Class Invariant Assertions");
 
     BoundedBuffer buf(3);
     buf.push(10);
     buf.push(20);
     buf.push(30);
-    std::cout << "pushed 3 items, full: " << buf.full() << '\n';
+    std::println("pushed 3 items, full: {}", buf.full());
 
-    std::cout << "popped: " << buf.pop() << '\n';
-    std::cout << "popped: " << buf.pop() << '\n';
-    std::cout << "size after 2 pops: " << buf.size() << '\n';
+    std::println("popped: {}", buf.pop());
+    std::println("popped: {}", buf.pop());
+    std::println("size after 2 pops: {}", buf.size());
 
     // buf.push(1); buf.push(2); buf.push(3); buf.push(4); // would assert: full!
     // buf.pop(); buf.pop();  // after empty: would assert!
-    std::cout << "(overflow/underflow assert demos — commented out to not abort)\n";
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Preconditions and Postconditions\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Preconditions and Postconditions ===
+    banner("Example 6: Preconditions and Postconditions");
 
-    std::cout << "safeSqrt(16.0) = " << safeSqrt(16.0) << '\n';
-    std::cout << "safeSqrt(2.0)  = " << safeSqrt(2.0)  << '\n';
-    std::cout << "safeSqrt(0.0)  = " << safeSqrt(0.0)  << '\n';
+    std::println("safeSqrt(16.0) = {}", safeSqrt(16.0));
+    std::println("safeSqrt(2.0)  = {}", safeSqrt(2.0));
+    std::println("safeSqrt(0.0)  = {}", safeSqrt(0.0));
     // safeSqrt(-1.0);  // would assert: precondition violated
 
     std::vector<int> sorted = {1, 3, 5, 7, 9, 11, 13};
-    std::cout << "binarySearch(7):  index " << binarySearch(sorted, 7)  << '\n';
-    std::cout << "binarySearch(10): index " << binarySearch(sorted, 10) << '\n';
+    std::println("binarySearch(7):  index {}", binarySearch(sorted, 7));
+    std::println("binarySearch(10): index {}", binarySearch(sorted, 10));
     // std::vector<int> unsorted = {5,1,3}; binarySearch(unsorted, 3); // asserts!
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: static_assert with Type Traits\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: static_assert with Type Traits ===
+    banner("Example 7: static_assert with Type Traits");
 
-    std::cout << "safeAdd<int>(3, 4)     = " << safeAdd(3, 4)       << '\n';
-    std::cout << "safeAdd<float>(1.5f, 2.5f) = " << safeAdd(1.5f, 2.5f) << '\n';
-    std::cout << "safeAdd<double>(1.1, 2.2)  = " << safeAdd(1.1, 2.2)   << '\n';
-    // safeAdd<std::string>("a","b");  // compile error: not arithmetic
-    // safeAdd(true, false);           // compile error: no bool
+    std::println("safeAdd<int>(3, 4)     = {}", safeAdd(3, 4));
+    std::println("safeAdd<float>(1.5f, 2.5f) = {}", safeAdd(1.5f, 2.5f));
+    std::println("safeAdd<double>(1.1, 2.2)  = {}", safeAdd(1.1, 2.2));
+    // safeAdd(std::string("a"), std::string("b"));  // compile error: not arithmetic
+    // safeAdd(true, false);                         // compile error: no bool
 
     // More type trait checks
     static_assert(std::is_integral_v<int>,    "int must be integral");
     static_assert(std::is_floating_point_v<double>, "double must be float");
-    static_assert(std::is_signed_v<int32_t>,  "int32_t must be signed");
-    static_assert(std::is_unsigned_v<uint32_t>,"uint32_t must be unsigned");
-    std::cout << "type trait static_asserts: all passed\n";
+    static_assert(std::is_signed_v<std::int32_t>,  "int32_t must be signed");
+    static_assert(std::is_unsigned_v<std::uint32_t>,"uint32_t must be unsigned");
+    std::println("type trait static_asserts: all passed");
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: static_assert with constexpr\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: static_assert with constexpr ===
+    banner("Example 8: static_assert with constexpr");
 
     // Checked at compile time — no runtime cost
     static_assert(factorial(5) == 120, "factorial(5) == 120");
     static_assert(factorial(3) == 6,   "factorial(3) == 6");
-    std::cout << "factorial static_asserts: passed at compile time\n";
+    std::println("factorial static_asserts: passed at compile time");
 
-    // Protocol field size checks
-    struct McxHeader { uint8_t ver; uint8_t type; uint16_t len; uint32_t id; };
-    static_assert(sizeof(McxHeader) == 8, "McxHeader must be exactly 8 bytes");
-    std::cout << "McxHeader size static_assert: passed (" << sizeof(McxHeader) << " bytes)\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: assert vs exception vs if\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "assert(condition):\n";
-    std::cout << "  + Zero cost in release\n";
-    std::cout << "  + Documents programmer intent\n";
-    std::cout << "  - Disabled in release — not for production error handling\n";
-    std::cout << "  USE FOR: programming errors, invariants, preconditions\n\n";
-
-    std::cout << "throw std::exception(msg):\n";
-    std::cout << "  + Works in release\n";
-    std::cout << "  + Caller can catch and recover\n";
-    std::cout << "  - Cost (stack unwinding)\n";
-    std::cout << "  USE FOR: recoverable errors, bad user input, I/O failures\n\n";
-
-    std::cout << "if (!condition) return false:\n";
-    std::cout << "  + Zero cost, always active\n";
-    std::cout << "  + Works everywhere (embedded, no-exception)\n";
-    std::cout << "  - Verbose, must propagate manually\n";
-    std::cout << "  USE FOR: performance-critical, expected failure paths\n";
+    // Binary layout size checks
+    struct RecordHeader { std::uint8_t ver; std::uint8_t type; std::uint16_t len; std::uint32_t id; };
+    static_assert(sizeof(RecordHeader) == 8, "RecordHeader must be exactly 8 bytes");
+    std::println("RecordHeader size static_assert: passed ({} bytes)", sizeof(RecordHeader));
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: C++23 [[assume]] attribute\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: C++23 [[assume]] attribute ===
+    banner("Example 9: C++23 [[assume]] attribute");
 
     // [[assume]] tells the compiler to assume a condition is true
     // without checking it — enables optimizations
@@ -314,13 +287,9 @@ int main()
 
     int val = 42;
     [[assume(val > 0)]];   // C++23 — optimizer hint, not a check
-    std::cout << "[[assume(val > 0)]] — hint to optimizer (not a runtime check)\n";
+    std::println("[[assume(val > 0)]] — hint to optimizer (not a runtime check)");
 
-    std::cout << "\nassert vs [[assume]]:\n";
-    std::cout << "  assert(x > 0)    — DEBUG: checks + aborts. RELEASE: removed\n";
-    std::cout << "  [[assume(x > 0)]] — never checks, tells optimizer to assume\n";
-    std::cout << "  Use [[assume]] only when you are 100% certain condition holds\n";
-
-    std::cout << "\n=== CassertSTL complete ===\n";
+    std::println("");
+    std::println("=== CassertSTL complete ===");
     return 0;
 }

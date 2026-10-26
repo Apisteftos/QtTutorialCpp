@@ -1,45 +1,50 @@
-#include <iostream>
+#include <cctype>
 #include <map>
-#include <unordered_map>
-#include <vector>
-#include <string>
 #include <print>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 // ============================================================
 // std::map — Sorted Key-Value Store in C++23
 // ============================================================
 // Topics covered:
-//   1.  What is a map
-//   2.  Declaration and initialization
-//   3.  insert, emplace, operator[], erase
-//   4.  find, count, contains, at
-//   5.  Iterators — always sorted by key
-//   6.  lower_bound, upper_bound
-//   7.  Custom key comparator
-//   8.  std::unordered_map — O(1) average
-//   9.  Practical: word frequency counter
-//  10.  Practical: phone book, config store
+//   1.  Declaration and initialization
+//   2.  insert, emplace, operator[], erase
+//   3.  find, count, contains, at
+//   4.  Iterators — always sorted by key
+//   5.  lower_bound, upper_bound
+//   6.  Custom key comparator
+//   7.  std::unordered_map — O(1) average
+//   8.  Practical: word frequency counter
+//   9.  Practical: config store
 // ============================================================
+
+// Print the "=====" banner that introduces an example
+void banner(std::string_view title)
+{
+    std::println("");
+    std::println("=====================================================");
+    std::println("{}", title);
+    std::println("=====================================================");
+}
+
+// Print a label followed by all key=value pairs of a map
+template<typename Map>
+void printMap(std::string_view label, const Map& m)
+{
+    std::print("{}", label);
+    for (const auto& [k, v] : m) {
+        std::print("{}={} ", k, v);
+    }
+    std::println("");
+}
 
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: What is a Map\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "std::map properties:\n";
-    std::cout << "  - Stores KEY-VALUE pairs\n";
-    std::cout << "  - Keys are UNIQUE\n";
-    std::cout << "  - Always SORTED by key (ascending)\n";
-    std::cout << "  - Backed by a balanced BST (red-black tree)\n";
-    std::cout << "  - insert/find/erase: O(log n)\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Declaration and Initialization\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Declaration and Initialization ===
+    banner("Example 1: Declaration and Initialization");
 
     std::map<std::string, int> empty;
     std::map<std::string, int> scores = {
@@ -49,15 +54,15 @@ int main()
         {"Diana",  91}
     };
 
-    std::cout << "scores (sorted by key):\n";
-    for (const auto& [name, score] : scores)
+    std::println("empty size: {}", empty.size());
+    std::println("scores (sorted by key):");
+    for (const auto& [name, score] : scores) {
         std::println("  {}: {}", name, score);
+    }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Insert, emplace, operator[], erase\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: Insert, emplace, operator[], erase ===
+    banner("Example 2: Insert, emplace, operator[], erase");
 
     std::map<std::string, int> m;
 
@@ -65,22 +70,21 @@ int main()
     m["alpha"] = 1;
     m["beta"]  = 2;
     m["gamma"] = 3;
-    std::cout << "after [] inserts: ";
-    for (const auto& [k, v] : m) std::cout << k << "=" << v << " "; std::cout << '\n';
+    printMap("after [] inserts: ", m);
 
     // operator[] on missing key creates it with default value!
     m["delta"];   // creates "delta" with value 0
-    std::cout << "m[\"delta\"] (missing key): " << m["delta"] << " (created with 0)\n";
+    std::println("m[\"delta\"] (missing key): {} (created with 0)", m["delta"]);
 
     // insert — safe, does NOT overwrite existing
-    auto [it1, ok1] = m.insert({"epsilon", 5});
-    auto [it2, ok2] = m.insert({"alpha",   99});  // alpha already exists!
-    std::cout << "insert(alpha=99): inserted=" << ok2 << " (existing unchanged)\n";
-    std::cout << "alpha is still: " << m["alpha"] << '\n';
+    m.insert({"epsilon", 5});
+    auto [it2, ok2] = m.insert({"alpha", 99});  // alpha already exists!
+    std::println("insert(alpha=99): inserted={} (existing unchanged)", ok2);
+    std::println("alpha is still: {}", m["alpha"]);
 
     // insert_or_assign — always overwrites (C++17)
     m.insert_or_assign("alpha", 99);
-    std::cout << "insert_or_assign(alpha=99): alpha=" << m["alpha"] << '\n';
+    std::println("insert_or_assign(alpha=99): alpha={}", m["alpha"]);
 
     // emplace — construct in place
     m.emplace("zeta", 6);
@@ -88,23 +92,22 @@ int main()
     // try_emplace — only inserts if key not present (C++17)
     m.try_emplace("alpha", 999);   // alpha exists — does nothing
     m.try_emplace("eta",   7);     // new key — inserts
-    std::cout << "after try_emplace: alpha=" << m["alpha"]
-              << " eta=" << m["eta"] << '\n';
+    std::println("after try_emplace: alpha={} eta={}", m["alpha"], m["eta"]);
 
     // erase by key
     m.erase("delta");
-    std::cout << "after erase(delta) size: " << m.size() << '\n';
+    std::println("after erase(delta) size: {}", m.size());
 
     // erase by iterator
     auto itErase = m.find("epsilon");
-    if (itErase != m.end()) m.erase(itErase);
-    std::cout << "after erase(it->epsilon) size: " << m.size() << '\n';
+    if (itErase != m.end()) {
+        m.erase(itErase);
+    }
+    std::println("after erase(it->epsilon) size: {}", m.size());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: find, count, contains, at\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: find, count, contains, at ===
+    banner("Example 3: find, count, contains, at");
 
     std::map<std::string, int> phonebook = {
         {"Alice",   555001},
@@ -114,53 +117,53 @@ int main()
 
     // find — returns iterator or end()
     auto found = phonebook.find("Bob");
-    if (found != phonebook.end())
+    if (found != phonebook.end()) {
         std::println("find(Bob): {}", found->second);
+    }
 
     // contains — C++20
-    std::cout << "contains(Alice):  " << phonebook.contains("Alice")  << '\n';
-    std::cout << "contains(nobody): " << phonebook.contains("nobody") << '\n';
+    std::println("contains(Alice):  {}", phonebook.contains("Alice"));
+    std::println("contains(nobody): {}", phonebook.contains("nobody"));
 
     // at — bounds checked, throws if key missing
-    std::cout << "at(Charlie): " << phonebook.at("Charlie") << '\n';
+    std::println("at(Charlie): {}", phonebook.at("Charlie"));
     try {
         int val = phonebook.at("nobody");
         (void)val;
     } catch (const std::out_of_range& e) {
-        std::cout << "at(nobody) threw: " << e.what() << '\n';
+        std::println("at(nobody) threw: {}", e.what());
     }
 
     // count — 0 or 1 for map
-    std::cout << "count(Alice): " << phonebook.count("Alice") << '\n';
+    std::println("count(Alice): {}", phonebook.count("Alice"));
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Iterators — sorted by key\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Iterators — sorted by key ===
+    banner("Example 4: Iterators — sorted by key");
 
     std::map<int, std::string> m5 = {{3,"c"},{1,"a"},{4,"d"},{2,"b"}};
 
-    std::cout << "forward (sorted by key): ";
-    for (const auto& [k, v] : m5)
-        std::cout << k << ":" << v << " ";
-    std::cout << '\n';
+    std::print("forward (sorted by key): ");
+    for (const auto& [k, v] : m5) {
+        std::print("{}:{} ", k, v);
+    }
+    std::println("");
 
-    std::cout << "reverse:                 ";
-    for (auto it = m5.rbegin(); it != m5.rend(); ++it)
-        std::cout << it->first << ":" << it->second << " ";
-    std::cout << '\n';
+    std::print("reverse:                 ");
+    for (auto it = m5.rbegin(); it != m5.rend(); ++it) {
+        std::print("{}:{} ", it->first, it->second);
+    }
+    std::println("");
 
     // Structured bindings (C++17)
-    std::cout << "structured bindings:\n";
-    for (const auto& [key, value] : m5)
+    std::println("structured bindings:");
+    for (const auto& [key, value] : m5) {
         std::println("  key={} value={}", key, value);
+    }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: lower_bound, upper_bound\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: lower_bound, upper_bound ===
+    banner("Example 5: lower_bound, upper_bound");
 
     std::map<int, std::string> grades = {
         {50, "F"}, {60, "D"}, {70, "C"}, {80, "B"}, {90, "A"}
@@ -175,23 +178,25 @@ int main()
     std::println("upper_bound(70): key={} val={}", ub->first, ub->second);
 
     // Range [60, 80)
-    std::cout << "grades in [60, 80): ";
-    for (auto it = grades.lower_bound(60); it != grades.lower_bound(80); ++it)
-        std::cout << it->first << ":" << it->second << " ";
-    std::cout << '\n';
+    std::print("grades in [60, 80): ");
+    for (auto it = grades.lower_bound(60); it != grades.lower_bound(80); ++it) {
+        std::print("{}:{} ", it->first, it->second);
+    }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Custom Key Comparator\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Custom Key Comparator ===
+    banner("Example 6: Custom Key Comparator");
 
     // Case-insensitive string key
-    auto caseInsensitive = [](const std::string& a, const std::string& b) {
-        std::string la = a, lb = b;
-        for (auto& c : la) c = std::tolower(c);
-        for (auto& c : lb) c = std::tolower(c);
-        return la < lb;
+    auto lower = [](std::string s) {
+        for (auto& c : s) {
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        }
+        return s;
+    };
+    auto caseInsensitive = [&lower](const std::string& lhs, const std::string& rhs) {
+        return lower(lhs) < lower(rhs);
     };
 
     std::map<std::string, int, decltype(caseInsensitive)>
@@ -199,16 +204,16 @@ int main()
     ciMap["Alice"] = 1;
     ciMap["BOB"]   = 2;
     ciMap["charlie"] = 3;
+    ciMap["ALICE"] = 10;   // same key as "Alice" -> overwrites the value
 
-    std::cout << "case-insensitive map:\n";
-    for (const auto& [k, v] : ciMap)
+    std::println("case-insensitive map:");
+    for (const auto& [k, v] : ciMap) {
         std::println("  {}: {}", k, v);
+    }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::unordered_map — O(1) average\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: std::unordered_map — O(1) average ===
+    banner("Example 7: std::unordered_map — O(1) average");
 
     std::unordered_map<std::string, int> um = {
         {"one", 1}, {"two", 2}, {"three", 3}
@@ -217,18 +222,17 @@ int main()
     um["four"] = 4;
     um.insert({"five", 5});
 
-    std::cout << "unordered_map (order not guaranteed):\n";
-    for (const auto& [k, v] : um)
+    std::println("unordered_map (order not guaranteed):");
+    for (const auto& [k, v] : um) {
         std::println("  {}: {}", k, v);
+    }
 
-    std::cout << "contains(two):  " << um.contains("two")    << '\n';
-    std::cout << "contains(nine): " << um.contains("nine")   << '\n';
+    std::println("contains(two):  {}", um.contains("two"));
+    std::println("contains(nine): {}", um.contains("nine"));
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Word Frequency Counter\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Word Frequency Counter ===
+    banner("Example 8: Word Frequency Counter");
 
     std::string text = "the quick brown fox jumps over the lazy dog the fox";
     std::map<std::string, int> freq;
@@ -244,30 +248,32 @@ int main()
             word += c;
         }
     }
-    if (!word.empty()) freq[word]++;
+    if (!word.empty()) {
+        freq[word]++;
+    }
 
-    std::cout << "word frequencies (sorted):\n";
-    for (const auto& [w, count] : freq)
+    std::println("word frequencies (sorted):");
+    for (const auto& [w, count] : freq) {
         std::println("  '{}': {}", w, count);
+    }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Config Store\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: Config Store ===
+    banner("Example 9: Config Store");
 
     std::map<std::string, std::string> config = {
         {"server.host",    "192.168.1.100"},
-        {"server.port",    "5060"},
-        {"mcx.group_id",   "42"},
-        {"mcx.codec",      "AMR-NB"},
+        {"server.port",    "8080"},
+        {"db.name",        "inventory"},
+        {"db.timeout",     "30"},
         {"log.level",      "INFO"},
-        {"log.file",       "/var/log/mcx.log"}
+        {"log.file",       "/var/log/app.log"}
     };
 
-    std::cout << "Configuration:\n";
-    for (const auto& [key, value] : config)
+    std::println("Configuration:");
+    for (const auto& [key, value] : config) {
         std::println("  {} = {}", key, value);
+    }
 
     // Safe access with default value
     auto getConfig = [&](const std::string& key,
@@ -276,9 +282,11 @@ int main()
         return (it != config.end()) ? it->second : defaultVal;
     };
 
-    std::cout << "\nserver.host:  " << getConfig("server.host",  "localhost") << '\n';
-    std::cout << "server.proto: " << getConfig("server.proto", "SIP")       << '\n';
+    std::println("");
+    std::println("server.host:  {}", getConfig("server.host",  "localhost"));
+    std::println("server.proto: {}", getConfig("server.proto", "HTTP"));
 
-    std::cout << "\n=== MapSTL complete ===\n";
+    std::println("");
+    std::println("=== MapSTL complete ===");
     return 0;
 }

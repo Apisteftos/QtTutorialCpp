@@ -1,7 +1,10 @@
-#include <iostream>
 #include <bitset>
-#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <print>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
 // ============================================================
 // std::bitset — Fixed-Size Bit Array in C++23
@@ -15,153 +18,154 @@
 //   6.  Practical: permission flags
 //   7.  Practical: sieve of Eratosthenes
 //   8.  Practical: feature flags / bitmask
-//   9.  Practical: MCX status flags
+//   9.  Practical: connection status flags
 //  10.  bitset vs uint32_t bitmask comparison
 // ============================================================
 
+// Print the "=====" banner that introduces an example
+void banner(std::string_view title)
+{
+    std::println("");
+    std::println("=====================================================");
+    std::println("{}", title);
+    std::println("=====================================================");
+}
+
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Declaration and Initialization\n";
-    std::cout << "=====================================================\n";
+    // NOTE: std::bitset has no std::formatter, so it is printed with .to_string()
+    // (leftmost character = highest bit, rightmost character = bit 0).
+
+    // === EXAMPLE 1: Declaration and Initialization ===
+    banner("Example 1: Declaration and Initialization");
 
     std::bitset<8> b1;                    // all zeros
     std::bitset<8> b2(0b10110100);        // from integer
-    std::bitset<8> b3(0xA5);             // from hex
-    std::bitset<8> b4("11001010");       // from string (MSB first)
+    std::bitset<8> b3(0xA5);              // from hex
+    std::bitset<8> b4("11001010");        // from string (MSB first)
     std::bitset<8> b5(std::string("10110001"), 0, 8);  // from std::string
 
-    std::cout << "b1 (zero):   " << b1 << '\n';
-    std::cout << "b2 (0b10110100): " << b2 << '\n';
-    std::cout << "b3 (0xA5):   " << b3 << '\n';
-    std::cout << "b4 (string): " << b4 << '\n';
-    std::cout << "b5 (string): " << b5 << '\n';
+    std::println("b1 (zero):   {}", b1.to_string());
+    std::println("b2 (0b10110100): {}", b2.to_string());
+    std::println("b3 (0xA5):   {}", b3.to_string());
+    std::println("b4 (string): {}", b4.to_string());
+    std::println("b5 (string): {}", b5.to_string());
 
     // Size is always compile-time constant
-    std::cout << "size: " << b1.size() << " bits\n";
+    std::println("size: {} bits", b1.size());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Setting, Clearing, Flipping Bits\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: Setting, Clearing, Flipping Bits ===
+    banner("Example 2: Setting, Clearing, Flipping Bits");
 
     std::bitset<8> b;
-    std::cout << "initial:        " << b << '\n';
+    std::println("initial:        {}", b.to_string());
 
     b.set(3);          // set bit 3 to 1
     b.set(5);
     b.set(7);
-    std::cout << "after set(3,5,7): " << b << '\n';
+    std::println("after set(3,5,7): {}", b.to_string());
 
     b.set();           // set ALL bits to 1
-    std::cout << "after set():    " << b << '\n';
+    std::println("after set():    {}", b.to_string());
 
     b.reset(3);        // clear bit 3 to 0
     b.reset(5);
-    std::cout << "after reset(3,5): " << b << '\n';
+    std::println("after reset(3,5): {}", b.to_string());
 
     b.reset();         // clear ALL bits
-    std::cout << "after reset():  " << b << '\n';
+    std::println("after reset():  {}", b.to_string());
 
     b.set(2); b.set(4); b.set(6);
     b.flip(2);         // flip bit 2 (1->0)
     b.flip(3);         // flip bit 3 (0->1)
-    std::cout << "after flip(2,3):" << b << '\n';
+    std::println("after flip(2,3):{}", b.to_string());
 
     b.flip();          // flip ALL bits
-    std::cout << "after flip():   " << b << '\n';
+    std::println("after flip():   {}", b.to_string());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Accessing and Testing Bits\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Accessing and Testing Bits ===
+    banner("Example 3: Accessing and Testing Bits");
 
     std::bitset<8> c("10110100");
-    std::cout << "bitset: " << c << '\n';
+    std::println("bitset: {}", c.to_string());
 
-    // operator[] — no bounds check
-    std::cout << "c[0] (LSB): " << c[0] << '\n';
-    std::cout << "c[2]:       " << c[2] << '\n';
-    std::cout << "c[7] (MSB): " << c[7] << '\n';
+    // operator[] — no bounds check. On a non-const bitset it returns a proxy
+    // object, so convert it to bool before printing.
+    std::println("c[0] (LSB): {}", static_cast<bool>(c[0]));
+    std::println("c[2]:       {}", static_cast<bool>(c[2]));
+    std::println("c[7] (MSB): {}", static_cast<bool>(c[7]));
 
     // test() — bounds checked, throws std::out_of_range
-    std::cout << "test(4):    " << c.test(4) << '\n';
+    std::println("test(4):    {}", c.test(4));
     try {
-        c.test(100);
+        bool bad = c.test(100);
+        (void)bad;
     } catch (const std::out_of_range& e) {
-        std::cout << "test(100) threw: " << e.what() << '\n';
+        std::println("test(100) threw: {}", e.what());
     }
 
     // Count and check
-    std::cout << "count():    " << c.count() << " bits set\n";
-    std::cout << "size():     " << c.size()  << '\n';
-    std::cout << "any():      " << c.any()   << " (any bit set?)\n";
-    std::cout << "all():      " << c.all()   << " (all bits set?)\n";
-    std::cout << "none():     " << c.none()  << " (no bits set?)\n";
+    std::println("count():    {} bits set", c.count());
+    std::println("size():     {}", c.size());
+    std::println("any():      {} (any bit set?)", c.any());
+    std::println("all():      {} (all bits set?)", c.all());
+    std::println("none():     {} (no bits set?)", c.none());
 
     std::bitset<8> allSet; allSet.set();
-    std::cout << "allSet.all():  " << allSet.all()  << '\n';
-    std::cout << "allSet.none(): " << allSet.none() << '\n';
+    std::println("allSet.all():  {}", allSet.all());
+    std::println("allSet.none(): {}", allSet.none());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Bitwise Operators\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Bitwise Operators ===
+    banner("Example 4: Bitwise Operators");
 
     std::bitset<8> x("11001010");
     std::bitset<8> y("10110101");
 
-    std::cout << "x:     " << x << '\n';
-    std::cout << "y:     " << y << '\n';
-    std::cout << "x & y: " << (x & y) << " (AND)\n";
-    std::cout << "x | y: " << (x | y) << " (OR)\n";
-    std::cout << "x ^ y: " << (x ^ y) << " (XOR)\n";
-    std::cout << "~x:    " << (~x)    << " (NOT)\n";
-    std::cout << "x<<2:  " << (x<<2)  << " (left shift)\n";
-    std::cout << "x>>2:  " << (x>>2)  << " (right shift)\n";
+    std::println("x:     {}", x.to_string());
+    std::println("y:     {}", y.to_string());
+    std::println("x & y: {} (AND)", (x & y).to_string());
+    std::println("x | y: {} (OR)", (x | y).to_string());
+    std::println("x ^ y: {} (XOR)", (x ^ y).to_string());
+    std::println("~x:    {} (NOT)", (~x).to_string());
+    std::println("x<<2:  {} (left shift)", (x << 2).to_string());
+    std::println("x>>2:  {} (right shift)", (x >> 2).to_string());
 
     // In-place
     std::bitset<8> z("11001010");
     z &= y;
-    std::cout << "z &= y: " << z << '\n';
+    std::println("z &= y: {}", z.to_string());
     z = std::bitset<8>("11001010");
     z |= y;
-    std::cout << "z |= y: " << z << '\n';
+    std::println("z |= y: {}", z.to_string());
     z = std::bitset<8>("11001010");
     z ^= y;
-    std::cout << "z ^= y: " << z << '\n';
+    std::println("z ^= y: {}", z.to_string());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Converting to/from integer and string\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Converting to/from integer and string ===
+    banner("Example 5: Converting to/from integer and string");
 
     std::bitset<8> d("10110100");
 
     // to integer
-    std::cout << "to_ulong():  " << d.to_ulong()  << '\n';
-    std::cout << "to_ullong(): " << d.to_ullong() << '\n';
+    std::println("to_ulong():  {}", d.to_ulong());
+    std::println("to_ullong(): {}", d.to_ullong());
 
     // to string
-    std::cout << "to_string(): " << d.to_string() << '\n';
-    std::cout << "to_string('O','I'): " << d.to_string('O', 'I') << '\n';  // custom chars
+    std::println("to_string(): {}", d.to_string());
+    std::println("to_string('O','I'): {}", d.to_string('O', 'I'));  // custom chars
 
     // from integer (round trip)
     unsigned long val = 42;
     std::bitset<8> fromInt(val);
-    std::cout << "bitset(42):  " << fromInt
-              << " -> " << fromInt.to_ulong() << '\n';
+    std::println("bitset(42):  {} -> {}", fromInt.to_string(), fromInt.to_ulong());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Permission Flags\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Permission Flags ===
+    banner("Example 6: Permission Flags");
 
     // Unix-style file permissions: rwxrwxrwx (9 bits)
     // bit 8=owner_r, 7=owner_w, 6=owner_x, 5=group_r...
@@ -177,19 +181,17 @@ int main()
     perms.set(GROUP_X);
     perms.set(OTHER_R);
 
-    std::cout << "permissions (rwxrwxrwx): " << perms << '\n';
-    std::cout << "octal value: " << perms.to_ulong() << '\n';
+    std::println("permissions (rwxrwxrwx): {}", perms.to_string());
+    std::println("octal value: {:o}", perms.to_ulong());   // 754 = rwxr-xr--
 
-    std::cout << "owner read:  " << perms.test(OWNER_R) << '\n';
-    std::cout << "other write: " << perms.test(OTHER_W) << '\n';
+    std::println("owner read:  {}", perms.test(OWNER_R));
+    std::println("other write: {}", perms.test(OTHER_W));
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Sieve of Eratosthenes\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: Sieve of Eratosthenes ===
+    banner("Example 7: Sieve of Eratosthenes");
 
-    const int LIMIT = 50;
+    constexpr int LIMIT = 50;
     std::bitset<LIMIT + 1> isPrime;
     isPrime.set();        // assume all prime
     isPrime.reset(0);     // 0 is not prime
@@ -197,30 +199,32 @@ int main()
 
     for (int i = 2; i * i <= LIMIT; ++i) {
         if (isPrime.test(i)) {
-            for (int j = i * i; j <= LIMIT; j += i)
+            for (int j = i * i; j <= LIMIT; j += i) {
                 isPrime.reset(j);
+            }
         }
     }
 
-    std::cout << "Primes up to " << LIMIT << ":\n  ";
-    for (int i = 2; i <= LIMIT; ++i)
-        if (isPrime.test(i)) std::cout << i << ' ';
-    std::cout << '\n';
-    std::cout << "Count: " << isPrime.count() << '\n';
+    std::println("Primes up to {}:", LIMIT);
+    std::print("  ");
+    for (int i = 2; i <= LIMIT; ++i) {
+        if (isPrime.test(i)) {
+            std::print("{} ", i);
+        }
+    }
+    std::println("");
+    std::println("Count: {}", isPrime.count());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Feature Flags\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Feature Flags ===
+    banner("Example 8: Feature Flags");
 
     enum Feature {
         FEATURE_DARK_MODE     = 0,
         FEATURE_NOTIFICATIONS = 1,
         FEATURE_ANALYTICS     = 2,
         FEATURE_BETA_UI       = 3,
-        FEATURE_OFFLINE_MODE  = 4,
-        FEATURE_COUNT         = 8
+        FEATURE_OFFLINE_MODE  = 4
     };
 
     std::bitset<8> features;
@@ -228,86 +232,68 @@ int main()
     features.set(FEATURE_NOTIFICATIONS);
     features.set(FEATURE_OFFLINE_MODE);
 
-    std::cout << "feature flags: " << features << '\n';
+    std::println("feature flags: {}", features.to_string());
 
     auto hasFeature = [&](Feature f) { return features.test(f); };
-    std::cout << "dark mode:     " << hasFeature(FEATURE_DARK_MODE)     << '\n';
-    std::cout << "analytics:     " << hasFeature(FEATURE_ANALYTICS)     << '\n';
-    std::cout << "offline mode:  " << hasFeature(FEATURE_OFFLINE_MODE)  << '\n';
+    std::println("dark mode:     {}", hasFeature(FEATURE_DARK_MODE));
+    std::println("analytics:     {}", hasFeature(FEATURE_ANALYTICS));
+    std::println("offline mode:  {}", hasFeature(FEATURE_OFFLINE_MODE));
 
     // Toggle feature
     features.flip(FEATURE_DARK_MODE);
-    std::cout << "dark mode after toggle: " << hasFeature(FEATURE_DARK_MODE) << '\n';
+    std::println("dark mode after toggle: {}", hasFeature(FEATURE_DARK_MODE));
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: MCX Status Flags\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: Connection Status Flags ===
+    banner("Example 9: Connection Status Flags");
 
-    // MCX/MCPTT call status word
-    enum McxStatus {
-        STATUS_CALL_ACTIVE      = 0,
-        STATUS_FLOOR_GRANTED    = 1,
-        STATUS_FLOOR_REQUESTED  = 2,
-        STATUS_EMERGENCY        = 3,
-        STATUS_RECORDING        = 4,
-        STATUS_ENCRYPTED        = 5,
-        STATUS_DUPLEX           = 6,
-        STATUS_CONNECTED        = 7
+    // A status byte of a network connection
+    enum ConnStatus {
+        STATUS_ACTIVE        = 0,
+        STATUS_AUTHENTICATED = 1,
+        STATUS_RETRYING      = 2,
+        STATUS_ERROR         = 3,
+        STATUS_LOGGING       = 4,
+        STATUS_ENCRYPTED     = 5,
+        STATUS_COMPRESSED    = 6,
+        STATUS_CONNECTED     = 7
     };
 
-    std::bitset<8> callStatus;
-    callStatus.set(STATUS_CONNECTED);
-    callStatus.set(STATUS_CALL_ACTIVE);
-    callStatus.set(STATUS_ENCRYPTED);
+    std::bitset<8> connStatus;
+    connStatus.set(STATUS_CONNECTED);
+    connStatus.set(STATUS_ACTIVE);
+    connStatus.set(STATUS_ENCRYPTED);
 
-    std::cout << "call status byte: 0x"
-              << std::hex << callStatus.to_ulong()
-              << std::dec << " = " << callStatus << '\n';
+    std::println("status byte: 0x{:x} = {}", connStatus.to_ulong(), connStatus.to_string());
 
-    std::cout << "connected:  " << callStatus.test(STATUS_CONNECTED)  << '\n';
-    std::cout << "emergency:  " << callStatus.test(STATUS_EMERGENCY)  << '\n';
-    std::cout << "encrypted:  " << callStatus.test(STATUS_ENCRYPTED)  << '\n';
+    std::println("connected:  {}", connStatus.test(STATUS_CONNECTED));
+    std::println("error:      {}", connStatus.test(STATUS_ERROR));
+    std::println("encrypted:  {}", connStatus.test(STATUS_ENCRYPTED));
 
-    // Emergency declared
-    callStatus.set(STATUS_EMERGENCY);
-    callStatus.set(STATUS_FLOOR_GRANTED);
-    std::cout << "emergency call status: " << callStatus << '\n';
-    std::cout << "active bits: " << callStatus.count() << '\n';
+    // An error occurs while authenticated
+    connStatus.set(STATUS_ERROR);
+    connStatus.set(STATUS_AUTHENTICATED);
+    std::println("status after error: {}", connStatus.to_string());
+    std::println("active bits: {}", connStatus.count());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: bitset vs uint32_t bitmask\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 10: bitset vs uint32_t bitmask ===
+    banner("Example 10: bitset vs uint32_t bitmask");
 
     // Traditional C-style bitmask
-    uint32_t flags = 0;
+    std::uint32_t flags = 0;
     flags |= (1u << 3);   // set bit 3
     flags |= (1u << 5);
     bool bit3 = (flags >> 3) & 1;
-    std::cout << "uint32_t bitmask:  0x" << std::hex << flags
-              << std::dec << " bit3=" << bit3 << '\n';
+    std::println("uint32_t bitmask:  0x{:x} bit3={}", flags, bit3);
 
     // std::bitset equivalent
     std::bitset<32> bFlags;
     bFlags.set(3);
     bFlags.set(5);
-    std::cout << "std::bitset<32>:   " << bFlags.to_ulong()
-              << " bit3=" << bFlags.test(3) << '\n';
+    std::println("std::bitset<32>:   0x{:x} bit3={}", bFlags.to_ulong(), bFlags.test(3));
 
-    std::cout << "\nbitset advantages:\n";
-    std::cout << "  + count() — count set bits easily\n";
-    std::cout << "  + any/all/none — readability\n";
-    std::cout << "  + string output for debugging\n";
-    std::cout << "  + bounds checking with test()\n";
-    std::cout << "  + arbitrary size (not limited to 64 bits)\n";
-    std::cout << "uint32_t advantages:\n";
-    std::cout << "  + arithmetic operations\n";
-    std::cout << "  + C interop\n";
-    std::cout << "  + runtime-determined size\n";
-
-    std::cout << "\n=== BitsetSTL complete ===\n";
+    std::println("");
+    std::println("=== BitsetSTL complete ===");
     return 0;
 }

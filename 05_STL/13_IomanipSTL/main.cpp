@@ -1,9 +1,9 @@
-#include <iostream>
 #include <iomanip>
-#include <string>
-#include <vector>
-#include <cmath>
+#include <iostream>
 #include <print>
+#include <string>
+#include <string_view>
+#include <vector>
 
 // ============================================================
 // std::iomanip — I/O Manipulation in C++23
@@ -20,13 +20,26 @@
 //   9.  Formatted table output
 //  10.  C++23 std::print / std::println formatting
 // ============================================================
+//
+// Note: Examples 1-9 use std::cout ON PURPOSE. The <iomanip> manipulators
+// work on stream objects and cannot be passed to std::println.
+// Titles, plain text and Example 10 use std::println.
+// ============================================================
+
+namespace
+{
+    void banner(std::string_view title)
+    {
+        std::println("=====================================================");
+        std::println("{}", title);
+        std::println("=====================================================");
+    }
+}
 
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: setw — Field Width\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: setw — Field Width ===
+    banner("Example 1: setw — Field Width");
 
     std::cout << std::setw(10) << "hello"   << '\n';  // right-aligned (default)
     std::cout << std::setw(10) << 42        << '\n';
@@ -36,34 +49,31 @@ int main()
     std::cout << std::setw(5) << 1
               << std::setw(5) << 2
               << std::setw(5) << 3 << '\n';
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: setfill — Fill Character\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: setfill — Fill Character ===
+    banner("Example 2: setfill — Fill Character");
 
     std::cout << std::setfill('*') << std::setw(10) << "hi"    << '\n';
     std::cout << std::setfill('-') << std::setw(10) << 42      << '\n';
     std::cout << std::setfill('0') << std::setw(8)  << 255     << '\n';  // zero-pad
     std::cout << std::setfill(' ');  // reset to space
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Alignment\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Alignment ===
+    banner("Example 3: Alignment");
 
-    std::cout << "[" << std::right   << std::setw(10) << "right"    << "]\n";
-    std::cout << "[" << std::left    << std::setw(10) << "left"     << "]\n";
-    std::cout << "[" << std::internal<< std::setw(10) << -42        << "]\n"; // sign left, value right
+    std::cout << "[" << std::right    << std::setw(10) << "right"    << "]\n";
+    std::cout << "[" << std::left     << std::setw(10) << "left"     << "]\n";
+    std::cout << "[" << std::internal << std::setw(10) << -42        << "]\n"; // sign left, value right
     std::cout << std::right;  // reset
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: setprecision — Floating Point\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: setprecision — Floating Point ===
+    banner("Example 4: setprecision — Floating Point");
 
     double pi = 3.141592653589793;
 
@@ -72,12 +82,11 @@ int main()
     std::cout << "setprecision(5):  " << std::setprecision(5)  << pi << '\n';
     std::cout << "setprecision(10): " << std::setprecision(10) << pi << '\n';
     std::cout << std::setprecision(6);  // reset
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: fixed, scientific, defaultfloat\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: fixed, scientific, defaultfloat ===
+    banner("Example 5: fixed, scientific, defaultfloat");
 
     double val = 123456.789;
 
@@ -94,23 +103,21 @@ int main()
     std::cout << "small default:    " << small << '\n';
     std::cout << "small fixed(8):   " << std::fixed << std::setprecision(8) << small << '\n';
     std::cout << std::defaultfloat << std::setprecision(6);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: boolalpha\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: boolalpha ===
+    banner("Example 6: boolalpha");
 
     bool t = true, f = false;
     std::cout << "default:   " << t << " " << f << '\n';
     std::cout << "boolalpha: " << std::boolalpha << t << " " << f << '\n';
     std::cout << std::noboolalpha;  // reset
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: hex, oct, dec, showbase\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: hex, oct, dec, showbase ===
+    banner("Example 7: hex, oct, dec, showbase");
 
     int n = 255;
     std::cout << "decimal: " << std::dec     << n << '\n';
@@ -126,12 +133,11 @@ int main()
 
     // showpos
     std::cout << "showpos: " << std::showpos << 42 << " " << -42 << std::noshowpos << '\n';
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Formatted Table Output\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Formatted Table Output ===
+    banner("Example 8: Formatted Table Output");
 
     struct Product {
         std::string name;
@@ -171,12 +177,11 @@ int main()
     std::cout << std::left  << std::setw(16) << "TOTAL"
               << std::right << std::setw(30) << grandTotal << '\n';
     std::cout << std::defaultfloat << std::setprecision(6);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Number formatting utilities\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: Number formatting utilities ===
+    banner("Example 9: Number formatting utilities");
 
     // Zero-padded numbers
     std::cout << "Zero padded:    ";
@@ -191,14 +196,13 @@ int main()
     for (auto b : bytes)
         std::cout << std::uppercase << std::hex
                   << std::setfill('0') << std::setw(2)
-                  << (int)b << ' ';
+                  << static_cast<int>(b) << ' ';
     std::cout << std::dec << std::nouppercase << std::setfill(' ') << '\n';
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: C++23 std::print / std::println formatting\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 10: C++23 std::print / std::println formatting ===
+    banner("Example 10: C++23 std::print / std::println formatting");
 
     // std::print is the modern replacement for printf and cout+iomanip
     double pi2 = 3.14159265;
@@ -216,6 +220,7 @@ int main()
     std::println("binary:       {:b}", 42);
     std::println("bool:         {}", true);
 
-    std::cout << "\n=== IomanipSTL complete ===\n";
+    std::println("");
+    std::println("=== IomanipSTL complete ===");
     return 0;
 }

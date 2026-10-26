@@ -43,9 +43,9 @@ Demonstrates the five main problems with raw pointers:
 ### Example 2: shared_ptr Basics
 Introduction to basic usage:
 ```cpp
-auto ptr1 = make_shared<Resource>("Example", 1);
+auto ptr1 = std::make_shared<Resource>("Example", 1);
 auto ptr2 = ptr1;  // Share ownership
-cout << ptr1.use_count();  // 2
+std::println("{}", ptr1.use_count());  // 2
 ```
 
 ### Example 3: Reference Counting Explained
@@ -84,10 +84,10 @@ Decision guide for choosing the right smart pointer:
 Why `make_shared` is superior:
 ```cpp
 // ❌ BAD: Two allocations
-shared_ptr<T> ptr(new T(args));
+std::shared_ptr<T> ptr(new T(args));
 
 // ✅ GOOD: One allocation
-auto ptr = make_shared<T>(args);
+auto ptr = std::make_shared<T>(args);
 ```
 
 **`shared_ptr<T>(new T(args))` — two separate allocations:**
@@ -119,7 +119,7 @@ the other.
 ### Example 6: Custom Deleters
 Handling special cleanup requirements:
 ```cpp
-shared_ptr<FILE> file(
+std::shared_ptr<FILE> file(
     fopen("file.txt", "r"),
     [](FILE* f) { fclose(f); }
 );
@@ -129,7 +129,7 @@ shared_ptr<FILE> file(
 Demonstrates memory leaks from circular references:
 ```cpp
 struct Node {
-    shared_ptr<Node> next;  // Creates cycle!
+    std::shared_ptr<Node> next;  // Creates cycle!
 };
 // Both nodes keep each other alive → Memory leak!
 ```
@@ -138,8 +138,8 @@ struct Node {
 Breaking cycles with `weak_ptr`:
 ```cpp
 struct Node {
-    weak_ptr<Node> parent;     // No ownership
-    shared_ptr<Node> child;    // Ownership
+    std::weak_ptr<Node> parent;     // No ownership
+    std::shared_ptr<Node> child;    // Ownership
 };
 // Cycle broken! Proper cleanup occurs
 ```
@@ -160,16 +160,16 @@ Understanding thread safety guarantees:
 ### Example 11: Aliasing Constructor
 Advanced feature for pointing to sub-objects:
 ```cpp
-auto data = make_shared<Data>();
-shared_ptr<int> value_ptr(data, &data->value);
+auto data = std::make_shared<Data>();
+std::shared_ptr<int> value_ptr(data, &data->value);
 // Points to member, but keeps whole object alive
 ```
 
 ### Example 12: enable_shared_from_this
 Getting `shared_ptr` from member functions:
 ```cpp
-class Foo : public enable_shared_from_this<Foo> {
-    shared_ptr<Foo> getPtr() {
+class Foo : public std::enable_shared_from_this<Foo> {
+    std::shared_ptr<Foo> getPtr() {
         return shared_from_this();  // ✅ Correct!
     }
 };
@@ -207,12 +207,12 @@ Understanding costs and trade-offs:
 ## 🔧 Compilation & Usage
 
 ### Requirements
-- C++17 or later
-- Any modern C++ compiler (g++, clang++, MSVC)
+- C++23 (`main.cpp` uses `std::println` from `<print>`)
+- GCC 14+ (or a recent Clang/MSVC with `<print>` support)
 
 ### Compile
 ```bash
-g++ -std=c++17 -Wall -Wextra shared_ptr.cpp -o shared_ptr
+g++ -std=c++23 -Wall -Wextra main.cpp -o shared_ptr
 ```
 
 ### Run
@@ -221,12 +221,26 @@ g++ -std=c++17 -Wall -Wextra shared_ptr.cpp -o shared_ptr
 ```
 
 ### Expected Output
-The program runs all 15 examples sequentially, producing:
-- Clear section headers with box-drawing characters
-- Emoji indicators for important points
-- Detailed explanations and code examples
-- Visual demonstrations of concepts
-- Summary of key takeaways
+`main.cpp` runs the 8 examples that show real runtime behavior, one after the other
+(shared_ptr basics, `make_shared`, custom deleters, circular reference, `weak_ptr`,
+observer pattern, aliasing constructor, `enable_shared_from_this`). Each section
+starts with a `--- title ---` line.
+
+The other examples in this Readme (raw-pointer problems, thread safety, common mistakes,
+best practices, performance) are explanations only and have no code in `main.cpp`.
+
+Two things in the output are intentional:
+- The circular-reference section prints **no** "destroyed" lines — the two nodes leak on purpose.
+  LeakSanitizer (`-fsanitize=address`) reports this leak at exit.
+- `weak.expired()` prints `false` / `true` (`std::println` formats `bool` as text; `std::cout` printed `0` / `1`).
+
+## 🧾 Notes moved from main.cpp
+
+`main.cpp` used to end with a comment, which now lives here:
+
+Raw-pointer pitfalls, `shared_ptr` vs `unique_ptr`, the custom-deleter catalogue, thread safety,
+common mistakes, best practices, and performance numbers are all covered in this Readme.
+None of them involve executable behavior worth demonstrating in `main.cpp`.
 
 ## 📊 Key Takeaways
 
@@ -248,13 +262,13 @@ The program runs all 15 examples sequentially, producing:
 #### Creation
 ```cpp
 // ✅ BEST: make_shared (1 allocation, exception safe)
-auto ptr = make_shared<T>(args);
+auto ptr = std::make_shared<T>(args);
 
 // ❌ AVOID: new (2 allocations, exception unsafe)
-shared_ptr<T> ptr(new T(args));
+std::shared_ptr<T> ptr(new T(args));
 
 // ✅ OK: Custom deleter
-shared_ptr<T> ptr(new T(args), custom_deleter);
+std::shared_ptr<T> ptr(new T(args), custom_deleter);
 ```
 
 #### Usage
@@ -269,14 +283,14 @@ ptr.reset(new T);    // Replace managed object
 
 #### Sharing & Copying
 ```cpp
-shared_ptr<T> ptr2 = ptr1;      // Share ownership (++count)
-shared_ptr<T> ptr3(ptr1);       // Share ownership (++count)
-weak_ptr<T> weak = ptr1;        // Non-owning reference
+std::shared_ptr<T> ptr2 = ptr1;      // Share ownership (++count)
+std::shared_ptr<T> ptr3(ptr1);       // Share ownership (++count)
+std::weak_ptr<T> weak = ptr1;        // Non-owning reference
 ```
 
 #### weak_ptr
 ```cpp
-weak_ptr<T> weak = shared_ptr;  // Create from shared_ptr
+std::weak_ptr<T> weak = std::shared_ptr;  // Create from shared_ptr
 if (auto sp = weak.lock()) {    // Convert to shared_ptr
     sp->use();                  // Safe to use
 }
@@ -294,31 +308,31 @@ bool expired = weak.expired();  // Check if object deleted
 
 #### Factory Functions
 ```cpp
-shared_ptr<Widget> createWidget() {
-    return make_shared<Widget>();
+std::shared_ptr<Widget> createWidget() {
+    return std::make_shared<Widget>();
 }
 ```
 
 #### Parent-Child Relationships
 ```cpp
 class Parent {
-    vector<shared_ptr<Child>> children;  // Own children
+    std::vector<std::shared_ptr<Child>> children;  // Own children
 };
 class Child {
-    weak_ptr<Parent> parent;  // Don't own parent
+    std::weak_ptr<Parent> parent;  // Don't own parent
 };
 ```
 
 #### Observer Pattern
 ```cpp
 class Subject {
-    vector<weak_ptr<Observer>> observers;  // Don't own
+    std::vector<std::weak_ptr<Observer>> observers;  // Don't own
 };
 ```
 
 #### Callbacks
 ```cpp
-void registerCallback(shared_ptr<Handler> handler) {
+void registerCallback(std::shared_ptr<Handler> handler) {
     callbacks.push_back(handler);  // Keep alive
 }
 ```
@@ -329,11 +343,11 @@ void registerCallback(shared_ptr<Handler> handler) {
 ```cpp
 // ❌ WRONG
 Resource* raw = new Resource();
-shared_ptr<Resource> ptr1(raw);
-shared_ptr<Resource> ptr2(raw);  // 💥 Two control blocks!
+std::shared_ptr<Resource> ptr1(raw);
+std::shared_ptr<Resource> ptr2(raw);  // 💥 Two control blocks!
 
 // ✅ CORRECT
-auto ptr1 = make_shared<Resource>();
+auto ptr1 = std::make_shared<Resource>();
 auto ptr2 = ptr1;  // Share same control block
 ```
 
@@ -341,35 +355,35 @@ auto ptr2 = ptr1;  // Share same control block
 ```cpp
 // ❌ MEMORY LEAK
 struct Node {
-    shared_ptr<Node> next;
+    std::shared_ptr<Node> next;
 };
-auto a = make_shared<Node>();
-auto b = make_shared<Node>();
+auto a = std::make_shared<Node>();
+auto b = std::make_shared<Node>();
 a->next = b;
 b->next = a;  // Cycle! Leak!
 
 // ✅ FIXED
 struct Node {
-    weak_ptr<Node> next;  // Break cycle
+    std::weak_ptr<Node> next;  // Break cycle
 };
 ```
 
 ### 3. Forgetting make_shared
 ```cpp
 // ❌ SLOW (2 allocations)
-shared_ptr<T> ptr(new T());
+std::shared_ptr<T> ptr(new T());
 
 // ✅ FAST (1 allocation)
-auto ptr = make_shared<T>();
+auto ptr = std::make_shared<T>();
 ```
 
 ### 4. Unnecessary Copying
 ```cpp
 // ❌ SLOW (ref count changes)
-void process(shared_ptr<T> ptr);
+void process(std::shared_ptr<T> ptr);
 
 // ✅ FAST (no ref count change)
-void process(const shared_ptr<T>& ptr);
+void process(const std::shared_ptr<T>& ptr);
 void process(T& obj);  // Even better!
 ```
 

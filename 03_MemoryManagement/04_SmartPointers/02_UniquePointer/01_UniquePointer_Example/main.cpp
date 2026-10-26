@@ -1,7 +1,7 @@
-#include <iostream>
 #include <memory>
-#include <vector>
+#include <print>
 #include <string>
+#include <vector>
 
 // =============================================================
 // unique_ptr — exclusive ownership
@@ -17,16 +17,15 @@ private:
 public:
     Weapon(const std::string& name, int damage)
         : name(name), damage(damage) {
-        std::cout << "[Weapon] '" << name << "' created\n";
+        std::println("[Weapon] '{}' created", this->name);
     }
 
     ~Weapon() {
-        std::cout << "[Weapon] '" << name << "' destroyed\n";
+        std::println("[Weapon] '{}' destroyed", name);
     }
 
     void attack() const {
-        std::cout << "Attacking with '" << name
-                  << "' for " << damage << " damage!\n";
+        std::println("Attacking with '{}' for {} damage!", name, damage);
     }
 
     std::string getName()   const { return name;   }
@@ -41,7 +40,7 @@ private:
 
 public:
     FileHandle(const std::string& filename) : filename(filename), isOpen(true) {
-        std::cout << "[FileHandle] Opening '" << filename << "'\n";
+        std::println("[FileHandle] Opening '{}'", this->filename);
     }
 
     ~FileHandle() {
@@ -50,14 +49,14 @@ public:
 
     void close() {
         isOpen = false;
-        std::cout << "[FileHandle] Closing '" << filename << "'\n";
+        std::println("[FileHandle] Closing '{}'", filename);
     }
 
     void write(const std::string& data) const {
         if (isOpen)
-            std::cout << "[FileHandle] Writing to '" << filename << "': " << data << '\n';
+            std::println("[FileHandle] Writing to '{}': {}", filename, data);
         else
-            std::cout << "[FileHandle] Error — file is closed!\n";
+            std::println("[FileHandle] Error — file is closed!");
     }
 };
 
@@ -72,10 +71,9 @@ std::unique_ptr<Weapon> createWeapon(const std::string& name, int damage)
 void inspectWeapon(const Weapon* weapon)
 {
     if (weapon)
-        std::cout << "[inspect] Weapon: " << weapon->getName()
-                  << " | damage: " << weapon->getDamage() << '\n';
+        std::println("[inspect] Weapon: {} | damage: {}", weapon->getName(), weapon->getDamage());
     else
-        std::cout << "[inspect] No weapon\n";
+        std::println("[inspect] No weapon");
 }
 
 // Function that BORROWS via reference (preferred over raw pointer when non-null)
@@ -87,27 +85,24 @@ void useWeapon(const Weapon& weapon)
 
 int main()
 {
-    // =================================================
-    // BASIC unique_ptr — automatic cleanup
-    // =================================================
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Basic unique_ptr\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Basic unique_ptr — automatic cleanup ===
+    std::println("=====================================================");
+    std::println("Example 1: Basic unique_ptr");
+    std::println("=====================================================");
 
     {
         std::unique_ptr<Weapon> sword = std::make_unique<Weapon>("Sword", 50);
         sword->attack();
-        std::cout << "Leaving scope...\n";
+        std::println("Leaving scope...");
     }   // sword automatically destroyed here — no delete needed
-    std::cout << "Back in main — sword is gone\n";
+    std::println("Back in main — sword is gone");
 
 
-    // =================================================
-    // CANNOT COPY — only move
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Cannot Copy — Only Move\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: Cannot copy — only move ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Cannot Copy — Only Move");
+    std::println("=====================================================");
 
     std::unique_ptr<Weapon> bow = std::make_unique<Weapon>("Bow", 30);
 
@@ -117,33 +112,31 @@ int main()
     // Transfer ownership with std::move
     std::unique_ptr<Weapon> bow2 = std::move(bow);   // bow is now EMPTY (nullptr)
 
-    std::cout << "bow  is: " << (bow  ? "valid" : "nullptr (ownership transferred)") << '\n';
-    std::cout << "bow2 is: " << (bow2 ? "valid" : "nullptr") << '\n';
+    std::println("bow  is: {}", bow  ? "valid" : "nullptr (ownership transferred)");
+    std::println("bow2 is: {}", bow2 ? "valid" : "nullptr");
     bow2->attack();
 
 
-    // =================================================
-    // TRANSFERRING OWNERSHIP via function return
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Transfer Ownership via Function\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Transferring ownership via function return ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Transfer Ownership via Function");
+    std::println("=====================================================");
 
     std::unique_ptr<Weapon> axe = createWeapon("Battle Axe", 80);
     axe->attack();
 
     // Pass to another owner
     std::unique_ptr<Weapon> storedWeapon = std::move(axe);
-    std::cout << "axe is now: " << (axe ? "valid" : "nullptr") << '\n';
+    std::println("axe is now: {}", axe ? "valid" : "nullptr");
     storedWeapon->attack();
 
 
-    // =================================================
-    // BORROWING — get raw pointer without ownership
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Borrowing (get() and references)\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Borrowing — get() and references ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Borrowing (get() and references)");
+    std::println("=====================================================");
 
     std::unique_ptr<Weapon> spear = std::make_unique<Weapon>("Spear", 60);
 
@@ -153,32 +146,30 @@ int main()
     // Pass by reference — clean, no ownership transfer
     useWeapon(*spear);
 
-    std::cout << "spear still valid: " << (spear ? "YES" : "NO") << '\n';
+    std::println("spear still valid: {}", spear ? "YES" : "NO");
 
 
-    // =================================================
-    // unique_ptr with ARRAYS
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: unique_ptr with Arrays\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: unique_ptr with arrays ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: unique_ptr with Arrays");
+    std::println("=====================================================");
 
     std::unique_ptr<int[]> scores = std::make_unique<int[]>(5);
     for (int i = 0; i < 5; ++i)
         scores[i] = (i + 1) * 100;
 
-    std::cout << "Scores: ";
+    std::print("Scores: ");
     for (int i = 0; i < 5; ++i)
-        std::cout << scores[i] << " ";
-    std::cout << '\n';
+        std::print("{} ", scores[i]);
+    std::println("");
 
 
-    // =================================================
-    // REAL-WORLD: RAII resource management
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: RAII — Resource Automatically Released\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: RAII — resource automatically released ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: RAII — Resource Automatically Released");
+    std::println("=====================================================");
 
     {
         std::unique_ptr<FileHandle> file =
@@ -187,54 +178,53 @@ int main()
         file->write("Line 1: Sales data");
         file->write("Line 2: Q4 results");
 
-        std::cout << "Leaving scope — file will be closed automatically\n";
+        std::println("Leaving scope — file will be closed automatically");
     }   // FileHandle destructor called — file closed, no leak possible
-    std::cout << "File is closed\n";
+    std::println("File is closed");
 
 
-    // =================================================
-    // RESETTING and RELEASING
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: reset() and release()\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: reset() and release() ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: reset() and release()");
+    std::println("=====================================================");
 
     std::unique_ptr<Weapon> dagger = std::make_unique<Weapon>("Dagger", 20);
-    std::cout << "dagger valid: " << (dagger ? "YES" : "NO") << '\n';
+    std::println("dagger valid: {}", dagger ? "YES" : "NO");
 
     // reset() — destroys current object, pointer becomes nullptr
     dagger.reset();
-    std::cout << "After reset() — dagger valid: " << (dagger ? "YES" : "NO") << '\n';
+    std::println("After reset() — dagger valid: {}", dagger ? "YES" : "NO");
 
     // reset() with new value — destroys old, takes new ownership
     dagger.reset(new Weapon("Magic Dagger", 45));
-    std::cout << "After reset(new) — dagger valid: " << (dagger ? "YES" : "NO") << '\n';
+    std::println("After reset(new) — dagger valid: {}", dagger ? "YES" : "NO");
     dagger->attack();
 
     // release() — gives up ownership WITHOUT deleting (you own it now!)
     Weapon* rawWeapon = dagger.release();   // dagger is now nullptr
-    std::cout << "After release() — dagger valid: " << (dagger ? "YES" : "NO") << '\n';
+    std::println("After release() — dagger valid: {}", dagger ? "YES" : "NO");
     rawWeapon->attack();
     delete rawWeapon;   // YOU must delete it now
     rawWeapon = nullptr;
 
 
-    // =================================================
-    // unique_ptr in a vector
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: vector of unique_ptr\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: vector of unique_ptr ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: vector of unique_ptr");
+    std::println("=====================================================");
 
     std::vector<std::unique_ptr<Weapon>> arsenal;
     arsenal.push_back(std::make_unique<Weapon>("Crossbow", 40));
     arsenal.push_back(std::make_unique<Weapon>("Hammer",   70));
     arsenal.push_back(std::make_unique<Weapon>("Katana",   65));
 
-    std::cout << "Arsenal:\n";
+    std::println("Arsenal:");
     for (const auto& w : arsenal)
         w->attack();
 
-    std::cout << "\nLeaving main — arsenal destroyed\n";
+    std::println("");
+    std::println("Leaving main — arsenal destroyed");
     return 0;
 }

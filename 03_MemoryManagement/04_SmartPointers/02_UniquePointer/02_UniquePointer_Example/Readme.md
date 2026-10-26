@@ -4,10 +4,10 @@
 
 **unique_ptr** is a smart pointer that owns and manages another object through a pointer and deletes that object when the unique_ptr goes out of scope. It provides automatic memory management with zero overhead compared to raw pointers.
 
-**File:** `unique_ptr.cpp`  
+**File:** `main.cpp`  
 **Difficulty:** 🟡 Intermediate  
-**C++ Version:** C++11 (make_unique in C++14)  
-**Compile:** `g++ -std=c++14 -Wall -Wextra unique_ptr.cpp -o unique_ptr`
+**C++ Version:** `unique_ptr` is C++11 (`make_unique` in C++14); `main.cpp` itself uses `std::println`, so it is built with C++23  
+**Compile:** `g++ -std=c++23 -Wall -Wextra main.cpp -o unique_ptr`
 
 ---
 
@@ -42,14 +42,14 @@ unique_ptr is a **smart pointer** that:
 ### Key Properties
 
 ```cpp
-unique_ptr<T> ptr = make_unique<T>(args);
+std::unique_ptr<T> ptr = std::make_unique<T>(args);
 
 ✅ Automatic cleanup     - Destructor calls delete
 ✅ Unique ownership      - Only one owner
 ✅ Move semantics        - Transfer with std::move
 ✅ Exception safe        - RAII pattern
 ✅ Zero overhead         - Same cost as raw pointer
-❌ Cannot copy           - Copy constructor deleted
+❌ Cannot std::copy           - Copy constructor deleted
 ```
 
 ---
@@ -83,7 +83,7 @@ Widget* shared = ptr;  // Who owns it?
 
 ```cpp
 // ✅ unique_ptr solution
-auto ptr = make_unique<Widget>();
+auto ptr = std::make_unique<Widget>();
 
 // ✅ Automatic cleanup on:
 // - Normal scope exit
@@ -156,7 +156,7 @@ Demonstrates all the problems with manual memory management:
 Simple usage showing automatic cleanup:
 ```cpp
 {
-    auto ptr = make_unique<Widget>(42);
+    auto ptr = std::make_unique<Widget>(42);
     ptr->doWork();
 }  // ✅ Automatically deleted here
 ```
@@ -165,19 +165,23 @@ Simple usage showing automatic cleanup:
 
 Why prefer make_unique over `new`:
 ```cpp
-// ✅ Exception safe
-func(make_unique<T>(), other_func());
+// ✅ Preferred — no naked new, type written once
+auto p = std::make_unique<T>(args);
 
-// ❌ Not exception safe
-func(unique_ptr<T>(new T), other_func());
-// If other_func() throws before unique_ptr created, leak!
+// ❌ Old way — still works
+std::unique_ptr<T> p(new T(args));
 ```
+
+**About exception safety:** before C++17, `func(unique_ptr<T>(new T), other_func());` could leak, because the
+compiler was allowed to run `new T`, then `other_func()`, and only then construct the `unique_ptr`.
+Since C++17 the two arguments can no longer be interleaved that way, so this call is safe too
+(C++17 evaluation-order rule P0145 — *not tested here*). `make_unique` is still preferred for the other reasons below.
 
 ### Example 4: Moving unique_ptr
 
 Transferring ownership:
 ```cpp
-auto ptr1 = make_unique<Widget>();
+auto ptr1 = std::make_unique<Widget>();
 auto ptr2 = std::move(ptr1);  // Transfer ownership
 
 // ptr1 is now nullptr
@@ -204,7 +208,7 @@ struct FileDeleter {
     }
 };
 
-unique_ptr<FILE, FileDeleter> file(fopen("file.txt", "r"));
+std::unique_ptr<FILE, FileDeleter> file(fopen("file.txt", "r"));
 // Automatically calls fclose on destruction
 ```
 
@@ -212,19 +216,19 @@ unique_ptr<FILE, FileDeleter> file(fopen("file.txt", "r"));
 
 ```cpp
 // ✅ For arrays
-auto arr = make_unique<int[]>(5);
+auto arr = std::make_unique<int[]>(5);
 arr[0] = 10;  // Supports []
 
 // ⚠️ But prefer vector!
-vector<int> v(5);  // Better choice
+std::vector<int> v(5);  // Better choice
 ```
 
 ### Example 8: Returning from Functions
 
 Transfer ownership to caller:
 ```cpp
-unique_ptr<Widget> create() {
-    return make_unique<Widget>();
+std::unique_ptr<Widget> create() {
+    return std::make_unique<Widget>();
     // Ownership transferred to caller
 }
 
@@ -235,9 +239,9 @@ auto widget = create();  // Now owns it
 
 Perfect for polymorphic collections:
 ```cpp
-vector<unique_ptr<Animal>> animals;
-animals.push_back(make_unique<Dog>());
-animals.push_back(make_unique<Cat>());
+std::vector<std::unique_ptr<Animal>> animals;
+animals.push_back(std::make_unique<Dog>());
+animals.push_back(std::make_unique<Cat>());
 
 for (auto& animal : animals) {
     animal->makeSound();  // Polymorphic call
@@ -250,13 +254,13 @@ for (auto& animal : animals) {
 Complete resource management system:
 ```cpp
 class Application {
-    unique_ptr<Database> db;
-    unique_ptr<Logger> logger;
+    std::unique_ptr<Database> db;
+    std::unique_ptr<Logger> logger;
     
 public:
     Application() {
-        db = make_unique<Database>();
-        logger = make_unique<Logger>();
+        db = std::make_unique<Database>();
+        logger = std::make_unique<Logger>();
     }
     // Destructor automatically cleans up everything
 };
@@ -269,7 +273,7 @@ public:
 ### Unique Ownership
 
 ```cpp
-auto ptr = make_unique<Widget>();
+auto ptr = std::make_unique<Widget>();
 
 // ❌ Cannot copy
 auto ptr2 = ptr;  // Won't compile!
@@ -299,12 +303,12 @@ ptr2  ───────> [Widget]
 
 ```cpp
 // Takes ownership (by value)
-void take_ownership(unique_ptr<T> ptr) {
+void take_ownership(std::unique_ptr<T> ptr) {
     // ptr deleted at end of function
 }
 
 // Borrow (by reference) - doesn't take ownership
-void borrow(const unique_ptr<T>& ptr) {
+void borrow(const std::unique_ptr<T>& ptr) {
     // ptr still owned by caller
 }
 
@@ -314,7 +318,7 @@ void borrow(T* ptr) {
 }
 
 // Usage
-auto ptr = make_unique<T>();
+auto ptr = std::make_unique<T>();
 
 take_ownership(std::move(ptr));  // Transfer
 // ptr is now nullptr
@@ -330,22 +334,22 @@ borrow(ptr);  // Still owns it
 
 ```cpp
 // ✅ Best way (C++14+)
-auto ptr = make_unique<Widget>(arg1, arg2);
+auto ptr = std::make_unique<Widget>(arg1, arg2);
 
 // Advantages:
-// 1. Exception safe
-// 2. No need to repeat type
-// 3. Cannot accidentally use raw pointer
-// 4. Consistent with make_shared
+// 1. No need to repeat the type
+// 2. Cannot accidentally use a raw pointer / naked new
+// 3. Consistent with make_shared
+// 4. (Pre-C++17 only) Exception safe inside function-call arguments
 ```
 
 ### Constructor (C++11)
 
 ```cpp
 // ✅ OK (C++11)
-unique_ptr<Widget> ptr(new Widget(arg1, arg2));
+std::unique_ptr<Widget> ptr(new Widget(arg1, arg2));
 
-// ⚠️ Not as safe:
+// ⚠️ Before C++17 this could leak (since C++17 it cannot):
 // func(unique_ptr<T>(new T), other_func());
 // If other_func() throws, potential leak
 ```
@@ -354,21 +358,21 @@ unique_ptr<Widget> ptr(new Widget(arg1, arg2));
 
 ```cpp
 // For arrays - use make_unique<T[]>
-auto arr = make_unique<int[]>(10);
+auto arr = std::make_unique<int[]>(10);
 
 // ⚠️ But prefer vector!
-vector<int> v(10);  // Better
+std::vector<int> v(10);  // Better
 ```
 
 ### From Raw Pointer
 
 ```cpp
 Widget* raw = new Widget();
-unique_ptr<Widget> ptr(raw);  // Takes ownership
+std::unique_ptr<Widget> ptr(raw);  // Takes ownership
 
 // ⚠️ Dangerous - don't do:
-unique_ptr<Widget> p1(raw);
-unique_ptr<Widget> p2(raw);  // ❌ Double ownership!
+std::unique_ptr<Widget> p1(raw);
+std::unique_ptr<Widget> p2(raw);  // ❌ Double ownership!
 ```
 
 ---
@@ -378,7 +382,7 @@ unique_ptr<Widget> p2(raw);  // ❌ Double ownership!
 ### Accessing the Object
 
 ```cpp
-auto ptr = make_unique<Widget>();
+auto ptr = std::make_unique<Widget>();
 
 ptr->member()       // Call member function
 (*ptr).member()     // Same as above
@@ -412,7 +416,7 @@ ptr.reset();
 ptr.reset(new Widget());
 
 // Or use assignment
-ptr = make_unique<Widget>();  // Easier!
+ptr = std::make_unique<Widget>();  // Easier!
 ```
 
 ### Releasing Ownership
@@ -430,8 +434,8 @@ delete raw;
 ### Swapping
 
 ```cpp
-unique_ptr<T> p1 = make_unique<T>();
-unique_ptr<T> p2 = make_unique<T>();
+std::unique_ptr<T> p1 = std::make_unique<T>();
+std::unique_ptr<T> p2 = std::make_unique<T>();
 
 p1.swap(p2);  // Swap ownership
 // or
@@ -448,18 +452,18 @@ std::swap(p1, p2);  // Same thing
 
 ```cpp
 // ✅ Preferred
-auto ptr = make_unique<Widget>(args);
+auto ptr = std::make_unique<Widget>(args);
 
 // ❌ Avoid
-unique_ptr<Widget> ptr(new Widget(args));
+std::unique_ptr<Widget> ptr(new Widget(args));
 ```
 
 2. **Return by value**
 
 ```cpp
 // ✅ Good - ownership transferred to caller
-unique_ptr<T> create() {
-    return make_unique<T>();
+std::unique_ptr<T> create() {
+    return std::make_unique<T>();
 }
 ```
 
@@ -474,8 +478,8 @@ take_ownership(std::move(ptr));
 
 ```cpp
 // ✅ Perfect for polymorphic collections
-vector<unique_ptr<Base>> items;
-items.push_back(make_unique<Derived>());
+std::vector<std::unique_ptr<Base>> items;
+items.push_back(std::make_unique<Derived>());
 ```
 
 5. **Check before dereferencing**
@@ -501,7 +505,7 @@ process(ptr.get());
 ```cpp
 // ✅ Automatic cleanup
 class Manager {
-    unique_ptr<Resource> resource;
+    std::unique_ptr<Resource> resource;
 };
 ```
 
@@ -521,10 +525,10 @@ auto ptr2 = std::move(ptr1);
 
 ```cpp
 // ❌ Overkill
-unique_ptr<int[]> arr = make_unique<int[]>(10);
+std::unique_ptr<int[]> arr = std::make_unique<int[]>(10);
 
 // ✅ Better
-vector<int> arr(10);
+std::vector<int> arr(10);
 ```
 
 3. **Don't store raw pointers from get()**
@@ -541,8 +545,8 @@ Widget* raw = ptr.get();
 
 ```cpp
 Widget* raw = new Widget();
-unique_ptr<Widget> p1(raw);
-unique_ptr<Widget> p2(raw);  // ❌ Double delete!
+std::unique_ptr<Widget> p1(raw);
+std::unique_ptr<Widget> p2(raw);  // ❌ Double delete!
 ```
 
 5. **Don't manually delete**
@@ -574,24 +578,24 @@ delete raw;
 
 ```cpp
 // ❌ Won't compile
-unique_ptr<T> p1 = make_unique<T>();
-unique_ptr<T> p2 = p1;  // Error!
+std::unique_ptr<T> p1 = std::make_unique<T>();
+std::unique_ptr<T> p2 = p1;  // Error!
 
 // ✅ Move instead
-unique_ptr<T> p2 = std::move(p1);
+std::unique_ptr<T> p2 = std::move(p1);
 ```
 
 ### Mistake 2: Wrong Array Syntax
 
 ```cpp
 // ❌ Wrong - uses delete instead of delete[]
-unique_ptr<int> arr(new int[10]);
+std::unique_ptr<int> arr(new int[10]);
 
 // ✅ Correct - uses delete[]
-unique_ptr<int[]> arr = make_unique<int[]>(10);
+std::unique_ptr<int[]> arr = std::make_unique<int[]>(10);
 
 // ✅✅ Best - use vector
-vector<int> arr(10);
+std::vector<int> arr(10);
 ```
 
 ### Mistake 3: Double Ownership
@@ -599,22 +603,22 @@ vector<int> arr(10);
 ```cpp
 // ❌ Both will try to delete same object
 Widget* raw = new Widget();
-unique_ptr<Widget> p1(raw);
-unique_ptr<Widget> p2(raw);  // BOOM!
+std::unique_ptr<Widget> p1(raw);
+std::unique_ptr<Widget> p2(raw);  // BOOM!
 
 // ✅ Only one unique_ptr per object
-auto p1 = make_unique<Widget>();
+auto p1 = std::make_unique<Widget>();
 // No p2!
 ```
 
 ### Mistake 4: Using After Move
 
 ```cpp
-auto ptr1 = make_unique<Widget>();
+auto ptr1 = std::make_unique<Widget>();
 auto ptr2 = std::move(ptr1);
 
 // ❌ ptr1 is nullptr now!
-ptr1->doWork();  // Crash!
+ptr1->doWork();  // Undefined behavior (typically a crash)
 
 // ✅ Check first
 if (ptr1) {
@@ -626,14 +630,14 @@ if (ptr1) {
 
 ```cpp
 // ❌ Don't return reference
-unique_ptr<T>& create() {
-    unique_ptr<T> ptr = make_unique<T>();
+std::unique_ptr<T>& create() {
+    std::unique_ptr<T> ptr = std::make_unique<T>();
     return ptr;  // Dangling reference!
 }
 
 // ✅ Return by value
-unique_ptr<T> create() {
-    return make_unique<T>();  // Ownership transferred
+std::unique_ptr<T> create() {
+    return std::make_unique<T>();  // Ownership transferred
 }
 ```
 
@@ -656,58 +660,46 @@ raw->doWork();  // Crash! Dangling pointer
 ### Size
 
 ```cpp
-sizeof(unique_ptr<T>)  ==  sizeof(T*)
+sizeof(std::unique_ptr<T>)  ==  sizeof(T*)    // 8 bytes on x86-64 ✅ tested
 
-// Same size as raw pointer!
-// No extra overhead
+// Same size as raw pointer — with the DEFAULT deleter.
+// With a function-pointer deleter or a capturing lambda it is 16 bytes ✅ tested
 ```
 
 ### Speed
 
-| Operation | unique_ptr | Raw Pointer | Overhead |
-|-----------|------------|-------------|----------|
-| Creation | ~2ns | ~2ns | **0%** |
-| Destruction | ~2ns | ~2ns | **0%** |
-| Dereferencing | ~1ns | ~1ns | **0%** |
-| Moving | ~2ns | ~2ns | **0%** |
-| Function call | Inlined | Inlined | **0%** |
+No timing numbers are given here: the old table and benchmark figures were not measured, so they were removed.
+To measure on your machine, benchmark with `-O2` and look at the generated assembly yourself.
+
+With the default deleter, `unique_ptr` is a thin wrapper: no reference count, no extra allocation,
+and `operator->` / `operator*` are inlined.
 
 ### Compiler Optimization
 
 ```cpp
 // Code:
 void process() {
-    auto ptr = make_unique<Widget>(42);
+    auto ptr = std::make_unique<Widget>(42);
     ptr->work();
 }
 
-// Optimized assembly is identical to:
+// Roughly equivalent to:
 void process() {
     Widget* ptr = new Widget(42);
     ptr->work();
     delete ptr;
 }
 ```
-
-### Benchmarks
-
-```cpp
-// Test: Create, use, destroy 1 million objects
-
-Raw pointer:   847ms
-unique_ptr:    847ms  (0% overhead!)
-
-// Test: Move 1 million unique_ptrs
-
-Move time:     12ms  (just pointer copy)
-```
+✅ tested with `g++ -O2 -S`: the two functions are **not** byte-for-byte identical. The `unique_ptr` version
+also contains cleanup code that deletes the object if `work()` throws, which the raw-pointer version
+does not have (it would leak). So "same performance" is right for the normal path, but "identical assembly" is not.
 
 ### Key Insights
 
 - **Zero abstraction overhead**
-- **Same performance as manual management**
-- **Compiler inlines everything**
-- **No runtime cost for safety!**
+- **Same size as a raw pointer** (default deleter)
+- **Normal-path cost is the same as manual new/delete**
+- **A deleter that holds state makes the `unique_ptr` bigger** (16 bytes for a function-pointer or capturing-lambda deleter — ✅ tested)
 
 ---
 
@@ -718,39 +710,39 @@ Move time:     12ms  (just pointer copy)
 1. **Single ownership needed**
    ```cpp
    class Manager {
-       unique_ptr<Resource> resource;  // Manager owns it
+       std::unique_ptr<Resource> resource;  // Manager owns it
    };
    ```
 
 2. **Factory functions**
    ```cpp
-   unique_ptr<Widget> createWidget() {
-       return make_unique<Widget>();
+   std::unique_ptr<Widget> createWidget() {
+       return std::make_unique<Widget>();
    }
    ```
 
 3. **Polymorphic collections**
    ```cpp
-   vector<unique_ptr<Base>> items;
-   items.push_back(make_unique<Derived>());
+   std::vector<std::unique_ptr<Base>> items;
+   items.push_back(std::make_unique<Derived>());
    ```
 
 4. **RAII resources**
    ```cpp
-   unique_ptr<FILE, FileDeleter> file(fopen(...));
+   std::unique_ptr<FILE, FileDeleter> file(fopen(...));
    ```
 
 5. **Preventing copies**
    ```cpp
    class NonCopyable {
-       unique_ptr<Impl> pImpl;  // Can't copy
+       std::unique_ptr<Impl> pImpl;  // Can't copy
    };
    ```
 
 6. **Optional ownership**
    ```cpp
-   unique_ptr<T> maybeCreate(bool create) {
-       return create ? make_unique<T>() : nullptr;
+   std::unique_ptr<T> maybeCreate(bool create) {
+       return create ? std::make_unique<T>() : nullptr;
    }
    ```
 
@@ -760,13 +752,13 @@ Move time:     12ms  (just pointer copy)
    ```cpp
    // ❌ unique_ptr - can't share
    // ✅ shared_ptr - multiple owners
-   shared_ptr<T> ptr = make_shared<T>();
+   std::shared_ptr<T> ptr = std::make_shared<T>();
    ```
 
 2. **Stack allocation works**
    ```cpp
    // ❌ Unnecessary heap allocation
-   auto ptr = make_unique<Widget>();
+   auto ptr = std::make_unique<Widget>();
    
    // ✅ Stack is faster
    Widget widget;
@@ -775,7 +767,7 @@ Move time:     12ms  (just pointer copy)
 3. **Need to observe only**
    ```cpp
    // ❌ unique_ptr when not owning
-   void observe(unique_ptr<T>& ptr);
+   void observe(std::unique_ptr<T>& ptr);
    
    // ✅ Raw pointer for observation
    void observe(T* ptr);
@@ -784,10 +776,10 @@ Move time:     12ms  (just pointer copy)
 4. **Standard containers work**
    ```cpp
    // ❌ unique_ptr<T[]>
-   auto arr = make_unique<int[]>(10);
+   auto arr = std::make_unique<int[]>(10);
    
    // ✅ vector is better
-   vector<int> arr(10);
+   std::vector<int> arr(10);
    ```
 
 ---
@@ -798,12 +790,12 @@ Move time:     12ms  (just pointer copy)
 
 ```cpp
 class FileHandler {
-    unique_ptr<FILE, FileDeleter> file;
+    std::unique_ptr<FILE, FileDeleter> file;
     
 public:
     FileHandler(const char* name) 
         : file(fopen(name, "r"), FileDeleter{}) {
-        if (!file) throw runtime_error("Failed to open");
+        if (!file) throw std::runtime_error("Failed to open");
     }
     
     // Destructor automatically closes file
@@ -814,13 +806,13 @@ public:
 ### Move Semantics
 
 ```cpp
-unique_ptr<T> ptr1 = make_unique<T>();
+std::unique_ptr<T> ptr1 = std::make_unique<T>();
 
 // Move constructor
-unique_ptr<T> ptr2(std::move(ptr1));
+std::unique_ptr<T> ptr2(std::move(ptr1));
 
 // Move assignment
-unique_ptr<T> ptr3;
+std::unique_ptr<T> ptr3;
 ptr3 = std::move(ptr2);
 ```
 
@@ -829,17 +821,17 @@ ptr3 = std::move(ptr2);
 ```cpp
 // Function pointer deleter
 void cleanup(Resource* r) { /* ... */ }
-unique_ptr<Resource, decltype(&cleanup)> ptr(new Resource, &cleanup);
+std::unique_ptr<Resource, decltype(&cleanup)> ptr(new Resource, &cleanup);
 
 // Lambda deleter
 auto deleter = [](Resource* r) { /* ... */ };
-unique_ptr<Resource, decltype(deleter)> ptr(new Resource, deleter);
+std::unique_ptr<Resource, decltype(deleter)> ptr(new Resource, deleter);
 
 // Functor deleter
 struct Deleter {
     void operator()(Resource* r) const { /* ... */ }
 };
-unique_ptr<Resource, Deleter> ptr(new Resource, Deleter{});
+std::unique_ptr<Resource, Deleter> ptr(new Resource, Deleter{});
 ```
 
 ### Polymorphism
@@ -855,7 +847,7 @@ class Derived : public Base {
     void work() override { /* ... */ }
 };
 
-unique_ptr<Base> ptr = make_unique<Derived>();
+std::unique_ptr<Base> ptr = std::make_unique<Derived>();
 ptr->work();  // Calls Derived::work()
 // Properly deletes Derived object
 ```
@@ -872,7 +864,7 @@ public:
     
 private:
     struct Impl;
-    unique_ptr<Impl> pImpl;
+    std::unique_ptr<Impl> pImpl;
 };
 
 // widget.cpp
@@ -880,7 +872,7 @@ struct Widget::Impl {
     // Implementation details
 };
 
-Widget::Widget() : pImpl(make_unique<Impl>()) {}
+Widget::Widget() : pImpl(std::make_unique<Impl>()) {}
 Widget::~Widget() = default;  // unique_ptr handles it
 ```
 
@@ -912,7 +904,7 @@ After: auto ptr2 = std::move(ptr1);
 
 ```cpp
 void function() {
-    auto ptr = make_unique<Widget>();  // Created
+    auto ptr = std::make_unique<Widget>();  // Created
     
     ptr->doWork();  // Used
     
@@ -949,9 +941,9 @@ All properly deleted when vector destroyed
 ### Creation
 
 ```cpp
-auto ptr = make_unique<T>(args);        // Preferred
-unique_ptr<T> ptr(new T(args));         // OK
-auto arr = make_unique<T[]>(size);      // Arrays
+auto ptr = std::make_unique<T>(args);        // Preferred
+std::unique_ptr<T> ptr(new T(args));         // OK
+auto arr = std::make_unique<T[]>(size);      // Arrays
 ```
 
 ### Access
@@ -982,7 +974,7 @@ if (!ptr) { }     // Is null
 ### Custom Deleter
 
 ```cpp
-unique_ptr<T, Deleter> ptr(new T, deleter);
+std::unique_ptr<T, Deleter> ptr(new T, deleter);
 ```
 
 ---
@@ -992,21 +984,24 @@ unique_ptr<T, Deleter> ptr(new T, deleter);
 ### Basic
 
 ```bash
-g++ -std=c++14 -Wall -Wextra unique_ptr.cpp -o unique_ptr
+g++ -std=c++23 -Wall -Wextra main.cpp -o unique_ptr
 ./unique_ptr
 ```
+`main.cpp` uses `std::println` (`<print>`), so it needs GCC 14+ or a recent Clang with `-std=c++23`.
+Example 6 creates a file `test.txt` in the current directory.
 
 ### With Optimizations
 
 ```bash
-g++ -std=c++14 -O3 -Wall -Wextra unique_ptr.cpp -o unique_ptr
+g++ -std=c++23 -O3 -Wall -Wextra main.cpp -o unique_ptr
 ```
 
-### Check Assembly (verify zero overhead)
+### Check Assembly
 
 ```bash
-g++ -std=c++14 -O3 -S unique_ptr.cpp
-# Check that unique_ptr code is identical to raw pointer code
+g++ -std=c++23 -O2 -S main.cpp
+# Compare unique_ptr code with raw-pointer code yourself.
+# Not identical: the unique_ptr version also contains exception-cleanup code.
 ```
 
 ---
@@ -1017,7 +1012,7 @@ g++ -std=c++14 -O3 -S unique_ptr.cpp
 
 1. **unique_ptr** = automatic memory management
 2. **Unique ownership** - one owner at a time
-3. **Use make_unique** - exception safe, cleaner
+3. **Use make_unique** - cleaner, no naked `new`
 4. **Move with std::move** - can't copy
 5. **Zero overhead** - same as raw pointers
 6. **Exception safe** - RAII pattern
@@ -1046,6 +1041,38 @@ g++ -std=c++14 -O3 -S unique_ptr.cpp
    
    unique_ptr = AUTOMATIC MEMORY MANAGEMENT!
 ```
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+The title and description comment at the top of `main.cpp` stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `rand()` / `runtime_error` etc. now have their includes (`<cstdlib>`, `<stdexcept>`, `<cstdio>`).
+- **Printed lecture text removed from the program** — everything in it is covered by the sections above:
+  - Example 1: the list of raw-pointer problems → "The Problem It Solves" and Examples Overview, Example 1.
+  - Example 2: the "Advantages" list → "What Is unique_ptr?" / Key Properties.
+  - Example 3: the "Why prefer make_unique?" list and the exception-safety example → Example 3 and "Creating unique_ptr" (corrected for C++17, see above).
+  - Examples 4, 8, 10: the closing "✅ …" lines → Ownership and Moving, Example 8, Best Practices.
+  - Example 5: the reset()/release() comparison → Example 5 and "Common Operations".
+  - Example 7: the "Important" list and the "Don't do this" block → Common Mistakes, Mistake 2.
+  - `printComprehensiveInfo()` (quick reference, special cases, patterns, mistakes, best practices, performance, "C++ evolution") and the "KEY TAKEAWAYS" block → the Quick Reference, Best Practices, Common Mistakes, Performance and Summary sections of this Readme.
+- The "C++17: Better deduction" line from the old "C++ evolution" block was dropped (not accurate enough to keep). From the same block: C++11 introduced `unique_ptr`, C++14 added `make_unique`, C++20 added `make_unique_for_overwrite`.
+- Example 1 now prints one extra line, `(no 'destroyed' line above — the Widget leaked)`, because the leak is otherwise invisible once the list of problems is gone.
+- Example 6: the heading said "lambda" for the second block, but it uses a function pointer; it now says "function pointer".
+
+### Corrections to comments in main.cpp
+
+- Example 8: "RVO/NRVO applies - no copy, no move!" was too strong. Returning a prvalue (`return make_unique<...>()`) is guaranteed elision; returning a named local (`return widget;`) usually gets NRVO, but if not, it is **moved** — never copied.
+- Example 9: "destroyed in reverse order" was wrong for a `vector`: elements are destroyed in forward order (✅ tested: Dog, Cat, Bird; each prints `~Derived` then `~Animal`).
+- Example 10: "logger destroyed after db" was wrong: members are destroyed in reverse declaration order, so `logger` is destroyed first, then `db` (✅ tested: `[LOG] Closing app.log` is printed before any DB line). `db` prints nothing on destruction here because `shutdown()` already closed it.
+
+### Tested
+
+✅ `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer: no warnings, no errors. Output identical to the original except the removed lecture text, the two changed/added lines above, and pointer addresses.
+Example 1 leaks one `Widget` on purpose, so LeakSanitizer (`detect_leaks=1`) reports it at exit.
+`unique_ptr<int> arr(new int[10])` is reported by AddressSanitizer as `alloc-dealloc-mismatch` ✅ tested (Mistake 2).
+`return create ? make_unique<T>() : nullptr;` compiles ✅ tested (the "Optional ownership" example).
 
 ---
 

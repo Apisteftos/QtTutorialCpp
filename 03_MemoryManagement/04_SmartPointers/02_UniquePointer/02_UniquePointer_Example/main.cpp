@@ -1,9 +1,11 @@
-#include <iostream>
-#include <memory>
-#include <vector>
-#include <string>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-using namespace std;
+#include <memory>
+#include <print>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // ============================================
 // WHAT IS unique_ptr?
@@ -58,13 +60,13 @@ namespace RawPointerProblems {
 class Widget {
 public:
     Widget(int id) : id(id) {
-        cout << "  Widget " << id << " created\n";
+        std::println("  Widget {} created", this->id);
     }
     ~Widget() {
-        cout << "  Widget " << id << " destroyed\n";
+        std::println("  Widget {} destroyed", id);
     }
     void doWork() {
-        cout << "  Widget " << id << " working...\n";
+        std::println("  Widget {} working...", id);
     }
 private:
     int id;
@@ -82,19 +84,19 @@ void problematic_function1(bool condition) {
     delete ptr;  // Never reached if condition is true
 }
 
-// ❌ Problem 2: Memory leak on exception
+// ❌ Problem 2: Memory leak on exception (not called — shown for the code only)
 void problematic_function2() {
     Widget* ptr = new Widget(2);
 
     // Imagine some code that might throw
     if (rand() % 2) {
-        throw runtime_error("Oops!");  // ❌ MEMORY LEAK!
+        throw std::runtime_error("Oops!");  // ❌ MEMORY LEAK!
     }
 
     delete ptr;  // Never reached if exception thrown
 }
 
-// ❌ Problem 3: Double deletion
+// ❌ Problem 3: Double deletion (not called — it would be undefined behavior)
 void problematic_function3() {
     Widget* ptr = new Widget(3);
     delete ptr;
@@ -103,18 +105,13 @@ void problematic_function3() {
 }
 
 void demonstrate() {
-    cout << "\n=== Example 1: Raw Pointer Problems ===\n";
+    std::println("");
+    std::println("=== Example 1: Raw Pointer Problems ===");
 
-    cout << "\n❌ Problem 1: Early return\n";
+    std::println("");
+    std::println("❌ Problem 1: Early return");
     problematic_function1(true);  // Memory leak!
-
-    cout << "\n❌ Problems with raw pointers:\n";
-    cout << "  • Memory leaks (forgot delete)\n";
-    cout << "  • Double deletion (deleted twice)\n";
-    cout << "  • Exception safety (exception before delete)\n";
-    cout << "  • Complex ownership (who deletes?)\n";
-    cout << "  • Dangling pointers (deleted, still used)\n";
-    cout << "\n✅ Solution: Use unique_ptr!\n";
+    std::println("  (no 'destroyed' line above — the Widget leaked)");
 }
 }
 
@@ -127,42 +124,38 @@ namespace BasicUniquePtr {
 class Widget {
 public:
     Widget(int id) : id(id) {
-        cout << "  Widget " << id << " created\n";
+        std::println("  Widget {} created", this->id);
     }
     ~Widget() {
-        cout << "  Widget " << id << " destroyed\n";
+        std::println("  Widget {} destroyed", id);
     }
     void doWork() {
-        cout << "  Widget " << id << " working...\n";
+        std::println("  Widget {} working...", id);
     }
 private:
     int id;
 };
 
 void demonstrate() {
-    cout << "\n=== Example 2: Basic unique_ptr ===\n";
+    std::println("");
+    std::println("=== Example 2: Basic unique_ptr ===");
 
-    cout << "\nCreating unique_ptr:\n";
+    std::println("");
+    std::println("Creating unique_ptr:");
     {
-        unique_ptr<Widget> ptr = make_unique<Widget>(1);
+        std::unique_ptr<Widget> ptr = std::make_unique<Widget>(1);
         ptr->doWork();
 
         // Check if valid
         if (ptr) {
-            cout << "  ptr is valid\n";
+            std::println("  ptr is valid");
         }
 
         // Get raw pointer (rarely needed)
         Widget* raw = ptr.get();
-        cout << "  Raw pointer: " << raw << "\n";
+        std::println("  Raw pointer: {}", static_cast<const void*>(raw));
 
     }  // ✅ Widget automatically destroyed here!
-
-    cout << "\n✅ Advantages:\n";
-    cout << "  • Automatic cleanup (destructor calls delete)\n";
-    cout << "  • Exception safe (RAII)\n";
-    cout << "  • Can't forget to delete\n";
-    cout << "  • Zero overhead vs raw pointer\n";
 }
 }
 
@@ -175,43 +168,31 @@ namespace MakeUnique {
 class Point {
 public:
     Point(int x, int y) : x(x), y(y) {
-        cout << "  Point(" << x << ", " << y << ") created\n";
+        std::println("  Point({}, {}) created", this->x, this->y);
     }
     ~Point() {
-        cout << "  Point destroyed\n";
+        std::println("  Point destroyed");
     }
     void display() const {
-        cout << "  Point: (" << x << ", " << y << ")\n";
+        std::println("  Point: ({}, {})", x, y);
     }
 private:
     int x, y;
 };
 
 void demonstrate() {
-    cout << "\n=== Example 3: make_unique ===\n";
+    std::println("");
+    std::println("=== Example 3: make_unique ===");
 
-    cout << "\n✅ Preferred way (C++14+):\n";
-    auto p1 = make_unique<Point>(10, 20);
+    std::println("");
+    std::println("✅ Preferred way (C++14+):");
+    auto p1 = std::make_unique<Point>(10, 20);
     p1->display();
 
-    cout << "\n❌ Old way (C++11, still works):\n";
-    unique_ptr<Point> p2(new Point(30, 40));
+    std::println("");
+    std::println("❌ Old way (C++11, still works):");
+    std::unique_ptr<Point> p2(new Point(30, 40));
     p2->display();
-
-    cout << "\nWhy prefer make_unique?\n";
-    cout << "  1. Exception safe in function calls\n";
-    cout << "  2. No need to repeat type\n";
-    cout << "  3. Cannot accidentally use raw pointer\n";
-    cout << "  4. Consistent with make_shared\n";
-
-    cout << "\nException safety example:\n";
-    cout << "  // ❌ Not exception safe:\n";
-    cout << "  func(unique_ptr<T>(new T), other_func());\n";
-    cout << "  // If other_func() throws, T leaks!\n";
-    cout << "\n";
-    cout << "  // ✅ Exception safe:\n";
-    cout << "  func(make_unique<T>(), other_func());\n";
-    cout << "  // Guaranteed no leak!\n";
 }
 }
 
@@ -223,65 +204,67 @@ namespace MovingUniquePtr {
 
 class Resource {
 public:
-    Resource(string name) : name(name) {
-        cout << "  Resource \"" << name << "\" created\n";
+    Resource(std::string name) : name(name) {
+        std::println("  Resource \"{}\" created", this->name);
     }
     ~Resource() {
-        cout << "  Resource \"" << name << "\" destroyed\n";
+        std::println("  Resource \"{}\" destroyed", name);
     }
     void use() {
-        cout << "  Using resource \"" << name << "\"\n";
+        std::println("  Using resource \"{}\"", name);
     }
 private:
-    string name;
+    std::string name;
 };
 
 // Function takes ownership by value
-void take_ownership(unique_ptr<Resource> ptr) {
-    cout << "  take_ownership() received resource\n";
+void take_ownership(std::unique_ptr<Resource> ptr) {
+    std::println("  take_ownership() received resource");
     ptr->use();
     // ptr destroyed at end of function
 }
 
 // Function returns ownership
-unique_ptr<Resource> create_resource(string name) {
-    cout << "  create_resource() creating resource\n";
-    return make_unique<Resource>(name);
+std::unique_ptr<Resource> create_resource(std::string name) {
+    std::println("  create_resource() creating resource");
+    return std::make_unique<Resource>(name);
     // Ownership transferred to caller
 }
 
 void demonstrate() {
-    cout << "\n=== Example 4: Moving unique_ptr ===\n";
+    std::println("");
+    std::println("=== Example 4: Moving unique_ptr ===");
 
-    cout << "\nTransferring ownership:\n";
-    unique_ptr<Resource> r1 = make_unique<Resource>("R1");
+    std::println("");
+    std::println("Transferring ownership:");
+    std::unique_ptr<Resource> r1 = std::make_unique<Resource>("R1");
 
     // ❌ Can't copy unique_ptr
     // unique_ptr<Resource> r2 = r1;  // Won't compile!
 
     // ✅ Move ownership with std::move
-    unique_ptr<Resource> r2 = std::move(r1);
+    std::unique_ptr<Resource> r2 = std::move(r1);
 
     if (!r1) {
-        cout << "  r1 is now nullptr (ownership moved)\n";
+        std::println("  r1 is now nullptr (ownership moved)");
     }
     if (r2) {
-        cout << "  r2 now owns the resource\n";
+        std::println("  r2 now owns the resource");
     }
 
-    cout << "\nPassing to function:\n";
-    unique_ptr<Resource> r3 = make_unique<Resource>("R3");
+    std::println("");
+    std::println("Passing to function:");
+    std::unique_ptr<Resource> r3 = std::make_unique<Resource>("R3");
     take_ownership(std::move(r3));  // Transfer ownership
 
     if (!r3) {
-        cout << "  r3 is now nullptr (ownership transferred)\n";
+        std::println("  r3 is now nullptr (ownership transferred)");
     }
 
-    cout << "\nReturning from function:\n";
-    unique_ptr<Resource> r4 = create_resource("R4");
+    std::println("");
+    std::println("Returning from function:");
+    std::unique_ptr<Resource> r4 = create_resource("R4");
     r4->use();
-
-    cout << "\n✅ Move semantics prevent double deletion!\n";
 }
 }
 
@@ -294,10 +277,10 @@ namespace ResetAndRelease {
 class Widget {
 public:
     Widget(int id) : id(id) {
-        cout << "  Widget " << id << " created\n";
+        std::println("  Widget {} created", this->id);
     }
     ~Widget() {
-        cout << "  Widget " << id << " destroyed\n";
+        std::println("  Widget {} destroyed", id);
     }
     int getId() const { return id; }
 private:
@@ -305,31 +288,29 @@ private:
 };
 
 void demonstrate() {
-    cout << "\n=== Example 5: reset() and release() ===\n";
+    std::println("");
+    std::println("=== Example 5: reset() and release() ===");
 
-    cout << "\nreset() - Delete current and optionally set new:\n";
-    unique_ptr<Widget> ptr = make_unique<Widget>(1);
-    cout << "  Created Widget 1\n";
+    std::println("");
+    std::println("reset() - Delete current and optionally set new:");
+    std::unique_ptr<Widget> ptr = std::make_unique<Widget>(1);
+    std::println("  Created Widget 1");
 
     ptr.reset();  // Delete Widget 1, set to nullptr
-    cout << "  After reset(): ptr is " << (ptr ? "valid" : "nullptr") << "\n";
+    std::println("  After reset(): ptr is {}", ptr ? "valid" : "nullptr");
 
     ptr.reset(new Widget(2));  // Delete old (if any) and take new
-    cout << "  After reset(new Widget(2)): ptr is valid\n";
+    std::println("  After reset(new Widget(2)): ptr is valid");
 
-    cout << "\nrelease() - Give up ownership WITHOUT deleting:\n";
-    unique_ptr<Widget> ptr2 = make_unique<Widget>(3);
+    std::println("");
+    std::println("release() - Give up ownership WITHOUT deleting:");
+    std::unique_ptr<Widget> ptr2 = std::make_unique<Widget>(3);
     Widget* raw = ptr2.release();  // ptr2 becomes nullptr
 
-    cout << "  After release(): ptr2 is " << (ptr2 ? "valid" : "nullptr") << "\n";
-    cout << "  Raw pointer: " << raw << "\n";
-    cout << "  ⚠️  Must manually delete raw pointer!\n";
+    std::println("  After release(): ptr2 is {}", ptr2 ? "valid" : "nullptr");
+    std::println("  Raw pointer: {}", static_cast<const void*>(raw));
+    std::println("  ⚠️  Must manually delete raw pointer!");
     delete raw;  // Manual cleanup required!
-
-    cout << "\nComparison:\n";
-    cout << "  reset()   - Deletes current object, takes new ownership\n";
-    cout << "  release() - Gives up ownership, returns raw pointer\n";
-    cout << "              (YOU must delete!)\n";
 }
 }
 
@@ -343,7 +324,7 @@ namespace CustomDeleters {
 struct FileDeleter {
     void operator()(FILE* file) const {
         if (file) {
-            cout << "  Closing file...\n";
+            std::println("  Closing file...");
             fclose(file);
         }
     }
@@ -353,7 +334,7 @@ struct FileDeleter {
 struct ArrayDeleter {
     void operator()(int* ptr) const {
         if (ptr) {
-            cout << "  Deleting array...\n";
+            std::println("  Deleting array...");
             delete[] ptr;
         }
     }
@@ -361,25 +342,27 @@ struct ArrayDeleter {
 
 // Example resource
 struct Connection {
-    Connection() { cout << "  Connection opened\n"; }
-    void send(const string& msg) {
-        cout << "  Sending: " << msg << "\n";
+    Connection() { std::println("  Connection opened"); }
+    void send(const std::string& msg) {
+        std::println("  Sending: {}", msg);
     }
     // Custom cleanup function
     static void cleanup(Connection* conn) {
         if (conn) {
-            cout << "  Connection closed\n";
+            std::println("  Connection closed");
             delete conn;
         }
     }
 };
 
 void demonstrate() {
-    cout << "\n=== Example 6: Custom Deleters ===\n";
+    std::println("");
+    std::println("=== Example 6: Custom Deleters ===");
 
-    cout << "\nCustom deleter for FILE*:\n";
+    std::println("");
+    std::println("Custom deleter for FILE*:");
     {
-        unique_ptr<FILE, FileDeleter> file(
+        std::unique_ptr<FILE, FileDeleter> file(
             fopen("test.txt", "w"),
             FileDeleter{}
             );
@@ -389,9 +372,10 @@ void demonstrate() {
         }
     }  // FileDeleter called automatically
 
-    cout << "\nCustom deleter with lambda:\n";
+    std::println("");
+    std::println("Custom deleter with function pointer:");
     {
-        unique_ptr<Connection, decltype(&Connection::cleanup)> conn(
+        std::unique_ptr<Connection, decltype(&Connection::cleanup)> conn(
             new Connection(),
             &Connection::cleanup
             );
@@ -399,20 +383,19 @@ void demonstrate() {
         conn->send("Hello");
     }  // Connection::cleanup called automatically
 
-    cout << "\nLambda deleter:\n";
+    std::println("");
+    std::println("Lambda deleter:");
     {
         auto deleter = [](int* ptr) {
             if (ptr) {
-                cout << "  Lambda deleting: " << *ptr << "\n";
+                std::println("  Lambda deleting: {}", *ptr);
                 delete ptr;
             }
         };
 
-        unique_ptr<int, decltype(deleter)> ptr(new int(42), deleter);
-        cout << "  Value: " << *ptr << "\n";
+        std::unique_ptr<int, decltype(deleter)> ptr(new int(42), deleter);
+        std::println("  Value: {}", *ptr);
     }  // Lambda called automatically
-
-    cout << "\n✅ Custom deleters for non-standard cleanup!\n";
 }
 }
 
@@ -423,12 +406,14 @@ void demonstrate() {
 namespace ArraysWithUniquePtr {
 
 void demonstrate() {
-    cout << "\n=== Example 7: Arrays with unique_ptr ===\n";
+    std::println("");
+    std::println("=== Example 7: Arrays with unique_ptr ===");
 
-    cout << "\nDynamic array (prefer std::vector!):\n";
+    std::println("");
+    std::println("Dynamic array (prefer std::vector!):");
     {
         // ✅ Correct: unique_ptr<T[]> for arrays
-        unique_ptr<int[]> arr = make_unique<int[]>(5);
+        std::unique_ptr<int[]> arr = std::make_unique<int[]>(5);
 
         // Initialize
         for (int i = 0; i < 5; ++i) {
@@ -436,30 +421,14 @@ void demonstrate() {
         }
 
         // Access with []
-        cout << "  Array: [ ";
+        std::print("  Array: [ ");
         for (int i = 0; i < 5; ++i) {
-            cout << arr[i] << " ";
+            std::print("{} ", arr[i]);
         }
-        cout << "]\n";
+        std::println("]");
 
         // ✅ Automatically uses delete[] instead of delete
     }  // Array properly deleted with delete[]
-
-    cout << "\n⚠️  Important:\n";
-    cout << "  • Use unique_ptr<T[]> for arrays\n";
-    cout << "  • Automatically calls delete[] instead of delete\n";
-    cout << "  • Supports [] operator\n";
-    cout << "  • BUT: Prefer std::vector in most cases!\n";
-
-    cout << "\n❌ Don't do this:\n";
-    cout << "  unique_ptr<int> arr(new int[5]);  // ❌ Wrong!\n";
-    cout << "  // Will use delete instead of delete[]!\n";
-    cout << "\n";
-    cout << "  ✅ Do this:\n";
-    cout << "  unique_ptr<int[]> arr = make_unique<int[]>(5);\n";
-
-    cout << "\n✅✅ Or better - use vector:\n";
-    cout << "  vector<int> arr(5);  // Best choice!\n";
 }
 }
 
@@ -472,31 +441,31 @@ namespace ReturningFromFunctions {
 class Widget {
 public:
     Widget(int id) : id(id) {
-        cout << "  Widget " << id << " created\n";
+        std::println("  Widget {} created", this->id);
     }
     ~Widget() {
-        cout << "  Widget " << id << " destroyed\n";
+        std::println("  Widget {} destroyed", id);
     }
     void show() const {
-        cout << "  Widget " << id << "\n";
+        std::println("  Widget {}", id);
     }
 private:
     int id;
 };
 
 // Return unique_ptr by value - ownership transferred to caller
-unique_ptr<Widget> createWidget(int id) {
-    cout << "  createWidget() creating widget\n";
-    auto widget = make_unique<Widget>(id);
+std::unique_ptr<Widget> createWidget(int id) {
+    std::println("  createWidget() creating widget");
+    auto widget = std::make_unique<Widget>(id);
     // Process widget...
-    return widget;  // RVO/NRVO applies - no copy, no move!
-    // Or: return make_unique<Widget>(id);
+    return widget;  // returned by value: NRVO usually applies, otherwise it is moved — never copied
+    // Or: return make_unique<Widget>(id);  (copy elision is guaranteed here)
 }
 
 // Conditional creation
-unique_ptr<Widget> maybeCreateWidget(bool create) {
+std::unique_ptr<Widget> maybeCreateWidget(bool create) {
     if (create) {
-        return make_unique<Widget>(99);
+        return std::make_unique<Widget>(99);
     }
     return nullptr;  // Return empty unique_ptr
 }
@@ -511,53 +480,54 @@ public:
 class Circle : public Shape {
 public:
     void draw() const override {
-        cout << "  Drawing Circle\n";
+        std::println("  Drawing Circle");
     }
 };
 
 class Square : public Shape {
 public:
     void draw() const override {
-        cout << "  Drawing Square\n";
+        std::println("  Drawing Square");
     }
 };
 
-unique_ptr<Shape> createShape(string type) {
+std::unique_ptr<Shape> createShape(std::string type) {
     if (type == "circle") {
-        return make_unique<Circle>();
+        return std::make_unique<Circle>();
     } else if (type == "square") {
-        return make_unique<Square>();
+        return std::make_unique<Square>();
     }
     return nullptr;
 }
 
 void demonstrate() {
-    cout << "\n=== Example 8: Returning from Functions ===\n";
+    std::println("");
+    std::println("=== Example 8: Returning from Functions ===");
 
-    cout << "\nReturning unique_ptr:\n";
-    unique_ptr<Widget> w1 = createWidget(1);
+    std::println("");
+    std::println("Returning unique_ptr:");
+    std::unique_ptr<Widget> w1 = createWidget(1);
     w1->show();
 
-    cout << "\nConditional return:\n";
-    unique_ptr<Widget> w2 = maybeCreateWidget(true);
+    std::println("");
+    std::println("Conditional return:");
+    std::unique_ptr<Widget> w2 = maybeCreateWidget(true);
     if (w2) {
         w2->show();
     }
 
-    unique_ptr<Widget> w3 = maybeCreateWidget(false);
+    std::unique_ptr<Widget> w3 = maybeCreateWidget(false);
     if (!w3) {
-        cout << "  w3 is nullptr\n";
+        std::println("  w3 is nullptr");
     }
 
-    cout << "\nFactory pattern:\n";
+    std::println("");
+    std::println("Factory pattern:");
     auto shape1 = createShape("circle");
     if (shape1) shape1->draw();
 
     auto shape2 = createShape("square");
     if (shape2) shape2->draw();
-
-    cout << "\n✅ Ownership automatically transferred to caller!\n";
-    cout << "✅ No manual memory management needed!\n";
 }
 }
 
@@ -570,7 +540,7 @@ namespace PolymorphismWithUniquePtr {
 class Animal {
 public:
     virtual ~Animal() {
-        cout << "  Animal destroyed\n";
+        std::println("  Animal destroyed");
     }
     virtual void makeSound() const = 0;
     virtual void move() const = 0;
@@ -579,66 +549,67 @@ public:
 class Dog : public Animal {
 public:
     ~Dog() override {
-        cout << "  Dog destroyed\n";
+        std::println("  Dog destroyed");
     }
     void makeSound() const override {
-        cout << "  Woof! Woof!\n";
+        std::println("  Woof! Woof!");
     }
     void move() const override {
-        cout << "  Running on four legs\n";
+        std::println("  Running on four legs");
     }
 };
 
 class Cat : public Animal {
 public:
     ~Cat() override {
-        cout << "  Cat destroyed\n";
+        std::println("  Cat destroyed");
     }
     void makeSound() const override {
-        cout << "  Meow!\n";
+        std::println("  Meow!");
     }
     void move() const override {
-        cout << "  Sneaking silently\n";
+        std::println("  Sneaking silently");
     }
 };
 
 class Bird : public Animal {
 public:
     ~Bird() override {
-        cout << "  Bird destroyed\n";
+        std::println("  Bird destroyed");
     }
     void makeSound() const override {
-        cout << "  Chirp! Chirp!\n";
+        std::println("  Chirp! Chirp!");
     }
     void move() const override {
-        cout << "  Flying in the sky\n";
+        std::println("  Flying in the sky");
     }
 };
 
 void demonstrate() {
-    cout << "\n=== Example 9: Polymorphism with unique_ptr ===\n";
+    std::println("");
+    std::println("=== Example 9: Polymorphism with unique_ptr ===");
 
-    cout << "\nPolymorphic collection:\n";
-    vector<unique_ptr<Animal>> animals;
+    std::println("");
+    std::println("Polymorphic collection:");
+    std::vector<std::unique_ptr<Animal>> animals;
 
-    animals.push_back(make_unique<Dog>());
-    animals.push_back(make_unique<Cat>());
-    animals.push_back(make_unique<Bird>());
+    animals.push_back(std::make_unique<Dog>());
+    animals.push_back(std::make_unique<Cat>());
+    animals.push_back(std::make_unique<Bird>());
 
-    cout << "\nMaking sounds:\n";
+    std::println("");
+    std::println("Making sounds:");
     for (const auto& animal : animals) {
         animal->makeSound();
     }
 
-    cout << "\nMoving:\n";
+    std::println("");
+    std::println("Moving:");
     for (const auto& animal : animals) {
         animal->move();
     }
 
-    cout << "\n✅ Polymorphic behavior with automatic cleanup!\n";
-    cout << "✅ Virtual destructor ensures proper cleanup!\n";
-
-}  // All animals automatically destroyed in reverse order
+}  // All animals destroyed in vector order (first element first); each one runs ~Derived then ~Animal
 }
 
 // ============================================
@@ -650,70 +621,71 @@ namespace ResourceManager {
 // Resource that needs cleanup
 class Database {
 public:
-    Database(const string& name) : name(name) {
-        cout << "  [DB] Connecting to " << name << "...\n";
+    Database(const std::string& name) : name(name) {
+        std::println("  [DB] Connecting to {}...", this->name);
         connected = true;
     }
 
     ~Database() {
         if (connected) {
-            cout << "  [DB] Disconnecting from " << name << "...\n";
+            std::println("  [DB] Disconnecting from {}...", name);
         }
     }
 
-    void query(const string& sql) {
+    void query(const std::string& sql) {
         if (connected) {
-            cout << "  [DB] Executing: " << sql << "\n";
+            std::println("  [DB] Executing: {}", sql);
         }
     }
 
     void close() {
         if (connected) {
-            cout << "  [DB] Closing connection\n";
+            std::println("  [DB] Closing connection");
             connected = false;
         }
     }
 
 private:
-    string name;
+    std::string name;
     bool connected;
 };
 
 // File handler
 class LogFile {
 public:
-    LogFile(const string& filename) : filename(filename) {
-        cout << "  [LOG] Opening " << filename << "\n";
+    LogFile(const std::string& filename) : filename(filename) {
+        std::println("  [LOG] Opening {}", this->filename);
     }
 
     ~LogFile() {
-        cout << "  [LOG] Closing " << filename << "\n";
+        std::println("  [LOG] Closing {}", filename);
     }
 
-    void write(const string& message) {
-        cout << "  [LOG] " << message << "\n";
+    void write(const std::string& message) {
+        std::println("  [LOG] {}", message);
     }
 
 private:
-    string filename;
+    std::string filename;
 };
 
 // Manager class using unique_ptr for all resources
 class Application {
 public:
     Application() {
-        cout << "\n[APP] Starting application...\n";
+        std::println("");
+        std::println("[APP] Starting application...");
 
         // Initialize resources with unique_ptr
-        db = make_unique<Database>("production_db");
-        logger = make_unique<LogFile>("app.log");
+        db = std::make_unique<Database>("production_db");
+        logger = std::make_unique<LogFile>("app.log");
 
         logger->write("Application started");
     }
 
     ~Application() {
         logger->write("Application shutting down");
-        cout << "[APP] Destroying application...\n";
+        std::println("[APP] Destroying application...");
         // unique_ptr automatically cleans up resources
     }
 
@@ -727,8 +699,8 @@ public:
             // Simulate work
             logger->write("Processing complete");
 
-        } catch (const exception& e) {
-            logger->write(string("Error: ") + e.what());
+        } catch (const std::exception& e) {
+            logger->write(std::string("Error: ") + e.what());
             // ✅ unique_ptr ensures cleanup even on exception!
         }
     }
@@ -739,14 +711,15 @@ public:
     }
 
 private:
-    unique_ptr<Database> db;
-    unique_ptr<LogFile> logger;
+    std::unique_ptr<Database> db;
+    std::unique_ptr<LogFile> logger;
     // ✅ Automatically cleaned up in destructor
-    // ✅ Order: logger destroyed after db (reverse declaration)
+    // ✅ Members are destroyed in reverse declaration order: logger first, then db
 };
 
 void demonstrate() {
-    cout << "\n=== Example 10: RAII Resource Manager ===\n";
+    std::println("");
+    std::println("=== Example 10: RAII Resource Manager ===");
 
     {
         Application app;
@@ -754,140 +727,7 @@ void demonstrate() {
         app.shutdown();
 
     }  // ✅ All resources automatically cleaned up!
-
-    cout << "\n✅ Benefits:\n";
-    cout << "  • Automatic resource cleanup\n";
-    cout << "  • Exception safe\n";
-    cout << "  • No manual memory management\n";
-    cout << "  • Clear ownership semantics\n";
-    cout << "  • Destructor order guaranteed\n";
 }
-}
-
-// ============================================
-// COMPREHENSIVE OUTPUT
-// ============================================
-
-void printComprehensiveInfo() {
-    cout << "\n" << string(60, '=') << "\n";
-    cout << "unique_ptr - COMPLETE REFERENCE\n";
-    cout << string(60, '=') << "\n";
-
-    cout << "\n📚 WHAT IS unique_ptr?\n";
-    cout << string(60, '-') << "\n";
-    cout << "Smart pointer with unique ownership semantics:\n";
-    cout << "  • Only ONE owner at a time\n";
-    cout << "  • Automatically deletes when destroyed\n";
-    cout << "  • Move-only (cannot copy)\n";
-    cout << "  • Zero overhead vs raw pointer\n";
-    cout << "  • Exception safe (RAII)\n";
-
-    cout << "\n📊 KEY OPERATIONS\n";
-    cout << string(60, '-') << "\n";
-    cout << "Creation:\n";
-    cout << "  auto ptr = make_unique<T>(args);     // ✅ Preferred (C++14)\n";
-    cout << "  unique_ptr<T> ptr(new T(args));      // ✅ OK (C++11)\n";
-    cout << "\n";
-    cout << "Access:\n";
-    cout << "  ptr->member()        // Access member\n";
-    cout << "  *ptr                 // Dereference\n";
-    cout << "  ptr.get()            // Get raw pointer\n";
-    cout << "\n";
-    cout << "Ownership:\n";
-    cout << "  auto p2 = std::move(ptr);  // Transfer ownership\n";
-    cout << "  ptr.reset()                // Delete and set to nullptr\n";
-    cout << "  ptr.release()              // Give up ownership\n";
-    cout << "\n";
-    cout << "Check:\n";
-    cout << "  if (ptr) { }         // Check if valid\n";
-    cout << "  if (!ptr) { }        // Check if nullptr\n";
-
-    cout << "\n🔧 SPECIAL CASES\n";
-    cout << string(60, '-') << "\n";
-    cout << "Arrays:\n";
-    cout << "  unique_ptr<T[]> arr = make_unique<T[]>(size);\n";
-    cout << "  arr[i] = value;  // Supports []\n";
-    cout << "\n";
-    cout << "Custom deleters:\n";
-    cout << "  unique_ptr<FILE, FileDeleter> file(fopen(...));\n";
-    cout << "  unique_ptr<T, decltype(&func)> ptr(new T, &func);\n";
-
-    cout << "\n💡 COMMON PATTERNS\n";
-    cout << string(60, '-') << "\n";
-    cout << "Factory function:\n";
-    cout << "  unique_ptr<Base> create() {\n";
-    cout << "      return make_unique<Derived>();\n";
-    cout << "  }\n";
-    cout << "\n";
-    cout << "Taking ownership:\n";
-    cout << "  void take(unique_ptr<T> ptr) {\n";
-    cout << "      // Owns ptr, deletes when done\n";
-    cout << "  }\n";
-    cout << "  take(std::move(my_ptr));  // Transfer\n";
-    cout << "\n";
-    cout << "Polymorphism:\n";
-    cout << "  vector<unique_ptr<Base>> items;\n";
-    cout << "  items.push_back(make_unique<Derived>());\n";
-
-    cout << "\n⚠️  COMMON MISTAKES\n";
-    cout << string(60, '-') << "\n";
-    cout << "❌ Trying to copy:\n";
-    cout << "   auto p2 = p1;  // Won't compile!\n";
-    cout << "   ✅ Use std::move(p1)\n";
-    cout << "\n";
-    cout << "❌ Using new T[size] without []:\n";
-    cout << "   unique_ptr<T> ptr(new T[5]);  // ❌ Wrong!\n";
-    cout << "   ✅ unique_ptr<T[]> ptr = make_unique<T[]>(5);\n";
-    cout << "\n";
-    cout << "❌ Storing raw pointer elsewhere:\n";
-    cout << "   T* raw = ptr.get();\n";
-    cout << "   // ptr destroyed → raw is dangling!\n";
-    cout << "   ✅ Don't store raw pointers from get()\n";
-    cout << "\n";
-    cout << "❌ Double ownership:\n";
-    cout << "   T* raw = new T;\n";
-    cout << "   unique_ptr<T> p1(raw);\n";
-    cout << "   unique_ptr<T> p2(raw);  // ❌ Double delete!\n";
-    cout << "   ✅ Only one unique_ptr per object\n";
-
-    cout << "\n🎯 BEST PRACTICES\n";
-    cout << string(60, '-') << "\n";
-    cout << "✅ Prefer make_unique over new:\n";
-    cout << "   auto ptr = make_unique<T>(args);  // ✅ Best\n";
-    cout << "\n";
-    cout << "✅ Return by value:\n";
-    cout << "   unique_ptr<T> create() { return make_unique<T>(); }\n";
-    cout << "\n";
-    cout << "✅ Use for polymorphism:\n";
-    cout << "   vector<unique_ptr<Base>> items;\n";
-    cout << "\n";
-    cout << "✅ Move when transferring:\n";
-    cout << "   func(std::move(ptr));  // Transfer ownership\n";
-    cout << "\n";
-    cout << "✅ Check before use:\n";
-    cout << "   if (ptr) { ptr->foo(); }\n";
-    cout << "\n";
-    cout << "✅ Prefer vector over unique_ptr<T[]>:\n";
-    cout << "   vector<T> arr;  // Better than unique_ptr<T[]>\n";
-
-    cout << "\n⚡ PERFORMANCE\n";
-    cout << string(60, '-') << "\n";
-    cout << "✅ Zero overhead:\n";
-    cout << "  • Same size as raw pointer\n";
-    cout << "  • No runtime cost vs raw pointer\n";
-    cout << "  • Destructor call is free (would happen anyway)\n";
-    cout << "  • Inline optimization possible\n";
-    cout << "\n";
-    cout << "Move vs Copy:\n";
-    cout << "  Move:  ~1-2 cycles (pointer copy)\n";
-    cout << "  Copy:  ❌ Deleted (not allowed)\n";
-
-    cout << "\n🚀 C++ EVOLUTION\n";
-    cout << string(60, '-') << "\n";
-    cout << "C++11: unique_ptr introduced\n";
-    cout << "C++14: make_unique added (finally!)\n";
-    cout << "C++17: Better deduction\n";
-    cout << "C++20: make_unique_for_overwrite\n";
 }
 
 // ============================================
@@ -895,11 +735,12 @@ void printComprehensiveInfo() {
 // ============================================
 
 int main() {
-    cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║            unique_ptr IN C++                          ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Automatic Memory Management with Zero Overhead!     ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║            unique_ptr IN C++                          ║");
+    std::println("║                                                       ║");
+    std::println("║  Automatic Memory Management with Zero Overhead!     ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     RawPointerProblems::demonstrate();
     BasicUniquePtr::demonstrate();
@@ -911,23 +752,6 @@ int main() {
     ReturningFromFunctions::demonstrate();
     PolymorphismWithUniquePtr::demonstrate();
     ResourceManager::demonstrate();
-
-    printComprehensiveInfo();
-
-    cout << "\n" << string(60, '=') << "\n";
-    cout << "🎓 KEY TAKEAWAYS\n";
-    cout << string(60, '=') << "\n";
-    cout << "1. unique_ptr = automatic memory management\n";
-    cout << "2. Unique ownership - only one owner at a time\n";
-    cout << "3. Use make_unique (exception safe, cleaner)\n";
-    cout << "4. Move with std::move (can't copy)\n";
-    cout << "5. Zero overhead vs raw pointers\n";
-    cout << "6. Exception safe (RAII pattern)\n";
-    cout << "7. Perfect for polymorphism\n";
-    cout << "8. Return by value from functions\n";
-    cout << "9. Never use raw new/delete in modern C++\n";
-    cout << "10. Default choice for heap allocations\n";
-    cout << string(60, '=') << "\n\n";
 
     return 0;
 }

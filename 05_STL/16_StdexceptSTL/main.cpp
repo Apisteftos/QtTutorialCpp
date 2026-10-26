@@ -1,9 +1,12 @@
-#include <iostream>
+#include <exception>
+#include <memory>
+#include <new>
+#include <print>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
-#include <memory>
-#include <print>
 
 // ============================================================
 // std::exception / stdexcept — Exception Handling in C++23
@@ -18,7 +21,6 @@
 //   7.  Exception in constructors / RAII
 //   8.  std::exception_ptr — transfer across threads
 //   9.  std::nested_exception
-//  10.  Best practices
 // ============================================================
 
 // ============================================================
@@ -74,35 +76,76 @@ private:
 };
 
 
+// ============================================================
+// Example 9 — std::nested_exception
+// ============================================================
+void loadConfig() {
+    try {
+        throw std::runtime_error("file 'app.cfg' not found");
+    } catch (...) {
+        // wraps the currently handled exception inside a new one
+        std::throw_with_nested(AppException("cannot load configuration"));
+    }
+}
+
+// Prints the exception and every exception nested inside it
+void printNested(const std::exception& e, int level = 0) {
+    std::println("{}{}", std::string(level * 2, ' '), e.what());
+    try {
+        std::rethrow_if_nested(e);
+    } catch (const std::exception& inner) {
+        printNested(inner, level + 1);
+    }
+}
+
+
+namespace
+{
+    void banner(std::string_view title)
+    {
+        std::println("=====================================================");
+        std::println("{}", title);
+        std::println("=====================================================");
+    }
+
+    template<typename Base, typename Derived>
+    void showDerivedFrom(std::string_view derived, std::string_view base)
+    {
+        static_assert(std::is_base_of_v<Base, Derived>);
+        std::println("  {} derives from {}", derived, base);
+    }
+}
+
+
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Exception Hierarchy\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Exception Hierarchy ===
+    banner("Example 1: Exception Hierarchy");
 
-    std::cout << "std::exception\n";
-    std::cout << "  ├── std::logic_error\n";
-    std::cout << "  │     ├── std::invalid_argument\n";
-    std::cout << "  │     ├── std::domain_error\n";
-    std::cout << "  │     ├── std::length_error\n";
-    std::cout << "  │     └── std::out_of_range\n";
-    std::cout << "  └── std::runtime_error\n";
-    std::cout << "        ├── std::range_error\n";
-    std::cout << "        ├── std::overflow_error\n";
-    std::cout << "        └── std::underflow_error\n";
+    // The hierarchy is checked at compile time with std::is_base_of_v
+    showDerivedFrom<std::exception,     std::logic_error>    ("logic_error",     "exception");
+    showDerivedFrom<std::logic_error,   std::invalid_argument>("invalid_argument", "logic_error");
+    showDerivedFrom<std::logic_error,   std::domain_error>   ("domain_error",    "logic_error");
+    showDerivedFrom<std::logic_error,   std::length_error>   ("length_error",    "logic_error");
+    showDerivedFrom<std::logic_error,   std::out_of_range>   ("out_of_range",    "logic_error");
+    showDerivedFrom<std::exception,     std::runtime_error>  ("runtime_error",   "exception");
+    showDerivedFrom<std::runtime_error, std::range_error>    ("range_error",     "runtime_error");
+    showDerivedFrom<std::runtime_error, std::overflow_error> ("overflow_error",  "runtime_error");
+    showDerivedFrom<std::runtime_error, std::underflow_error>("underflow_error", "runtime_error");
+    showDerivedFrom<std::exception,     std::bad_alloc>      ("bad_alloc",       "exception");
+    std::println("  logic_error derives from runtime_error? {}",
+                 std::is_base_of_v<std::runtime_error, std::logic_error>);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: try / catch / throw basics\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: try / catch / throw basics ===
+    banner("Example 2: try / catch / throw basics");
 
     // Basic try-catch
     try {
-        std::cout << "about to throw...\n";
+        std::println("about to throw...");
         throw std::runtime_error("something went wrong");
-        std::cout << "this line is never reached\n";
+        std::println("this line is never reached");
     } catch (const std::runtime_error& e) {
         std::println("caught runtime_error: {}", e.what());
     }
@@ -113,25 +156,24 @@ int main()
             if (choice == 1) throw std::invalid_argument("bad argument");
             if (choice == 2) throw std::out_of_range("index out of range");
             if (choice == 3) throw std::runtime_error("runtime failure");
-            std::cout << "no exception\n";
+            std::println("no exception");
         }
         catch (const std::invalid_argument& e) { std::println("invalid_arg: {}", e.what()); }
         catch (const std::out_of_range& e)     { std::println("out_of_range: {}", e.what()); }
         catch (const std::runtime_error& e)    { std::println("runtime_error: {}", e.what()); }
         catch (const std::exception& e)        { std::println("exception: {}", e.what()); }
-        catch (...)                            { std::cout << "unknown exception\n"; }
+        catch (...)                            { std::println("unknown exception"); }
     };
 
     testException(1);
     testException(2);
     testException(3);
     testException(0);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Standard Exception Types\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Standard Exception Types ===
+    banner("Example 3: Standard Exception Types");
 
     // logic_error — programming errors (wrong arguments etc.)
     try {
@@ -139,7 +181,7 @@ int main()
         int x = v.at(10);  // throws std::out_of_range
         (void)x;
     } catch (const std::out_of_range& e) {
-        std::println("out_of_range: {}", e.what());
+        std::println("out_of_range: {}", e.what());   // text is implementation-specific
     }
 
     // runtime_error — errors at runtime
@@ -158,17 +200,17 @@ int main()
 
     // bad_alloc
     try {
-        // std::vector<int> huge(SIZE_MAX);  // would throw bad_alloc
+        // A real failure would be e.g. a huge new[] / allocation request.
+        // (std::vector<int> huge(SIZE_MAX) throws std::length_error, not bad_alloc.)
         throw std::bad_alloc();
     } catch (const std::bad_alloc& e) {
         std::println("bad_alloc: {}", e.what());
     }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Custom Exceptions\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Custom Exceptions ===
+    banner("Example 4: Custom Exceptions");
 
     // Catch custom by base class
     try {
@@ -195,12 +237,11 @@ int main()
     catch (const std::exception& e) {  // catches everything
         std::println("std::exception: {}", e.what());
     }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Rethrowing\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Rethrowing ===
+    banner("Example 5: Rethrowing");
 
     auto processData = [](int val) {
         try {
@@ -218,29 +259,27 @@ int main()
     } catch (const std::exception& e) {
         std::println("  [main] caught rethrown: {}", e.what());
     }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: noexcept\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: noexcept ===
+    banner("Example 6: noexcept");
 
-    std::cout << "safeAdd(3,4) = " << safeAdd(3, 4) << '\n';
-    std::cout << "safeAdd noexcept: " << noexcept(safeAdd(1,2)) << '\n';
-    std::cout << "riskyDiv noexcept: " << noexcept(riskyDiv(1,2)) << '\n';
+    std::println("safeAdd(3,4) = {}", safeAdd(3, 4));
+    std::println("safeAdd noexcept: {}", noexcept(safeAdd(1,2)));
+    std::println("riskyDiv noexcept: {}", noexcept(riskyDiv(1,2)));
 
     try {
-        std::cout << riskyDiv(10, 2) << '\n';
-        std::cout << riskyDiv(10, 0) << '\n';  // throws
+        std::println("{}", riskyDiv(10, 2));
+        std::println("{}", riskyDiv(10, 0));  // throws
     } catch (const std::invalid_argument& e) {
         std::println("caught: {}", e.what());
     }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: RAII — exception-safe resources\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: RAII — exception-safe resources ===
+    banner("Example 7: RAII — exception-safe resources");
 
     // RAII ensures cleanup even when exception thrown
     try {
@@ -252,12 +291,11 @@ int main()
         std::println("caught: {}", e.what());
     }
     // FileResource destructor called — file closed — no leak
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::exception_ptr — across threads\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: std::exception_ptr — across threads ===
+    banner("Example 8: std::exception_ptr — across threads");
 
     std::exception_ptr eptr;
 
@@ -270,7 +308,7 @@ int main()
         }
     };
 
-    worker();
+    worker();   // (a real std::thread works the same way — see the README)
 
     // Rethrow in calling context
     if (eptr) {
@@ -280,47 +318,19 @@ int main()
             std::println("rethrown from worker: {}", e.what());
         }
     }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Exception safety levels\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: std::nested_exception ===
+    banner("Example 9: std::nested_exception");
 
-    std::cout << "Exception safety guarantees:\n\n";
-    std::cout << "  No-throw (strongest):\n";
-    std::cout << "    Function never throws — noexcept\n";
-    std::cout << "    Use for: destructors, swap, move operations\n\n";
-    std::cout << "  Strong guarantee:\n";
-    std::cout << "    If exception thrown, state unchanged (commit-or-rollback)\n";
-    std::cout << "    Use copy-then-swap idiom\n\n";
-    std::cout << "  Basic guarantee:\n";
-    std::cout << "    If exception thrown, object in valid state (but changed)\n";
-    std::cout << "    No resource leaks\n\n";
-    std::cout << "  No guarantee (avoid):\n";
-    std::cout << "    Exception may leave object in invalid/corrupt state\n";
+    try {
+        loadConfig();
+    } catch (const std::exception& e) {
+        printNested(e);
+    }
 
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Best Practices\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "DO:\n";
-    std::cout << "  throw by value:       throw MyException(msg)\n";
-    std::cout << "  catch by const ref:   catch (const std::exception& e)\n";
-    std::cout << "  rethrow without arg:  throw;  (preserves type)\n";
-    std::cout << "  use RAII for cleanup: destructors always run\n";
-    std::cout << "  mark noexcept when safe (enables optimizations)\n";
-    std::cout << "  derive from std::exception or its subclasses\n\n";
-
-    std::cout << "DON'T:\n";
-    std::cout << "  catch by value — loses derived type info\n";
-    std::cout << "  throw from destructors — undefined behavior\n";
-    std::cout << "  use catch(...) to swallow all exceptions silently\n";
-    std::cout << "  throw raw pointers — memory leak if not caught\n";
-    std::cout << "  use exceptions for normal control flow\n";
-
-    std::cout << "\n=== StdexceptSTL complete ===\n";
+    std::println("");
+    std::println("=== StdexceptSTL complete ===");
     return 0;
 }

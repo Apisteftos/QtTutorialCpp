@@ -1,29 +1,38 @@
-#include <iostream>
-#include <stack>
-#include <vector>
+#include <cctype>
 #include <deque>
 #include <list>
-#include <string>
 #include <print>
+#include <stack>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 // ============================================================
 // std::stack — LIFO Container Adapter in C++23
 // ============================================================
 // Topics covered:
-//   1.  What is a stack (LIFO)
-//   2.  Declaration and initialization
-//   3.  push, pop, top, empty, size
-//   4.  Stack with different underlying containers
-//   5.  Practical: balanced parentheses checker
-//   6.  Practical: undo/redo system
-//   7.  Practical: expression evaluator (postfix)
-//   8.  Practical: DFS (depth-first search)
-//   9.  Stack of objects
-//  10.  Stack vs deque vs vector comparison
+//   1.  Declaration and initialization
+//   2.  push, pop, top, empty, size
+//   3.  Stack with different underlying containers
+//   4.  Practical: balanced parentheses checker
+//   5.  Practical: undo/redo system
+//   6.  Practical: expression evaluator (postfix)
+//   7.  Practical: DFS (depth-first search)
+//   8.  Stack of objects
 // ============================================================
 
+// Print the "=====" banner that introduces an example
+void banner(std::string_view title)
+{
+    std::println("");
+    std::println("=====================================================");
+    std::println("{}", title);
+    std::println("=====================================================");
+}
+
 // ============================================================
-// Example 5 — Balanced parentheses checker
+// Example 4 — Balanced parentheses checker
 // ============================================================
 bool isBalanced(const std::string& expr)
 {
@@ -45,25 +54,26 @@ bool isBalanced(const std::string& expr)
 
 
 // ============================================================
-// Example 6 — Undo/Redo system
+// Example 5 — Undo/Redo system
 // ============================================================
 class TextEditor {
 private:
-    std::string           m_text;
+    std::string             m_text;
     std::stack<std::string> m_undoStack;
     std::stack<std::string> m_redoStack;
 
 public:
     void type(const std::string& addition) {
         m_undoStack.push(m_text);   // save current state
-        while (!m_redoStack.empty()) m_redoStack.pop();  // clear redo
+        m_redoStack = {};           // a new action clears redo
         m_text += addition;
         std::println("  typed '{}' -> text: '{}'", addition, m_text);
     }
 
     void undo() {
         if (m_undoStack.empty()) {
-            std::cout << "  nothing to undo\n"; return;
+            std::println("  nothing to undo");
+            return;
         }
         m_redoStack.push(m_text);
         m_text = m_undoStack.top();
@@ -73,7 +83,8 @@ public:
 
     void redo() {
         if (m_redoStack.empty()) {
-            std::cout << "  nothing to redo\n"; return;
+            std::println("  nothing to redo");
+            return;
         }
         m_undoStack.push(m_text);
         m_text = m_redoStack.top();
@@ -86,7 +97,8 @@ public:
 
 
 // ============================================================
-// Example 7 — Postfix expression evaluator
+// Example 6 — Postfix expression evaluator
+// (single-digit operands only, input is assumed to be valid)
 // ============================================================
 int evaluatePostfix(const std::string& expr)
 {
@@ -95,7 +107,7 @@ int evaluatePostfix(const std::string& expr)
     for (char c : expr) {
         if (c == ' ') continue;
 
-        if (std::isdigit(c)) {
+        if (std::isdigit(static_cast<unsigned char>(c))) {
             st.push(c - '0');
         } else {
             int b = st.top(); st.pop();
@@ -113,7 +125,7 @@ int evaluatePostfix(const std::string& expr)
 
 
 // ============================================================
-// Example 8 — Depth-First Search (DFS) with stack
+// Example 7 — Depth-First Search (DFS) with stack
 // ============================================================
 void dfsIterative(int start, const std::vector<std::vector<int>>& graph)
 {
@@ -121,26 +133,28 @@ void dfsIterative(int start, const std::vector<std::vector<int>>& graph)
     std::stack<int>   st;
 
     st.push(start);
-    std::cout << "DFS from node " << start << ": ";
+    std::print("DFS from node {}: ", start);
 
     while (!st.empty()) {
         int node = st.top(); st.pop();
 
         if (visited[node]) continue;
         visited[node] = true;
-        std::cout << node << ' ';
+        std::print("{} ", node);
 
-        // Push neighbors (in reverse to maintain order)
-        for (int i = (int)graph[node].size() - 1; i >= 0; --i)
-            if (!visited[graph[node][i]])
+        // Push neighbors in reverse so the first neighbor is visited first
+        for (int i = static_cast<int>(graph[node].size()) - 1; i >= 0; --i) {
+            if (!visited[graph[node][i]]) {
                 st.push(graph[node][i]);
+            }
+        }
     }
-    std::cout << '\n';
+    std::println("");
 }
 
 
 // ============================================================
-// Example 9 — Stack of objects
+// Example 8 — Stack of objects
 // ============================================================
 struct StackFrame {
     std::string functionName;
@@ -154,22 +168,8 @@ struct StackFrame {
 
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: What is a Stack (LIFO)\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "LIFO = Last In, First Out\n";
-    std::cout << "Think of a stack of plates:\n";
-    std::cout << "  push plate -> goes on TOP\n";
-    std::cout << "  pop plate  -> comes from TOP (last added, first removed)\n";
-    std::cout << "Operations: push (add), pop (remove), top (peek)\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Declaration and Initialization\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Declaration and Initialization ===
+    banner("Example 1: Declaration and Initialization");
 
     // Default underlying container is std::deque
     std::stack<int> s1;
@@ -178,70 +178,64 @@ int main()
     std::deque<int> dq = {1, 2, 3, 4, 5};
     std::stack<int> s2(dq);   // top = 5 (last element of deque)
 
-    std::cout << "s1 empty: " << s1.empty() << '\n';
-    std::cout << "s2 size:  " << s2.size()  << '\n';
-    std::cout << "s2 top:   " << s2.top()   << '\n';
+    std::println("s1 empty: {}", s1.empty());
+    std::println("s2 size:  {}", s2.size());
+    std::println("s2 top:   {}", s2.top());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: push, pop, top, empty, size\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: push, pop, top, empty, size ===
+    banner("Example 2: push, pop, top, empty, size");
 
     std::stack<int> st;
 
-    std::cout << "empty: " << st.empty() << " size: " << st.size() << '\n';
+    std::println("empty: {} size: {}", st.empty(), st.size());
 
     st.push(10);
     st.push(20);
     st.push(30);
     st.emplace(40);   // construct in place (same as push for int)
 
-    std::cout << "after pushing 10,20,30,40:\n";
-    std::cout << "  size:  " << st.size()  << '\n';
-    std::cout << "  top:   " << st.top()   << '\n';  // 40 — last pushed
-    std::cout << "  empty: " << st.empty() << '\n';
+    std::println("after pushing 10,20,30,40:");
+    std::println("  size:  {}", st.size());
+    std::println("  top:   {}", st.top());     // 40 — last pushed
+    std::println("  empty: {}", st.empty());
 
     // Drain the stack (LIFO order)
-    std::cout << "popping all: ";
+    std::print("popping all: ");
     while (!st.empty()) {
-        std::cout << st.top() << ' ';
+        std::print("{} ", st.top());
         st.pop();
     }
-    std::cout << '\n';
-    std::cout << "now empty: " << st.empty() << '\n';
+    std::println("");
+    std::println("now empty: {}", st.empty());
 
     // Modify top
     st.push(100);
     st.top() = 999;   // top() returns a reference
-    std::cout << "after push(100) and top()=999: " << st.top() << '\n';
+    std::println("after push(100) and top()=999: {}", st.top());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Different Underlying Containers\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Different Underlying Containers ===
+    banner("Example 3: Different Underlying Containers");
 
     // Stack over deque (default)
     std::stack<int, std::deque<int>> stackDeque;
     stackDeque.push(1); stackDeque.push(2); stackDeque.push(3);
-    std::cout << "deque-backed top: " << stackDeque.top() << '\n';
+    std::println("deque-backed top: {}", stackDeque.top());
 
     // Stack over vector (more cache-friendly)
     std::stack<int, std::vector<int>> stackVector;
     stackVector.push(1); stackVector.push(2); stackVector.push(3);
-    std::cout << "vector-backed top: " << stackVector.top() << '\n';
+    std::println("vector-backed top: {}", stackVector.top());
 
     // Stack over list
     std::stack<int, std::list<int>> stackList;
     stackList.push(1); stackList.push(2); stackList.push(3);
-    std::cout << "list-backed top: " << stackList.top() << '\n';
+    std::println("list-backed top: {}", stackList.top());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Balanced Parentheses Checker\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Balanced Parentheses Checker ===
+    banner("Example 4: Balanced Parentheses Checker");
 
     std::vector<std::string> exprs = {
         "(())",
@@ -259,10 +253,8 @@ int main()
     }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Undo/Redo System\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Undo/Redo System ===
+    banner("Example 5: Undo/Redo System");
 
     TextEditor editor;
     editor.type("Hello");
@@ -274,13 +266,12 @@ int main()
     editor.type(" Everyone");
     editor.undo();
     editor.undo();
+    editor.undo();   // back to the empty text
     editor.undo();   // nothing to undo beyond this
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Postfix Expression Evaluator\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Postfix Expression Evaluator ===
+    banner("Example 6: Postfix Expression Evaluator");
 
     // "3 4 +" = 3 + 4 = 7
     // "5 3 2 * +" = 5 + (3*2) = 11
@@ -297,10 +288,8 @@ int main()
     }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: DFS with Stack\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: DFS with Stack ===
+    banner("Example 7: DFS with Stack");
 
     // Graph as adjacency list (6 nodes)
     std::vector<std::vector<int>> graph = {
@@ -315,10 +304,8 @@ int main()
     dfsIterative(0, graph);
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Stack of Objects (call stack simulation)\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Stack of Objects (call stack simulation) ===
+    banner("Example 8: Stack of Objects (call stack simulation)");
 
     std::stack<StackFrame> callStack;
 
@@ -328,44 +315,22 @@ int main()
     callStack.push({"parseBuffer",   8,  100});
     callStack.push({"validateBytes", 3,  255});
 
-    std::cout << "Call stack (top = current function):\n";
-    std::stack<StackFrame> temp = callStack;
+    std::println("Call stack (top = current function):");
+    std::stack<StackFrame> temp = callStack;   // copy, so we can drain it
     while (!temp.empty()) {
         temp.top().print();
         temp.pop();
     }
 
     // Return from functions
-    std::cout << "\nUnwinding call stack:\n";
+    std::println("");
+    std::println("Unwinding call stack:");
     while (!callStack.empty()) {
-        std::cout << "  returning from: " << callStack.top().functionName << '\n';
+        std::println("  returning from: {}", callStack.top().functionName);
         callStack.pop();
     }
 
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Stack characteristics\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "std::stack is a CONTAINER ADAPTER\n";
-    std::cout << "  wraps deque/vector/list\n";
-    std::cout << "  exposes only: push, pop, top, empty, size\n";
-    std::cout << "  NO iterators, NO random access, NO find\n";
-    std::cout << '\n';
-    std::cout << "Underlying container choices:\n";
-    std::cout << "  deque  (default) — good general choice\n";
-    std::cout << "  vector — better cache performance, no push_front overhead\n";
-    std::cout << "  list   — O(1) guaranteed push/pop, worst cache\n";
-    std::cout << '\n';
-    std::cout << "Real-world uses:\n";
-    std::cout << "  - Undo/redo history\n";
-    std::cout << "  - Expression parsing/evaluation\n";
-    std::cout << "  - DFS graph traversal\n";
-    std::cout << "  - Call stack simulation\n";
-    std::cout << "  - Balanced bracket checking\n";
-    std::cout << "  - Browser back/forward history\n";
-
-    std::cout << "\n=== StackSTL complete ===\n";
+    std::println("");
+    std::println("=== StackSTL complete ===");
     return 0;
 }

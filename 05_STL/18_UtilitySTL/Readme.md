@@ -11,7 +11,7 @@ container's internal logic).
 ## Header
 
 ```cpp
-#include <utility>
+#include <utility>      // std::move, std::forward, std::swap, std::exchange, std::pair, std::cmp_*, std::in_place
 ```
 
 > **Careful:** `std::move` for a *single object* lives in `<utility>`. A
@@ -62,13 +62,14 @@ std::vector<std::string> c = std::move(a);    // MOVE — a is now empty/unspeci
 ## Example 1 — moving a large object
 
 ```cpp
+#include <algorithm>    // std::copy
+#include <cstddef>
 #include <iostream>
-#include <string>
 #include <utility>
 
 class Buffer {
 public:
-    explicit Buffer(size_t size) : m_size(size), m_data(new int[size]) {
+    explicit Buffer(std::size_t size) : m_size(size), m_data(new int[size]) {
         std::cout << "Constructed Buffer(" << m_size << ")\n";
     }
 
@@ -89,7 +90,7 @@ public:
     ~Buffer() { delete[] m_data; }
 
 private:
-    size_t m_size;
+    std::size_t m_size;
     int* m_data;
 };
 
@@ -114,6 +115,10 @@ MOVE constructed (pointer stolen, no copy)
 over `Buffer(const Buffer&)` — without it, `Buffer c = a;` would always
 pick the copy constructor, even if a move constructor exists.
 
+`main.cpp` also has the copy and move **assignment** operators (the snippet above omits them for space) and
+shows `d = b;` → `COPY assigned` and `d = std::move(c);` → `MOVE assigned`. A class with a user-declared move
+constructor and no assignment operators would not even allow `d = b;` (see the Rule of 5 section).
+
 ---
 
 ## Example 2 — moving into a container
@@ -126,6 +131,8 @@ std::string s = "a very long string that would be expensive to copy...";
 
 names.push_back(s);              // COPY — s is still valid and unchanged after
 names.push_back(std::move(s));   // MOVE — s is now unspecified/likely empty
+// libstdc++ (tested): the moved-from std::string is empty, for short (SSO) and long strings alike.
+// The standard only says "valid but unspecified" — don't rely on it.
 
 // std::cout << s;   // legal, but s's content should not be relied upon here
 ```
@@ -160,6 +167,21 @@ Returning a local variable by value already triggers RVO/NRVO or an
 implicit move in modern C++ — wrapping it in `std::move` can actually
 prevent the compiler's more efficient RVO path. **Never call `std::move`
 on a local variable in a `return` statement.**
+
+Counted with a type that logs its copies and moves (GCC 13, `-std=c++23`):
+
+| Code | copies | moves |
+|------|--------|-------|
+| `Cnt c; return c;` (NRVO) | 0 | 0 |
+| `Cnt c; return std::move(c);` | 0 | **1** |
+| `return Cnt{};` (prvalue) | 0 | 0 |
+| `Cnt t = std::move(makeCnt());` | 0 | **1** |
+
+GCC warns about both bad forms with `-Wall`: `moving a local object in a return statement prevents copy elision [-Wpessimizing-move]`.
+Elision of a returned prvalue is **guaranteed** since C++17 (it works even if copy and move are deleted — tested); NRVO of a named local
+is not guaranteed, but if it isn't applied the compiler still treats the `return` as a move.
+`std::move` in a return statement is only right when you return something that is *not* a plain local variable —
+e.g. a data member (`return std::move(m_buffer);`).
 
 ---
 
@@ -199,14 +221,16 @@ the original afterward (`push_back(std::move(x))`)
 ❌ On a local variable in a `return` statement — blocks RVO, use plain
 `return result;`
 ❌ On a `const` object — `std::move` on a `const T` silently falls back
-to a copy, since a `const T&&` still can't bind to a non-const move
-constructor
+to a copy, since a `const T&&` can't bind to the `T&&` parameter of the move
+constructor (it binds to `const T&`, the copy constructor; tested: `copies=1 moves=0`).
+If the type has *no* usable copy constructor, you get a compile error instead
 ❌ On an object you still need afterward — the moved-from object is left
 in a valid-but-unspecified state; reading its contents is a logic bug,
 even though it's not undefined behavior
 ❌ On the return value of a function that already returns a temporary
-(`std::move(makeString())` — that's already an rvalue, `std::move` is a
-no-op here)
+(`std::move(makeString())` — it is already an rvalue; the cast is redundant **and** it
+turns a guaranteed-elided construction into an extra move: tested `moves=1`, and GCC warns
+`moving a temporary object prevents copy elision`)
 
 ---
 
@@ -226,14 +250,22 @@ public:
 If a class manages a resource (raw pointer, file handle, socket) and
 defines **any one** of these five, it should almost always define **all
 five** explicitly (or `= default`/`= delete` them deliberately) — this is
-the **Rule of 5**. `std::move` is what lets calling code actually invoke
+the **Rule of 5**. Better still: own resources through members such as `std::vector` /
+`std::unique_ptr` and declare none of the five (**Rule of 0**).
+
+What the compiler does for you:
+
+- Declaring a **move constructor or move assignment** makes the implicit copy operations *deleted*.
+- Declaring a **copy constructor, copy assignment or destructor** suppresses the implicit move operations, so
+  `std::move(x)` silently **copies**. Tested: a class with only a user-written copy constructor, and a class with only a
+  user-written destructor, both reported `copies=1` for `T b = std::move(a);`. `std::move` is what lets calling code actually invoke
 the move constructor/move assignment operator instead of falling back to
 the (usually more expensive) copy versions.
 
 | Operation | Signature | Triggered by |
 |---|---|---|
 | Copy constructor | `T(const T&)` | `T b = a;` (lvalue) |
-| Move constructor | `T(T&&)` | `T b = std::move(a);` or `T b = makeT();` |
+| Move constructor | `T(T&&)` | `T b = std::move(a);` (and e.g. `v.push_back(makeT())`). `T b = makeT();` needs **no** constructor at all in C++17 and later — guaranteed elision |
 | Copy assignment | `T& operator=(const T&)` | `b = a;` (lvalue) |
 | Move assignment | `T& operator=(T&&)` | `b = std::move(a);` |
 
@@ -245,8 +277,8 @@ the (usually more expensive) copy versions.
 |---|---|
 | `return std::move(localVar);` | Blocks RVO — almost always *slower*, not faster |
 | Using a variable after `std::move`-ing it | Its state is valid but unspecified — undefined *content*, not undefined *behavior* |
-| `std::move` on a `const` object | Silently degrades to a copy — `const T&&` won't bind to `T&&` move constructor parameters |
-| Forgetting `noexcept` on move constructors | `std::vector` and other containers won't use your move constructor during reallocation unless it's `noexcept` — they'll fall back to copying to preserve the strong exception guarantee |
+| `std::move` on a `const` object | Silently degrades to a copy — `const T&&` won't bind to `T&&` move constructor parameters (compile error if there is no copy constructor either) |
+| Forgetting `noexcept` on move constructors | `std::vector` and other containers won't use your move constructor during reallocation unless it's `noexcept` — they'll fall back to copying to preserve the strong exception guarantee (tested: 8 × `emplace_back` → 7 moves with a `noexcept` move constructor, 7 copies without). A *move-only* type is moved regardless, because there is no copy to fall back to |
 | Moving from an object you still read afterward | Logic bug — the moved-from object's contents are unreliable |
 
 ---
@@ -258,7 +290,7 @@ the (usually more expensive) copy versions.
 
 T a = ...;
 
-T b = a;                 // COPY — a is unchanged, unchanged
+T b = a;                 // COPY — a is unchanged
 T c = std::move(a);      // MOVE — a is left valid-but-unspecified
 
 container.push_back(a);              // copies a
@@ -305,7 +337,7 @@ std::pair<std::string, int> p{"Kostas", 30};
 
 std::cout << p.first << " is " << p.second << "\n";
 
-auto [name, age] = p;   // structured bindings (C++17)
+auto [name, age] = p;   // structured bindings (C++17) — COPIES p; use `auto& [n, a] = p;` to refer to it
 
 auto p2 = std::make_pair(1, 2.5);   // deduces std::pair<int, double>
 ```
@@ -325,9 +357,15 @@ std::vector<int> v1{1, 2, 3}, v2{4, 5};
 std::swap(v1, v2);   // cheap — just swaps internal pointers, no element copies
 ```
 
-Most standard containers/types also provide a member `.swap()` and a
-matching free `swap()` found via ADL — `std::swap` calls that overload when
-one exists, which is why it's efficient even for big objects.
+The standard containers have a member `.swap()` and **overloads of `std::swap` in namespace `std`**, which overload
+resolution prefers over the generic template — that is why `std::swap(v1, v2)` is cheap. For *your own* type with its own
+`swap` in its namespace, `std::swap(a, b)` does **not** call it (tested: it used the generic move-based swap). To pick up a custom swap
+use the two-step idiom, or `std::ranges::swap`:
+
+```cpp
+using std::swap;   // fallback
+swap(a, b);        // ADL finds ns::swap(T&, T&) if it exists, otherwise std::swap
+```
 
 ---
 
@@ -340,18 +378,21 @@ an lvalue, as an rvalue if it came in as an rvalue. Unlike `std::move`,
 rvalue.
 
 ```cpp
+void inner(const std::string&) { std::cout << "lvalue overload\n"; }   // must be declared BEFORE wrapper
+void inner(std::string&&)      { std::cout << "rvalue overload\n"; }
+
 template<typename T>
 void wrapper(T&& arg) {
     inner(std::forward<T>(arg));   // preserves arg's original value category
 }
 
-void inner(const std::string&) { std::cout << "lvalue overload\n"; }
-void inner(std::string&&)      { std::cout << "rvalue overload\n"; }
-
 std::string s = "hi";
 wrapper(s);              // T deduced as std::string&  -> "lvalue overload"
 wrapper(std::string{});  // T deduced as std::string   -> "rvalue overload"
 ```
+
+(In the original order, with `wrapper` first, this does not compile: `'inner' was not declared in this scope, and no
+declarations were found by argument-dependent lookup` — `inner` is in the global namespace, not in `std`.)
 
 **Rule of thumb:** use `std::move` on things you own and are done with; use
 `std::forward` only on a `T&&` template parameter, to relay the caller's
@@ -395,10 +436,12 @@ constructor is `noexcept`.
 template<typename T>
 T maybeMove(T& obj) {
     return std::move_if_noexcept(obj);
-    // returns T&& if T's move constructor is noexcept
-    // returns const T& (forcing a copy) otherwise
+    // returns T&&       if T's move constructor is noexcept, or if T cannot be copied
+    // returns const T&  (forcing a copy) if the move may throw AND T is copyable
 }
 ```
+
+Checked with `decltype`: `noexcept` move → `T&&`; throwing move + copyable → `const T&`; throwing move + move-only → `T&&`.
 
 This is exactly why the **"forgetting `noexcept`" mistake** listed earlier
 matters: containers like `std::vector` use this same logic during
@@ -424,6 +467,9 @@ a < b;                    // ❌ false! -1 converts to a huge unsigned value,
 std::cmp_less(a, b);      // ✅ true — compares mathematically: -1 IS less than 0
 ```
 
+GCC warns about the first line with `-Wall`/`-Wextra` (`-Wsign-compare`). The `cmp_*` functions only accept integer
+types: `std::cmp_less(true, 1)` is rejected (`static assertion failed`) — `bool` and character types are not allowed.
+
 ---
 
 ### `std::in_place` tags
@@ -443,6 +489,10 @@ std::optional<Buffer> o1 = Buffer(1000);
 std::optional<Buffer> o2(std::in_place, 1000);   // no move/copy at all
 ```
 
+Counted (tested): `optional<T> o = T();` → 1 move; `optional<T> o(std::in_place);` → 0 copies, 0 moves.
+`main.cpp` Example 9 prints both: `Constructed Buffer(100)` only for the `in_place` one, and
+`Constructed Buffer(50)` followed by `MOVE constructed` for the temporary.
+
 ---
 
 ### Quick reference — the rest of `<utility>`
@@ -456,3 +506,51 @@ std::optional<Buffer> o2(std::in_place, 1000);   // no move/copy at all
 | `std::move_if_noexcept` | Move only if the move constructor is `noexcept`, else copy |
 | `std::cmp_equal` / `cmp_less` / ... (C++20) | Compare signed vs. unsigned safely |
 | `std::in_place*` tags | Construct directly inside `optional`/`variant`/`any` — no extra move |
+
+---
+
+## Notes moved from main.cpp
+
+- `main.cpp` uses `std::println` and `std::` everywhere (no `using namespace std;`, no `std::cout`); `size_t` became `std::size_t`
+  and the missing `<algorithm>` (for `std::copy`) and `<cstddef>` includes were added.
+- All nine examples contain real code, so none were removed. The top title comment and the `=== Example n ===` headings are kept
+  and every example has a `// === EXAMPLE n: ... ===` comment.
+- The `std::boolalpha` call is gone because `std::println` prints `bool` as `true`/`false` anyway.
+- The explanatory remarks stay in the code as short comments; the longer reasoning (when not to `std::move`, Rule of 5,
+  `noexcept`, `in_place`) lives in this README.
+
+## Changes to the program
+
+- `Buffer` now has copy and move **assignment** operators (it had a copy constructor, a move constructor and a destructor,
+  but this README itself says to define all five). Example 1 gained two lines using them (`COPY assigned`, `MOVE assigned`).
+- Example 9 gained a contrast line, `std::optional<Buffer> o1 = Buffer(50);`, which shows the extra `MOVE constructed`.
+- Example 8 still triggers `-Wsign-compare` on purpose (that is the point of the demo).
+- Everything else prints exactly what the original printed (`diff` shows only the added lines).
+
+## Corrections to the original README
+
+- The `std::forward` snippet did not compile (`inner` declared after the template) — reordered.
+- "`std::swap` calls the ADL `swap` overload when one exists" is wrong: the standard containers have overloads *in `std`*; for your own
+  type you need `using std::swap; swap(a, b);`.
+- `T b = makeT();` is not a "move constructor" case in C++17 and later; it is guaranteed copy elision.
+- `std::move(makeString())` is not "a no-op": it adds a move and blocks elision.
+- "`const` → copy" is only half the story: with no copy constructor it does not compile.
+- User-declared copy constructor / destructor also suppress the implicit move operations — added.
+- Quick reference had "unchanged, unchanged" (duplicated word).
+- The `Buffer` snippet used `size_t` and `std::copy` without the includes (`<cstddef>`, `<algorithm>`).
+
+## What was tested
+
+GCC 13.3, `-std=c++23 -Wall -Wextra -Wshadow -fsanitize=address,undefined` (plus leak detection), with a small test-only
+`<print>` shim (GCC 13 has no `<print>`): clean build apart from the intentional `-Wsign-compare`, no sanitizer or leak reports; output compared with
+the original by `diff`. A separate program with copy/move counters checked: NRVO, `return std::move(local)`, prvalue elision (also with deleted copy
+and move), `std::move` of a prvalue, `std::move` of a `const`, a class with only a copy constructor or only a destructor, `std::string` moved-from
+state, vector growth with/without `noexcept` and for a move-only type, `move_if_noexcept` result types, `std::swap` vs ADL swap,
+`optional` with/without `in_place`, structured binding copy vs reference, moved-from `unique_ptr`, the `std::forward` compile error,
+`cmp_less(true, 1)`, and the `-Wpessimizing-move` warnings.
+
+## Not tested
+
+- Behavior on other compilers / standard libraries (the moved-from `std::string` state, NRVO decisions).
+- Timing of copy vs move for the 1 000 000-int `Buffer` (no benchmark was run; the README claims are about behavior, not speed).
+- Real `<print>` from GCC 14+.

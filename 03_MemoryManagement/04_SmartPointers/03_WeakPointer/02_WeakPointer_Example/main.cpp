@@ -1,9 +1,9 @@
-#include <iostream>
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <print>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
-#include <algorithm>
 using namespace std;
 
 // ============================================
@@ -64,52 +64,51 @@ public:
     shared_ptr<BadNode> prev;    // ❌ Circular reference!
 
     BadNode(const string& n) : name(n) {
-        cout << "🔴 [" << name << "] BadNode created\n";
+        println("🔴 [{}] BadNode created", name);
     }
 
     ~BadNode() {
-        cout << "🔴 [" << name << "] BadNode destroyed\n";
+        println("🔴 [{}] BadNode destroyed", name);
     }
 };
 
 void demonstrateCircularProblem() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: CIRCULAR REFERENCE PROBLEM        ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 1: CIRCULAR REFERENCE PROBLEM        ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
-    cout << "THE PROBLEM: shared_ptr circular references\n";
-    cout << "\n";
-    cout << "Creating a cycle with shared_ptr:\n";
+    println("Creating a cycle with shared_ptr:");
     {
         auto node1 = make_shared<BadNode>("Node1");
         auto node2 = make_shared<BadNode>("Node2");
 
-        cout << "\nInitial reference counts:\n";
-        cout << "  node1: " << node1.use_count() << "\n";
-        cout << "  node2: " << node2.use_count() << "\n";
+        println("");
+        println("Initial reference counts:");
+        println("  node1: {}", node1.use_count());
+        println("  node2: {}", node2.use_count());
 
-        cout << "\nCreating circular references...\n";
+        println("");
+        println("Creating circular references...");
         node1->next = node2;  // node1 owns node2 (ref_count = 2)
         node2->prev = node1;  // node2 owns node1 (ref_count = 2)
 
-        cout << "\nAfter creating cycle:\n";
-        cout << "  node1: " << node1.use_count() << " (owned by: main + node2)\n";
-        cout << "  node2: " << node2.use_count() << " (owned by: main + node1)\n";
+        println("");
+        println("After creating cycle:");
+        println("  node1: {} (owned by: main + node2)", node1.use_count());
+        println("  node2: {} (owned by: main + node1)", node2.use_count());
 
-        cout << "\n⚠️  CIRCULAR REFERENCE DETECTED!\n";
-        cout << "⚠️  node1 keeps node2 alive\n";
-        cout << "⚠️  node2 keeps node1 alive\n";
-        cout << "⚠️  Both will NEVER be destroyed!\n";
-
-        cout << "\n--- Leaving scope ---\n";
+        println("");
+        println("--- Leaving scope ---");
         // node1 and node2 go out of scope
         // - node1 ref_count: 2 → 1 (still alive because node2 owns it)
         // - node2 ref_count: 2 → 1 (still alive because node1 owns it)
         // MEMORY LEAK! Both objects leaked!
     }
 
-    cout << "\n💥 NOTICE: Destructors NOT called! MEMORY LEAKED!\n";
-    cout << "This is why we need weak_ptr!\n";
+    println("");
+    println("💥 NOTICE: Destructors NOT called! MEMORY LEAKED!");
 }
 
 // ============================================
@@ -123,65 +122,61 @@ public:
     weak_ptr<GoodNode> prev;     // ✅ Back-reference (non-owning)
 
     GoodNode(const string& n) : name(n) {
-        cout << "🟢 [" << name << "] GoodNode created\n";
+        println("🟢 [{}] GoodNode created", name);
     }
 
     ~GoodNode() {
-        cout << "🟢 [" << name << "] GoodNode destroyed\n";
+        println("🟢 [{}] GoodNode destroyed", name);
     }
 
     void showPrev() const {
         if (auto p = prev.lock()) {  // Convert weak_ptr to shared_ptr
-            cout << "   [" << name << "] prev = " << p->name << "\n";
+            println("   [{}] prev = {}", name, p->name);
         } else {
-            cout << "   [" << name << "] prev is expired (or null)\n";
+            println("   [{}] prev is expired (or null)", name);
         }
     }
 };
 
 void demonstrateWeakPtrSolution() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: WEAK_PTR SOLUTION                 ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "THE SOLUTION: Use weak_ptr for back-references\n";
-    cout << "\n";
-    cout << "class GoodNode {\n";
-    cout << "    shared_ptr<GoodNode> next;  // Ownership →\n";
-    cout << "    weak_ptr<GoodNode> prev;    // Observe ←\n";
-    cout << "};\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 2: WEAK_PTR SOLUTION                 ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     {
         auto node1 = make_shared<GoodNode>("Node1");
         auto node2 = make_shared<GoodNode>("Node2");
 
-        cout << "\nInitial reference counts:\n";
-        cout << "  node1: " << node1.use_count() << "\n";
-        cout << "  node2: " << node2.use_count() << "\n";
+        println("");
+        println("Initial reference counts:");
+        println("  node1: {}", node1.use_count());
+        println("  node2: {}", node2.use_count());
 
-        cout << "\nConnecting nodes (breaking the cycle)...\n";
+        println("");
+        println("Connecting nodes (breaking the cycle)...");
         node1->next = node2;  // node1 owns node2 (ref_count = 2)
         node2->prev = node1;  // node2 observes node1 (ref_count STILL 1!)
 
-        cout << "\nAfter connecting:\n";
-        cout << "  node1: " << node1.use_count() << " (owned by: main only!)\n";
-        cout << "  node2: " << node2.use_count() << " (owned by: main + node1)\n";
+        println("");
+        println("After connecting:");
+        println("  node1: {} (owned by: main only!)", node1.use_count());
+        println("  node2: {} (owned by: main + node1)", node2.use_count());
 
-        cout << "\n✅ NO CIRCULAR REFERENCE!\n";
-        cout << "✅ node2 observes node1 but doesn't own it\n";
-
-        cout << "\nAccessing prev through weak_ptr:\n";
+        println("");
+        println("Accessing prev through weak_ptr:");
         node2->showPrev();
 
-        cout << "\n--- Leaving scope ---\n";
-        // node1 and node2 go out of scope
-        // - node1 ref_count: 1 → 0 (DESTROYED!)
-        // - node2 ref_count: 2 → 1 → 0 (DESTROYED!)
-        // SUCCESS! All memory cleaned up!
+        println("");
+        println("--- Leaving scope ---");
+        // node2 (local) is destroyed first: ref_count 2 → 1 (node1->next still owns it)
+        // node1 (local) is destroyed next: ref_count 1 → 0 → node1 destroyed,
+        //   which releases node1->next → node2 ref_count 1 → 0 → node2 destroyed
     }
 
-    cout << "\n✅ SUCCESS: All destructors called! No memory leak!\n";
+    println("");
+    println("✅ SUCCESS: All destructors called! No memory leak!");
 }
 
 // ============================================
@@ -189,83 +184,78 @@ void demonstrateWeakPtrSolution() {
 // ============================================
 
 void demonstrateBasicOperations() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: WEAK_PTR BASIC OPERATIONS         ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 3: WEAK_PTR BASIC OPERATIONS         ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
-    cout << "1. CREATING weak_ptr:\n";
+    println("1. CREATING weak_ptr:");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak = shared;  // Observe shared
 
-        cout << "  shared ref_count: " << shared.use_count() << " (not affected by weak_ptr!)\n";
-        cout << "\n";
+        println("  shared ref_count: {} (not affected by weak_ptr!)", shared.use_count());
+        println("");
     }
 
-    cout << "2. ACCESSING through lock():\n";
+    println("2. ACCESSING through lock():");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak = shared;
 
         if (auto locked = weak.lock()) {
-            cout << "  ✅ Object exists! Value = " << *locked << "\n";
-            cout << "  locked is a shared_ptr, ref_count = " << locked.use_count() << "\n";
+            println("  ✅ Object exists! Value = {}", *locked);
+            println("  locked is a shared_ptr, ref_count = {}", locked.use_count());
         } else {
-            cout << "  ❌ Object was destroyed\n";
+            println("  ❌ Object was destroyed");
         }
-        cout << "\n";
+        println("");
     }
 
-    cout << "3. CHECKING if expired:\n";
+    println("3. CHECKING if expired:");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak = shared;
 
-        cout << "  Before reset: weak.expired() = "
-             << (weak.expired() ? "true" : "false") << "\n";
+        println("  Before reset: weak.expired() = {}", weak.expired());
 
         shared.reset();  // Destroy the object
 
-        cout << "  After reset:  weak.expired() = "
-             << (weak.expired() ? "true" : "false") << "\n";
-        cout << "\n";
+        println("  After reset:  weak.expired() = {}", weak.expired());
+        println("");
     }
 
-    cout << "4. WEAK_PTR use_count():\n";
+    println("4. WEAK_PTR use_count():");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak = shared;
 
-        cout << "  shared.use_count() = " << shared.use_count() << "\n";
-        cout << "  weak.use_count()   = " << weak.use_count() << "\n";
-        cout << "  (Both return the number of shared_ptr owners)\n";
-        cout << "\n";
+        println("  shared.use_count() = {}", shared.use_count());
+        println("  weak.use_count()   = {}", weak.use_count());
+        println("");
     }
 
-    cout << "5. COPYING weak_ptr:\n";
+    println("5. COPYING weak_ptr:");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak1 = shared;
         weak_ptr<int> weak2 = weak1;  // Copy weak_ptr
 
-        cout << "  shared ref_count: " << shared.use_count() << " (unchanged!)\n";
-        cout << "  Multiple weak_ptrs can observe same object\n";
-        cout << "\n";
+        println("  shared ref_count: {} (unchanged!)", shared.use_count());
+        println("");
     }
 
-    cout << "6. RESETTING weak_ptr:\n";
+    println("6. RESETTING weak_ptr:");
     {
         auto shared = make_shared<int>(42);
         weak_ptr<int> weak = shared;
 
-        cout << "  Before reset: weak.expired() = "
-             << (weak.expired() ? "true" : "false") << "\n";
+        println("  Before reset: weak.expired() = {}", weak.expired());
 
         weak.reset();  // Stop observing
 
-        cout << "  After reset:  weak.expired() = "
-             << (weak.expired() ? "true" : "false") << "\n";
-        cout << "  weak is now empty (doesn't observe anything)\n";
+        println("  After reset:  weak.expired() = {}", weak.expired());
     }
 }
 
@@ -273,129 +263,78 @@ void demonstrateBasicOperations() {
 // EXAMPLE 4: TREE STRUCTURE (Parent-Child)
 // ============================================
 
-class TreeNode: public enable_shared_from_this<TreeNode> {
+class TreeNode : public enable_shared_from_this<TreeNode> {
 public:
     int value;
     string name;
-    weak_ptr<TreeNode> parent;           // ✅ Child observes parent
-    vector<shared_ptr<TreeNode>> children;  // Parent owns children
+    weak_ptr<TreeNode> parent;                // ✅ Child observes parent
+    vector<shared_ptr<TreeNode>> children;    // Parent owns children
 
     TreeNode(int v, const string& n) : value(v), name(n) {
-        cout << "🌳 [" << name << "] TreeNode created (value=" << value << ")\n";
+        println("🌳 [{}] TreeNode created (value={})", name, value);
     }
 
     ~TreeNode() {
-        cout << "🌳 [" << name << "] TreeNode destroyed\n";
+        println("🌳 [{}] TreeNode destroyed", name);
     }
 
+    // Must be called on an object that is already owned by a shared_ptr
+    // (shared_from_this() throws std::bad_weak_ptr otherwise — e.g. inside a constructor)
     void addChild(shared_ptr<TreeNode> child) {
         children.push_back(child);
         child->parent = shared_from_this();  // Child observes parent
-        cout << "   [" << name << "] added child [" << child->name << "]\n";
+        println("   [{}] added child [{}]", name, child->name);
     }
 
     void showParent() const {
         if (auto p = parent.lock()) {
-            cout << "   [" << name << "] parent = " << p->name << "\n";
+            println("   [{}] parent = {} (value={})", name, p->name, p->value);
         } else {
-            cout << "   [" << name << "] no parent (root or parent destroyed)\n";
-        }
-    }
-
-    void showChildren() const {
-        cout << "   [" << name << "] children: ";
-        if (children.empty()) {
-            cout << "none\n";
-        } else {
-            for (const auto& child : children) {
-                cout << child->name << " ";
-            }
-            cout << "\n";
-        }
-    }
-};
-
-// TreeNode needs to inherit from enable_shared_from_this
-class TreeNodeV2 : public enable_shared_from_this<TreeNodeV2> {
-public:
-    int value;
-    string name;
-    weak_ptr<TreeNodeV2> parent;
-    vector<shared_ptr<TreeNodeV2>> children;
-
-    TreeNodeV2(int v, const string& n) : value(v), name(n) {
-        cout << "🌳 [" << name << "] TreeNode created (value=" << value << ")\n";
-    }
-
-    ~TreeNodeV2() {
-        cout << "🌳 [" << name << "] TreeNode destroyed\n";
-    }
-
-    void addChild(shared_ptr<TreeNodeV2> child) {
-        children.push_back(child);
-        child->parent = shared_from_this();
-        cout << "   [" << name << "] added child [" << child->name << "]\n";
-    }
-
-    void showParent() const {
-        if (auto p = parent.lock()) {
-            cout << "   [" << name << "] parent = " << p->name << " (value=" << p->value << ")\n";
-        } else {
-            cout << "   [" << name << "] no parent\n";
+            println("   [{}] no parent", name);
         }
     }
 };
 
 void demonstrateTreeStructure() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: TREE STRUCTURE (Parent-Child)     ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "Tree structure with weak_ptr:\n";
-    cout << "  - Parent owns children (shared_ptr)\n";
-    cout << "  - Children observe parent (weak_ptr)\n";
-    cout << "  - No circular references!\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 4: TREE STRUCTURE (Parent-Child)     ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     {
-        auto root = make_shared<TreeNodeV2>(1, "Root");
-        auto child1 = make_shared<TreeNodeV2>(2, "Child1");
-        auto child2 = make_shared<TreeNodeV2>(3, "Child2");
-        auto grandchild = make_shared<TreeNodeV2>(4, "Grandchild");
+        auto root = make_shared<TreeNode>(1, "Root");
+        auto child1 = make_shared<TreeNode>(2, "Child1");
+        auto child2 = make_shared<TreeNode>(3, "Child2");
+        auto grandchild = make_shared<TreeNode>(4, "Grandchild");
 
-        cout << "\nBuilding tree:\n";
+        println("");
+        println("Building tree:");
         root->addChild(child1);
         root->addChild(child2);
         child1->addChild(grandchild);
 
-        cout << "\nTree structure:\n";
-        cout << "        Root(1)\n";
-        cout << "        /     \\\n";
-        cout << "   Child1(2)  Child2(3)\n";
-        cout << "      |\n";
-        cout << "  Grandchild(4)\n";
-        cout << "\n";
+        println("");
+        println("Reference counts:");
+        println("  root: {} (main owns it)", root.use_count());
+        println("  child1: {} (main + root own it)", child1.use_count());
+        println("  child2: {} (main + root own it)", child2.use_count());
+        println("  grandchild: {} (main + child1 own it)", grandchild.use_count());
 
-        cout << "Reference counts:\n";
-        cout << "  root: " << root.use_count() << " (main owns it)\n";
-        cout << "  child1: " << child1.use_count() << " (main + root own it)\n";
-        cout << "  child2: " << child2.use_count() << " (main + root own it)\n";
-        cout << "  grandchild: " << grandchild.use_count() << " (main + child1 own it)\n";
-
-        cout << "\nChecking parent relationships:\n";
+        println("");
+        println("Checking parent relationships:");
         root->showParent();
         child1->showParent();
         grandchild->showParent();
 
-        cout << "\n--- Leaving scope ---\n";
-        // Destruction order:
-        // 1. grandchild destroyed (no more references from main or child1)
-        // 2. child2 destroyed (no more references from main or root)
-        // 3. child1 destroyed (no more references from main or root)
-        // 4. root destroyed (no more references from main)
+        println("");
+        println("--- Leaving scope ---");
+        // Locals are destroyed in reverse order: grandchild, child2, child1, root.
+        // The first three only drop from 2 to 1 (their parent still owns them).
+        // root drops from 1 to 0 → Root destroyed → its children vector is destroyed:
+        //   Child1 (→ its children: Grandchild), then Child2.
+        // Printed order: Root, Child1, Grandchild, Child2.
     }
-
-    cout << "\n✅ All nodes properly destroyed in correct order!\n";
 }
 
 // ============================================
@@ -406,25 +345,25 @@ class Subject{
 private:
     string name;
     int state;
-    vector<weak_ptr<class Observer>> observers;  // Observers don't own subject
+    vector<weak_ptr<class Observer>> observers;  // Subject doesn't keep observers alive
 
 public:
     Subject(const string& n, int s) : name(n), state(s) {
-        cout << "📡 Subject '" << name << "' created (state=" << state << ")\n";
+        println("📡 Subject '{}' created (state={})", name, state);
     }
 
     ~Subject() {
-        cout << "📡 Subject '" << name << "' destroyed\n";
+        println("📡 Subject '{}' destroyed", name);
     }
 
     void attach(shared_ptr<Observer> obs) {
         observers.push_back(obs);
-        cout << "   Subject attached an observer\n";
+        println("   Subject attached an observer");
     }
 
     void setState(int s) {
         state = s;
-        cout << "   Subject state changed to " << state << "\n";
+        println("   Subject state changed to {}", state);
         notify();
     }
 
@@ -434,36 +373,36 @@ public:
     void notify();  // Defined after Observer class
 };
 
-class Observer : public enable_shared_from_this<Observer>{
+class Observer {
 private:
     string name;
     weak_ptr<Subject> subject;  // ✅ Observer doesn't own subject
 
 public:
+    // Note: the constructor must NOT call subject->attach(shared_from_this()) —
+    // the object is not owned by a shared_ptr yet while its constructor runs,
+    // so shared_from_this() would throw std::bad_weak_ptr. Attach after make_shared instead.
     Observer(const string& n, shared_ptr<Subject> s) : name(n), subject(s) {
-        cout << "👁️  Observer '" << name << "' created\n";
-        s->attach(shared_from_this());  // Would need enable_shared_from_this
+        println("👁️  Observer '{}' created", name);
     }
 
     ~Observer() {
-        cout << "👁️  Observer '" << name << "' destroyed\n";
+        println("👁️  Observer '{}' destroyed", name);
     }
 
     void update() {
         if (auto subj = subject.lock()) {
-            cout << "   [" << name << "] notified: "
-                 << subj->getName() << " = " << subj->getState() << "\n";
+            println("   [{}] notified: {} = {}", name, subj->getName(), subj->getState());
         } else {
-            cout << "   [" << name << "] Subject no longer exists!\n";
+            println("   [{}] Subject no longer exists!", name);
         }
     }
 
     void checkSubject() {
         if (auto subj = subject.lock()) {
-            cout << "   [" << name << "] Subject exists: "
-                 << subj->getName() << " = " << subj->getState() << "\n";
+            println("   [{}] Subject exists: {} = {}", name, subj->getName(), subj->getState());
         } else {
-            cout << "   [" << name << "] Subject expired!\n";
+            println("   [{}] Subject expired!", name);
         }
     }
 };
@@ -484,52 +423,56 @@ void Subject::notify() {
 }
 
 void demonstrateObserverPattern() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: OBSERVER PATTERN                  ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "Observer Pattern with weak_ptr:\n";
-    cout << "  - Subject is observed by multiple observers\n";
-    cout << "  - Observers use weak_ptr (don't keep subject alive)\n";
-    cout << "  - Observers automatically detect when subject dies\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 5: OBSERVER PATTERN                  ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     auto subject = make_shared<Subject>("Temperature", 20);
 
     {
         auto obs1 = make_shared<Observer>("Thermometer", subject);
+        subject->attach(obs1);
         auto obs2 = make_shared<Observer>("Display", subject);
+        subject->attach(obs2);
 
-        cout << "\n📊 Observers checking subject:\n";
+        println("");
+        println("📊 Observers checking subject:");
         obs1->checkSubject();
         obs2->checkSubject();
 
-        cout << "\n📊 Changing subject state:\n";
+        println("");
+        println("📊 Changing subject state:");
         subject->setState(25);
 
-        cout << "\n📊 Observers checking again:\n";
+        println("");
+        println("📊 Observers checking again:");
         obs1->checkSubject();
         obs2->checkSubject();
 
-        cout << "\n--- Observers destroyed first ---\n";
+        println("");
+        println("--- Observers destroyed first ---");
     }
 
-    cout << "\nSubject still exists (ref_count=" << subject.use_count() << ")\n";
-    cout << "Subject can continue to exist after observers are destroyed\n";
+    println("");
+    println("Subject still exists (ref_count={})", subject.use_count());
 
     {
         auto obs3 = make_shared<Observer>("LateObserver", subject);
+        subject->attach(obs3);
 
-        cout << "\n--- Destroying subject while observer exists ---\n";
+        println("");
+        println("--- Destroying subject while observer exists ---");
         subject.reset();
 
-        cout << "\n📊 LateObserver checking subject:\n";
+        println("");
+        println("📊 LateObserver checking subject:");
         obs3->checkSubject();  // Subject expired!
 
-        cout << "\n--- LateObserver destroyed ---\n";
+        println("");
+        println("--- LateObserver destroyed ---");
     }
-
-    cout << "\n✅ Observer pattern works perfectly with weak_ptr!\n";
 }
 
 // ============================================
@@ -543,13 +486,12 @@ private:
 
 public:
     ExpensiveData(const string& k, int size) : key(k), data(size, 42) {
-        cout << "💾 Loading expensive data '" << key
-             << "' (" << size << " elements)\n";
+        println("💾 Loading expensive data '{}' ({} elements)", key, size);
         // Simulate expensive loading
     }
 
     ~ExpensiveData() {
-        cout << "💾 Unloading data '" << key << "'\n";
+        println("💾 Unloading data '{}'", key);
     }
 
     string getKey() const { return key; }
@@ -567,14 +509,14 @@ public:
         if (it != cache.end()) {
             // Try to get cached data
             if (auto data = it->second.lock()) {
-                cout << "✅ Cache HIT for '" << key << "'\n";
+                println("✅ Cache HIT for '{}'", key);
                 return data;
             } else {
-                cout << "⚠️  Cache EXPIRED for '" << key << "', reloading...\n";
+                println("⚠️  Cache EXPIRED for '{}', reloading...", key);
                 cache.erase(it);  // Clean up expired entry
             }
         } else {
-            cout << "❌ Cache MISS for '" << key << "', loading...\n";
+            println("❌ Cache MISS for '{}', loading...", key);
         }
 
         // Load new data
@@ -583,59 +525,55 @@ public:
         return data;
     }
 
+    // Only reports the status — expired entries are removed later, in get()
     void showCacheStatus() {
-        cout << "\n📊 Cache status:\n";
-        for (auto it = cache.begin(); it != cache.end();) {
-            if (it->second.expired()) {
-                cout << "   '" << it->first << "': EXPIRED (will be cleaned up)\n";
-                it = cache.erase(it);
+        println("");
+        println("📊 Cache status:");
+        for (const auto& [key, weakData] : cache) {
+            if (weakData.expired()) {
+                println("   '{}': EXPIRED (will be cleaned up)", key);
             } else {
-                cout << "   '" << it->first << "': VALID\n";
-                ++it;
+                println("   '{}': VALID", key);
             }
         }
     }
 };
 
 void demonstrateCaching() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 6: CACHING WITH WEAK_PTR             ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "Caching with weak_ptr:\n";
-    cout << "  - Cache stores weak_ptr to data\n";
-    cout << "  - Data lives only while clients use it\n";
-    cout << "  - Cache entries automatically expire\n";
-    cout << "  - No memory waste on unused cached items\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 6: CACHING WITH WEAK_PTR             ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     Cache cache;
 
-    cout << "--- First access (cache miss) ---\n";
+    println("--- First access (cache miss) ---");
     {
         auto data1 = cache.get("UserData");
-        cout << "  Using data: " << data1->getKey()
-             << " (" << data1->getSize() << " elements)\n";
+        println("  Using data: {} ({} elements)", data1->getKey(), data1->getSize());
 
-        cout << "\n--- Second access (cache hit) ---\n";
+        println("");
+        println("--- Second access (cache hit) ---");
         auto data2 = cache.get("UserData");
-        cout << "  data1 == data2: " << (data1 == data2 ? "true" : "false") << "\n";
+        println("  data1 == data2: {}", data1 == data2 ? "true" : "false");
 
         cache.showCacheStatus();
 
-        cout << "\n--- Data still in use ---\n";
+        println("");
+        println("--- Data still in use ---");
         // data1 and data2 keep the data alive
     }
 
-    cout << "\n--- Data destroyed (no more users) ---\n";
+    println("");
+    println("--- Data destroyed (no more users) ---");
     cache.showCacheStatus();
 
-    cout << "\n--- Third access (cache expired) ---\n";
+    println("");
+    println("--- Third access (cache expired) ---");
     auto data3 = cache.get("UserData");
 
     cache.showCacheStatus();
-
-    cout << "\n✅ Cache automatically manages memory!\n";
 }
 
 // ============================================
@@ -647,15 +585,15 @@ public:
     string name;
 
     AsyncTask(const string& n) : name(n) {
-        cout << "⚡ AsyncTask '" << name << "' created\n";
+        println("⚡ AsyncTask '{}' created", name);
     }
 
     ~AsyncTask() {
-        cout << "⚡ AsyncTask '" << name << "' destroyed\n";
+        println("⚡ AsyncTask '{}' destroyed", name);
     }
 
     void execute() {
-        cout << "   [" << name << "] Task executing...\n";
+        println("   [{}] Task executing...", name);
     }
 };
 
@@ -667,52 +605,51 @@ private:
 public:
     EventHandler(const string& n, shared_ptr<AsyncTask> t)
         : task(t), name(n) {
-        cout << "🎯 EventHandler '" << name << "' created\n";
+        println("🎯 EventHandler '{}' created", name);
     }
 
     ~EventHandler() {
-        cout << "🎯 EventHandler '" << name << "' destroyed\n";
+        println("🎯 EventHandler '{}' destroyed", name);
     }
 
     void onEvent() {
-        cout << "\n📬 [" << name << "] Event triggered!\n";
+        println("");
+        println("📬 [{}] Event triggered!", name);
         if (auto t = task.lock()) {
-            cout << "   Task still exists, executing...\n";
+            println("   Task still exists, executing...");
             t->execute();
         } else {
-            cout << "   Task was destroyed, callback is safe (no crash)!\n";
+            println("   Task was destroyed, callback is safe (no crash)!");
         }
     }
 };
 
 void demonstrateCallback() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 7: CALLBACK WITH WEAK_PTR            ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "Callbacks with weak_ptr:\n";
-    cout << "  - Callback uses weak_ptr to target object\n";
-    cout << "  - Safe if object is destroyed before callback fires\n";
-    cout << "  - No dangling pointer risk\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 7: CALLBACK WITH WEAK_PTR            ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     {
         auto task = make_shared<AsyncTask>("DataSync");
         auto handler = make_shared<EventHandler>("Handler1", task);
 
-        cout << "\n--- Event 1: Task exists ---\n";
+        println("");
+        println("--- Event 1: Task exists ---");
         handler->onEvent();
 
-        cout << "\n--- Destroying task ---\n";
+        println("");
+        println("--- Destroying task ---");
         task.reset();
 
-        cout << "\n--- Event 2: Task destroyed ---\n";
+        println("");
+        println("--- Event 2: Task destroyed ---");
         handler->onEvent();  // Safe! No crash!
 
-        cout << "\n--- Destroying handler ---\n";
+        println("");
+        println("--- Destroying handler ---");
     }
-
-    cout << "\n✅ Callback safely handled task destruction!\n";
 }
 
 // ============================================
@@ -720,303 +657,74 @@ void demonstrateCallback() {
 // ============================================
 
 void demonstrateRefCounting() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 8: REFERENCE COUNTING DETAILS        ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "Control Block contains TWO counters:\n";
-    cout << "  1. Strong count (shared_ptr count)\n";
-    cout << "  2. Weak count (weak_ptr count)\n";
-    cout << "\n";
-    cout << "Object lifetime:\n";
-    cout << "  - Object destroyed when strong_count reaches 0\n";
-    cout << "  - Control block destroyed when weak_count reaches 0\n";
-    cout << "\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 8: REFERENCE COUNTING DETAILS        ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
     {
-        cout << "--- Creating shared_ptr ---\n";
+        println("--- Creating shared_ptr ---");
         auto shared1 = make_shared<int>(42);
-        cout << "  strong_count: " << shared1.use_count() << "\n";
-        cout << "  (control block created)\n";
+        println("  strong_count: {}", shared1.use_count());
 
-        cout << "\n--- Creating weak_ptr ---\n";
+        println("");
+        println("--- Creating weak_ptr ---");
         weak_ptr<int> weak1 = shared1;
-        cout << "  strong_count: " << shared1.use_count() << " (unchanged!)\n";
-        cout << "  weak_count: 1 (weak_ptr added)\n";
-        cout << "  weak1.expired(): " << (weak1.expired() ? "true" : "false") << "\n";
+        println("  strong_count: {} (unchanged!)", shared1.use_count());
+        println("  weak1.expired(): {}", weak1.expired());
 
-        cout << "\n--- Creating another shared_ptr ---\n";
+        println("");
+        println("--- Creating another shared_ptr ---");
         auto shared2 = shared1;
-        cout << "  strong_count: " << shared2.use_count() << "\n";
+        println("  strong_count: {}", shared2.use_count());
 
-        cout << "\n--- Creating another weak_ptr ---\n";
+        println("");
+        println("--- Creating another weak_ptr ---");
         weak_ptr<int> weak2 = shared1;
-        cout << "  strong_count: " << shared1.use_count() << " (still unchanged!)\n";
-        cout << "  weak_count: 2\n";
+        println("  strong_count: {} (still unchanged!)", shared1.use_count());
 
         {
-            cout << "\n--- Locking weak_ptr ---\n";
+            println("");
+            println("--- Locking weak_ptr ---");
             auto locked = weak1.lock();
-            cout << "  strong_count: " << shared1.use_count() << " (temporarily increased!)\n";
-            cout << "  locked is a shared_ptr that keeps object alive\n";
+            println("  strong_count: {} (temporarily increased!)", shared1.use_count());
 
-            cout << "\n--- locked goes out of scope ---\n";
+            println("");
+            println("--- locked goes out of scope ---");
         }
-        cout << "  strong_count: " << shared1.use_count() << " (back to 2)\n";
+        println("  strong_count: {} (back to 2)", shared1.use_count());
 
-        cout << "\n--- Destroying shared1 ---\n";
+        println("");
+        println("--- Destroying shared1 ---");
         shared1.reset();
-        cout << "  strong_count: " << shared2.use_count() << "\n";
+        println("  strong_count: {}", shared2.use_count());
 
-        cout << "\n--- Destroying shared2 ---\n";
+        println("");
+        println("--- Destroying shared2 ---");
         shared2.reset();
-        cout << "  strong_count: 0\n";
-        cout << "  💥 OBJECT DESTROYED!\n";
-        cout << "  Control block still exists (for weak_ptrs)\n";
-        cout << "  weak1.expired(): " << (weak1.expired() ? "true" : "false") << "\n";
-        cout << "  weak2.expired(): " << (weak2.expired() ? "true" : "false") << "\n";
+        println("  weak1.expired(): {}", weak1.expired());
+        println("  weak2.expired(): {}", weak2.expired());
 
-        cout << "\n--- weak_ptrs go out of scope ---\n";
+        println("");
+        println("--- weak_ptrs go out of scope ---");
     }
-    cout << "  weak_count: 0\n";
-    cout << "  💥 CONTROL BLOCK DESTROYED!\n";
-
-    cout << "\n✅ Control block lifecycle:\n";
-    cout << "   1. Created with first shared_ptr\n";
-    cout << "   2. Object destroyed when strong_count = 0\n";
-    cout << "   3. Control block destroyed when weak_count = 0\n";
 }
 
 // ============================================
-// EXAMPLE 9: COMMON MISTAKES
-// ============================================
-
-void demonstrateCommonMistakes() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 9: COMMON MISTAKES                   ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "MISTAKE 1: Using weak_ptr without lock()\n";
-    cout << "  ❌ WRONG:\n";
-    cout << "     weak_ptr<int> weak = shared;\n";
-    cout << "     *weak;  // ERROR! Can't dereference weak_ptr!\n";
-    cout << "\n";
-    cout << "  ✅ CORRECT:\n";
-    cout << "     weak_ptr<int> weak = shared;\n";
-    cout << "     if (auto locked = weak.lock()) {\n";
-    cout << "         *locked;  // Safe!\n";
-    cout << "     }\n";
-    cout << "\n";
-
-    cout << "MISTAKE 2: Not checking if lock() succeeds\n";
-    cout << "  ❌ WRONG:\n";
-    cout << "     auto locked = weak.lock();\n";
-    cout << "     locked->method();  // May crash if nullptr!\n";
-    cout << "\n";
-    cout << "  ✅ CORRECT:\n";
-    cout << "     if (auto locked = weak.lock()) {\n";
-    cout << "         locked->method();  // Safe!\n";
-    cout << "     }\n";
-    cout << "\n";
-
-    cout << "MISTAKE 3: Using weak_ptr instead of shared_ptr for ownership\n";
-    cout << "  ❌ WRONG:\n";
-    cout << "     class Widget {\n";
-    cout << "         weak_ptr<Resource> resource;  // Should own it!\n";
-    cout << "     };\n";
-    cout << "\n";
-    cout << "  ✅ CORRECT:\n";
-    cout << "     class Widget {\n";
-    cout << "         shared_ptr<Resource> resource;  // Ownership\n";
-    cout << "     };\n";
-    cout << "\n";
-
-    cout << "MISTAKE 4: Using shared_ptr where weak_ptr should be used\n";
-    cout << "  ❌ WRONG:\n";
-    cout << "     class Node {\n";
-    cout << "         shared_ptr<Node> parent;  // Circular reference!\n";
-    cout << "     };\n";
-    cout << "\n";
-    cout << "  ✅ CORRECT:\n";
-    cout << "     class Node {\n";
-    cout << "         weak_ptr<Node> parent;  // Break cycle!\n";
-    cout << "     };\n";
-    cout << "\n";
-
-    cout << "MISTAKE 5: Storing weak_ptr in containers without cleanup\n";
-    cout << "  ⚠️  SUBOPTIMAL:\n";
-    cout << "     vector<weak_ptr<Observer>> observers;\n";
-    cout << "     // Expired weak_ptrs accumulate!\n";
-    cout << "\n";
-    cout << "  ✅ BETTER:\n";
-    cout << "     // Periodically remove expired weak_ptrs\n";
-    cout << "     observers.erase(\n";
-    cout << "         remove_if(observers.begin(), observers.end(),\n";
-    cout << "             [](auto& w) { return w.expired(); }),\n";
-    cout << "         observers.end()\n";
-    cout << "     );\n";
-    cout << "\n";
-
-    cout << "MISTAKE 6: Creating weak_ptr from raw pointer\n";
-    cout << "  ❌ WRONG:\n";
-    cout << "     int* raw = new int(42);\n";
-    cout << "     weak_ptr<int> weak(raw);  // ERROR! Doesn't compile!\n";
-    cout << "\n";
-    cout << "  ✅ CORRECT:\n";
-    cout << "     auto shared = make_shared<int>(42);\n";
-    cout << "     weak_ptr<int> weak = shared;  // OK!\n";
-}
-
-// ============================================
-// EXAMPLE 10: BEST PRACTICES
-// ============================================
-
-void demonstrateBestPractices() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 10: BEST PRACTICES                   ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "✅ BEST PRACTICES:\n";
-    cout << "\n";
-    cout << "1. ALWAYS use lock() before accessing\n";
-    cout << "   if (auto locked = weak.lock()) {\n";
-    cout << "       locked->method();  // Safe!\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "2. Check expired() for simple existence check\n";
-    cout << "   if (!weak.expired()) {\n";
-    cout << "       // Object still exists (might change!)\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "3. Use weak_ptr for back-references\n";
-    cout << "   - Parent → Child: shared_ptr\n";
-    cout << "   - Child → Parent: weak_ptr\n";
-    cout << "\n";
-    cout << "4. Use weak_ptr in observer pattern\n";
-    cout << "   - Subject owns observers: shared_ptr\n";
-    cout << "   - Observers observe subject: weak_ptr\n";
-    cout << "\n";
-    cout << "5. Use weak_ptr for caching\n";
-    cout << "   - Cache stores weak_ptr\n";
-    cout << "   - Entries expire when no longer used\n";
-    cout << "\n";
-    cout << "6. Clean up expired weak_ptrs periodically\n";
-    cout << "   observers.erase(\n";
-    cout << "       remove_if(..., [](auto& w) { return w.expired(); }),\n";
-    cout << "       observers.end()\n";
-    cout << "   );\n";
-    cout << "\n";
-    cout << "7. Use weak_ptr for callbacks\n";
-    cout << "   - Safe if target object is destroyed\n";
-    cout << "   - No dangling pointer risk\n";
-    cout << "\n";
-    cout << "8. Don't use weak_ptr for ownership\n";
-    cout << "   - weak_ptr is for observation\n";
-    cout << "   - Use shared_ptr for ownership\n";
-    cout << "   - Use unique_ptr for exclusive ownership\n";
-}
-
-// ============================================
-// EXAMPLE 11: PERFORMANCE CONSIDERATIONS
+// EXAMPLE 9: PERFORMANCE CONSIDERATIONS
 // ============================================
 
 void demonstratePerformance() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 11: PERFORMANCE CONSIDERATIONS       ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
+    println("");
+    println("╔════════════════════════════════════════════════╗");
+    println("║  EXAMPLE 9: PERFORMANCE CONSIDERATIONS        ║");
+    println("╚════════════════════════════════════════════════╝");
+    println("");
 
-    cout << "Memory overhead:\n";
-    cout << "  sizeof(weak_ptr<int>): " << sizeof(weak_ptr<int>) << " bytes\n";
-    cout << "  sizeof(shared_ptr<int>): " << sizeof(shared_ptr<int>) << " bytes\n";
-    cout << "  (Same size! Both store 2 pointers)\n";
-    cout << "\n";
-
-    cout << "Performance characteristics:\n";
-    cout << "\n";
-    cout << "1. CREATION:\n";
-    cout << "   weak_ptr<T> weak = shared;  // Fast (no allocation)\n";
-    cout << "   - Just copies pointers\n";
-    cout << "   - Increments weak_count (atomic operation)\n";
-    cout << "\n";
-    cout << "2. LOCK:\n";
-    cout << "   auto locked = weak.lock();  // Moderate cost\n";
-    cout << "   - Atomic check + increment\n";
-    cout << "   - Creates temporary shared_ptr\n";
-    cout << "\n";
-    cout << "3. EXPIRED CHECK:\n";
-    cout << "   bool expired = weak.expired();  // Fast\n";
-    cout << "   - Just reads strong_count\n";
-    cout << "   - No allocation\n";
-    cout << "\n";
-    cout << "4. DESTRUCTION:\n";
-    cout << "   ~weak_ptr()  // Fast\n";
-    cout << "   - Decrements weak_count (atomic)\n";
-    cout << "   - May delete control block if last weak_ptr\n";
-    cout << "\n";
-
-    cout << "When to use:\n";
-    cout << "  ✅ Use when you need to observe without owning\n";
-    cout << "  ✅ Use to break circular references\n";
-    cout << "  ✅ Small overhead compared to avoiding memory leaks\n";
-    cout << "  ⚠️  lock() has some cost (atomic operations)\n";
-    cout << "  ⚠️  Control block persists until all weak_ptrs destroyed\n";
-}
-
-// ============================================
-// EXAMPLE 12: REAL-WORLD SCENARIOS
-// ============================================
-
-void demonstrateRealWorldScenarios() {
-    cout << "\n╔════════════════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 12: REAL-WORLD SCENARIOS             ║\n";
-    cout << "╚════════════════════════════════════════════════╝\n\n";
-
-    cout << "SCENARIO 1: Event System\n";
-    cout << "  class EventDispatcher {\n";
-    cout << "      vector<weak_ptr<EventListener>> listeners;\n";
-    cout << "  };\n";
-    cout << "  - Listeners can be destroyed at any time\n";
-    cout << "  - Dispatcher doesn't keep them alive\n";
-    cout << "  - Automatically removes dead listeners\n";
-    cout << "\n";
-
-    cout << "SCENARIO 2: UI Framework\n";
-    cout << "  class Window {\n";
-    cout << "      weak_ptr<Window> parent;  // Child observes parent\n";
-    cout << "      vector<shared_ptr<Widget>> children;  // Parent owns children\n";
-    cout << "  };\n";
-    cout << "  - No circular references\n";
-    cout << "  - Automatic cleanup when window destroyed\n";
-    cout << "\n";
-
-    cout << "SCENARIO 3: Resource Pool\n";
-    cout << "  class ResourcePool {\n";
-    cout << "      map<string, weak_ptr<Resource>> pool;\n";
-    cout << "  };\n";
-    cout << "  - Reuse resources while they're alive\n";
-    cout << "  - Automatic cleanup when no longer used\n";
-    cout << "  - No memory waste on idle resources\n";
-    cout << "\n";
-
-    cout << "SCENARIO 4: Document Editor\n";
-    cout << "  class Document {\n";
-    cout << "      shared_ptr<Paragraph> paragraphs;\n";
-    cout << "  };\n";
-    cout << "  class Bookmark {\n";
-    cout << "      weak_ptr<Paragraph> target;  // Don't own paragraph\n";
-    cout << "  };\n";
-    cout << "  - Bookmarks observe paragraphs\n";
-    cout << "  - Bookmarks become invalid if paragraph deleted\n";
-    cout << "  - No memory leaks\n";
-    cout << "\n";
-
-    cout << "SCENARIO 5: Game Engine\n";
-    cout << "  class Entity {\n";
-    cout << "      weak_ptr<Entity> target;  // Target for AI\n";
-    cout << "  };\n";
-    cout << "  - AI targets other entities\n";
-    cout << "  - Target can be destroyed\n";
-    cout << "  - AI handles missing targets gracefully\n";
+    println("Memory overhead:");
+    println("  sizeof(weak_ptr<int>): {} bytes", sizeof(weak_ptr<int>));
+    println("  sizeof(shared_ptr<int>): {} bytes", sizeof(shared_ptr<int>));
 }
 
 // ============================================
@@ -1024,12 +732,12 @@ void demonstrateRealWorldScenarios() {
 // ============================================
 
 int main() {
-    cout << "╔══════════════════════════════════════════════════════════╗\n";
-    cout << "║                                                          ║\n";
-    cout << "║              WEAK_PTR - COMPLETE GUIDE                   ║\n";
-    cout << "║         Breaking Circular References & More              ║\n";
-    cout << "║                                                          ║\n";
-    cout << "╚══════════════════════════════════════════════════════════╝\n";
+    println("╔══════════════════════════════════════════════════════════╗");
+    println("║                                                          ║");
+    println("║              WEAK_PTR - COMPLETE GUIDE                   ║");
+    println("║         Breaking Circular References & More              ║");
+    println("║                                                          ║");
+    println("╚══════════════════════════════════════════════════════════╝");
 
     try {
         demonstrateCircularProblem();     // The circular reference problem
@@ -1040,107 +748,11 @@ int main() {
         demonstrateCaching();             // Caching with weak_ptr
         demonstrateCallback();            // Safe callbacks
         demonstrateRefCounting();         // Reference counting details
-        demonstrateCommonMistakes();      // Common mistakes
-        demonstrateBestPractices();       // Best practices
-        demonstratePerformance();         // Performance considerations
-        demonstrateRealWorldScenarios();  // Real-world use cases
+        demonstratePerformance();         // Size of weak_ptr vs shared_ptr
 
     } catch (const exception& e) {
-        cout << "💥 Exception: " << e.what() << "\n";
+        println("💥 Exception: {}", e.what());
     }
-
-    cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    cout << "║                    KEY TAKEAWAYS                         ║\n";
-    cout << "╚══════════════════════════════════════════════════════════╝\n\n";
-
-    cout << "1. WHAT IS WEAK_PTR:\n";
-    cout << "   - Non-owning observer of shared_ptr\n";
-    cout << "   - Does NOT increase reference count\n";
-    cout << "   - Does NOT prevent object destruction\n";
-    cout << "   - Must use lock() to access object\n";
-    cout << "\n";
-
-    cout << "2. WHY USE WEAK_PTR:\n";
-    cout << "   ✅ Break circular references (MAIN USE)\n";
-    cout << "   ✅ Observer pattern (observe without owning)\n";
-    cout << "   ✅ Caching (entries can expire)\n";
-    cout << "   ✅ Callbacks (safe if target destroyed)\n";
-    cout << "   ✅ Parent-child relationships (child → parent)\n";
-    cout << "\n";
-
-    cout << "3. HOW TO USE:\n";
-    cout << "   // Create from shared_ptr\n";
-    cout << "   shared_ptr<T> shared = make_shared<T>();\n";
-    cout << "   weak_ptr<T> weak = shared;\n";
-    cout << "\n";
-    cout << "   // Access through lock()\n";
-    cout << "   if (auto locked = weak.lock()) {\n";
-    cout << "       locked->method();  // Safe!\n";
-    cout << "   }\n";
-    cout << "\n";
-    cout << "   // Check if expired\n";
-    cout << "   if (weak.expired()) {\n";
-    cout << "       // Object was destroyed\n";
-    cout << "   }\n";
-    cout << "\n";
-
-    cout << "4. CIRCULAR REFERENCE SOLUTION:\n";
-    cout << "   class Node {\n";
-    cout << "       shared_ptr<Node> next;  // Ownership →\n";
-    cout << "       weak_ptr<Node> prev;    // Observe ←\n";
-    cout << "   };\n";
-    cout << "   ✅ No memory leaks!\n";
-    cout << "\n";
-
-    cout << "5. BEST PRACTICES:\n";
-    cout << "   ✅ ALWAYS use lock() before accessing\n";
-    cout << "   ✅ Check if lock() succeeded\n";
-    cout << "   ✅ Use weak_ptr for back-references\n";
-    cout << "   ✅ Clean up expired weak_ptrs periodically\n";
-    cout << "   ✅ Use weak_ptr in observer pattern\n";
-    cout << "   ❌ DON'T use weak_ptr for ownership\n";
-    cout << "   ❌ DON'T forget to check if expired\n";
-    cout << "\n";
-
-    cout << "6. DECISION GUIDE:\n";
-    cout << "   Need to own object?\n";
-    cout << "   YES → Use shared_ptr (or unique_ptr)\n";
-    cout << "   NO → Need to observe?\n";
-    cout << "        YES → Use weak_ptr ✅\n";
-    cout << "        NO → Use raw pointer or reference\n";
-    cout << "\n";
 
     return 0;
 }
-
-/*
-COMPILATION:
-    g++ -std=c++17 -Wall -Wextra weak_ptr.cpp -o weak_ptr
-
-RUN:
-    ./weak_ptr
-
-TOPICS COVERED:
-    ✅ Circular reference problem
-    ✅ weak_ptr solution
-    ✅ Basic operations (lock, expired, use_count)
-    ✅ Tree structures (parent-child)
-    ✅ Observer pattern
-    ✅ Caching with expiration
-    ✅ Safe callbacks
-    ✅ Reference counting internals
-    ✅ Common mistakes
-    ✅ Best practices
-    ✅ Performance considerations
-    ✅ Real-world scenarios
-
-KEY CONCEPTS:
-    - weak_ptr observes without owning
-    - Use lock() to access safely
-    - Automatically detects object destruction
-    - Perfect for breaking circular references
-    - Essential for observer patterns
-    - Enables automatic cache expiration
-
-OUTPUT: Complete demonstrations with clear explanations!
-*/

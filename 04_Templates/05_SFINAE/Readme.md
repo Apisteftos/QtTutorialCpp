@@ -4,10 +4,10 @@
 
 **SFINAE** (Substitution Failure Is Not An Error) is an advanced C++ template technique that enables compile-time function selection based on type properties. When template parameter substitution fails, the compiler removes that overload from consideration rather than producing an error.
 
-**File:** `SFINAE.cpp`  
+**File:** `main.cpp`  
 **Difficulty:** 🔴 Advanced  
 **C++ Version:** C++11 (enable_if), C++17 (if constexpr), C++20 (concepts)  
-**Compile:** `g++ -std=c++17 -Wall -Wextra SFINAE.cpp -o sfinae`
+**Compile:** `g++ -std=c++23 -Wall -Wextra main.cpp -o sfinae` (`std::println` needs C++23 and GCC 14+ / recent Clang / MSVC; `enable_if_t` and the `_v` traits need C++14/17)
 
 ---
 
@@ -55,15 +55,19 @@ Waiter: "Sorry, we're out of fish. Would you like chicken instead?"
 
 In C++:
 ```cpp
+// 1st choice: only exists if T has foo()
 template<typename T>
-void func(T value) {
-    value.foo();  // Try this first
+auto func(T value) -> decltype(value.foo(), void()) {
+    value.foo();
 }
 
-template<typename T>
-void func(T value) {
-    // Fallback if first doesn't work
+// Fallback: accepts anything
+void func(...) {
+    // no foo() available
 }
+
+func(42);   // Substituting T = int into the signature of #1 fails
+            // → overload removed (no error) → fallback is called
 ```
 
 ---
@@ -76,14 +80,14 @@ void func(T value) {
 // ❌ This template tries to work with ALL types
 template<typename T>
 void print_size(const T& container) {
-    cout << container.size();  // What if T has no size()?
+    std::println("{}", container.size());  // What if T has no size()?
 }
 
-print_size(vector<int>{1,2,3});  // ✅ OK - vector has size()
+print_size(std::vector<int>{1,2,3});  // ✅ OK - vector has size()
 print_size(42);                   // ❌ ERROR! int has no size()
 ```
 
-**Result:** Compilation error even though we just wanted it to skip that overload!
+**Result:** Compilation error: the template is the only candidate and its body does not compile for `int`.
 
 ### Solution With SFINAE
 
@@ -92,17 +96,17 @@ print_size(42);                   // ❌ ERROR! int has no size()
 template<typename T>
 std::enable_if_t<has_size<T>::value, void>
 print_size(const T& container) {
-    cout << container.size();
+    std::println("{}", container.size());
 }
 
 // ✅ Fallback for types without size()
 template<typename T>
 std::enable_if_t<!has_size<T>::value, void>
 print_size(const T& value) {
-    cout << "No size() available";
+    std::println("No size() available");
 }
 
-print_size(vector<int>{1,2,3});  // ✅ Calls first version
+print_size(std::vector<int>{1,2,3});  // ✅ Calls first version
 print_size(42);                   // ✅ Calls second version (no error!)
 ```
 
@@ -156,29 +160,66 @@ std::enable_if_t<
 func(T value) { /* ... */ }
 ```
 
+### Only the Signature Counts
+
+SFINAE only applies to failures in the **immediate context**: the function signature
+(return type, parameter types, template parameters and their default arguments).
+An error inside the **body** is a hard error, even if another overload would have worked:
+
+```cpp
+void f(...) { }                                 // fallback
+
+template<typename T>
+void f(T v) { v.foo(); }                        // viable by signature → chosen for int
+
+f(42);   // ❌ error: request for member 'foo' in 'v', which is of non-class type 'int'
+```
+
+To make the failure part of the signature, put the expression in the signature
+(`decltype(v.foo(), void())`, `enable_if_t`, ...).
+
+### Two Overloads Can Not Differ Only in a Default Template Argument
+
+```cpp
+template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+void f(T);
+
+template<typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+void f(T);   // ❌ error: redefinition of 'template<class T, class> void f(T)'
+```
+
+Default arguments are not part of the signature, so these are the same template.
+`main.cpp` gets away with the default-argument form because `print_integral` and
+`print_floating` have **different names**. For overloads of the same name, move the
+condition into the type of a non-type template parameter (or into the return type):
+
+```cpp
+template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+void f(T);   // ✅
+
+template<typename T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+void f(T);   // ✅ different signature
+```
+
 ---
 
 ## Examples Overview
 
-### Example 1: The Problem
-
-Shows why we need SFINAE - templates that fail for certain types.
-
-### Example 2: Basic enable_if
+### Example 1: Basic enable_if
 
 Simple type checking with standard type traits:
 ```cpp
 template<typename T,
          typename = std::enable_if_t<std::is_integral_v<T>>>
 void print_integral(T value) {
-    cout << "Integral: " << value << "\n";
+    std::println("Integral: {}", value);
 }
 
 print_integral(42);    // ✅ Works
 print_integral(3.14);  // ❌ Won't compile (not integral)
 ```
 
-### Example 3: Return Type SFINAE
+### Example 2: Return Type SFINAE
 
 Different return types based on input type:
 ```cpp
@@ -189,11 +230,11 @@ process(T value) { return value * 2; }
 
 // Returns string for strings
 template<typename T>
-std::enable_if_t<std::is_same_v<T, string>, string>
+std::enable_if_t<std::is_same_v<T, std::string>, std::string>
 process(const T& value) { return value + " processed"; }
 ```
 
-### Example 4: Detecting Member Functions
+### Example 3: Detecting Member Functions
 
 Check if a type has specific methods:
 ```cpp
@@ -206,7 +247,7 @@ struct has_size<T, std::void_t<decltype(std::declval<T>().size())>>
     : std::true_type {};
 ```
 
-### Example 5: Detecting Operators
+### Example 4: Detecting Operators
 
 Check if a type supports specific operators:
 ```cpp
@@ -220,7 +261,7 @@ struct has_less_than<T, std::void_t<
     : std::true_type {};
 ```
 
-### Example 6: Multiple Constraints
+### Example 5: Multiple Constraints
 
 Combine multiple conditions:
 ```cpp
@@ -232,7 +273,7 @@ std::enable_if_t<
 print_number(T value) { /* ... */ }
 ```
 
-### Example 7: Function Overloading
+### Example 6: Function Overloading
 
 Multiple overloads for different type categories:
 ```cpp
@@ -247,7 +288,12 @@ std::enable_if_t<!std::is_pointer_v<T>, void>
 print_value(T value) { /* ... */ }
 ```
 
-### Example 8: Tag Dispatching
+`main.cpp` also has a third overload `template<typename T, std::size_t N> void print_value(T (&arr)[N])`
+that is **not** SFINAE-constrained. For an `int arr[5]` argument both the array version and the
+pointer version (after array-to-pointer decay, `T = int*`) are viable; the array overload wins in partial
+ordering because it is more specialized, so the output is `Array of 5 elements`.
+
+### Example 7: Tag Dispatching
 
 Cleaner alternative to SFINAE:
 ```cpp
@@ -257,7 +303,7 @@ void func(T value) {
 }
 ```
 
-### Example 9: if constexpr (C++17)
+### Example 8: if constexpr (C++17)
 
 Modern, simpler alternative:
 ```cpp
@@ -271,7 +317,7 @@ void print_info(T value) {
 }
 ```
 
-### Example 10: Generic Serializer
+### Example 9: Generic Serializer
 
 Real-world example - serializer that adapts to type capabilities:
 ```cpp
@@ -286,7 +332,7 @@ serialize(const T& obj) {
 template<typename T>
 std::enable_if_t<!has_serialize_v<T> && std::is_arithmetic_v<T>, void>
 serialize(T value) {
-    cout << value;
+    std::print("{}", value);
 }
 ```
 
@@ -366,16 +412,17 @@ inline constexpr bool has_foo_v = has_foo<T>::value;
 #### How It Works
 
 ```
-1. Compiler tries first template (false_type)
-2. Then tries specialization with void_t
-3. If T has foo():
+has_foo<T> means has_foo<T, void> (the default argument)
+
+1. Compiler looks for a specialization matching has_foo<T, void>
+2. If T has foo():
    → decltype(std::declval<T>().foo()) works
-   → void_t makes it void
-   → Specialization selected (true_type)
-4. If T has no foo():
-   → decltype fails
-   → SFINAE removes specialization
-   → First template selected (false_type)
+   → void_t<...> is void
+   → specialization matches → true_type
+3. If T has no foo():
+   → decltype fails during substitution
+   → SFINAE removes the specialization (no error)
+   → only the primary template matches → false_type
 ```
 
 ### Detecting Member Types
@@ -441,9 +488,12 @@ process(T value) { return value * 2; }
 
 // Return string for strings
 template<typename T>
-std::enable_if_t<std::is_same_v<T, string>, string>
-process(const string& s) { return s + "!"; }
+std::enable_if_t<std::is_same_v<T, std::string>, std::string>
+process(const T& s) { return s + "!"; }   // const T&, not const string&
 ```
+
+Write the parameter as `const T&`: with `const string&`, `T` cannot be deduced from
+the argument and the call fails (`no matching function for call to 'process(std::string)'`).
 
 ### Pattern 3: Multiple Constraints
 
@@ -469,7 +519,7 @@ void func(T value) {
 // Implementations
 void func_impl(int value, integral_tag) { /* ... */ }
 void func_impl(double value, floating_tag) { /* ... */ }
-void func_impl(const string& s, string_tag) { /* ... */ }
+void func_impl(const std::string& s, string_tag) { /* ... */ }
 ```
 
 ---
@@ -484,19 +534,19 @@ Much cleaner than SFINAE for many cases:
 // ❌ Old SFINAE way - multiple overloads
 template<typename T>
 std::enable_if_t<std::is_integral_v<T>, void>
-print(T value) { cout << "Integral\n"; }
+print(T value) { std::println("Integral"); }
 
 template<typename T>
 std::enable_if_t<std::is_floating_point_v<T>, void>
-print(T value) { cout << "Floating\n"; }
+print(T value) { std::println("Floating"); }
 
 // ✅ Modern if constexpr - single function
 template<typename T>
 void print(T value) {
     if constexpr (std::is_integral_v<T>) {
-        cout << "Integral\n";
+        std::println("Integral");
     } else if constexpr (std::is_floating_point_v<T>) {
-        cout << "Floating\n";
+        std::println("Floating");
     }
 }
 ```
@@ -521,11 +571,11 @@ concept Floating = std::is_floating_point_v<T>;
 
 // Use concepts
 void print(Integral auto value) {
-    cout << "Integral\n";
+    std::println("Integral");
 }
 
 void print(Floating auto value) {
-    cout << "Floating\n";
+    std::println("Floating");
 }
 
 // Or with requires
@@ -549,7 +599,7 @@ void process(T value) { /* ... */ }
 | Error Messages | ❌ Cryptic | ✅ Better | ✅✅ Clear |
 | Overload Resolution | Manual | Automatic | Clean |
 | Learning Curve | Steep | Moderate | Easy |
-| Compile Time | Slower | Faster | Fastest |
+| Compile Time | Often slowest (many overloads) | Usually faster than SFINAE | Usually faster than SFINAE (not measured here) |
 
 **Recommendation:** Use C++20 concepts when available!
 
@@ -563,6 +613,9 @@ void process(T value) { /* ... */ }
 
 ```cpp
 // C++20: Use concepts (best)
+template<typename T>
+concept Arithmetic = std::is_arithmetic_v<T>;
+
 template<Arithmetic T>
 void func(T value) { }
 
@@ -605,42 +658,43 @@ process(T value) { }
 
 ```cpp
 // ✅ Good - conditions are mutually exclusive
-enable_if_t<is_integral_v<T>, void> func(T);
-enable_if_t<is_floating_point_v<T>, void> func(T);
+std::enable_if_t<std::is_integral_v<T>, void> func(T);
+std::enable_if_t<std::is_floating_point_v<T>, void> func(T);
 
 // ❌ Bad - both could be true (ambiguous)
-enable_if_t<is_arithmetic_v<T>, void> func(T);
-enable_if_t<is_integral_v<T>, void> func(T);  // int satisfies both!
+std::enable_if_t<std::is_arithmetic_v<T>, void> func(T);
+std::enable_if_t<std::is_integral_v<T>, void> func(T);  // int satisfies both!
+// func(1);  → error: call of overloaded 'func(int)' is ambiguous
 ```
 
 5. **Keep conditions simple**
 
 ```cpp
 // ✅ Simple, readable
-enable_if_t<is_arithmetic_v<T>, void>
+std::enable_if_t<std::is_arithmetic_v<T>, void>
 
 // ❌ Too complex
-enable_if_t<
-    (is_integral_v<T> || is_floating_point_v<T>) &&
-    !is_same_v<T, bool> &&
-    !is_const_v<T> &&
+std::enable_if_t<
+    (std::is_integral_v<T> || std::is_floating_point_v<T>) &&
+    !std::is_same_v<T, bool> &&
+    !std::is_const_v<T> &&
     sizeof(T) >= 4,
     void>
 ```
 
 ### ❌ DON'T
 
-1. **Forget typename (C++11/14)**
+1. **Forget typename (before C++20)**
 
 ```cpp
-// ❌ Missing typename
-enable_if<condition, T>::type func();
+// ❌ Missing typename (error before C++20)
+std::enable_if<condition, T>::type func();
 
 // ✅ With typename
-typename enable_if<condition, T>::type func();
+typename std::enable_if<condition, T>::type func();
 
 // ✅✅ Better - use _t helper (C++14+)
-enable_if_t<condition, T> func();
+std::enable_if_t<condition, T> func();
 ```
 
 2. **Create ambiguous overloads**
@@ -648,17 +702,17 @@ enable_if_t<condition, T> func();
 ```cpp
 // ❌ Ambiguous if T is integral
 template<typename T>
-enable_if_t<is_arithmetic_v<T>, void> func(T);
+std::enable_if_t<std::is_arithmetic_v<T>, void> func(T);
 
 template<typename T>
-enable_if_t<is_integral_v<T>, void> func(T);  // Overlap!
+std::enable_if_t<std::is_integral_v<T>, void> func(T);  // Overlap!
 
 // ✅ Mutually exclusive
 template<typename T>
-enable_if_t<is_integral_v<T>, void> func(T);
+std::enable_if_t<std::is_integral_v<T>, void> func(T);
 
 template<typename T>
-enable_if_t<is_floating_point_v<T>, void> func(T);
+std::enable_if_t<std::is_floating_point_v<T>, void> func(T);
 ```
 
 3. **Overuse SFINAE**
@@ -666,11 +720,11 @@ enable_if_t<is_floating_point_v<T>, void> func(T);
 ```cpp
 // ❌ SFINAE overkill for simple case
 template<typename T>
-enable_if_t<is_same_v<T, int>, void>
-print_int(T value) { cout << value; }
+std::enable_if_t<std::is_same_v<T, int>, void>
+print_int(T value) { std::print("{}", value); }
 
 // ✅ Just use overloading
-void print_int(int value) { cout << value; }
+void print_int(int value) { std::print("{}", value); }
 ```
 
 4. **Make it too complex**
@@ -678,11 +732,11 @@ void print_int(int value) { cout << value; }
 ```cpp
 // ❌ Too complex - hard to understand
 template<typename T>
-enable_if_t<
+std::enable_if_t<
     has_begin_v<T> &&
     has_end_v<T> &&
     has_value_type_v<T> &&
-    is_same_v<typename T::value_type, int>,
+    std::is_same_v<typename T::value_type, int>,
     void>
 process(const T& container);
 
@@ -700,17 +754,17 @@ void process(IntContainer auto container);
 ### Mistake 1: Missing typename
 
 ```cpp
-// ❌ C++11/14 - won't compile
+// ❌ C++11/14/17 - won't compile ("need 'typename' before ...", fixed in C++20 by P0634)
 template<typename T>
-enable_if<condition, T>::type func(T value);
+std::enable_if<condition, T>::type func(T value);
 
 // ✅ Add typename
 template<typename T>
-typename enable_if<condition, T>::type func(T value);
+typename std::enable_if<condition, T>::type func(T value);
 
 // ✅✅ Or use _t helper (C++14+)
 template<typename T>
-enable_if_t<condition, T> func(T value);
+std::enable_if_t<condition, T> func(T value);
 ```
 
 ### Mistake 2: Ambiguous Overloads
@@ -718,19 +772,19 @@ enable_if_t<condition, T> func(T value);
 ```cpp
 // ❌ Both match for int
 template<typename T>
-enable_if_t<is_arithmetic_v<T>, void> func(T);  // Matches int
+std::enable_if_t<std::is_arithmetic_v<T>, void> func(T);  // Matches int
 
 template<typename T>
-enable_if_t<is_integral_v<T>, void> func(T);    // Also matches int!
+std::enable_if_t<std::is_integral_v<T>, void> func(T);    // Also matches int!
 
 // Result: Ambiguous call for int
 
 // ✅ Use mutually exclusive conditions
 template<typename T>
-enable_if_t<is_integral_v<T>, void> func(T);
+std::enable_if_t<std::is_integral_v<T>, void> func(T);
 
 template<typename T>
-enable_if_t<is_floating_point_v<T>, void> func(T);
+std::enable_if_t<std::is_floating_point_v<T>, void> func(T);
 ```
 
 ### Mistake 3: Wrong std::declval Usage
@@ -738,19 +792,21 @@ enable_if_t<is_floating_point_v<T>, void> func(T);
 ```cpp
 // ❌ Missing ()
 decltype(std::declval<T>.foo())  // Won't compile
+// error: insufficient contextual information to determine type
+// (a hard error, not a silently false trait)
 
 // ✅ Correct
 decltype(std::declval<T>().foo())
 ```
 
-### Mistake 4: Forgetting _v Suffix (C++17+)
+### Mistake 4: Verbose `::value` Instead of `_v` (C++17+)
 
 ```cpp
-// ❌ Old style (verbose)
-enable_if_t<is_integral<T>::value, void>
+// Works, but verbose
+std::enable_if_t<std::is_integral<T>::value, void>
 
 // ✅ Modern style (C++17+)
-enable_if_t<is_integral_v<T>, void>
+std::enable_if_t<std::is_integral_v<T>, void>
 ```
 
 ### Mistake 5: Using SFINAE for Simple Cases
@@ -758,13 +814,51 @@ enable_if_t<is_integral_v<T>, void>
 ```cpp
 // ❌ SFINAE overkill
 template<typename T>
-enable_if_t<is_same_v<T, int> || is_same_v<T, long>, void>
+std::enable_if_t<std::is_same_v<T, int> || std::is_same_v<T, long>, void>
 func(T value) { }
 
 // ✅ Just use overloading
 void func(int value) { }
 void func(long value) { }
 ```
+
+### Mistake 6: Overloads That Differ Only in a Default Template Argument
+
+```cpp
+template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+void f(T);
+template<typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+void f(T);   // ❌ error: redefinition of 'template<class T, class> void f(T)'
+
+// ✅ Condition in the type of a non-type template parameter
+template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+void f(T);
+template<typename T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+void f(T);
+```
+
+### Mistake 7: Member Function SFINAE That Depends Only on the Class Parameter
+
+```cpp
+template<typename T>
+struct S {
+    template<typename = std::enable_if_t<std::is_integral_v<T>>>
+    void f() { }   // ❌ T is the CLASS parameter: S<double> itself fails
+};
+
+S<double> s;   // error: no type named 'type' in 'struct std::enable_if<false, void>'
+
+// ✅ Make the condition depend on the member template's own parameter
+template<typename T>
+struct S {
+    template<typename U = T, typename = std::enable_if_t<std::is_integral_v<U>>>
+    void f() { }
+};
+```
+
+### Mistake 8: Error in the Body Instead of the Signature
+
+An error inside the function body is never SFINAE; see *Only the Signature Counts*.
 
 ---
 
@@ -779,14 +873,12 @@ void func(long value) { }
 - Can inline completely
 
 **Compilation cost:**
-```
-Simple SFINAE:   +5-10% compile time
-Complex SFINAE:  +20-50% compile time
-Many overloads:  +50-100% compile time
 
-if constexpr:    +2-5% (faster than SFINAE)
-Concepts:        +1-3% (fastest)
-```
+SFINAE-heavy code makes the compiler try every overload and instantiate every trait,
+so it usually compiles slower than `if constexpr` or concepts, and the error messages
+are longer. The percentages (`+5-10%`, `+20-50%`, ...) and the benchmark table that were
+in the earlier version of this file had no measurements behind them and were removed;
+nothing about compile time was measured for this folder.
 
 ### Binary Size
 
@@ -796,20 +888,11 @@ func<int>(42);       // Instance 1
 func<double>(3.14);  // Instance 2
 func<char>('X');     // Instance 3
 
-// Result: Larger binary size
-// But: Compiler can deduplicate
+// Result: larger binary (one function per type)
+// The linker may merge identical functions, but do not rely on it
 ```
 
-### Benchmarks
-
-| Operation | Runtime Check | SFINAE | Difference |
-|-----------|---------------|--------|------------|
-| Type selection | ~10ns | 0ns | ∞ faster |
-| Function call | ~5ns | 0ns (inlined) | No overhead |
-| Code size | Smaller | Larger | Trade-off |
-| Compile time | Faster | Slower | -20-50% |
-
-**Key insight:** SFINAE has **zero runtime cost** but **higher compile-time cost**.
+**Key insight:** SFINAE has **no runtime cost** (the choice is made by the compiler) but costs compile time and readability.
 
 ---
 
@@ -820,14 +903,14 @@ func<char>('X');     // Instance 3
 1. **Need compile-time type selection (C++11/14)**
    ```cpp
    template<typename T>
-   enable_if_t<is_arithmetic_v<T>, void>
+   std::enable_if_t<std::is_arithmetic_v<T>, void>
    process(T value) { }
    ```
 
 2. **Detecting type capabilities**
    ```cpp
    template<typename T>
-   enable_if_t<has_serialize_v<T>, void>
+   std::enable_if_t<has_serialize_v<T>, void>
    serialize(const T& obj) { obj.serialize(); }
    ```
 
@@ -835,16 +918,17 @@ func<char>('X');     // Instance 3
    ```cpp
    // Work with any container type
    template<typename Container>
-   enable_if_t<is_container_v<Container>, void>
+   std::enable_if_t<is_container_v<Container>, void>
    process(const Container& c) { }
    ```
 
 4. **Supporting multiple type categories**
    ```cpp
    // Different code paths for different types
-   enable_if_t<is_pointer_v<T>, void> func(T);
-   enable_if_t<is_reference_v<T>, void> func(T);
-   enable_if_t<is_value_v<T>, void> func(T);
+   std::enable_if_t<std::is_pointer_v<T>, void> func(T);
+   std::enable_if_t<std::is_integral_v<T>, void> func(T);
+   std::enable_if_t<std::is_floating_point_v<T>, void> func(T);
+   // (is_reference_v<T> is never true for a by-value parameter: T is deduced without the reference)
    ```
 
 ### ❌ Don't Use SFINAE When:
@@ -853,16 +937,16 @@ func<char>('X');     // Instance 3
    ```cpp
    // ❌ SFINAE (old way)
    template<typename T>
-   enable_if_t<is_integral_v<T>, void> func(T);
+   std::enable_if_t<std::is_integral_v<T>, void> func(T);
    
    template<typename T>
-   enable_if_t<is_floating_point_v<T>, void> func(T);
+   std::enable_if_t<std::is_floating_point_v<T>, void> func(T);
    
    // ✅ if constexpr (modern)
    template<typename T>
    void func(T value) {
-       if constexpr (is_integral_v<T>) { }
-       else if constexpr (is_floating_point_v<T>) { }
+       if constexpr (std::is_integral_v<T>) { }
+       else if constexpr (std::is_floating_point_v<T>) { }
    }
    ```
 
@@ -870,7 +954,7 @@ func<char>('X');     // Instance 3
    ```cpp
    // ❌ SFINAE
    template<typename T>
-   enable_if_t<is_integral_v<T>, void> func(T);
+   std::enable_if_t<std::is_integral_v<T>, void> func(T);
    
    // ✅ Concepts
    void func(Integral auto value) { }
@@ -880,7 +964,7 @@ func<char>('X');     // Instance 3
    ```cpp
    // ❌ SFINAE overkill
    template<typename T>
-   enable_if_t<is_same_v<T, int>, void> func(T);
+   std::enable_if_t<std::is_same_v<T, int>, void> func(T);
    
    // ✅ Just overload
    void func(int value) { }
@@ -1014,11 +1098,11 @@ inline constexpr bool has_foo_v = has_foo<T>::value;
 ### Common Type Traits
 
 ```cpp
-is_integral_v<T>         // int, long, char
-is_floating_point_v<T>   // float, double
-is_arithmetic_v<T>       // integral or floating
-is_pointer_v<T>          // T*
-is_same_v<T, U>          // T == U
+std::is_integral_v<T>         // int, long, char
+std::is_floating_point_v<T>   // float, double
+std::is_arithmetic_v<T>       // integral or floating
+std::is_pointer_v<T>          // T*
+std::is_same_v<T, U>          // T == U
 ```
 
 ---
@@ -1073,3 +1157,53 @@ is_same_v<T, U>          // T == U
 *Difficulty: Advanced*  
 *Prerequisites: Templates, Type Traits*  
 *Essential for Advanced Generic Programming*
+
+---
+
+## Notes moved from main.cpp
+
+The title/description comment at the top of `main.cpp` ("WHAT IS SFINAE?") stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `#include <print>` added, `<iostream>` removed, `<cstddef>` and `<utility>` added (`std::size_t`, `std::declval`). `using namespace std;` is gone and every standard name is written with `std::`.
+- Each example has a `// === EXAMPLE n: … ===` title comment.
+- **Old Example 1 ("The Problem") was removed from `main.cpp`**: it only printed lecture text and contained no code. It is covered by *The Problem It Solves*. The remaining examples were renumbered (9 examples: Basic enable_if, Return Type SFINAE, Member Functions, Operators, Multiple Constraints, Function Overloading, Tag Dispatching, if constexpr, Generic Serializer).
+- **Printed lecture text removed from the program** (it is covered by the sections above):
+  - the "✅ …" lines at the end of the examples → *Examples Overview*, *Modern Alternatives*;
+  - the whole **`printComprehensiveInfo()`** block (what is SFINAE, key syntax, common type traits, custom type traits, common patterns, common mistakes, best practices, performance, C++ evolution) and the **KEY TAKEAWAYS** at the end of `main()` → *Basic Syntax*, *Type Traits*, *Custom Type Traits*, *Common Patterns*, *Common Mistakes*, *Best Practices*, *Performance*, *Modern Alternatives*, *Summary*.
+- Output and code differences:
+  - `bool` prints as `true` / `false` instead of `1` / `0` (`print_integral(true)`, the `compare` results).
+  - Example 2 (`process(std::string)`): the old `cout << "\"" << process(...) << "\""` printed the opening quote **before** the function's own output (`"  String: "hello" → hello processed"`). The call now happens before the format string is printed, so the line reads `  String: "hello" → "hello processed"`.
+  - Example 8 (`if constexpr`) printed `(binary: 2a)` but `std::hex` prints **hexadecimal**; the label is now `hex`.
+  - Two unused-parameter warnings (`print_size` fallback, `process_impl(T, other_tag)`) are gone: the parameters are unnamed.
+  - The comment "Another version for containers" above `is_container` was wrong (it is the trait that detects containers) and was reworded.
+
+### Corrections to the original files
+
+- **The restaurant-menu snippet did not show SFINAE.** It declared two identical templates `func(T)`, which is a redefinition error (`redefinition of 'template<class T> void func(T)'`); also, `value.foo()` in the body would not be SFINAE. Replaced with a `decltype(value.foo(), void())` signature plus a `func(...)` fallback.
+- **Pattern 2** used `process(const string& s)` with `enable_if_t<is_same_v<T, string>, ...>`: `T` can not be deduced from `const string&`, so the call fails (`no matching function for call to 'process(std::string)'`). It must be `const T& s`.
+- **Added "Only the signature counts"**: an error in the function body is a hard error even if another overload would work. The old text implied SFINAE protects the body.
+- **Added the default-template-argument trap**: two overloads that differ only in `typename = enable_if_t<…>` are a redefinition (Mistake 6); and member-function SFINAE that depends only on the class parameter fails when the class is instantiated (Mistake 7).
+- **`typename` mistake:** the old text said the missing `typename` "won't compile". That is only true before C++20; with `-std=c++20` GCC accepts `std::enable_if<…>::type` as a return type (P0634).
+- **`std::declval<T>.foo()` (missing parentheses)** is a hard error (`insufficient contextual information to determine type`), not a silently false trait.
+- **"Forgetting `_v`" was not a mistake**, just verbosity; reworded.
+- **Missing definitions:** the `Arithmetic` concept was used but never defined; added. `is_value_v` does not exist and `is_reference_v<T>` is never true for a by-value parameter; the "multiple type categories" example now uses pointer / integral / floating point.
+- **Performance section:** "+5-10% / +20-50% / +50-100% compile time", "~10ns vs 0ns" and the benchmark table had no measurements behind them. Removed; the text now says what is known (no runtime cost, higher compile-time cost) and that nothing was measured.
+- **Compile command:** `-std=c++17 SFINAE.cpp` → `-std=c++23 main.cpp`.
+
+### What was tested (GCC 13.3, `-Wall -Wextra`, ASan/UBSan)
+
+- `main.cpp` builds without warnings and runs; the output matches the old program except for the intended differences above.
+- Two identical templates → `redefinition of 'template<class T> void func(T)'`.
+- `f(...)` fallback + `template<typename T> void f(T v) { v.foo(); }` → hard error in the body; `auto g(T v) -> decltype(v.foo(), void())` + `g(...)` compiles and picks the fallback.
+- Overloads differing only in a default template argument → `redefinition`; the `enable_if_t<…, int> = 0` form compiles.
+- `process(const std::string&)` with `enable_if_t<is_same_v<T, std::string>, …>` → `no matching function`.
+- `enable_if_t<is_arithmetic_v<T>>` + `enable_if_t<is_integral_v<T>>` for `int` → `call of overloaded 'func(int)' is ambiguous`; for `double` only the arithmetic one matches.
+- `std::enable_if<…>::type` without `typename`: error with `-std=c++17` (`need 'typename' …`), compiles with `-std=c++20`.
+- `std::declval<T>.foo()` → `insufficient contextual information to determine type`.
+- Member `template<typename = enable_if_t<is_integral_v<T>>>` with `S<double>` → `no type named 'type' in 'struct std::enable_if<false, void>'`; the `typename U = T` form compiles.
+- Concepts `Arithmetic` / `Integral auto` compile and select the right overload; `enable_if_t` vs `if constexpr` versions both print `I` / `F`.
+- `is_printable<int>` is `true`, `is_printable<X>` is `false`; `has_size` is `false` for `int` and `int[3]`, `true` for `std::string`.
+- `f(int&)` against `enable_if_t<is_reference_v<T>>` fails: a deduced by-value `T` is never a reference.
+
+Not tested: Clang / MSVC behavior, compile-time numbers, `std::formattable` (C++23, needs GCC 14+) as an alternative to `is_printable`.
+

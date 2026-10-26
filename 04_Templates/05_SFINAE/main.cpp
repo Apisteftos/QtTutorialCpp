@@ -1,8 +1,9 @@
-#include <iostream>
+#include <cstddef>
+#include <print>
 #include <string>
-#include <vector>
 #include <type_traits>
-using namespace std;
+#include <utility>
+#include <vector>
 
 // ============================================
 // WHAT IS SFINAE?
@@ -52,39 +53,7 @@ GOLDEN RULE:
 */
 
 // ============================================
-// EXAMPLE 1: The Problem Without SFINAE
-// ============================================
-
-namespace WithoutSFINAE {
-
-// ❌ This doesn't work - compilation fails if T doesn't have size()
-/*
-    template<typename T>
-    void print_size(const T& container) {
-        cout << "Size: " << container.size() << "\n";
-    }
-    */
-
-// We'd get errors like:
-// print_size(42);  // ERROR: int has no member 'size'
-
-void demonstrate() {
-    cout << "\n=== Example 1: The Problem ===\n";
-    cout << "Without SFINAE, we can't write generic functions\n";
-    cout << "that only work with certain types.\n";
-    cout << "\n";
-    cout << "Problem: How to write print_size() that works with:\n";
-    cout << "  ✅ vector<int>  (has size())\n";
-    cout << "  ✅ string       (has size())\n";
-    cout << "  ❌ int          (no size())\n";
-    cout << "  ❌ double       (no size())\n";
-    cout << "\n";
-    cout << "Solution: SFINAE!\n";
-}
-}
-
-// ============================================
-// EXAMPLE 2: Basic enable_if
+// === EXAMPLE 1: Basic enable_if ===
 // ============================================
 
 namespace BasicEnableIf {
@@ -93,36 +62,36 @@ namespace BasicEnableIf {
 template<typename T,
          typename = std::enable_if_t<std::is_integral_v<T>>>
 void print_integral(T value) {
-    cout << "  Integral: " << value << "\n";
+    std::println("  Integral: {}", value);
 }
 
 // Only enable for floating point types
 template<typename T,
          typename = std::enable_if_t<std::is_floating_point_v<T>>>
 void print_floating(T value) {
-    cout << "  Floating: " << value << "\n";
+    std::println("  Floating: {}", value);
 }
 
 void demonstrate() {
-    cout << "\n=== Example 2: Basic enable_if ===\n";
+    std::println("");
+    std::println("=== Example 1: Basic enable_if ===");
 
-    cout << "Integral types:\n";
+    std::println("Integral types:");
     print_integral(42);
     print_integral('X');
     print_integral(true);
     // print_integral(3.14);  // ❌ Won't compile - float not integral
 
-    cout << "\nFloating types:\n";
+    std::println("");
+    std::println("Floating types:");
     print_floating(3.14);
     print_floating(2.71f);
     // print_floating(42);  // ❌ Won't compile - int not floating
-
-    cout << "\n✅ SFINAE selects correct overload at compile-time!\n";
 }
 }
 
 // ============================================
-// EXAMPLE 3: Return Type SFINAE
+// === EXAMPLE 2: Return Type SFINAE ===
 // ============================================
 
 namespace ReturnTypeSFINAE {
@@ -131,34 +100,34 @@ namespace ReturnTypeSFINAE {
 template<typename T>
 std::enable_if_t<std::is_arithmetic_v<T>, int>
 process(T value) {
-    cout << "  Arithmetic: " << value << " → ";
+    std::print("  Arithmetic: {} → ", value);
     return static_cast<int>(value * 2);
 }
 
 // Return string for string types
 template<typename T>
-std::enable_if_t<std::is_same_v<T, string>, string>
+std::enable_if_t<std::is_same_v<T, std::string>, std::string>
 process(const T& value) {
-    cout << "  String: \"" << value << "\" → ";
+    std::print("  String: \"{}\" → ", value);
     return value + " processed";
 }
 
 void demonstrate() {
-    cout << "\n=== Example 3: Return Type SFINAE ===\n";
+    std::println("");
+    std::println("=== Example 2: Return Type SFINAE ===");
 
-    cout << "Process arithmetic:\n";
-    cout << process(21) << "\n";
-    cout << process(3.14) << "\n";
+    std::println("Process arithmetic:");
+    std::println("{}", process(21));
+    std::println("{}", process(3.14));
 
-    cout << "\nProcess string:\n";
-    cout << "\"" << process(string("hello")) << "\"\n";
-
-    cout << "\n✅ Different return types based on input type!\n";
+    std::println("");
+    std::println("Process string:");
+    std::println("\"{}\"", process(std::string("hello")));
 }
 }
 
 // ============================================
-// EXAMPLE 4: Detecting Member Functions
+// === EXAMPLE 3: Detecting Member Functions ===
 // ============================================
 
 namespace DetectMemberFunction {
@@ -178,38 +147,39 @@ inline constexpr bool has_size_v = has_size<T>::value;
 template<typename T>
 std::enable_if_t<has_size_v<T>, void>
 print_size(const T& container) {
-    cout << "  Size: " << container.size() << "\n";
+    std::println("  Size: {}", container.size());
 }
 
 // Fallback for types without size()
 template<typename T>
 std::enable_if_t<!has_size_v<T>, void>
-print_size(const T& value) {
-    cout << "  No size() method available\n";
+print_size(const T&) {
+    std::println("  No size() method available");
 }
 
 void demonstrate() {
-    cout << "\n=== Example 4: Detecting Member Functions ===\n";
+    std::println("");
+    std::println("=== Example 3: Detecting Member Functions ===");
 
-    vector<int> vec = {1, 2, 3, 4, 5};
-    string str = "hello";
+    std::vector<int> vec = {1, 2, 3, 4, 5};
+    std::string str = "hello";
     int num = 42;
 
-    cout << "vector:\n";
+    std::println("vector:");
     print_size(vec);
 
-    cout << "\nstring:\n";
+    std::println("");
+    std::println("string:");
     print_size(str);
 
-    cout << "\nint:\n";
+    std::println("");
+    std::println("int:");
     print_size(num);
-
-    cout << "\n✅ SFINAE detects capabilities at compile-time!\n";
 }
 }
 
 // ============================================
-// EXAMPLE 5: Detecting Operators
+// === EXAMPLE 4: Detecting Operators ===
 // ============================================
 
 namespace DetectOperators {
@@ -237,7 +207,7 @@ compare(const T& a, const T& b) {
 template<typename T>
 std::enable_if_t<!has_less_than_v<T>, bool>
 compare(const T&, const T&) {
-    cout << "  Type doesn't support operator<\n";
+    std::println("  Type doesn't support operator<");
     return false;
 }
 
@@ -247,24 +217,25 @@ struct NoCompare {
 };
 
 void demonstrate() {
-    cout << "\n=== Example 5: Detecting Operators ===\n";
+    std::println("");
+    std::println("=== Example 4: Detecting Operators ===");
 
-    cout << "Comparing ints:\n";
-    cout << "  5 < 10 = " << compare(5, 10) << "\n";
+    std::println("Comparing ints:");
+    std::println("  5 < 10 = {}", compare(5, 10));
 
-    cout << "\nComparing strings:\n";
-    cout << "  \"abc\" < \"xyz\" = " << compare(string("abc"), string("xyz")) << "\n";
+    std::println("");
+    std::println("Comparing strings:");
+    std::println("  \"abc\" < \"xyz\" = {}", compare(std::string("abc"), std::string("xyz")));
 
-    cout << "\nComparing NoCompare objects:\n";
+    std::println("");
+    std::println("Comparing NoCompare objects:");
     NoCompare a{5}, b{10};
     compare(a, b);
-
-    cout << "\n✅ SFINAE handles missing operators gracefully!\n";
 }
 }
 
 // ============================================
-// EXAMPLE 6: Multiple Constraints
+// === EXAMPLE 5: Multiple Constraints ===
 // ============================================
 
 namespace MultipleConstraints {
@@ -276,10 +247,10 @@ std::enable_if_t<
         !std::is_same_v<T, bool>,
     void>
 print_number(T value) {
-    cout << "  Number: " << value << " (arithmetic, not bool)\n";
+    std::println("  Number: {} (arithmetic, not bool)", value);
 }
 
-// Another version for containers
+// Detect containers
 template<typename T, typename = void>
 struct is_container : std::false_type {};
 
@@ -301,34 +272,34 @@ std::enable_if_t<
         std::is_arithmetic_v<typename T::value_type>,
     void>
 print_container(const T& container) {
-    cout << "  Container of numbers: [ ";
+    std::print("  Container of numbers: [ ");
     for (const auto& elem : container) {
-        cout << elem << " ";
+        std::print("{} ", elem);
     }
-    cout << "]\n";
+    std::println("]");
 }
 
 void demonstrate() {
-    cout << "\n=== Example 6: Multiple Constraints ===\n";
+    std::println("");
+    std::println("=== Example 5: Multiple Constraints ===");
 
-    cout << "Print numbers:\n";
+    std::println("Print numbers:");
     print_number(42);
     print_number(3.14);
     // print_number(true);  // ❌ Won't compile - bool excluded
 
-    cout << "\nPrint numeric containers:\n";
-    vector<int> nums = {1, 2, 3, 4, 5};
+    std::println("");
+    std::println("Print numeric containers:");
+    std::vector<int> nums = {1, 2, 3, 4, 5};
     print_container(nums);
 
-    // vector<string> strs = {"a", "b"};
+    // std::vector<std::string> strs = {"a", "b"};
     // print_container(strs);  // ❌ Won't compile - not arithmetic
-
-    cout << "\n✅ Multiple conditions combined with &&!\n";
 }
 }
 
 // ============================================
-// EXAMPLE 7: Function Overloading with SFINAE
+// === EXAMPLE 6: Function Overloading with SFINAE ===
 // ============================================
 
 namespace FunctionOverloading {
@@ -338,55 +309,57 @@ template<typename T>
 std::enable_if_t<std::is_pointer_v<T>, void>
 print_value(T ptr) {
     if (ptr) {
-        cout << "  Pointer to: " << *ptr << "\n";
+        std::println("  Pointer to: {}", *ptr);
     } else {
-        cout << "  Null pointer\n";
+        std::println("  Null pointer");
     }
 }
 
 // Version 2: For arrays
-template<typename T, size_t N>
+template<typename T, std::size_t N>
 void print_value(T (&arr)[N]) {
-    cout << "  Array of " << N << " elements: [ ";
-    for (size_t i = 0; i < N; ++i) {
-        cout << arr[i] << " ";
+    std::print("  Array of {} elements: [ ", N);
+    for (std::size_t i = 0; i < N; ++i) {
+        std::print("{} ", arr[i]);
     }
-    cout << "]\n";
+    std::println("]");
 }
 
 // Version 3: For regular values
 template<typename T>
 std::enable_if_t<!std::is_pointer_v<T>, void>
 print_value(T value) {
-    cout << "  Value: " << value << "\n";
+    std::println("  Value: {}", value);
 }
 
 void demonstrate() {
-    cout << "\n=== Example 7: Function Overloading ===\n";
+    std::println("");
+    std::println("=== Example 6: Function Overloading ===");
 
     int x = 42;
     int* ptr = &x;
     int* null = nullptr;
     int arr[] = {1, 2, 3, 4, 5};
 
-    cout << "Direct value:\n";
+    std::println("Direct value:");
     print_value(x);
 
-    cout << "\nPointer:\n";
+    std::println("");
+    std::println("Pointer:");
     print_value(ptr);
 
-    cout << "\nNull pointer:\n";
+    std::println("");
+    std::println("Null pointer:");
     print_value(null);
 
-    cout << "\nArray:\n";
+    std::println("");
+    std::println("Array:");
     print_value(arr);
-
-    cout << "\n✅ SFINAE selects best overload!\n";
 }
 }
 
 // ============================================
-// EXAMPLE 8: Tag Dispatching Alternative
+// === EXAMPLE 7: Tag Dispatching Alternative ===
 // ============================================
 
 namespace TagDispatching {
@@ -407,17 +380,17 @@ using tag_t = std::conditional_t<
 // Implementation functions
 template<typename T>
 void process_impl(T value, integral_tag) {
-    cout << "  Processing integral: " << value << " → " << value * 2 << "\n";
+    std::println("  Processing integral: {} → {}", value, value * 2);
 }
 
 template<typename T>
 void process_impl(T value, floating_tag) {
-    cout << "  Processing floating: " << value << " → " << value / 2.0 << "\n";
+    std::println("  Processing floating: {} → {}", value, value / 2.0);
 }
 
 template<typename T>
-void process_impl(T value, other_tag) {
-    cout << "  Processing other type\n";
+void process_impl(T, other_tag) {
+    std::println("  Processing other type");
 }
 
 // Public interface - dispatch to correct implementation
@@ -427,19 +400,18 @@ void process(T value) {
 }
 
 void demonstrate() {
-    cout << "\n=== Example 8: Tag Dispatching ===\n";
+    std::println("");
+    std::println("=== Example 7: Tag Dispatching ===");
 
-    cout << "Process different types:\n";
+    std::println("Process different types:");
     process(42);
     process(3.14);
-    process(string("hello"));
-
-    cout << "\n✅ Tag dispatching = cleaner alternative to SFINAE!\n";
+    process(std::string("hello"));
 }
 }
 
 // ============================================
-// EXAMPLE 9: Modern Alternative - if constexpr
+// === EXAMPLE 8: Modern Alternative - if constexpr ===
 // ============================================
 
 namespace ModernIfConstexpr {
@@ -448,37 +420,32 @@ namespace ModernIfConstexpr {
 template<typename T>
 void print_info(const T& value) {
     if constexpr (std::is_integral_v<T>) {
-        cout << "  Integral: " << value
-             << " (binary: " << std::hex << value << std::dec << ")\n";
+        std::println("  Integral: {} (hex: {:x})", value, value);
     }
     else if constexpr (std::is_floating_point_v<T>) {
-        cout << "  Floating: " << value
-             << " (double: " << static_cast<double>(value) << ")\n";
+        std::println("  Floating: {} (double: {})", value, static_cast<double>(value));
     }
-    else if constexpr (std::is_same_v<T, string>) {
-        cout << "  String: \"" << value
-             << "\" (length: " << value.length() << ")\n";
+    else if constexpr (std::is_same_v<T, std::string>) {
+        std::println("  String: \"{}\" (length: {})", value, value.length());
     }
     else {
-        cout << "  Other type\n";
+        std::println("  Other type");
     }
 }
 
 void demonstrate() {
-    cout << "\n=== Example 9: Modern if constexpr (C++17) ===\n";
+    std::println("");
+    std::println("=== Example 8: Modern if constexpr (C++17) ===");
 
-    cout << "Much cleaner than SFINAE:\n";
+    std::println("Much cleaner than SFINAE:");
     print_info(42);
     print_info(3.14);
-    print_info(string("hello"));
-
-    cout << "\n✅ if constexpr = compile-time if statement!\n";
-    cout << "✅ Easier to read and write than SFINAE!\n";
+    print_info(std::string("hello"));
 }
 }
 
 // ============================================
-// EXAMPLE 10: Real-world - Generic Serializer
+// === EXAMPLE 9: Real-world - Generic Serializer ===
 // ============================================
 
 namespace GenericSerializer {
@@ -502,7 +469,7 @@ public:
     template<typename T>
     std::enable_if_t<has_serialize_v<T>, void>
     serialize(const T& obj) {
-        cout << "  Using custom serialize: ";
+        std::print("  Using custom serialize: ");
         obj.serialize();
     }
 
@@ -511,25 +478,25 @@ public:
     std::enable_if_t<
         !has_serialize_v<T> && std::is_arithmetic_v<T>, void>
     serialize(T value) {
-        cout << "  Arithmetic: " << value << "\n";
+        std::println("  Arithmetic: {}", value);
     }
 
     // For strings
     template<typename T>
     std::enable_if_t<
-        !has_serialize_v<T> && std::is_same_v<T, string>, void>
+        !has_serialize_v<T> && std::is_same_v<T, std::string>, void>
     serialize(const T& str) {
-        cout << "  String: \"" << str << "\"\n";
+        std::println("  String: \"{}\"", str);
     }
 
-    // For containers
+    // For everything else (containers, unknown types)
     template<typename T>
     std::enable_if_t<
         !has_serialize_v<T> &&
             !std::is_arithmetic_v<T> &&
-            !std::is_same_v<T, string>, void>
+            !std::is_same_v<T, std::string>, void>
     serialize(const T&) {
-        cout << "  Container or unknown type\n";
+        std::println("  Container or unknown type");
     }
 };
 
@@ -537,15 +504,15 @@ public:
 struct Point {
     int x, y;
     void serialize() const {
-        cout << "Point(" << x << ", " << y << ")\n";
+        std::println("Point({}, {})", x, y);
     }
 };
 
 struct Widget {
-    string name;
+    std::string name;
     int value;
     void serialize() const {
-        cout << "Widget{\"" << name << "\", " << value << "}\n";
+        std::println("Widget{{\"{}\", {}}}", name, value);
     }
 };
 
@@ -554,160 +521,29 @@ struct NoSerialize {
 };
 
 void demonstrate() {
-    cout << "\n=== Example 10: Generic Serializer ===\n";
+    std::println("");
+    std::println("=== Example 9: Generic Serializer ===");
 
     Serializer s;
 
-    cout << "Serialize custom types:\n";
+    std::println("Serialize custom types:");
     Point p{10, 20};
     s.serialize(p);
 
     Widget w{"MyWidget", 42};
     s.serialize(w);
 
-    cout << "\nSerialize built-in types:\n";
+    std::println("");
+    std::println("Serialize built-in types:");
     s.serialize(123);
     s.serialize(3.14);
-    s.serialize(string("hello"));
+    s.serialize(std::string("hello"));
 
-    cout << "\nSerialize type without serialize():\n";
+    std::println("");
+    std::println("Serialize type without serialize():");
     NoSerialize ns{99};
     s.serialize(ns);
-
-    cout << "\n✅ SFINAE selects correct serialization method!\n";
-    cout << "✅ Fallback for types without custom method!\n";
 }
-}
-
-// ============================================
-// COMPREHENSIVE OUTPUT
-// ============================================
-
-void printComprehensiveInfo() {
-    cout << "\n" << string(60, '=') << "\n";
-    cout << "SFINAE - COMPLETE REFERENCE\n";
-    cout << string(60, '=') << "\n";
-
-    cout << "\n📚 WHAT IS SFINAE?\n";
-    cout << string(60, '-') << "\n";
-    cout << "SFINAE = Substitution Failure Is Not An Error\n";
-    cout << "\n";
-    cout << "When the compiler substitutes template parameters:\n";
-    cout << "  1. If substitution fails → Remove that overload\n";
-    cout << "  2. Try next candidate\n";
-    cout << "  3. Error only if NO candidates work\n";
-    cout << "\n";
-    cout << "Result: Compile-time function selection based on types!\n";
-
-    cout << "\n📊 KEY SYNTAX\n";
-    cout << string(60, '-') << "\n";
-    cout << "Template parameter SFINAE:\n";
-    cout << "  template<typename T,\n";
-    cout << "           typename = std::enable_if_t<condition>>\n";
-    cout << "  void func(T value) { }\n";
-    cout << "\n";
-    cout << "Return type SFINAE:\n";
-    cout << "  template<typename T>\n";
-    cout << "  std::enable_if_t<condition, ReturnType>\n";
-    cout << "  func(T value) { }\n";
-    cout << "\n";
-    cout << "Modern alternatives:\n";
-    cout << "  if constexpr (condition) { }    // C++17\n";
-    cout << "  requires condition              // C++20 concepts\n";
-
-    cout << "\n🔍 COMMON TYPE TRAITS\n";
-    cout << string(60, '-') << "\n";
-    cout << "std::is_integral_v<T>         // int, long, char, bool\n";
-    cout << "std::is_floating_point_v<T>   // float, double\n";
-    cout << "std::is_arithmetic_v<T>       // integral or floating\n";
-    cout << "std::is_pointer_v<T>          // T*\n";
-    cout << "std::is_same_v<T, U>          // Exact type match\n";
-    cout << "std::is_base_of_v<Base, Der>  // Inheritance check\n";
-    cout << "std::is_const_v<T>            // const qualified\n";
-    cout << "std::is_reference_v<T>        // T& or T&&\n";
-
-    cout << "\n🔧 CUSTOM TYPE TRAITS\n";
-    cout << string(60, '-') << "\n";
-    cout << "Detect member function:\n";
-    cout << "  template<typename T, typename = void>\n";
-    cout << "  struct has_foo : std::false_type {};\n";
-    cout << "\n";
-    cout << "  template<typename T>\n";
-    cout << "  struct has_foo<T, std::void_t<\n";
-    cout << "      decltype(std::declval<T>().foo())>>\n";
-    cout << "      : std::true_type {};\n";
-
-    cout << "\n💡 COMMON PATTERNS\n";
-    cout << string(60, '-') << "\n";
-    cout << "Pattern 1: Enable/Disable overloads\n";
-    cout << "  template<typename T>\n";
-    cout << "  enable_if_t<condition, void> func(T) { }\n";
-    cout << "\n";
-    cout << "Pattern 2: Different return types\n";
-    cout << "  enable_if_t<cond1, int> func(T) { }\n";
-    cout << "  enable_if_t<cond2, string> func(T) { }\n";
-    cout << "\n";
-    cout << "Pattern 3: Multiple constraints\n";
-    cout << "  enable_if_t<cond1 && cond2 && !cond3, void>\n";
-    cout << "\n";
-    cout << "Pattern 4: Tag dispatching\n";
-    cout << "  func_impl(value, tag_type{});  // Cleaner!\n";
-
-    cout << "\n⚠️  COMMON MISTAKES\n";
-    cout << string(60, '-') << "\n";
-    cout << "❌ Forgetting typename:\n";
-    cout << "   enable_if<...>::type  // ❌ Missing typename!\n";
-    cout << "   typename enable_if<...>::type  // ✅\n";
-    cout << "   enable_if_t<...>  // ✅ Better (C++14)\n";
-    cout << "\n";
-    cout << "❌ Ambiguous overloads:\n";
-    cout << "   Both conditions true → ambiguous!\n";
-    cout << "   Use mutually exclusive conditions\n";
-    cout << "\n";
-    cout << "❌ Overly complex conditions:\n";
-    cout << "   Keep conditions simple and readable\n";
-    cout << "   Consider if constexpr or concepts instead\n";
-
-    cout << "\n🎯 BEST PRACTICES\n";
-    cout << string(60, '-') << "\n";
-    cout << "✅ Prefer modern alternatives:\n";
-    cout << "   C++17: Use if constexpr\n";
-    cout << "   C++20: Use concepts\n";
-    cout << "   C++11/14: Use SFINAE when necessary\n";
-    cout << "\n";
-    cout << "✅ Use helper traits:\n";
-    cout << "   Create has_foo_v instead of repeating logic\n";
-    cout << "\n";
-    cout << "✅ Document requirements:\n";
-    cout << "   Comment what types are expected\n";
-    cout << "\n";
-    cout << "✅ Keep conditions simple:\n";
-    cout << "   Complex conditions = hard to understand\n";
-    cout << "\n";
-    cout << "✅ Test edge cases:\n";
-    cout << "   Test with various types\n";
-
-    cout << "\n⚡ PERFORMANCE\n";
-    cout << string(60, '-') << "\n";
-    cout << "✅ Zero runtime overhead:\n";
-    cout << "  • All resolved at compile-time\n";
-    cout << "  • No runtime type checks\n";
-    cout << "  • Overload resolution during compilation\n";
-    cout << "  • Inline expansion possible\n";
-    cout << "\n";
-    cout << "⚠️  Compilation cost:\n";
-    cout << "  • Complex SFINAE = slower compilation\n";
-    cout << "  • Many overloads = longer compile times\n";
-    cout << "  • Binary size may increase (templates)\n";
-
-    cout << "\n🚀 C++ EVOLUTION\n";
-    cout << string(60, '-') << "\n";
-    cout << "C++11: SFINAE with enable_if\n";
-    cout << "C++14: enable_if_t helper\n";
-    cout << "C++17: if constexpr (simpler!)\n";
-    cout << "C++20: Concepts (best option!)\n";
-    cout << "\n";
-    cout << "Recommendation: Use C++20 concepts when possible!\n";
 }
 
 // ============================================
@@ -715,14 +551,14 @@ void printComprehensiveInfo() {
 // ============================================
 
 int main() {
-    cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║            SFINAE IN C++                              ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Substitution Failure Is Not An Error                ║\n";
-    cout << "║  Compile-time function selection!                    ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║            SFINAE IN C++                              ║");
+    std::println("║                                                       ║");
+    std::println("║  Substitution Failure Is Not An Error                ║");
+    std::println("║  Compile-time function selection!                    ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
-    WithoutSFINAE::demonstrate();
     BasicEnableIf::demonstrate();
     ReturnTypeSFINAE::demonstrate();
     DetectMemberFunction::demonstrate();
@@ -732,23 +568,6 @@ int main() {
     TagDispatching::demonstrate();
     ModernIfConstexpr::demonstrate();
     GenericSerializer::demonstrate();
-
-    printComprehensiveInfo();
-
-    cout << "\n" << string(60, '=') << "\n";
-    cout << "🎓 KEY TAKEAWAYS\n";
-    cout << string(60, '=') << "\n";
-    cout << "1. SFINAE = compile-time function selection\n";
-    cout << "2. enable_if controls overload availability\n";
-    cout << "3. Substitution failure removes overload, doesn't error\n";
-    cout << "4. Use type traits to detect capabilities\n";
-    cout << "5. Custom traits detect members/operators\n";
-    cout << "6. Zero runtime overhead (all compile-time)\n";
-    cout << "7. C++17: Prefer if constexpr (simpler)\n";
-    cout << "8. C++20: Prefer concepts (clearest)\n";
-    cout << "9. Tag dispatching = cleaner alternative\n";
-    cout << "10. Essential for generic library code\n";
-    cout << string(60, '=') << "\n\n";
 
     return 0;
 }

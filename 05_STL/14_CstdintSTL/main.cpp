@@ -1,9 +1,8 @@
-#include <iostream>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
-#include <climits>
 #include <print>
+#include <string_view>
 
 // ============================================================
 // std::cstdint — Fixed-Width Integer Types in C++23
@@ -18,256 +17,264 @@
 //   7.  Max-width: intmax_t, uintmax_t
 //   8.  Limits: INT8_MAX, UINT32_MAX etc.
 //   9.  std::numeric_limits<T>
-//  10.  Practical: protocol buffer, MCX frame, hardware register
+//  10.  Practical: binary packet header, hardware register
 // ============================================================
+
+namespace
+{
+    void banner(std::string_view title)
+    {
+        std::println("=====================================================");
+        std::println("{}", title);
+        std::println("=====================================================");
+    }
+}
 
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Why Fixed-Width Integers?\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Why Fixed-Width Integers? ===
+    banner("Example 1: Why Fixed-Width Integers?");
 
-    std::cout << "Platform-dependent sizes (can vary!):\n";
-    std::cout << "  sizeof(short):    " << sizeof(short)     << " bytes\n";
-    std::cout << "  sizeof(int):      " << sizeof(int)       << " bytes\n";
-    std::cout << "  sizeof(long):     " << sizeof(long)      << " bytes\n";
-    std::cout << "  sizeof(long long):" << sizeof(long long) << " bytes\n";
+    std::println("Platform-dependent sizes (can vary!):");
+    std::println("  sizeof(short):    {} bytes", sizeof(short));
+    std::println("  sizeof(int):      {} bytes", sizeof(int));
+    std::println("  sizeof(long):     {} bytes", sizeof(long));
+    std::println("  sizeof(long long):{} bytes", sizeof(long long));
 
-    std::cout << "\nFixed-width sizes (always guaranteed):\n";
-    std::cout << "  sizeof(int8_t):   " << sizeof(int8_t)   << " bytes (always 1)\n";
-    std::cout << "  sizeof(int16_t):  " << sizeof(int16_t)  << " bytes (always 2)\n";
-    std::cout << "  sizeof(int32_t):  " << sizeof(int32_t)  << " bytes (always 4)\n";
-    std::cout << "  sizeof(int64_t):  " << sizeof(int64_t)  << " bytes (always 8)\n";
+    std::println("");
+    std::println("Fixed-width sizes (always guaranteed):");
+    std::println("  sizeof(int8_t):   {} bytes (always 1)", sizeof(std::int8_t));
+    std::println("  sizeof(int16_t):  {} bytes (always 2)", sizeof(std::int16_t));
+    std::println("  sizeof(int32_t):  {} bytes (always 4)", sizeof(std::int32_t));
+    std::println("  sizeof(int64_t):  {} bytes (always 8)", sizeof(std::int64_t));
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Signed Fixed-Width Types\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: Signed Fixed-Width Types ===
+    banner("Example 2: Signed Fixed-Width Types");
 
-    int8_t  i8  = 127;
-    int16_t i16 = 32767;
-    int32_t i32 = 2147483647;
-    int64_t i64 = 9223372036854775807LL;
+    std::int8_t  i8  = 127;
+    std::int16_t i16 = 32767;
+    std::int32_t i32 = 2147483647;
+    std::int64_t i64 = 9223372036854775807LL;
 
     std::println("int8_t   (1 byte):  {}", i8);
     std::println("int16_t  (2 bytes): {}", i16);
     std::println("int32_t  (4 bytes): {}", i32);
     std::println("int64_t  (8 bytes): {}", i64);
 
-    // Overflow behavior (wraps around for signed — UB, but shown for awareness)
-    int8_t overflow = 127;
-    overflow++;  // wraps to -128 (undefined behavior — shown for education)
+    // i8++ computes in int (127 + 1 = 128) and converts back to int8_t.
+    // Since C++20 that conversion is modular, so the result is -128 (not UB).
+    // Real signed overflow (e.g. INT32_MAX + 1 in int) IS undefined behavior.
+    std::int8_t overflow = 127;
+    overflow++;
     std::println("int8_t 127+1 = {} (wraps to -128!)", overflow);
 
     // Casting
-    int32_t big  = 300;
-    int8_t  small = static_cast<int8_t>(big);   // truncates
+    std::int32_t big   = 300;
+    std::int8_t  small = static_cast<std::int8_t>(big);   // keeps the low 8 bits
     std::println("(int8_t)300 = {} (truncated)", small);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Unsigned Fixed-Width Types\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Unsigned Fixed-Width Types ===
+    banner("Example 3: Unsigned Fixed-Width Types");
 
-    uint8_t  u8  = 255;
-    uint16_t u16 = 65535;
-    uint32_t u32 = 4294967295U;
-    uint64_t u64 = 18446744073709551615ULL;
+    std::uint8_t  u8  = 255;
+    std::uint16_t u16 = 65535;
+    std::uint32_t u32 = 4294967295U;
+    std::uint64_t u64 = 18446744073709551615ULL;
 
-    // uint8_t prints as char — cast to int for numeric output
-    std::println("uint8_t  (1 byte):  {}", (unsigned)u8);
+    // std::println formats uint8_t as a number (only plain char is a character);
+    // with std::cout << u8 it would print a character, so no cast is needed here.
+    std::println("uint8_t  (1 byte):  {}", u8);
     std::println("uint16_t (2 bytes): {}", u16);
     std::println("uint32_t (4 bytes): {}", u32);
     std::println("uint64_t (8 bytes): {}", u64);
 
     // uint8_t is commonly used as a raw byte
-    uint8_t byte = 0b10110100;
-    std::cout << "byte (binary): ";
+    std::uint8_t byte = 0b10110100;
+    std::print("byte (binary): ");
     for (int i = 7; i >= 0; --i)
-        std::cout << ((byte >> i) & 1);
-    std::cout << " = " << (unsigned)byte << '\n';
+        std::print("{}", (byte >> i) & 1);
+    std::println(" = {}", byte);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Minimum-Width Types (int_least)\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Minimum-Width Types (int_least) ===
+    banner("Example 4: Minimum-Width Types (int_least)");
 
     // int_leastN_t — at least N bits, smallest type available
-    int_least8_t  l8  = 100;
-    int_least16_t l16 = 1000;
-    int_least32_t l32 = 100000;
-    int_least64_t l64 = 1000000000LL;
+    std::int_least8_t  l8  = 100;
+    std::int_least16_t l16 = 1000;
+    std::int_least32_t l32 = 100000;
+    std::int_least64_t l64 = 1000000000LL;
 
-    std::cout << "int_least8_t  size: " << sizeof(l8)  << " bytes\n";
-    std::cout << "int_least16_t size: " << sizeof(l16) << " bytes\n";
-    std::cout << "int_least32_t size: " << sizeof(l32) << " bytes\n";
-    std::cout << "int_least64_t size: " << sizeof(l64) << " bytes\n";
-    std::cout << "(may be larger than minimum on some platforms)\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Fastest Types (int_fast)\n";
-    std::cout << "=====================================================\n";
-
-    // int_fastN_t — at least N bits, fastest type on this platform
-    int_fast8_t  f8  = 42;
-    int_fast16_t f16 = 1000;
-    int_fast32_t f32 = 100000;
-    int_fast64_t f64 = 1000000LL;
-
-    std::cout << "int_fast8_t  size: " << sizeof(f8)  << " bytes\n";
-    std::cout << "int_fast16_t size: " << sizeof(f16) << " bytes\n";
-    std::cout << "int_fast32_t size: " << sizeof(f32) << " bytes\n";
-    std::cout << "int_fast64_t size: " << sizeof(f64) << " bytes\n";
-    std::cout << "(may be larger for CPU register alignment)\n";
+    std::println("int_least8_t  size: {} bytes", sizeof(l8));
+    std::println("int_least16_t size: {} bytes", sizeof(l16));
+    std::println("int_least32_t size: {} bytes", sizeof(l32));
+    std::println("int_least64_t size: {} bytes", sizeof(l64));
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Pointer-Sized Types\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Fastest Types (int_fast) ===
+    banner("Example 5: Fastest Types (int_fast)");
 
-    // intptr_t / uintptr_t — same size as a pointer
+    // int_fastN_t — at least N bits, "fastest" type chosen by the implementation
+    std::int_fast8_t  f8  = 42;
+    std::int_fast16_t f16 = 1000;
+    std::int_fast32_t f32 = 100000;
+    std::int_fast64_t f64 = 1000000LL;
+
+    std::println("int_fast8_t  size: {} bytes", sizeof(f8));
+    std::println("int_fast16_t size: {} bytes", sizeof(f16));
+    std::println("int_fast32_t size: {} bytes", sizeof(f32));
+    std::println("int_fast64_t size: {} bytes", sizeof(f64));
+    std::println("");
+
+
+    // === EXAMPLE 6: Pointer-Sized Types ===
+    banner("Example 6: Pointer-Sized Types");
+
+    // intptr_t / uintptr_t — can hold a pointer value (optional types)
     int  x   = 42;
     int* ptr = &x;
 
-    intptr_t  ip = reinterpret_cast<intptr_t>(ptr);
-    uintptr_t up = reinterpret_cast<uintptr_t>(ptr);
+    std::intptr_t  ip = reinterpret_cast<std::intptr_t>(ptr);
+    std::uintptr_t up = reinterpret_cast<std::uintptr_t>(ptr);
 
-    std::cout << "pointer size:       " << sizeof(ptr)      << " bytes\n";
-    std::cout << "intptr_t size:      " << sizeof(intptr_t) << " bytes\n";
-    std::cout << "pointer as intptr:  " << std::hex << ip   << std::dec << '\n';
-    std::cout << "pointer as uintptr: " << std::hex << up   << std::dec << '\n';
+    std::println("pointer size:       {} bytes", sizeof(ptr));
+    std::println("intptr_t size:      {} bytes", sizeof(std::intptr_t));
+    std::println("pointer as intptr:  {:x}", ip);
+    std::println("pointer as uintptr: {:x}", up);
 
     // ptrdiff_t — difference between two pointers
-    int arr[5] = {10,20,30,40,50};
-    ptrdiff_t diff = &arr[4] - &arr[0];
-    std::cout << "ptrdiff_t:          " << diff << " elements\n";
+    int arr[5] = {10, 20, 30, 40, 50};
+    std::ptrdiff_t diff = &arr[4] - &arr[0];
+    std::println("ptrdiff_t:          {} elements", diff);
 
     // size_t — result of sizeof, index type
     std::size_t sz = sizeof(double);
-    std::cout << "size_t sizeof(double): " << sz << '\n';
+    std::println("size_t sizeof(double): {}", sz);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Maximum Width Types\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: Maximum Width Types ===
+    banner("Example 7: Maximum Width Types");
 
-    intmax_t  imax =  9223372036854775807LL;
-    uintmax_t umax = 18446744073709551615ULL;
+    std::intmax_t  imax =  9223372036854775807LL;
+    std::uintmax_t umax = 18446744073709551615ULL;
 
-    std::cout << "intmax_t  size: " << sizeof(intmax_t)  << " bytes\n";
-    std::cout << "uintmax_t size: " << sizeof(uintmax_t) << " bytes\n";
+    std::println("intmax_t  size: {} bytes", sizeof(std::intmax_t));
+    std::println("uintmax_t size: {} bytes", sizeof(std::uintmax_t));
     std::println("intmax_t  max:  {}", imax);
     std::println("uintmax_t max:  {}", umax);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Compile-Time Limits (macros)\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Compile-Time Limits (macros) ===
+    banner("Example 8: Compile-Time Limits (macros)");
 
-    std::cout << "INT8_MIN:   " << (int)INT8_MIN   << '\n';
-    std::cout << "INT8_MAX:   " << (int)INT8_MAX   << '\n';
-    std::cout << "UINT8_MAX:  " << (unsigned)UINT8_MAX  << '\n';
-    std::cout << "INT16_MIN:  " << INT16_MIN  << '\n';
-    std::cout << "INT16_MAX:  " << INT16_MAX  << '\n';
-    std::cout << "INT32_MIN:  " << INT32_MIN  << '\n';
-    std::cout << "INT32_MAX:  " << INT32_MAX  << '\n';
-    std::cout << "UINT32_MAX: " << UINT32_MAX << '\n';
-    std::cout << "INT64_MAX:  " << INT64_MAX  << '\n';
-    std::cout << "UINT64_MAX: " << UINT64_MAX << '\n';
+    // The limit macros are not in namespace std (they are preprocessor macros).
+    std::println("INT8_MIN:   {}", INT8_MIN);
+    std::println("INT8_MAX:   {}", INT8_MAX);
+    std::println("UINT8_MAX:  {}", UINT8_MAX);
+    std::println("INT16_MIN:  {}", INT16_MIN);
+    std::println("INT16_MAX:  {}", INT16_MAX);
+    std::println("INT32_MIN:  {}", INT32_MIN);
+    std::println("INT32_MAX:  {}", INT32_MAX);
+    std::println("UINT32_MAX: {}", UINT32_MAX);
+    std::println("INT64_MAX:  {}", INT64_MAX);
+    std::println("UINT64_MAX: {}", UINT64_MAX);
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: std::numeric_limits<T>\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: std::numeric_limits<T> ===
+    banner("Example 9: std::numeric_limits<T>");
 
-    std::cout << "int32_t:\n";
-    std::println("  min:    {}", std::numeric_limits<int32_t>::min());
-    std::println("  max:    {}", std::numeric_limits<int32_t>::max());
-    std::println("  digits: {}", std::numeric_limits<int32_t>::digits);
+    std::println("int32_t:");
+    std::println("  min:    {}", std::numeric_limits<std::int32_t>::min());
+    std::println("  max:    {}", std::numeric_limits<std::int32_t>::max());
+    std::println("  digits: {}", std::numeric_limits<std::int32_t>::digits);
 
-    std::cout << "uint64_t:\n";
-    std::println("  min:    {}", std::numeric_limits<uint64_t>::min());
-    std::println("  max:    {}", std::numeric_limits<uint64_t>::max());
+    std::println("uint64_t:");
+    std::println("  min:    {}", std::numeric_limits<std::uint64_t>::min());
+    std::println("  max:    {}", std::numeric_limits<std::uint64_t>::max());
 
-    std::cout << "float:\n";
+    std::println("float:");
     std::println("  min:     {}", std::numeric_limits<float>::min());
     std::println("  max:     {}", std::numeric_limits<float>::max());
     std::println("  epsilon: {}", std::numeric_limits<float>::epsilon());
 
-    std::cout << "double:\n";
+    std::println("double:");
     std::println("  max:     {}", std::numeric_limits<double>::max());
     std::println("  epsilon: {}", std::numeric_limits<double>::epsilon());
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Practical — MCX Protocol Frame\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 10: Practical — Binary Packet Header ===
+    banner("Example 10: Practical — Binary Packet Header");
 
-    // Simulated MCX binary protocol frame
-    // Fixed-width integers essential for binary protocol work
-    struct McxFrameHeader {
-        uint8_t  version;       // 1 byte: protocol version
-        uint8_t  messageType;   // 1 byte: message type
-        uint16_t length;        // 2 bytes: total frame length
-        uint32_t callId;        // 4 bytes: unique call identifier
-        uint32_t userId;        // 4 bytes: user identifier
-        uint64_t timestamp;     // 8 bytes: Unix timestamp ms
-    } __attribute__((packed));  // no padding between fields
+    // Fixed-width integers are essential for binary file/network formats.
+    struct PacketHeader {
+        std::uint8_t  version;      // 1 byte: format version
+        std::uint8_t  type;         // 1 byte: packet type
+        std::uint16_t length;       // 2 bytes: total packet length
+        std::uint32_t sequence;     // 4 bytes: sequence number
+        std::uint32_t deviceId;     // 4 bytes: device identifier
+        std::uint64_t timestamp;    // 8 bytes: Unix timestamp ms
+    } __attribute__((packed));      // GCC/Clang: no padding between fields
 
-    std::cout << "McxFrameHeader size: " << sizeof(McxFrameHeader) << " bytes\n";
-    std::cout << "(version=1, type=1, length=2, callId=4, userId=4, ts=8 = 20 bytes)\n";
+    static_assert(sizeof(PacketHeader) == 20, "header must be exactly 20 bytes");
 
-    McxFrameHeader frame;
-    frame.version     = 0x01;
-    frame.messageType = 0x10;   // GROUP_CALL_REQUEST
-    frame.length      = sizeof(McxFrameHeader);
-    frame.callId      = 12345U;
-    frame.userId      = 7U;
-    frame.timestamp   = 1712917200000ULL;  // example ms timestamp
+    std::println("PacketHeader size: {} bytes", sizeof(PacketHeader));
 
-    uint8_t  ver  = frame.version;
-    uint8_t  mtype = frame.messageType;
-    uint16_t len  = frame.length;
-    uint32_t cid  = frame.callId;
-    uint32_t uid  = frame.userId;
-    uint64_t ts   = frame.timestamp;
+    PacketHeader packet;
+    packet.version   = 0x01;
+    packet.type      = 0x10;        // example packet type
+    packet.length    = sizeof(PacketHeader);
+    packet.sequence  = 12345U;
+    packet.deviceId  = 7U;
+    packet.timestamp = 1712917200000ULL;  // example ms timestamp
+
+    // Copy members of a packed struct into locals before passing them on:
+    // you must not bind a reference to a packed member.
+    std::uint8_t  ver   = packet.version;
+    std::uint8_t  ptype = packet.type;
+    std::uint16_t len   = packet.length;
+    std::uint32_t seq   = packet.sequence;
+    std::uint32_t dev   = packet.deviceId;
+    std::uint64_t ts    = packet.timestamp;
 
     std::println("version:     0x{:02X}", ver);
-    std::println("messageType: 0x{:02X}", mtype);
+    std::println("type:        0x{:02X}", ptype);
     std::println("length:      {} bytes", len);
-    std::println("callId:      {}", cid);
-    std::println("userId:      {}", uid);
+    std::println("sequence:    {}", seq);
+    std::println("deviceId:    {}", dev);
     std::println("timestamp:   {}", ts);
 
-    // Hardware register simulation
+    // Hardware register simulation (bit-fields)
     struct StatusRegister {
-        uint8_t connected  : 1;   // bit 0
-        uint8_t active     : 1;   // bit 1
-        uint8_t encrypted  : 1;   // bit 2
-        uint8_t emergency  : 1;   // bit 3
-        uint8_t reserved   : 4;   // bits 4-7
+        std::uint8_t enabled  : 1;   // bit 0
+        std::uint8_t ready    : 1;   // bit 1
+        std::uint8_t error    : 1;   // bit 2
+        std::uint8_t busy     : 1;   // bit 3
+        std::uint8_t reserved : 4;   // bits 4-7
     };
 
     StatusRegister reg = {};
-    reg.connected = 1;
-    reg.active    = 1;
-    reg.encrypted = 1;
-    std::println("\nStatusRegister size: {} byte", sizeof(reg));
-    std::println("connected: {}", (int)reg.connected);
-    std::println("active:    {}", (int)reg.active);
-    std::println("emergency: {}", (int)reg.emergency);
+    reg.enabled = 1;
+    reg.ready   = 1;
+    reg.error   = 1;
+    std::println("");
+    std::println("StatusRegister size: {} byte", sizeof(reg));
+    // println takes its arguments by reference and a bit-field cannot be bound
+    // to one, so convert to a normal int first.
+    std::println("enabled: {}", static_cast<int>(reg.enabled));
+    std::println("ready:   {}", static_cast<int>(reg.ready));
+    std::println("busy:    {}", static_cast<int>(reg.busy));
 
-    std::cout << "\n=== CstdintSTL complete ===\n";
+    std::println("");
+    std::println("=== CstdintSTL complete ===");
     return 0;
 }

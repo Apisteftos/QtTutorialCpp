@@ -17,6 +17,8 @@
 - [Best Practices](#best-practices)
 - [Real-World Examples](#real-world-examples)
 - [Key Takeaways](#key-takeaways)
+- [How to Run](#how-to-run)
+- [Notes moved from main.cpp](#notes-moved-from-maincpp)
 
 ---
 
@@ -47,8 +49,8 @@ It's a C++ programming idiom/principle where:
 | Design Pattern | RAII |
 |----------------|------|
 | ✓ From Gang of Four (GoF) | ✓ C++ Programming Idiom |
-| ✓ Optional architectural choice | ✓ Mandatory best practice |
-| ✓ Multiple solutions exist | ✓ The only correct way |
+| ✓ A design choice, used when the problem fits | ✓ The recommended default for owning resources in C++ |
+| ✓ Multiple solutions exist | ✓ Alternatives exist (manual cleanup), but they are error-prone |
 | ✓ Problem-specific | ✓ Fundamental principle |
 | ✓ Example: Singleton, Factory | ✓ Example: smart pointers, RAII wrappers |
 
@@ -62,14 +64,14 @@ Programming Concepts:
 ```
 
 ### What Makes RAII Different:
-- **Not optional** - It's the recommended way to manage resources in C++
-- **Language-level** - Built into C++ philosophy
-- **Foundation** - Other patterns are built on top of RAII
-- **Zero overhead** - No runtime cost (unlike garbage collection)
+- **Not a pattern you pick per problem** - It's the recommended default way to manage resources in C++
+- **Relies on a language guarantee** - The destructor of a fully constructed object runs when its scope ends, also while an exception unwinds the stack
+- **Foundation** - Smart pointers, containers, streams and lock guards are all built on it
+- **Zero overhead** - No runtime cost compared with writing the cleanup by hand (unlike garbage collection). "Zero overhead" does not mean free: `shared_ptr` still pays for reference counting, for example
 
 > 💡 **Think of it this way:**
 > - **Design Patterns** = Tools you choose from your toolbox
-> - **RAII** = The toolbox itself (everything is built on it!)
+> - **RAII** = A basic technique that many of those tools (smart pointers, lock guards) are built with
 
 ---
 
@@ -95,7 +97,7 @@ private:
 ### Three Simple Rules:
 1. **Constructor acquires** the resource
 2. **Destructor releases** the resource
-3. **Compiler guarantees** destructor is called
+3. **Compiler guarantees** the destructor is called for every fully constructed object (if a constructor throws, that object's destructor does *not* run, but its already-built members and bases are destroyed - tested)
 
 ---
 
@@ -109,7 +111,7 @@ void problematic() {
     // ... do work ...
     
     if (error) {
-        return;  // 💥 FORGOT TO CLOSE FILE! Memory leak!
+        return;  // 💥 FORGOT TO CLOSE FILE! Resource leak!
     }
     
     fclose(file);  // Never reached!
@@ -195,7 +197,7 @@ void demonstration() {
         // ptr3 already cleaned up
     }
     
-}  // 4. Program/function exits
+}  // 4. Function exits
 ```
 
 ---
@@ -218,7 +220,7 @@ Destructor called when:
   • Return statement
   • Exception thrown  
   • delete called (if heap-allocated)
-  • Program exits
+  • Program exits normally (global/static objects only - the locals of a function that calls std::exit() are NOT destroyed, tested)
 ```
 
 ### Visual Flow:
@@ -322,39 +324,20 @@ void threadSafeFunction() {
 }
 ```
 
-### Example 3: Smart Pointers (Standard RAII)
-```cpp
-void smartPointers() {
-    // unique_ptr: Exclusive ownership
-    {
-        auto ptr = make_unique<int>(42);
-        // Use ptr...
-    }  // Automatically deleted
-    
-    // shared_ptr: Shared ownership
-    {
-        auto shared = make_shared<string>("RAII");
-        auto another = shared;  // Reference count = 2
-    }  // Deleted when last reference goes away
-    
-    // No manual delete needed!
-}
-```
-
-### Example 4: Timer (RAII for Profiling)
+### Example 3: Timer (RAII for Profiling)
 ```cpp
 class Timer {
 private:
     string name;
-    chrono::time_point<chrono::high_resolution_clock> start;
+    chrono::steady_clock::time_point start;
     
 public:
-    Timer(const string& n) : name(n) {
-        start = chrono::high_resolution_clock::now();
+    explicit Timer(const string& n) : name(n) {
+        start = chrono::steady_clock::now();
     }
     
     ~Timer() {
-        auto end = chrono::high_resolution_clock::now();
+        auto end = chrono::steady_clock::now();
         auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
         cout << name << " took " << duration.count() << "ms\n";
     }
@@ -365,6 +348,70 @@ void measurePerformance() {
     Timer t("Operation");
     // Do expensive work...
 }  // Automatically prints elapsed time
+```
+> `steady_clock` is the right clock for measuring intervals (it never jumps backwards). The original used `high_resolution_clock`, which in libstdc++ is just another name for `system_clock` (tested with `static_assert`), and that clock can be adjusted while you measure.
+
+### Example 4: Database Connection
+```cpp
+class DatabaseConnection {
+    bool connected = false;
+    int pending = 0;                       // queries not yet committed
+public:
+    explicit DatabaseConnection(const string& connStr) {
+        // ... connect ...
+        connected = true;
+    }
+    ~DatabaseConnection() {
+        if (connected) {
+            if (pending > 0) { /* roll back */ }
+            // ... close ...
+        }
+    }
+    DatabaseConnection(const DatabaseConnection&) = delete;
+    DatabaseConnection& operator=(const DatabaseConnection&) = delete;
+
+    void execute(const string& query) { ++pending; }
+    void commit() { pending = 0; }
+};
+```
+If an exception is thrown between `execute` and `commit`, the destructor still runs and rolls back.
+
+### Example 5: Memory Pool (malloc/free)
+```cpp
+class MemoryPool {
+    void* memory;
+    size_t size;
+public:
+    explicit MemoryPool(size_t s) : memory(malloc(s)), size(s) {
+        if (!memory) throw bad_alloc();
+    }
+    ~MemoryPool() { free(memory); }
+    MemoryPool(const MemoryPool&) = delete;
+    MemoryPool& operator=(const MemoryPool&) = delete;
+};
+```
+A constructor that throws leaves no object behind, so the destructor does not run. That is fine here because nothing was acquired yet.
+
+### Example 6: Bad vs Good
+See [Why RAII?](#why-raii): `main.cpp` runs the manual `FILE*` version (leaks on early return) and the `FileHandle` version side by side.
+
+### Example 7: Standard Library (Smart Pointers, Containers, Streams, Locks)
+```cpp
+void standardRAII() {
+    {
+        auto ptr = make_unique<int>(42);        // unique_ptr: exclusive ownership
+        auto shared = make_shared<string>("RAII");
+        auto another = shared;                  // Reference count = 2
+    }  // Deleted when the last reference goes away
+
+    {
+        vector<int> numbers = {1, 2, 3};        // containers free their memory
+        ofstream out("log.txt");                // stream closes the file
+        mutex mtx;
+        lock_guard<mutex> lock(mtx);            // lock released at scope end
+    }
+    // No manual delete / close / unlock anywhere!
+}
 ```
 
 ---
@@ -443,7 +490,7 @@ public:
     
     RAIIWrapper& operator=(RAIIWrapper&& other) noexcept {
         if (this != &other) {
-            releaseResource(resource);
+            if (resource) releaseResource(resource);
             resource = other.resource;
             other.resource = nullptr;
         }
@@ -458,7 +505,7 @@ public:
 ### Checklist for RAII Classes:
 - ☑️ Constructor acquires resource
 - ☑️ Destructor releases resource
-- ☑️ Destructor is `noexcept` (implicit in C++11+)
+- ☑️ Destructor is `noexcept` (implicit in C++11+, even for a user-written destructor, unless a member or base class has a `noexcept(false)` destructor - tested)
 - ☑️ Copy operations deleted or properly implemented
 - ☑️ Move operations if needed
 - ☑️ Exception-safe acquisition
@@ -536,9 +583,17 @@ void cppWay() {
 - ✅ Zero runtime overhead
 - ✅ No manual cleanup needed
 
-### Java (Garbage Collection + try-finally):
+### Java (Garbage Collection + try-with-resources):
 ```java
-void javaWay() {
+void javaWay() throws IOException {
+    try (FileInputStream file = new FileInputStream("data.txt")) {
+        // Use file...
+    }  // file.close() called automatically (AutoCloseable)
+}
+```
+The older style (before Java 7) needed `try`/`finally`:
+```java
+void oldJavaWay() throws IOException {
     FileInputStream file = new FileInputStream("data.txt");
     try {
         // Use file...
@@ -547,15 +602,15 @@ void javaWay() {
     }
 }
 ```
-- ⚠️ Need try-finally blocks
+- ✅ try-with-resources is similar to RAII, but the programmer has to remember to write it
 - ⚠️ Non-deterministic GC for memory
 - ⚠️ Runtime overhead (GC)
-- ❌ Easy to forget finally block
+- ❌ Nothing forces you to use try-with-resources (a plain `new FileInputStream(...)` compiles fine)
 
 ### C# (using statement):
 ```csharp
 void csharpWay() {
-    using (var file = File.Open("data.txt")) {
+    using (var file = File.OpenRead("data.txt")) {
         // Use file...
     }  // Disposed automatically
 }
@@ -575,14 +630,14 @@ void cWay() {
 ```
 - ❌ Completely manual
 - ❌ Easy to forget cleanup
-- ❌ Not exception-safe
+- ❌ No automatic cleanup on early return (C has no destructors)
 - ❌ Error-prone
 
 ### Python (with statement):
 ```python
 def pythonWay():
     with open("data.txt", "r") as file:
-        # Use file...
+        data = file.read()
     # File closed automatically
 ```
 - ✅ with statement similar to RAII
@@ -603,20 +658,24 @@ def pythonWay():
 ### ❌ Mistake 1: Not Making Destructor Virtual in Base Class
 ```cpp
 class Base {
+public:
     ~Base() { }  // ❌ Not virtual!
 };
 
 class Derived : public Base {
+public:
     ~Derived() { cleanup(); }
 };
 
 Base* ptr = new Derived();
-delete ptr;  // 💥 Only Base destructor called! Leak!
+delete ptr;  // 💥 Undefined behavior! In practice only ~Base() runs, so Derived's resources leak
 ```
+> Tested: AddressSanitizer reports `new-delete-type-mismatch` for this. Note that with `class` and no `public:` the destructors are private, and the code does not even compile (`'Base::~Base()' is private within this context`).
 
 **Fix:**
 ```cpp
 class Base {
+public:
     virtual ~Base() { }  // ✅ Virtual destructor
 };
 ```
@@ -633,7 +692,7 @@ public:
 
 RAIIFile f1("data.txt");
 RAIIFile f2 = f1;  // 💥 Both point to same file!
-// 💥 Double-close when destructors run!
+// 💥 Double-close when destructors run! (tested with glibc: the program aborts with `free(): double free detected`)
 ```
 
 **Fix:**
@@ -653,15 +712,18 @@ public:
 ### ❌ Mistake 3: Throwing Exceptions in Destructor
 ```cpp
 class Bad {
+public:
     ~Bad() {
-        throw runtime_error("Error!");  // 💥 Undefined behavior!
+        throw runtime_error("Error!");  // 💥 std::terminate() is called!
     }
 };
 ```
+> Since C++11 destructors are `noexcept` by default, so a `throw` that leaves the destructor calls `std::terminate()` (tested: the program aborts, `catch` is never reached; GCC even warns `'throw' will always call 'terminate'`). It is not "undefined behavior" - the behavior is well defined, and it is fatal.
 
 **Fix:**
 ```cpp
 class Good {
+public:
     ~Good() noexcept {  // ✅ noexcept (implicit in C++11+)
         try {
             // Cleanup code
@@ -806,13 +868,14 @@ class Modern {
 ### 10. Compose RAII Objects
 ```cpp
 class CompositeRAII {
-    unique_ptr<Connection> connection;  // RAII
-    vector<unique_ptr<Buffer>> buffers; // RAII
-    lock_guard<mutex> lock;             // RAII
+    unique_ptr<Connection> connection;   // RAII
+    vector<unique_ptr<Buffer>> buffers;  // RAII
+    ofstream log;                        // RAII
     
-    // All automatically cleaned up in correct order!
+    // All automatically cleaned up in reverse order of declaration!
 };
 ```
+> Don't make a `lock_guard` a data member: it would hold the lock for the whole life of the object, and it has no default constructor, so `CompositeRAII c;` fails with `no matching function for call to 'std::lock_guard<std::mutex>::lock_guard()'` (tested).
 
 ---
 
@@ -821,43 +884,40 @@ class CompositeRAII {
 ### Game Engine:
 ```cpp
 class TextureManager {
-    unique_ptr<Texture> mainTexture;
-    vector<unique_ptr<Sprite>> sprites;
-    
+public:
     TextureManager() {
         // Load textures
     }
     
-    ~TextureManager() {
-        // Textures automatically unloaded
-    }
+    ~TextureManager() = default;   // Textures automatically unloaded
+    
+private:
+    unique_ptr<Texture> mainTexture;
+    vector<unique_ptr<Sprite>> sprites;
 };
 ```
 
 ### Web Server:
 ```cpp
 class ConnectionHandler {
+public:
+    explicit ConnectionHandler(unique_ptr<Socket> s)
+        : socket(move(s)) {
+        // Connection established
+    }
+    // No destructor needed: unique_ptr closes the socket (Rule of Zero)
+    
+private:
     unique_ptr<Socket> socket;
-    lock_guard<mutex> connectionLock;
-    
-    ConnectionHandler(Socket* s) 
-        : socket(s), connectionLock(globalMutex) {
-        // Connection established and locked
-    }
-    
-    ~ConnectionHandler() {
-        // Socket closed, lock released automatically
-    }
 };
 ```
+> Take ownership with a `unique_ptr` parameter, not a raw `Socket*`. And don't keep a `lock_guard` member that holds a global mutex for the whole life of the connection - take locks in short scopes.
 
 ### Database Application:
 ```cpp
 class Transaction {
-    DatabaseConnection& conn;
-    bool committed;
-    
-    Transaction(DatabaseConnection& c) : conn(c), committed(false) {
+public:
+    explicit Transaction(DatabaseConnection& c) : conn(c) {
         conn.beginTransaction();
     }
     
@@ -867,10 +927,17 @@ class Transaction {
         }
     }
     
+    Transaction(const Transaction&) = delete;
+    Transaction& operator=(const Transaction&) = delete;
+    
     void commit() {
         conn.commit();
         committed = true;
     }
+    
+private:
+    DatabaseConnection& conn;
+    bool committed = false;
 };
 ```
 
@@ -895,13 +962,13 @@ void processFile(const string& filename) {
 1. **RAII = Constructor acquires, Destructor releases**
 2. **Automatic, deterministic cleanup**
 3. **Exception-safe by design**
-4. **Zero runtime overhead**
+4. **No extra runtime cost** compared with hand-written cleanup
 
 ### 📊 Classification:
 - ❌ **NOT** a Gang of Four Design Pattern
 - ✅ **IS** a C++ Programming Idiom/Principle
 - ✅ **IS** the foundation for modern C++
-- ✅ **IS** mandatory for professional C++ code
+- ✅ **IS** the standard way to manage resources in professional C++ code
 
 ### 💪 Benefits:
 - No memory leaks
@@ -909,7 +976,7 @@ void processFile(const string& filename) {
 - Exception-safe
 - Less error-prone
 - More maintainable
-- Zero overhead
+- No garbage-collector overhead
 
 ### 🚀 In Practice:
 ```cpp
@@ -923,15 +990,18 @@ lock_guard<mutex>    // Not: manual lock/unlock
 
 ### 🎓 The RAII Philosophy:
 > **"If you can't make it easy, make it impossible to get wrong."**
+*(I could not find where this quote comes from. The closest well-known principle is Scott Meyers' "Make interfaces easy to use correctly and hard to use incorrectly" from Effective C++ - quoted from memory, not checked.)*
 
-RAII makes it impossible to:
+RAII makes it much harder to:
 - Forget to release resources
 - Leak memory
 - Leave files open
-- Cause deadlocks on exceptions
+- Leave a mutex locked when an exception is thrown
+
+It does not make it impossible: `shared_ptr` cycles still leak, and `release()` or raw `new` bypass the protection.
 
 ### 🏆 Why RAII Makes C++ Special:
-**This is why C++ doesn't need garbage collection!**
+**This is a big part of why C++ gets by without garbage collection!**
 - Deterministic cleanup (not whenever GC runs)
 - Zero overhead (no GC pauses)
 - Works for all resources (not just memory)
@@ -951,7 +1021,7 @@ RAII makes it impossible to:
 - ❌ A Gang of Four design pattern
 - ❌ Optional (it's the recommended way)
 - ❌ Complex (it's actually simple!)
-- ❌ Costly (zero overhead)
+- ❌ Costly (no garbage collector, no extra runtime machinery)
 
 ### When to Use RAII:
 - ✅ **Always!** For any resource management
@@ -968,6 +1038,61 @@ RAII makes it impossible to:
 
 ---
 
+## How to Run
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o raii && ./raii
+```
+`main.cpp` uses `std::println` from `<print>` (C++23). It needs a recent compiler (GCC 14+ or a current Clang with a C++23 standard library - versions from memory, not checked). The program creates `example.txt`, `manual.txt`, `raii.txt` and `stream_example.txt` in the current directory.
+
+---
+
+## Notes moved from main.cpp
+
+The big "summary" printout at the end of `main()` was removed. Most of it is already in this README (Core Principle, Lifecycle, Why RAII, Benefits, Types of Resources, Standard Library RAII Types, Creating RAII Classes, Common Mistakes, Best Practices, Key Takeaways). What was only in `main.cpp`:
+
+### What each example in main.cpp shows
+- **Example 1 (FileHandle)** - the destructor prints `📁 Closing file: example.txt` after each block; opening fails with an exception instead of returning a bad handle.
+- **Example 2 (MutexGuard)** - prints acquire/release around each critical section; the counter goes 1, then 6.
+- **Example 3 (Timer)** - the destructor reports elapsed milliseconds; nested timers are destroyed inner first, then outer.
+- **Example 4 (DatabaseConnection)** - after the thrown `Network error!` the destructor prints `Rolling back 2 uncommitted transactions` and closes the connection.
+- **Example 5 (MemoryPool)** - two pools; they are freed in reverse order of creation (Pool2, then Pool1).
+- **Example 6 (Bad vs Good)** - the manual version prints `FILE LEAKED!` and never closes the file; the `FileHandle` version prints `Closing file: raii.txt` even though it returns early.
+- **Example 7 (Standard library)** - `unique_ptr`/`shared_ptr`, `vector`/`string`, `ofstream` and `lock_guard`.
+
+### Memory management evolution
+```cpp
+// C-style (manual)
+int* p = (int*)malloc(sizeof(int));
+*p = 42;
+free(p);  // Must remember!
+
+// C++ old (new/delete)
+int* p = new int(42);
+delete p;  // Must remember!
+
+// C++ modern (RAII)
+auto p = make_unique<int>(42);
+// Automatic cleanup!
+```
+
+### More real-world areas
+- **Desktop application:** window handles, file operations, Windows registry keys.
+- **Embedded systems:** hardware peripheral access, interrupt handling, memory-mapped I/O.
+
+### Things found while testing (GCC 13, sanitizers on)
+- The original timer loops (`int sum`, up to 1,000,000 iterations) overflowed `int`, which is undefined behavior (UBSan: `signed integer overflow`); the printed results 704982704 and 1783293664 were wrapped values. `main.cpp` now uses `long long`, so the results are 4999950000 and 499999500000.
+- `FileHandle` listed its members in a different order than its initializer list (`-Wreorder`); fixed.
+- `badExample()` really leaks its `FILE*`, but AddressSanitizer/LeakSanitizer does not report it (glibc still holds the stream in its list of open files). The leak is real even though the tool is silent.
+- `std::exit()` does not run the destructors of local variables, only those of static/global objects (tested).
+
+### Open points
+- This folder has no number and no Previous/Next links.
+- The Java (try-with-resources) and C# (`File.OpenRead`) snippets are from memory; no Java or C# compiler was available to check them.
+- The links in "Further Reading" were not opened. The cppreference URL comes from a search result; the Core Guidelines anchors (`#rr-raii`, `#re-raii`) come from the guidelines text.
+
+---
+
 ## Further Reading
 
 ### C++ Standard:
@@ -976,18 +1101,20 @@ RAII makes it impossible to:
 
 ### Books:
 - "Effective C++" by Scott Meyers
-- "C++ Core Guidelines" by Bjarne Stroustrup
+- "C++ Core Guidelines" edited by Bjarne Stroustrup and Herb Sutter
 - "The C++ Programming Language" by Bjarne Stroustrup
 
 ### Online Resources:
-- [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/)
-- [cppreference.com - RAII](https://en.cppreference.com/w/cpp/language/raii)
+- [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
+  - [R.1: Manage resources automatically using resource handles and RAII](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#rr-raii)
+  - [E.6: Use RAII to prevent leaks](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#re-raii)
+- [cppreference.com - RAII](https://en.cppreference.com/cpp/language/raii)
 
 ---
 
 ## Conclusion
 
-RAII is not just a technique - it's the **fundamental philosophy** of C++ resource management. It's what makes C++ unique among programming languages and enables zero-overhead abstraction with perfect safety.
+RAII is not just a technique - it's the **fundamental philosophy** of C++ resource management. It's what makes C++ unique among programming languages and enables low-overhead abstraction with strong safety guarantees.
 
 **Master RAII, and you master modern C++!** 🚀
 

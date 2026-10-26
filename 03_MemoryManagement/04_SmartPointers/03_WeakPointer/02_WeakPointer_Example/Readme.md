@@ -15,6 +15,7 @@
 - [Performance Analysis](#performance-analysis)
 - [Decision Tree](#decision-tree)
 - [Real-World Examples](#real-world-examples)
+- [Compilation and notes on main.cpp](#compilation)
 
 ---
 
@@ -222,7 +223,7 @@ std::shared_ptr<int> shared = std::make_shared<int>(42);
 std::weak_ptr<int> weak = shared;
 
 // Note: ref_count NOT increased!
-std::cout << shared.use_count();  // 1 (not 2!)
+std::println("{}", shared.use_count());  // 1 (not 2!)
 ```
 
 ### Accessing: lock()
@@ -233,7 +234,7 @@ std::weak_ptr<int> weak = shared;
 // ✅ CORRECT: Use lock()
 if (auto locked = weak.lock()) {
     // locked is a shared_ptr
-    std::cout << *locked;  // Safe access
+    std::println("{}", *locked);  // Safe access
     // ref_count temporarily increased
 } else {
     // Object was destroyed
@@ -250,9 +251,9 @@ std::weak_ptr<int> weak = shared;
 
 // Check if object still exists
 if (weak.expired()) {
-    std::cout << "Object destroyed\n";
+    std::println("Object destroyed");
 } else {
-    std::cout << "Object still exists\n";
+    std::println("Object still exists");
 }
 
 // Equivalent to:
@@ -265,10 +266,10 @@ if (weak.use_count() == 0) { /* expired */ }
 std::weak_ptr<int> weak = shared;
 
 // Get strong reference count
-std::cout << weak.use_count();  // Number of shared_ptrs
+std::println("{}", weak.use_count());  // Number of shared_ptrs
 
 // Same as:
-std::cout << shared.use_count();
+std::println("{}", shared.use_count());
 ```
 
 ### Resetting
@@ -387,9 +388,9 @@ public:
     
     void showParent() const {
         if (auto p = parent.lock()) {
-            std::cout << "Parent: " << p->value << "\n";
+            std::println("Parent: {}", p->value);
         } else {
-            std::cout << "No parent (root)\n";
+            std::println("No parent (root)");
         }
     }
 };
@@ -470,9 +471,8 @@ class Observer {
     std::weak_ptr<Subject> subject;
     
 public:
-    Observer(std::shared_ptr<Subject> s) : subject(s) {
-        s->attach(shared_from_this());
-    }
+    Observer(std::shared_ptr<Subject> s) : subject(s) {}
+    // NOT: s->attach(shared_from_this());  — see the warning below
     
     void update() {
         if (auto s = subject.lock()) {
@@ -481,6 +481,12 @@ public:
     }
 };
 ```
+
+> ⚠️ **Never call `shared_from_this()` inside a constructor.** While the constructor runs, no `shared_ptr`
+> owns the object yet, so `shared_from_this()` throws `std::bad_weak_ptr` (C++17 and later; undefined behavior before).
+> ✅ tested: the original `main.cpp` did exactly this in `Observer`, Example 5 stopped with `bad_weak_ptr`
+> (caught by the `try/catch` in `main`), and Examples 6–12 never ran.
+> Attach **after** `make_shared` (as below), or use a static factory function.
 
 ### Benefits
 
@@ -496,7 +502,9 @@ auto subject = std::make_shared<Subject>();
 
 {
     auto obs1 = std::make_shared<Observer>(subject);
+    subject->attach(obs1);   // attach AFTER the shared_ptr exists
     auto obs2 = std::make_shared<Observer>(subject);
+    subject->attach(obs2);
     
     subject->notify();  // Both observers notified
     
@@ -646,11 +654,15 @@ weak1.reset();
 // 💥 CONTROL BLOCK DESTROYED!
 ```
 
+> The `weak_count` values in this section show the usual implementation (the `shared_ptr`s together hold one
+> weak reference). The standard API does **not** expose them — only `use_count()` and `expired()` are observable.
+> *(From knowledge of the common implementations, not tested here.)*
+
 ### Key Insights
 
 1. **Object destruction:** When `strong_count` reaches 0
 2. **Control block destruction:** When `weak_count` reaches 0
-3. **weak_count base:** Always starts at 1 (for the control block itself)
+3. **weak_count base:** In common implementations it starts at 1 (held on behalf of all `shared_ptr`s)
 4. **Atomic operations:** All counts are thread-safe (atomic increments/decrements)
 
 ### Why Control Block Survives
@@ -689,9 +701,9 @@ if (auto locked = weak.lock()) {
 ### Mistake 2: Not Checking lock() Result
 
 ```cpp
-// ❌ WRONG: May crash
+// ❌ WRONG: undefined behavior if lock() returned nullptr (typically a crash)
 auto locked = weak.lock();
-locked->method();  // Crash if nullptr!
+locked->method();
 
 // ✅ CORRECT: Always check
 if (auto locked = weak.lock()) {
@@ -860,6 +872,7 @@ class MyClass : public std::enable_shared_from_this<MyClass> {
 public:
     void registerCallback() {
         // Safe way to get weak_ptr to this
+        // (only once a shared_ptr owns the object — never from the constructor!)
         callback.setTarget(shared_from_this());
     }
 };
@@ -888,7 +901,7 @@ if (auto locked = weak.lock()) {
 sizeof(int*)                 = 8 bytes
 sizeof(std::unique_ptr<int>) = 8 bytes
 sizeof(std::shared_ptr<int>) = 16 bytes
-sizeof(std::weak_ptr<int>)   = 16 bytes  ← Same as shared_ptr
+sizeof(std::weak_ptr<int>)   = 16 bytes  ← Same as shared_ptr (✅ tested: 16 and 16)
 ```
 
 **Both shared_ptr and weak_ptr store:**
@@ -897,14 +910,15 @@ sizeof(std::weak_ptr<int>)   = 16 bytes  ← Same as shared_ptr
 
 ### Operation Costs
 
-| Operation | Cost | Notes |
-|-----------|------|-------|
-| Creation | ~10ns | Atomic increment of weak_count |
-| Copy | ~10ns | Atomic increment of weak_count |
-| Move | ~1ns | Just copies pointers |
-| lock() | ~20ns | Atomic check + increment if valid |
-| expired() | ~5ns | Read strong_count |
-| Destruction | ~10ns | Atomic decrement, may delete control block |
+No timing numbers are given here: the old table (`~10ns`, `~20ns`, ...) was not measured, so it was removed.
+What can be said without measuring:
+
+- **Creating / copying / destroying a `weak_ptr`** updates the weak count (an atomic operation in multithreaded programs).
+- **`lock()`** checks the strong count and increments it if the object is alive (atomic) — it costs more than `expired()`.
+- **`expired()`** only reads the strong count.
+- **Moving** just transfers the two pointers.
+
+To measure on your machine, benchmark with `-O2` and look at the generated assembly.
 
 ### Control Block Lifetime
 
@@ -915,7 +929,7 @@ std::weak_ptr<int> weak = shared;
 shared.reset();  // Object destroyed
 
 // ⚠️ Control block still exists!
-// Memory: sizeof(control block) ~= 32 bytes
+// Memory: the control block (counts + bookkeeping) is still allocated
 
 weak.reset();  // Control block destroyed
 ```
@@ -930,7 +944,6 @@ weak.reset();  // Control block destroyed
 | Raw pointer | ❌ | ✅ Fast | ✅ Small |
 | shared_ptr | ⚠️ (cycles) | ⚠️ Moderate | ⚠️ Larger |
 | weak_ptr | ✅ Safe | ⚠️ Moderate | ⚠️ Larger |
-| Observer pattern | ✅ Safe | ✅ Fast | ✅ Small |
 
 ### When weak_ptr Overhead is Worth It
 
@@ -1247,12 +1260,36 @@ if (auto locked = weak.lock()) {
 ## Compilation
 
 ```bash
-# Compile with C++17 or later
-g++ -std=c++17 -Wall -Wextra weak_ptr.cpp -o weak_ptr
-
-# Run
+g++ -std=c++23 -Wall -Wextra main.cpp -o weak_ptr
 ./weak_ptr
 ```
+`main.cpp` uses `std::println` (`<print>`), so it needs GCC 14+ or a recent Clang with `-std=c++23`.
+(`weak_ptr` itself is C++11; `make_shared` etc. work with C++17.)
+
+### 🧾 Notes moved from main.cpp
+
+The title/description comment at the top of `main.cpp` stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `#include <print>` added, `<iostream>` and the unused `<fstream>` removed.
+- **Printed lecture text removed from the program** (it is covered by the sections above):
+  - Examples 9 (common mistakes), 10 (best practices) and 12 (real-world scenarios) and the final "KEY TAKEAWAYS" block only printed text → *Common Mistakes*, *Best Practices*, *Real-World Examples*, *Summary*.
+  - Example 11 (performance) now only prints the two `sizeof` values and is Example **9** in the code; the printed notes about creation/lock/expired/destruction cost → *Performance Analysis*.
+  - Small lecture lines inside Examples 1–8 (bullet lists, printed code, the ASCII tree, "✅ …" closing lines) → *The Solution*, *Basic Operations*, *Parent-Child Relationships*, *Observer Pattern*, *Caching with weak_ptr*, *Reference Counting Internals*.
+  - The hard-coded `weak_count: …` lines of Example 8 were removed: the standard API cannot report a weak count, so they were not computed values.
+- The comment block at the end of `main.cpp` (COMPILATION / TOPICS COVERED / KEY CONCEPTS) → this section and the table of contents.
+
+### Bugs found while testing
+
+1. **Example 5 never worked.** `Observer`'s constructor called `shared_from_this()`, which throws `std::bad_weak_ptr` because the object is not yet owned by a `shared_ptr`. The `try/catch` in `main` swallowed it, so the program printed `💥 Exception: bad_weak_ptr` and **Examples 6–12 never ran**. Fixed: `Observer` no longer inherits `enable_shared_from_this`, and `attach()` is called after `make_shared` (see the warning in *Observer Pattern*).
+2. **Example 6 never showed "Cache EXPIRED".** `showCacheStatus()` erased expired entries, so the third access printed "Cache MISS" instead of the `EXPIRED` branch. `showCacheStatus()` now only reports; `get()` removes the expired entry.
+3. **Wrong comment in Example 4:** it listed grandchild destroyed first. ✅ Tested order: Root, Child1, Grandchild, Child2 (locals drop to a count of 1, then `Root` is destroyed and takes its children with it). The comment now says so.
+4. **Duplicate class:** the unused `TreeNode` (with the comment "TreeNode needs to inherit from enable_shared_from_this", although it already did) was removed and `TreeNodeV2` was renamed `TreeNode`. Output is unchanged.
+
+### Tested
+
+✅ `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer: no warnings, no errors. LeakSanitizer reports only the two `BadNode` objects of Example 1, which leak on purpose.
+✅ Output of Examples 1–4 is identical to the original apart from the removed lecture lines.
+✅ `sizeof(weak_ptr<int>)` and `sizeof(shared_ptr<int>)` are both 16 bytes.
 
 ---
 

@@ -1,5 +1,7 @@
-#include <iostream>
 #include <mutex>
+#include <print>
+#include <sstream>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -17,11 +19,18 @@ private:
     static std::mutex mtx;
 
     Singleton() {
-        std::cout << "Singleton instance created\n";
+        std::println("Singleton instance created");
     }
 
     Singleton(const Singleton&) = delete;
     Singleton& operator=(const Singleton&) = delete;
+
+    // std::thread::id has no std::formatter on GCC 13, so go through a stream
+    static std::string threadIdString() {
+        std::ostringstream oss;
+        oss << std::this_thread::get_id();
+        return oss.str();
+    }
 
 public:
     static Singleton* getInstance() {
@@ -33,12 +42,11 @@ public:
     }
 
     void doSomething() {
-        std::cout << "Singleton is doing something, thread: "
-                  << std::this_thread::get_id() << "\n";
+        std::println("Singleton is doing something, thread: {}", threadIdString());
     }
 
     ~Singleton() {
-        std::cout << "Singleton instance destroyed\n";
+        std::println("Singleton instance destroyed");
     }
 };
 
@@ -46,6 +54,7 @@ Singleton* Singleton::instance = nullptr;
 std::mutex Singleton::mtx;
 
 int main() {
+    // === EXAMPLE 1: Thread-safe Singleton with a mutex ===
     std::vector<std::thread> threads;
     for (int i = 0; i < 3; i++) {
         threads.emplace_back([]() {
@@ -61,7 +70,7 @@ int main() {
     // Verify same instance
     Singleton* s1 = Singleton::getInstance();
     Singleton* s2 = Singleton::getInstance();
-    std::cout << "Same instance? " << (s1 == s2 ? "Yes" : "No") << "\n";
+    std::println("Same instance? {}", s1 == s2 ? "Yes" : "No");
 
     return 0;
 }

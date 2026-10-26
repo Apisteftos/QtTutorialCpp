@@ -14,14 +14,20 @@ When the owner goes out of scope, the object is **automatically deleted**.
 std::unique_ptr<Weapon> p = std::make_unique<Weapon>("Sword", 50);
 ```
 
-Always prefer `std::make_unique<T>()` over `new`:
+Prefer `std::make_unique<T>()` over `new`:
 ```cpp
-// Preferred — exception safe, single allocation
+// Preferred — no naked new, type written once
 auto p = std::make_unique<Weapon>("Sword", 50);
 
-// Avoid — two separate expressions, exception between them leaks
+// Avoid — naked new, type written twice
 std::unique_ptr<Weapon> p(new Weapon("Sword", 50));
 ```
+
+Both versions allocate exactly once (a `unique_ptr` has no control block, unlike `shared_ptr`).
+The old exception-safety argument (a `new` leaking while other function arguments are evaluated)
+only applies before C++17; since C++17 `f(std::unique_ptr<W>(new W), g())` cannot leak.
+`make_unique` is still the better style: no `new` in your code, and it is the only way to create `unique_ptr<T[]>` with a size.
+*(Not tested here — this is the C++17 evaluation-order rule, P0145.)*
 
 ---
 
@@ -100,7 +106,7 @@ use(*spear);            // dereference to get reference
 auto scores = std::make_unique<int[]>(5);   // allocates int[5]
 scores[0] = 100;
 scores[1] = 200;
-// deleted[] automatically — no need to call delete[]
+// delete[] is called automatically — no need to call it yourself
 ```
 
 Prefer `std::vector<int>` over `unique_ptr<int[]>` in most cases —
@@ -158,10 +164,12 @@ for (const auto& w : arsenal)
 // all weapons destroyed when vector goes out of scope
 ```
 
-Use `emplace_back` instead of `push_back` to construct in place:
+`push_back` with a temporary `unique_ptr` is enough — it is moved into the vector, never copied:
 ```cpp
-arsenal.emplace_back(std::make_unique<Weapon>("Katana", 65));
+arsenal.push_back(std::make_unique<Weapon>("Katana", 65));
 ```
+(`emplace_back(std::make_unique<...>(...))` gives no benefit here: the `Weapon` is already
+constructed by `make_unique`, so nothing is constructed "in place" in the vector.)
 
 ---
 
@@ -176,8 +184,9 @@ arsenal.emplace_back(std::make_unique<Weapon>("Katana", 65));
 | Null check | Manual | `if (p)` |
 | Array support | `delete[]` manual | `unique_ptr<T[]>` |
 
-`unique_ptr` has **zero runtime overhead** compared to a raw pointer —
-the compiler optimizes it away completely.
+With the default deleter, `unique_ptr` has **zero runtime overhead** compared to a raw pointer:
+✅ tested — `sizeof(std::unique_ptr<W>)` is 8 bytes, the same as `W*`.
+A custom deleter that holds state makes it bigger (16 bytes with a capturing lambda or a function pointer ✅ tested).
 
 ---
 
@@ -186,9 +195,30 @@ the compiler optimizes it away completely.
 ✅ Single owner of a heap object
 ✅ Factory functions returning objects
 ✅ RAII resource management (files, sockets, handles)
-✅ Polymorphism — `unique_ptr<Base>` storing derived objects
+✅ Polymorphism — `unique_ptr<Base>` storing derived objects (`Base` needs a virtual destructor)
 ✅ Class members that own heap objects
 
 ❌ Shared ownership → use `shared_ptr`
 ❌ Non-owning observation → use raw pointer or reference
 ❌ Stack-allocated objects → no pointer needed
+
+---
+
+## 🚀 How to run
+
+```bash
+g++ -std=c++23 -Wall -Wextra main.cpp -o unique_ptr
+./unique_ptr
+```
+`main.cpp` uses `std::println` (`<print>`), so it needs GCC 14+ or a recent Clang with `-std=c++23`.
+
+---
+
+## 🧾 Notes moved from main.cpp
+
+No lecture text to move — the title and description comment at the top of `main.cpp` stays. Changes:
+
+- `std::cout` → `std::println` / `std::print`; the printed example headers and all output text are unchanged.
+- The box-style code comments are now `// === EXAMPLE n: ... ===` title comments, numbered 1–8 like this Readme.
+- `#include <iostream>` replaced by `<print>`.
+- ✅ tested with `-Wall -Wextra`, AddressSanitizer and UndefinedBehaviorSanitizer (also leak check): no warnings, no leaks; the output is identical to the original `cout` version (80 lines).

@@ -14,7 +14,7 @@ This is **ESSENTIAL** for advanced template programming and STL mastery.
 
 - What template specialization is and why it exists
 - Full (explicit) specialization
-- Partial specialization (class templates only)
+- Partial specialization (class and variable templates, not functions)
 - Specialization priority rules
 - Function vs class specialization
 - Pointer and array specializations
@@ -122,7 +122,7 @@ bool isEqual(T a, T b) {
 template<>
 bool isEqual<double>(double a, double b) {
     const double epsilon = 0.0001;
-    return abs(a - b) < epsilon;  // Epsilon comparison
+    return std::abs(a - b) < epsilon;  // Epsilon comparison
 }
 
 // Usage
@@ -147,14 +147,18 @@ class Container<const char*> {
     char* data;  // Different data structure!
 public:
     Container(const char* d) {
-        data = new char[strlen(d) + 1];
-        strcpy(data, d);
+        data = new char[std::strlen(d) + 1];
+        std::strcpy(data, d);
     }
     ~Container() { delete[] data; }
+
+    // Owns raw memory: copying would double-delete, so disable it
+    Container(const Container&) = delete;
+    Container& operator=(const Container&) = delete;
 };
 ```
 
-### Partial Specialization (Class Only!)
+### Partial Specialization (Classes, Not Functions)
 
 ```cpp
 // Primary template
@@ -179,7 +183,7 @@ Container<int*> c2;      // Partial (T*)
 Container<const int*> c3; // Partial (const T*)
 ```
 
-**Note:** Functions do NOT support partial specialization!
+**Note:** Functions do NOT support partial specialization! Use overloading instead (see *Common Mistakes*).
 
 ---
 
@@ -215,9 +219,10 @@ public:
 - Complete class/function redefinition
 - Can be completely different
 
-### 2. Partial Specialization (Classes Only)
+### 2. Partial Specialization (Classes and Variables)
 
-Specialize for patterns, not specific types:
+Specialize for patterns, not specific types. This works for class templates and
+variable templates, but **not** for function templates and not for alias templates:
 
 ```cpp
 // Primary
@@ -251,32 +256,39 @@ Pair<int, double*> p3; // Partial (pointer)
 
 ### 3. Specialization Priority
 
-When multiple specializations match, compiler picks most specific:
+When several specializations match, the compiler picks the **most specialized** one:
 
 ```cpp
 template<typename T1, typename T2>
 class Pair { };                    // 1. Primary (least specific)
 
 template<typename T>
-class Pair<T, T> { };              // 2. Partial
+class Pair<T, T> { };              // 2. Partial: both types the same
 
-template<typename T>
-class Pair<int, T> { };            // 3. Partial (more specific)
+template<typename T2>
+class Pair<int, T2> { };           // 3. Partial: first type is int
 
 template<>
-class Pair<int, int> { };          // 4. Full (most specific)
+class Pair<int, int> { };          // 4. Full (exact match)
 
 // Selection
-Pair<double, string> p1;  → Primary
-Pair<double, double> p2;  → Partial (T, T)
-Pair<int, double> p3;     → Partial (int, T)
-Pair<int, int> p4;        → Full (most specific!)
+Pair<double, std::string> p1;  // Primary
+Pair<double, double> p2;       // Partial <T, T>
+Pair<int, double> p3;          // Partial <int, T2>
+Pair<int, int> p4;             // Full (exact match)
 ```
 
 **Priority Order:**
-1. Full specialization (most specific)
-2. Partial specialization
-3. Primary template (least specific)
+1. Full specialization (exact match)
+2. The most specialized matching partial specialization
+3. Primary template
+
+**Ambiguity:** `<T, T>` and `<int, T2>` are *not* ordered against each other.
+`Pair<int, int>` matches both, so without the full specialization
+`Pair<int, int>` the compiler reports
+`ambiguous template instantiation for 'struct Pair<int, int>'`.
+The same happens for `Pair<int, int*>` with `<int, T2>` and `<T1, T2*>`.
+Resolve it with a more specific specialization, as the full one above does.
 
 ### 4. Pointer Specializations
 
@@ -287,16 +299,16 @@ Very common pattern:
 template<typename T>
 class SmartPtr {
 public:
-    void info() { cout << "Regular type\n"; }
+    void info() { std::println("Regular type"); }
 };
 
 // Partial for pointers
 template<typename T>
 class SmartPtr<T*> {
 public:
-    void info() { cout << "Pointer type\n"; }
-    T& operator*() { /* dereference */ }
-    T* operator->() { /* arrow */ }
+    void info() { std::println("Pointer type"); }
+    T& operator*();    // dereference (declaration only in this sketch)
+    T* operator->();   // arrow
 };
 
 SmartPtr<int> s1;   // Regular
@@ -311,13 +323,13 @@ Foundation of `<type_traits>` library:
 // Primary: not a pointer
 template<typename T>
 struct IsPointer {
-    static const bool value = false;
+    static constexpr bool value = false;
 };
 
 // Partial: is a pointer
 template<typename T>
 struct IsPointer<T*> {
-    static const bool value = true;
+    static constexpr bool value = true;
 };
 
 // Usage
@@ -325,6 +337,11 @@ IsPointer<int>::value;   // false
 IsPointer<int*>::value;  // true
 IsPointer<int**>::value; // true (int** matches T*)
 ```
+
+Use `static constexpr bool` (implicitly inline since C++17). A plain
+`static const bool value = false;` works in a `constant expression`, but passing
+it to something that takes a reference (such as `std::println`) odr-uses it
+and gives a linker error (`undefined reference to 'IsPointer<int>::value'`).
 
 ---
 
@@ -357,8 +374,6 @@ Space optimization with bit packing.
 ### Example 9: Member Function Specialization
 Specializing individual members.
 
-### Example 10: Alternatives
-When not to use specialization.
 
 ---
 
@@ -380,14 +395,14 @@ class Vector<bool> {
 **Performance optimizations:**
 ```cpp
 template<typename T>
-void copy(T* dest, T* src, size_t n) {
-    for (size_t i = 0; i < n; ++i)
+void copy(T* dest, T* src, std::size_t n) {
+    for (std::size_t i = 0; i < n; ++i)
         dest[i] = src[i];
 }
 
 template<>
-void copy<char>(char* dest, char* src, size_t n) {
-    memcpy(dest, src, n);  // Much faster!
+void copy<char>(char* dest, char* src, std::size_t n) {
+    std::memcpy(dest, src, n);  // Much faster!
 }
 ```
 
@@ -398,17 +413,17 @@ bool compare(T a, T b) { return a == b; }
 
 template<>
 bool compare<double>(double a, double b) {
-    return abs(a - b) < 0.0001;  // Epsilon
+    return std::abs(a - b) < 0.0001;  // Epsilon
 }
 ```
 
 **Type traits:**
 ```cpp
 template<typename T>
-struct IsPointer { static const bool value = false; };
+struct IsPointer { static constexpr bool value = false; };
 
 template<typename T>
-struct IsPointer<T*> { static const bool value = true; };
+struct IsPointer<T*> { static constexpr bool value = true; };
 ```
 
 ### ❌ Don't Use Specialization When:
@@ -417,23 +432,51 @@ struct IsPointer<T*> { static const bool value = true; };
 ```cpp
 // ❌ Bad: Specialize
 template<typename T>
-void print(T x) { cout << x; }
+void show(T x) { std::print("{}", x); }
 
 template<>
-void print<int>(int x) { cout << "Int: " << x; }
+void show<int>(int x) { std::print("Int: {}", x); }
 
 // ✅ Better: Overload
 template<typename T>
-void print(T x) { cout << x; }
+void show(T x) { std::print("{}", x); }
 
-void print(int x) { cout << "Int: " << x; }
+void show(int x) { std::print("Int: {}", x); }
+```
+
+**Why overloading is safer:** explicit specializations of a function template do
+**not** take part in overload resolution. Only the primary templates (and plain
+functions) compete; a specialization is used afterwards, only if its primary
+template wins. This surprises people:
+
+```cpp
+template<typename T> void f(T)  { std::println("1: primary f(T)"); }
+template<>           void f<int*>(int*) { std::println("2: specialization of #1"); }
+template<typename T> void f(T*) { std::println("3: overload f(T*)"); }
+
+int* p = nullptr;
+f(p);   // prints "3: overload f(T*)", the specialization (2) is never chosen
+```
+
+A plain overload is a real candidate, so it behaves the way it looks.
+
+```cpp
+template<typename T> void process(T)  { std::println("template"); }
+void process(int)    { std::println("overload int"); }
+void process(double) { std::println("overload double"); }
+
+process(1);      // overload int
+process(2.5);    // overload double
+process("x");    // template  (const char* -> T)
+process('c');    // template  (char is an exact match for T, no conversion)
+process<int>(1); // template  (explicit <int> forces the template)
 ```
 
 **Can use if constexpr (C++17):**
 ```cpp
 template<typename T>
 void process(T value) {
-    if constexpr (is_pointer_v<T>) {
+    if constexpr (std::is_pointer_v<T>) {
         // Handle pointers
     } else {
         // Handle regular types
@@ -443,10 +486,10 @@ void process(T value) {
 
 **Can use concepts (C++20):**
 ```cpp
-template<Integral T>
+template<std::integral T>
 void process(T value) { /* ... */ }
 
-template<FloatingPoint T>
+template<std::floating_point T>
 void process(T value) { /* ... */ }
 ```
 
@@ -461,22 +504,27 @@ void process(T value) { /* ... */ }
 template<typename T>
 void func(T value) { }
 
-// ❌ Error: Functions don't support partial specialization
+// ❌ Error: partial specialization syntax on a function
 template<typename T>
-void func(T* value) { }
+void func<T*>(T* value) { }
 ```
 
-**Fix:** Use overloading instead
+GCC: `non-class, non-variable partial specialization 'func<T*>' is not allowed`.
+
+**Fix:** Use overloading instead (leave out the `<T*>` after the name)
 ```cpp
 template<typename T>
 void func(T value) { }
 
-// ✅ Overload
+// ✅ A new overload, not a specialization
 template<typename T>
 void func(T* value) { }
 ```
 
 ### ❌ Mistake 2: Inconsistent Interface
+
+This compiles, but generic code that uses `add()` / `get()` breaks as soon as it
+is instantiated with `bool`.
 
 **Bad:**
 ```cpp
@@ -522,12 +570,16 @@ template<>  // ✅ Need this!
 class Box<int> { };
 ```
 
+GCC: `an explicit specialization must be preceded by 'template <>'`.
+
 ### ❌ Mistake 4: Forgetting to Test Specializations
 
 **Problem:** Specializations may have bugs!
 
 **Fix:** Test all specializations thoroughly
 ```cpp
+#include <cassert>
+
 // Test generic
 Box<int> b1(42);
 assert(b1.get() == 42);
@@ -536,6 +588,43 @@ assert(b1.get() == 42);
 Box<bool> b2(true);
 assert(b2.get() == true);
 ```
+
+### ❌ Mistake 5: Function Specialization in a Header Without `inline`
+
+An explicit (full) specialization of a function template is an ordinary function,
+not a template. Defined in a header that is included by two `.cpp` files it is
+defined twice:
+
+```cpp
+// utils.h
+template<typename T> bool isEqual(T a, T b) { return a == b; }
+
+template<>
+bool isEqual<double>(double a, double b) { ... }   // ❌ multiple definition at link time
+```
+
+GCC/ld: `multiple definition of 'bool isEqual<double>(double, double)'`.
+
+**Fix:**
+```cpp
+template<>
+inline bool isEqual<double>(double a, double b) { ... }   // ✅
+```
+
+(Class template specializations do not have this problem; only their
+non-inline member function definitions outside the class do.)
+
+### ❌ Mistake 6: Specializing From the Wrong Namespace
+
+```cpp
+namespace lib   { template<typename T> struct S { }; }
+namespace other { template<> struct lib::S<int> { }; }   // ❌ error
+```
+
+GCC: `declaration of 'struct lib::S<int>' in namespace 'other' which does not enclose 'lib'`.
+A specialization must be declared in the namespace of the template or in an
+enclosing namespace (that is why `std::hash<MyType>` is specialized by
+reopening `namespace std`).
 
 ---
 
@@ -562,7 +651,7 @@ Implement basic bit-packed bool vector.
 
 ### Compile:
 ```bash
-g++ -std=c++17 template_specialization.cpp -o template_specialization
+g++ -std=c++23 main.cpp -o template_specialization
 ```
 
 ### Run:
@@ -571,6 +660,8 @@ g++ -std=c++17 template_specialization.cpp -o template_specialization
 ```
 
 ### Expected Output:
+`std::println` needs C++23 and a standard library that ships `<print>` (GCC 14+, recent Clang/MSVC).
+
 The program demonstrates:
 1. Basic function specialization
 2. Basic class specialization
@@ -581,7 +672,6 @@ The program demonstrates:
 7. Optimization examples
 8. Vector<bool> pattern
 9. Member function specialization
-10. When to use alternatives
 
 ---
 
@@ -683,10 +773,10 @@ class Box<T*> { };    ← Pattern
 template<typename T>
 class Container {
     T* data;
-    size_t size;
+    std::size_t size;
     
 public:
-    Container(size_t n) : size(n) {
+    Container(std::size_t n) : size(n) {
         data = new T[n];
     }
     
@@ -694,7 +784,7 @@ public:
         delete[] data;
     }
     
-    T& operator[](size_t index) {
+    T& operator[](std::size_t index) {
         return data[index];
     }
 };
@@ -703,7 +793,7 @@ public:
 template<>
 class Container<bool> {
     unsigned char* data;  // Bit array
-    size_t size;
+    std::size_t size;
     
 public:
     // Proxy class for bit access
@@ -727,7 +817,7 @@ public:
         }
     };
     
-    Container(size_t n) : size(n) {
+    Container(std::size_t n) : size(n) {
         data = new unsigned char[(n + 7) / 8]();
     }
     
@@ -735,7 +825,7 @@ public:
         delete[] data;
     }
     
-    BitRef operator[](size_t index) {
+    BitRef operator[](std::size_t index) {
         return BitRef(data[index / 8], 1 << (index % 8));
     }
 };
@@ -744,22 +834,22 @@ public:
 template<typename T>
 class Container<T*> {
     T** data;
-    size_t size;
+    std::size_t size;
     
 public:
-    Container(size_t n) : size(n) {
+    Container(std::size_t n) : size(n) {
         data = new T*[n];
-        for (size_t i = 0; i < n; ++i)
+        for (std::size_t i = 0; i < n; ++i)
             data[i] = nullptr;
     }
     
     ~Container() {
-        for (size_t i = 0; i < n; ++i)
-            delete data[i];
+        for (std::size_t i = 0; i < size; ++i)
+            delete data[i];   // owns the pointed-to objects
         delete[] data;
     }
     
-    T*& operator[](size_t index) {
+    T*& operator[](std::size_t index) {
         return data[index];
     }
 };
@@ -769,6 +859,9 @@ Container<int> ints(100);      // Primary template
 Container<bool> bools(100);    // Full specialization (bit-packed)
 Container<int*> ptrs(100);     // Partial specialization (manages pointers)
 ```
+
+These classes own raw memory, so a real version also needs a copy constructor and
+copy assignment (or `= delete` them), see the Rule of 3/5/0. They are omitted to keep the pattern short.
 
 ---
 
@@ -794,7 +887,7 @@ template<typename T>
 class Box<T*> { };  // For any pointer
 
 // === PARTIAL SPECIALIZATION (Array) ===
-template<typename T, size_t N>
+template<typename T, std::size_t N>
 class Box<T[N]> { };  // For arrays
 
 // === MULTIPLE PARAMS ===
@@ -810,12 +903,12 @@ class Pair<T1, T2*> { };  // Second is pointer
 // === TYPE TRAITS ===
 template<typename T>
 struct IsPointer {
-    static const bool value = false;
+    static constexpr bool value = false;
 };
 
 template<typename T>
 struct IsPointer<T*> {
-    static const bool value = true;
+    static constexpr bool value = true;
 };
 
 // === USAGE ===
@@ -860,35 +953,38 @@ Box<int*> b3;     // Partial specialization
 
 ### std::vector<bool>
 ```cpp
-// Space optimization
-template<typename T>
-class vector { T* data; };
+// Space optimization (simplified sketch of what the library does)
+namespace std {
+    template<typename T>
+    class vector { T* data; };
 
-template<>
-class vector<bool> {
-    unsigned char* data;  // Bit packing
-};
+    template<>
+    class vector<bool> {
+        unsigned char* data;  // Bit packing
+    };
+}
 ```
 
 ### Type Traits Library
 ```cpp
 template<typename T>
-struct is_pointer : false_type { };
+struct is_pointer : std::false_type { };
 
 template<typename T>
-struct is_pointer<T*> : true_type { };
+struct is_pointer<T*> : std::true_type { };
 ```
 
-### String Optimizations
+### Character Traits
 ```cpp
-template<typename T>
-class BasicString { };
+template<typename CharT>
+struct char_traits { /* generic, element-by-element loops */ };
 
 template<>
-class BasicString<char> {
-    // SSO, COW, optimizations
+struct char_traits<char> {
+    // libstdc++: uses std::memcpy / memcmp / std::strlen for char
 };
 ```
+(`std::basic_string<char>` itself is not specialized; the specialization lives in `std::char_traits<char>`.)
 
 ### Smart Pointers
 ```cpp
@@ -971,3 +1067,53 @@ class UniquePtr<T[]> {
 *Difficulty: Advanced*
 *Prerequisites: Function and class templates*
 *CRITICAL for Advanced Template Programming*
+
+---
+
+## Notes moved from main.cpp
+
+The title/description comment at the top of `main.cpp` ("WHAT IS TEMPLATE SPECIALIZATION?") stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `#include <print>` added, `<iostream>`, `<vector>` and `<type_traits>` removed (unused), `<cmath>` / `<cstddef>` added. `using namespace std;` is gone and every standard name is written with `std::`.
+- Each example has a `// === EXAMPLE n: … ===` title comment.
+- **Printed lecture text removed from the program** (it is covered by the sections above):
+  - the "💡 …" bullet lists at the end of Examples 1–9 → *Concept Explanation*, *Key Concepts*;
+  - the whole **COMPREHENSIVE EXPLANATION** block printed by `main()` (What is template specialization, Full / Partial specialization, Priority, Common patterns, When to specialize, Alternatives, Best practices, Quick reference, Key takeaways, Golden rules) → *Basic Syntax*, *Key Concepts*, *When to Use Specialization*, *Best Practices*, *Quick Reference Card*, *Key Takeaways*, *THE GOLDEN RULES*.
+- **Old Example 10 ("Alternatives") was removed from `main.cpp`**: it only printed lecture text and its `process()` overloads were never called. It now lives in *When to Use Specialization* (overloading vs. specialization, `if constexpr`, concepts), with the output of the `process()` calls checked.
+- Output differences from the old program (all intended):
+  - `std::println` prints `bool` as `true` / `false` instead of `1` / `0`.
+  - The result is computed before it is printed (`bool r = isEqual(...)`), so the "Generic comparison" trace comes **before** the `5 == 5: true` line. With `cout << "5 == 5: " << isEqual(5, 5)` the text was printed first and then interleaved with the function's own output.
+  - `IsPointer::value` is now `static constexpr bool` (see corrections).
+  - `boolVec[i]` is converted with `static_cast<bool>`, because `std::println` cannot format the `BitReference` proxy directly.
+- `Storage<const char*>` now has a deleted copy assignment (it already had a copy constructor, so assigning would have shallow-copied the pointer and double-freed). The misleading "checks overflow" in `Calculator<int>::multiply` was removed; the code never checked anything.
+
+### Corrections to the original files
+
+- **Mistake 1 was wrong.** `template<typename T> void func(T* value) { }` is a perfectly valid *overload*, not an error. The real error is the partial-specialization syntax `void func<T*>(T* value)`: `non-class, non-variable partial specialization … is not allowed`. Rewritten.
+- **Priority example:** `Pair<int, T>` was described as "more specific" than `Pair<T, T>`. They are not ordered against each other; without the full `Pair<int, int>` specialization, `Pair<int, int>` is **ambiguous**. Fixed and explained.
+- **"Complete Pattern" did not compile**: the pointer specialization's destructor used `n`, which does not exist there (`size` is the member). Fixed, plus a note about copy operations.
+- **`String Optimizations` example was wrong**: `std::basic_string<char>` is not specialized (SSO is an implementation detail of the primary template). The real specialization is `std::char_traits<char>`. Replaced.
+- **`static const bool value`** in the type traits: fine in constant expressions, but passing it to `std::println` (takes a reference) gives a linker error `undefined reference to 'IsPointer<int>::value'`. Changed to `static constexpr bool` everywhere.
+- **Partial specialization "classes only"**: variable templates support it too (`template<typename T> constexpr bool is_ptr<T*> = true;`); alias templates and function templates do not.
+- **Concepts snippet** used non-existent `Integral` / `FloatingPoint`; now `std::integral` / `std::floating_point`.
+- **Compile command:** `-std=c++17 template_specialization.cpp` → `-std=c++23 main.cpp`.
+- **Added:** why function specializations are ignored by overload resolution, ambiguity between partial specializations, `inline` for function specializations in headers (Mistake 5), specializing from the wrong namespace (Mistake 6).
+- Raw `→` arrows inside code blocks were not valid C++; they are comments now. `print` was renamed `show` in the overload example so it cannot collide with `std::print`.
+
+### What was tested (GCC 13.3, `-Wall -Wextra`, ASan/UBSan)
+
+- `main.cpp` builds without warnings and runs; the output matches the old program except for the intended differences above.
+- Overload `func(T*)` compiles; `void func<T*>(T*)` is rejected with the quoted message.
+- `class Box<int> { };` without `template<>` → `an explicit specialization must be preceded by 'template <>'`.
+- `Pair<int,int>` with `<T,T>` + `<int,T2>` and no full specialization → `ambiguous template instantiation`; same for `Pair<int,int*>` with `<int,T2>` + `<T1,T2*>`.
+- `static const bool` + `std::println` → linker error; `static constexpr bool` → fine.
+- Specializing `lib::S<int>` from `namespace other` → error `…in namespace 'other' which does not enclose 'lib'`; from an enclosing namespace → accepted.
+- Function overload vs. specialization example: `f(p)` calls the overload (`3`), never the specialization. `process(1)` → overload int, `process(2.5)` → overload double, `process("x")` / `process('c')` / `process<int>(1)` → template.
+- A function-template specialization defined in a header included by two `.cpp` files → `multiple definition`; adding `inline` links.
+- Variable-template partial specialization compiles; alias-template partial specialization is rejected.
+- `std::integral` / `std::floating_point` constrained overloads, `if constexpr (std::is_pointer_v<T>)`, tag dispatch with `std::true_type` / `std::false_type` compile and select the expected branch.
+- The "Complete Pattern" `Container` (primary, `bool` bit-packed, `T*`) compiles and runs clean under ASan/UBSan after the fix.
+- `std::char_traits<char>` is a full specialization in libstdc++ (`struct char_traits<char>`).
+
+Not tested: Clang / MSVC behavior, SSO / COW details of `std::string`, and the performance claims ("much faster" `memcpy`, 8x memory savings beyond the byte counts printed by the program).
+

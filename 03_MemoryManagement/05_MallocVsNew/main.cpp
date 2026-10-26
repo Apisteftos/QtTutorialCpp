@@ -1,8 +1,8 @@
-#include <iostream>
+#include <algorithm>  // std::copy
 #include <cstdlib>    // malloc, calloc, realloc, free
-#include <cstring>    // memset, memcpy
+#include <new>        // std::bad_alloc, std::nothrow, placement new
+#include <print>
 #include <string>
-#include <new>        // std::bad_alloc, std::nothrow
 
 // =============================================================
 // Helper class to visualize constructor/destructor calls
@@ -14,21 +14,20 @@ private:
 
 public:
     Sensor() : name("unnamed"), value(0.0) {
-        std::cout << "[Sensor] Default constructor: '" << name << "'\n";
+        std::println("[Sensor] Default constructor: '{}'", name);
     }
 
     Sensor(const std::string& name, double value)
         : name(name), value(value) {
-        std::cout << "[Sensor] Constructor: '" << name
-                  << "' value=" << value << '\n';
+        std::println("[Sensor] Constructor: '{}' value={}", name, value);
     }
 
     ~Sensor() {
-        std::cout << "[Sensor] Destructor: '" << name << "'\n";
+        std::println("[Sensor] Destructor: '{}'", name);
     }
 
     void read() const {
-        std::cout << "  Sensor '" << name << "' reads: " << value << '\n';
+        std::println("  Sensor '{}' reads: {}", name, value);
     }
 
     void setValue(double v) { value = v; }
@@ -38,128 +37,124 @@ public:
 
 int main()
 {
-    // =================================================
-    // MALLOC — C style allocation
-    // =================================================
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: malloc — raw memory, no constructor\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: malloc — raw memory, no constructor ===
+    std::println("=====================================================");
+    std::println("Example 1: malloc — raw memory, no constructor");
+    std::println("=====================================================");
 
     // malloc returns void* — must cast in C++
     // allocates RAW bytes — does NOT call constructor
     Sensor* s1 = static_cast<Sensor*>(malloc(sizeof(Sensor)));
 
     if (s1 != nullptr) {
-        std::cout << "malloc allocated " << sizeof(Sensor) << " bytes\n";
-        std::cout << "Constructor was called? NO — malloc only allocates memory\n";
+        std::println("malloc allocated {} bytes", sizeof(Sensor));
+        std::println("Constructor was called? NO — malloc only allocates memory");
         // s1->read();   // DANGEROUS — object not constructed, undefined behavior
         free(s1);        // free does NOT call destructor
         s1 = nullptr;
-        std::cout << "Destructor was called? NO — free only releases memory\n";
+        std::println("Destructor was called? NO — free only releases memory");
     }
 
 
-    // =================================================
-    // NEW — C++ style allocation
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: new — allocation + constructor\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: new — allocation + constructor ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: new — allocation + constructor");
+    std::println("=====================================================");
 
     // new allocates memory AND calls constructor
     Sensor* s2 = new Sensor("TempSensor", 36.6);
-    std::cout << "new allocated memory AND called constructor\n";
+    std::println("new allocated memory AND called constructor");
     s2->read();
 
     // delete calls destructor AND releases memory
     delete s2;
     s2 = nullptr;
-    std::cout << "delete called destructor AND freed memory\n";
+    std::println("delete called destructor AND freed memory");
 
 
-    // =================================================
-    // CALLOC — zeroed memory
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: calloc — zeroed memory\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: calloc — zeroed memory ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: calloc — zeroed memory");
+    std::println("=====================================================");
 
     // calloc(count, size) — allocates count*size bytes, all set to ZERO
     int* intArray = static_cast<int*>(calloc(5, sizeof(int)));
 
     if (intArray != nullptr) {
-        std::cout << "calloc(5, sizeof(int)) — all bytes zeroed:\n";
-        std::cout << "Values: ";
+        std::println("calloc(5, sizeof(int)) — all bytes zeroed:");
+        std::print("Values: ");
         for (int i = 0; i < 5; ++i)
-            std::cout << intArray[i] << " ";   // all 0
-        std::cout << '\n';
+            std::print("{} ", intArray[i]);   // all 0
+        std::println("");
 
         // Fill with data
         for (int i = 0; i < 5; ++i)
             intArray[i] = (i + 1) * 10;
 
-        std::cout << "After fill: ";
+        std::print("After fill: ");
         for (int i = 0; i < 5; ++i)
-            std::cout << intArray[i] << " ";
-        std::cout << '\n';
+            std::print("{} ", intArray[i]);
+        std::println("");
 
         free(intArray);
         intArray = nullptr;
     }
 
 
-    // =================================================
-    // NEW[] vs malloc for ARRAYS
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: new[] vs malloc for arrays\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: new[] vs malloc for arrays ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: new[] vs malloc for arrays");
+    std::println("=====================================================");
 
-    std::cout << "\n--- malloc array (no constructors) ---\n";
+    std::println("");
+    std::println("--- malloc array (no constructors) ---");
     Sensor* mallocArr = static_cast<Sensor*>(malloc(3 * sizeof(Sensor)));
-    std::cout << "malloc: allocated " << 3 * sizeof(Sensor)
-              << " bytes — NO constructors called\n";
+    std::println("malloc: allocated {} bytes — NO constructors called",
+                 3 * sizeof(Sensor));
     // mallocArr[0].read();  // UNDEFINED BEHAVIOR — not constructed
     free(mallocArr);          // NO destructors called
     mallocArr = nullptr;
-    std::cout << "free: released memory — NO destructors called\n";
+    std::println("free: released memory — NO destructors called");
 
-    std::cout << "\n--- new[] array (constructors called) ---\n";
+    std::println("");
+    std::println("--- new[] array (constructors called) ---");
     Sensor* newArr = new Sensor[3];   // calls default constructor 3 times
-    std::cout << "All 3 sensors constructed — safe to use:\n";
+    std::println("All 3 sensors constructed — safe to use:");
     for (int i = 0; i < 3; ++i)
         newArr[i].read();
 
     delete[] newArr;    // calls destructor 3 times, then frees memory
     newArr = nullptr;
-    std::cout << "delete[]: all 3 destructors called\n";
+    std::println("delete[]: all 3 destructors called");
 
 
-    // =================================================
-    // REALLOC — resize allocated memory
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: realloc — resize memory block\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: realloc — resize memory block ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: realloc — resize memory block");
+    std::println("=====================================================");
 
     // Start with 3 ints
     int* dynArray = static_cast<int*>(malloc(3 * sizeof(int)));
     if (dynArray != nullptr) {
         dynArray[0] = 10; dynArray[1] = 20; dynArray[2] = 30;
-        std::cout << "Original (3 ints): ";
-        for (int i = 0; i < 3; ++i) std::cout << dynArray[i] << " ";
-        std::cout << '\n';
+        std::print("Original (3 ints): ");
+        for (int i = 0; i < 3; ++i) std::print("{} ", dynArray[i]);
+        std::println("");
 
         // Grow to 6 ints — may return same or new pointer
         int* temp = static_cast<int*>(realloc(dynArray, 6 * sizeof(int)));
         if (temp != nullptr) {
             dynArray = temp;   // IMPORTANT: use temp first, then reassign
             dynArray[3] = 40; dynArray[4] = 50; dynArray[5] = 60;
-            std::cout << "After realloc (6 ints): ";
-            for (int i = 0; i < 6; ++i) std::cout << dynArray[i] << " ";
-            std::cout << '\n';
+            std::print("After realloc (6 ints): ");
+            for (int i = 0; i < 6; ++i) std::print("{} ", dynArray[i]);
+            std::println("");
         } else {
-            std::cout << "realloc failed — original pointer still valid\n";
+            std::println("realloc failed — original pointer still valid");
             // dynArray still valid here — do NOT use temp
         }
 
@@ -169,43 +164,26 @@ int main()
 
     // There is NO C++ equivalent of realloc for new[]
     // With new[] you must: allocate new, copy, delete old
-    std::cout << "\nC++ equivalent of realloc with new[]:\n";
+    std::println("");
+    std::println("C++ equivalent of realloc with new[]:");
     int* oldArr = new int[3]{10, 20, 30};
     int* growArr = new int[6];                        // allocate larger
     std::copy(oldArr, oldArr + 3, growArr);           // copy old data
     growArr[3] = 40; growArr[4] = 50; growArr[5] = 60;
     delete[] oldArr;                                  // free old
     oldArr = growArr;                                 // reassign
-    std::cout << "Grown array: ";
-    for (int i = 0; i < 6; ++i) std::cout << oldArr[i] << " ";
-    std::cout << '\n';
+    std::print("Grown array: ");
+    for (int i = 0; i < 6; ++i) std::print("{} ", oldArr[i]);
+    std::println("");
     delete[] oldArr;
     oldArr = nullptr;
 
 
-    // =================================================
-    // MIXING malloc/free WITH new/delete — NEVER DO THIS
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Never mix malloc/free with new/delete\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "The following combinations are UNDEFINED BEHAVIOR:\n";
-    std::cout << "  Sensor* p = new Sensor(...);\n";
-    std::cout << "  free(p);           // WRONG — destructor not called\n\n";
-    std::cout << "  Sensor* p = (Sensor*)malloc(sizeof(Sensor));\n";
-    std::cout << "  delete p;          // WRONG — constructor was never called\n\n";
-    std::cout << "  int* arr = new int[5];\n";
-    std::cout << "  delete arr;        // WRONG — must use delete[]\n\n";
-    std::cout << "Rule: always pair malloc↔free and new↔delete and new[]↔delete[]\n";
-
-
-    // =================================================
-    // PLACEMENT NEW — construct in pre-allocated memory
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Placement new\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Placement new ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Placement new");
+    std::println("=====================================================");
 
     // Allocate raw memory first
     void* rawMemory = malloc(sizeof(Sensor));
@@ -221,16 +199,15 @@ int main()
         free(rawMemory);           // then free the raw memory
         rawMemory  = nullptr;
         placedSensor = nullptr;
-        std::cout << "Placement new: destructor called manually, memory freed with free()\n";
+        std::println("Placement new: destructor called manually, memory freed with free()");
     }
 
 
-    // =================================================
-    // NEW WITH std::nothrow — no exception on failure
-    // =================================================
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: new with std::nothrow\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: new with std::nothrow ===
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: new with std::nothrow");
+    std::println("=====================================================");
 
     // Normal new throws std::bad_alloc on failure
     // std::nothrow version returns nullptr instead
@@ -241,25 +218,28 @@ int main()
         delete safeAlloc;
         safeAlloc = nullptr;
     } else {
-        std::cout << "Allocation failed — returned nullptr (no exception)\n";
+        std::println("Allocation failed — returned nullptr (no exception)");
     }
 
-    // Simulating bad_alloc with try/catch
-    std::cout << "\nCatching std::bad_alloc:\n";
+    // Catching std::bad_alloc with try/catch
+    std::println("");
+    std::println("Catching std::bad_alloc:");
     try {
         // Intentionally try to allocate impossibly large amount
-        // (commented out to avoid actual crash — shown for educational purpose)
+        // (commented out so the demo also runs under AddressSanitizer, which
+        //  aborts on such a request instead of letting new throw — see Readme)
         // int* huge = new int[999999999999LL];
 
         Sensor* s = new Sensor("CatchTest", 5.5);
         s->read();
         delete s;
-        std::cout << "Allocation succeeded\n";
+        std::println("Allocation succeeded");
     }
     catch (const std::bad_alloc& e) {
-        std::cout << "Allocation failed: " << e.what() << '\n';
+        std::println("Allocation failed: {}", e.what());
     }
 
-    std::cout << "\n=== End of MallocVsNew ===\n";
+    std::println("");
+    std::println("=== End of MallocVsNew ===");
     return 0;
 }

@@ -1,9 +1,12 @@
-#include <iostream>
-#include <array>
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <functional>
+#include <iterator>
 #include <numeric>
-#include <string>
 #include <print>
+#include <stdexcept>
+#include <string_view>
 
 // ============================================================
 // std::array — Fixed-Size Array in C++23
@@ -21,215 +24,206 @@
 //  10.  std::array vs C array vs std::vector
 // ============================================================
 
+// Print a label followed by all elements of a range
+template<typename Range>
+void printAll(std::string_view label, const Range& r)
+{
+    std::print("{}", label);
+    for (const auto& x : r) {
+        std::print("{} ", x);
+    }
+    std::println("");
+}
+
+// Print the "=====" banner that introduces an example
+void banner(std::string_view title)
+{
+    std::println("");
+    std::println("=====================================================");
+    std::println("{}", title);
+    std::println("=====================================================");
+}
+
 int main()
 {
-    // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Declaration and Initialization\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 1: Declaration and Initialization ===
+    banner("Example 1: Declaration and Initialization");
 
     // Size MUST be compile-time constant
     std::array<int, 5> a1{};                     // zero-initialized
     std::array<int, 5> a2 = {1, 2, 3, 4, 5};    // initializer list
     std::array<int, 5> a3 = {10, 20};            // rest are zero
     std::array<int, 5> a4 = a2;                  // copy
-    std::array<int, 3> strings = {};             // zero-init (int, not string)
 
-    std::cout << "a1 (zero-init):  ";
-    for (int x : a1) std::cout << x << ' '; std::cout << '\n';
-
-    std::cout << "a2 (1-5):        ";
-    for (int x : a2) std::cout << x << ' '; std::cout << '\n';
-
-    std::cout << "a3 (partial):    ";
-    for (int x : a3) std::cout << x << ' '; std::cout << '\n';
-
-    std::cout << "a4 (copy of a2): ";
-    for (int x : a4) std::cout << x << ' '; std::cout << '\n';
+    printAll("a1 (zero-init):  ", a1);
+    printAll("a2 (1-5):        ", a2);
+    printAll("a3 (partial):    ", a3);
+    printAll("a4 (copy of a2): ", a4);
 
     // std::to_array — create from C array (C++20)
     int cArr[] = {5, 4, 3, 2, 1};
     auto fromCArray = std::to_array(cArr);
-    std::cout << "to_array:        ";
-    for (int x : fromCArray) std::cout << x << ' '; std::cout << '\n';
+    printAll("to_array:        ", fromCArray);
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Element Access\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 2: Element Access ===
+    banner("Example 2: Element Access");
 
     std::array<int, 5> arr = {10, 20, 30, 40, 50};
 
-    std::cout << "arr[2]:        " << arr[2]        << '\n';  // no bounds check
-    std::cout << "arr.at(2):     " << arr.at(2)     << '\n';  // bounds checked
-    std::cout << "arr.front():   " << arr.front()   << '\n';  // first
-    std::cout << "arr.back():    " << arr.back()    << '\n';  // last
-    std::cout << "arr.data()[1]: " << arr.data()[1] << '\n';  // raw pointer
+    std::println("arr[2]:        {}", arr[2]);         // no bounds check
+    std::println("arr.at(2):     {}", arr.at(2));      // bounds checked
+    std::println("arr.front():   {}", arr.front());    // first
+    std::println("arr.back():    {}", arr.back());     // last
+    std::println("arr.data()[1]: {}", arr.data()[1]);  // raw pointer
 
     // Modify
     arr[0] = 999;
     arr.back() = 888;
-    std::cout << "after modify:  ";
-    for (int x : arr) std::cout << x << ' '; std::cout << '\n';
+    printAll("after modify:  ", arr);
 
     // out_of_range exception
     try {
         int bad = arr.at(100);
         (void)bad;
     } catch (const std::out_of_range& e) {
-        std::cout << "at(100) threw: " << e.what() << '\n';
+        std::println("at(100) threw: {}", e.what());
     }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Size — always compile-time known\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 3: Size — always compile-time known ===
+    banner("Example 3: Size — always compile-time known");
 
     std::array<double, 4> d = {1.1, 2.2, 3.3, 4.4};
 
-    std::cout << "size():     " << d.size()     << '\n';  // always 4
-    std::cout << "max_size(): " << d.max_size() << '\n';  // same as size()
-    std::cout << "empty():    " << d.empty()    << '\n';  // always false (size > 0)
+    std::println("size():     {}", d.size());      // always 4
+    std::println("max_size(): {}", d.max_size());  // same as size()
+    std::println("empty():    {}", d.empty());     // always false (size > 0)
 
     // Size is a compile-time constant
     constexpr std::size_t N = d.size();
-    std::cout << "constexpr size N = " << N << '\n';
+    std::println("constexpr size N = {}", N);
 
     std::array<int, 0> emptyArr{};
-    std::cout << "empty array empty(): " << emptyArr.empty() << '\n';
+    std::println("empty array empty(): {}", emptyArr.empty());
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Iterators\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 4: Iterators ===
+    banner("Example 4: Iterators");
 
     std::array<int, 6> it_arr = {6, 3, 8, 1, 9, 4};
 
-    std::cout << "range-based: ";
-    for (const auto& x : it_arr) std::cout << x << ' '; std::cout << '\n';
+    printAll("range-based: ", it_arr);
 
-    std::cout << "forward:     ";
-    for (auto it = it_arr.begin(); it != it_arr.end(); ++it)
-        std::cout << *it << ' ';
-    std::cout << '\n';
+    std::print("forward:     ");
+    for (auto it = it_arr.begin(); it != it_arr.end(); ++it) {
+        std::print("{} ", *it);
+    }
+    std::println("");
 
-    std::cout << "reverse:     ";
-    for (auto it = it_arr.rbegin(); it != it_arr.rend(); ++it)
-        std::cout << *it << ' ';
-    std::cout << '\n';
+    std::print("reverse:     ");
+    for (auto it = it_arr.rbegin(); it != it_arr.rend(); ++it) {
+        std::print("{} ", *it);
+    }
+    std::println("");
 
-    std::cout << "const:       ";
-    for (auto it = it_arr.cbegin(); it != it_arr.cend(); ++it)
-        std::cout << *it << ' ';
-    std::cout << '\n';
+    std::print("const:       ");
+    for (auto it = it_arr.cbegin(); it != it_arr.cend(); ++it) {
+        std::print("{} ", *it);
+    }
+    std::println("");
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Sorting and Searching\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 5: Sorting and Searching ===
+    banner("Example 5: Sorting and Searching");
 
     std::array<int, 8> s = {5, 3, 8, 1, 9, 2, 7, 4};
 
     std::sort(s.begin(), s.end());
-    std::cout << "sorted:      ";
-    for (int x : s) std::cout << x << ' '; std::cout << '\n';
+    printAll("sorted:      ", s);
 
     std::sort(s.begin(), s.end(), std::greater<int>());
-    std::cout << "desc:        ";
-    for (int x : s) std::cout << x << ' '; std::cout << '\n';
+    printAll("desc:        ", s);
 
     std::sort(s.begin(), s.end());
 
-    auto it = std::find(s.begin(), s.end(), 7);
-    if (it != s.end())
-        std::println("find(7) at index: {}", std::distance(s.begin(), it));
+    auto found = std::find(s.begin(), s.end(), 7);
+    if (found != s.end()) {
+        std::println("find(7) at index: {}", std::distance(s.begin(), found));
+    }
 
-    std::cout << "binary_search(7): " << std::binary_search(s.begin(), s.end(), 7) << '\n';
-    std::cout << "min: " << *std::min_element(s.begin(), s.end()) << '\n';
-    std::cout << "max: " << *std::max_element(s.begin(), s.end()) << '\n';
-    std::cout << "sum: " << std::accumulate(s.begin(), s.end(), 0) << '\n';
+    std::println("binary_search(7): {}", std::binary_search(s.begin(), s.end(), 7));
+    std::println("min: {}", *std::min_element(s.begin(), s.end()));
+    std::println("max: {}", *std::max_element(s.begin(), s.end()));
+    std::println("sum: {}", std::accumulate(s.begin(), s.end(), 0));
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Algorithms with array\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 6: Algorithms with array ===
+    banner("Example 6: Algorithms with array");
 
     std::array<int, 5> src = {1, 2, 3, 4, 5};
     std::array<int, 5> dst{};
 
     // copy
     std::copy(src.begin(), src.end(), dst.begin());
-    std::cout << "copy:        ";
-    for (int x : dst) std::cout << x << ' '; std::cout << '\n';
+    printAll("copy:        ", dst);
 
     // transform
     std::array<int, 5> doubled{};
     std::transform(src.begin(), src.end(), doubled.begin(),
                    [](int x) { return x * 2; });
-    std::cout << "doubled:     ";
-    for (int x : doubled) std::cout << x << ' '; std::cout << '\n';
+    printAll("doubled:     ", doubled);
 
     // fill
     std::array<int, 5> filled{};
     std::fill(filled.begin(), filled.end(), 99);
-    std::cout << "filled(99):  ";
-    for (int x : filled) std::cout << x << ' '; std::cout << '\n';
+    printAll("filled(99):  ", filled);
 
     // iota
     std::array<int, 6> seq{};
     std::iota(seq.begin(), seq.end(), 10);   // 10,11,12,13,14,15
-    std::cout << "iota(10):    ";
-    for (int x : seq) std::cout << x << ' '; std::cout << '\n';
+    printAll("iota(10):    ", seq);
 
     // reverse
     std::reverse(seq.begin(), seq.end());
-    std::cout << "reversed:    ";
-    for (int x : seq) std::cout << x << ' '; std::cout << '\n';
+    printAll("reversed:    ", seq);
 
     // count_if
-    int evens = std::count_if(src.begin(), src.end(),
-                              [](int x) { return x % 2 == 0; });
-    std::cout << "even count:  " << evens << '\n';
+    auto evens = std::count_if(src.begin(), src.end(),
+                               [](int x) { return x % 2 == 0; });
+    std::println("even count:  {}", evens);
 
     // swap two arrays of same type and size
-    std::array<int, 5> x1 = {1,2,3,4,5};
-    std::array<int, 5> x2 = {9,8,7,6,5};
+    std::array<int, 5> x1 = {1, 2, 3, 4, 5};
+    std::array<int, 5> x2 = {9, 8, 7, 6, 5};
     x1.swap(x2);
-    std::cout << "after swap x1: ";
-    for (int x : x1) std::cout << x << ' '; std::cout << '\n';
+    printAll("after swap x1: ", x1);
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Array of Objects\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 7: Array of Objects ===
+    banner("Example 7: Array of Objects");
 
     struct Point { int x, y; };
 
-    std::array<Point, 4> points = {{{1,2}, {5,3}, {2,8}, {4,1}}};
+    std::array<Point, 4> points = {{{1, 2}, {5, 3}, {2, 8}, {4, 1}}};
 
-    std::cout << "points:\n";
-    for (const auto& p : points)
-        std::println("  ({}, {})", p.x, p.y);
+    std::println("points:");
+    for (const auto& pt : points) {
+        std::println("  ({}, {})", pt.x, pt.y);
+    }
 
     // Sort by x coordinate
     std::sort(points.begin(), points.end(),
-              [](const Point& a, const Point& b) { return a.x < b.x; });
+              [](const Point& lhs, const Point& rhs) { return lhs.x < rhs.x; });
 
-    std::cout << "sorted by x:\n";
-    for (const auto& p : points)
-        std::println("  ({}, {})", p.x, p.y);
+    std::println("sorted by x:");
+    for (const auto& pt : points) {
+        std::println("  ({}, {})", pt.x, pt.y);
+    }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Multi-dimensional arrays\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 8: Multi-dimensional arrays ===
+    banner("Example 8: Multi-dimensional arrays");
 
     // 3x3 matrix
     std::array<std::array<int, 3>, 3> matrix = {{
@@ -238,37 +232,41 @@ int main()
         {7, 8, 9}
     }};
 
-    std::cout << "3x3 matrix:\n";
+    std::println("3x3 matrix:");
     for (const auto& row : matrix) {
-        std::cout << "  ";
-        for (int val : row) std::cout << val << "\t";
-        std::cout << '\n';
+        std::print("  ");
+        for (int val : row) {
+            std::print("{}\t", val);
+        }
+        std::println("");
     }
 
     // Transpose
     std::array<std::array<int, 3>, 3> transposed{};
-    for (int r = 0; r < 3; ++r)
-        for (int c = 0; c < 3; ++c)
-            transposed[c][r] = matrix[r][c];
+    for (std::size_t i = 0; i < 3; ++i) {
+        for (std::size_t j = 0; j < 3; ++j) {
+            transposed[j][i] = matrix[i][j];
+        }
+    }
 
-    std::cout << "transposed:\n";
+    std::println("transposed:");
     for (const auto& row : transposed) {
-        std::cout << "  ";
-        for (int val : row) std::cout << val << "\t";
-        std::cout << '\n';
+        std::print("  ");
+        for (int val : row) {
+            std::print("{}\t", val);
+        }
+        std::println("");
     }
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: constexpr array\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 9: constexpr array ===
+    banner("Example 9: constexpr array");
 
     // Computed entirely at compile time
     constexpr std::array<int, 5> primes = {2, 3, 5, 7, 11};
     constexpr int firstPrime  = primes[0];
     constexpr int lastPrime   = primes.back();
-    constexpr int primeCount  = primes.size();
+    constexpr std::size_t primeCount = primes.size();
 
     std::println("primes:      {} {} {} {} {}", primes[0], primes[1], primes[2], primes[3], primes[4]);
     std::println("firstPrime:  {}", firstPrime);
@@ -277,32 +275,31 @@ int main()
 
     // constexpr lookup table
     constexpr std::array<double, 4> sineTable = {0.0, 0.5, 0.866, 1.0};
-    std::cout << "sineTable[2] = " << sineTable[2] << '\n';
+    std::println("sineTable[2] = {}", sineTable[2]);
 
 
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: std::array vs C array vs std::vector\n";
-    std::cout << "=====================================================\n";
+    // === EXAMPLE 10: std::array vs C array vs std::vector ===
+    banner("Example 10: std::array vs C array vs std::vector");
 
     // C array — no size info, decays to pointer, unsafe
     int cArray[5] = {1, 2, 3, 4, 5};
     // sizeof gives bytes, not count — fragile:
-    std::cout << "C array sizeof/sizeof[0]: " << sizeof(cArray)/sizeof(cArray[0]) << '\n';
+    std::println("C array sizeof/sizeof[0]: {}", sizeof(cArray) / sizeof(cArray[0]));
     // void func(int arr[]) — size lost! arr becomes pointer
 
     // std::array — size always known, never decays
     std::array<int, 5> stdArray = {1, 2, 3, 4, 5};
-    std::cout << "std::array size(): " << stdArray.size() << " (always known)\n";
+    std::println("std::array size(): {} (always known)", stdArray.size());
 
     // Comparison with ==
     std::array<int, 3> p = {1, 2, 3};
     std::array<int, 3> q = {1, 2, 3};
     std::array<int, 3> r = {1, 2, 4};
-    std::cout << "p == q: " << (p == q) << '\n';   // true
-    std::cout << "p == r: " << (p == r) << '\n';   // false
-    std::cout << "p <  r: " << (p <  r) << '\n';   // lexicographic
+    std::println("p == q: {}", p == q);   // true
+    std::println("p == r: {}", p == r);   // false
+    std::println("p <  r: {}", p <  r);   // lexicographic
 
-    std::cout << "\n=== ArraySTL complete ===\n";
+    std::println("");
+    std::println("=== ArraySTL complete ===");
     return 0;
 }

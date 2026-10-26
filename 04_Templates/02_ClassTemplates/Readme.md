@@ -46,7 +46,7 @@ public:
 // Use with any type!
 Box<int> intBox(42);           // Box for int
 Box<double> doubleBox(3.14);   // Box for double
-Box<string> stringBox("Hi");   // Box for string
+Box<std::string> stringBox("Hi");   // Box for string
 ```
 
 **Key Properties:**
@@ -144,7 +144,7 @@ public:
 
 // Instantiation
 Box<int> intBox(42);
-Box<string> strBox("Hello");
+Box<std::string> strBox("Hello");
 ```
 
 ### Member Functions Outside Class
@@ -174,13 +174,28 @@ T Box<T>::getValue() const {
 ### Instantiation
 
 ```cpp
-// Explicit instantiation
+// Implicit instantiation (what you normally write)
 Box<int> b1(42);        // Creates Box class for int
 Box<double> b2(3.14);   // Creates Box class for double
 
-// Each type is separate class
-Box<int> != Box<double>
+// Each type is a separate class
+static_assert(!std::is_same_v<Box<int>, Box<double>>);
+
+// Explicit instantiation: force the compiler to generate the class
+// (all of its members) even if nothing uses it yet
+template class Box<int>;
 ```
+
+Since C++17 the compiler can also deduce the template argument from the
+constructor call (**CTAD**, class template argument deduction):
+
+```cpp
+Box b(42);                    // Box<int>
+Box s(std::string("Hi"));     // Box<std::string>
+```
+
+**Note:** `Box<int> b;` only compiles if `Box<int>` has a default constructor.
+The `Box` above only has `Box(T v)`, so you must pass a value.
 
 ---
 
@@ -205,8 +220,8 @@ public:
 };
 
 // Usage
-KeyValue<int, string> kv1(1, "One");
-KeyValue<string, double> kv2("Pi", 3.14);
+KeyValue<int, std::string> kv1(1, "One");
+KeyValue<std::string, double> kv2("Pi", 3.14);
 ```
 
 ### 2. Default Template Parameters
@@ -214,7 +229,7 @@ KeyValue<string, double> kv2("Pi", 3.14);
 Provide sensible defaults:
 
 ```cpp
-template<typename T, typename Container = vector<T>>
+template<typename T, typename Container = std::vector<T>>
 class Stack {
 private:
     Container data;
@@ -228,7 +243,7 @@ public:
 Stack<int> s1;  // Uses vector<int>
 
 // Override default
-Stack<int, deque<int>> s2;  // Uses deque<int>
+Stack<int, std::deque<int>> s2;  // Uses deque<int>
 ```
 
 ### 3. Non-Type Template Parameters
@@ -252,7 +267,7 @@ Array<int, 5> arr1;     // int[5]
 Array<double, 10> arr2; // double[10]
 
 // Different types!
-Array<int, 5> != Array<int, 10>
+// Array<int, 5> and Array<int, 10> are two unrelated types
 ```
 
 **Allowed non-type parameters:**
@@ -260,6 +275,7 @@ Array<int, 5> != Array<int, 10>
 - Enums
 - Pointers
 - References
+- Since C++20: floating-point types (`template<double D>`) and literal class types
 - Must be compile-time constants
 
 ### 4. Full Specialization
@@ -272,7 +288,7 @@ template<typename T>
 class Printer {
 public:
     void print(const T& value) {
-        cout << "Generic: " << value << "\n";
+        std::println("Generic: {}", value);
     }
 };
 
@@ -281,7 +297,7 @@ template<>
 class Printer<bool> {
 public:
     void print(const bool& value) {
-        cout << "Bool: " << (value ? "true" : "false") << "\n";
+        std::println("Bool: {}", value ? "true" : "false");
     }
 };
 
@@ -295,28 +311,28 @@ p2.print(true);  // Uses specialization
 
 ### 5. Partial Specialization
 
-Specialize based on pattern (class templates only):
+Specialize based on a pattern. Partial specialization works for class templates (and variable templates), **not** for function templates:
 
 ```cpp
 // Primary template
 template<typename T1, typename T2>
 class Pair {
 public:
-    void describe() { cout << "Two different types\n"; }
+    void describe() { std::println("Two different types"); }
 };
 
 // Partial specialization: both types same
 template<typename T>
 class Pair<T, T> {
 public:
-    void describe() { cout << "Both types same\n"; }
+    void describe() { std::println("Both types same"); }
 };
 
 // Partial specialization: second is pointer
 template<typename T1, typename T2>
 class Pair<T1, T2*> {
 public:
-    void describe() { cout << "Second is pointer\n"; }
+    void describe() { std::println("Second is pointer"); }
 };
 
 // Usage
@@ -348,13 +364,62 @@ int Counter<T>::count = 0;
 // Usage
 Counter<int> c1;    // count for Counter<int>
 Counter<int> c2;    // Same count
-Counter<string> s1; // Separate count for Counter<string>
+Counter<std::string> s1; // Separate count for Counter<string>
 
-cout << Counter<int>::getCount();    // 2
-cout << Counter<string>::getCount(); // 1
+std::println("{}", Counter<int>::getCount());    // 2
+std::println("{}", Counter<std::string>::getCount()); // 1
 ```
 
 **Important:** Each instantiation has its own static member!
+
+Since C++17 you can skip the out-of-class definition with `inline static`:
+
+```cpp
+template<typename T>
+class Counter {
+    inline static int count = 0;   // definition and declaration in one place
+};
+```
+
+### 7. Members are instantiated lazily
+
+Only the member functions you actually call are instantiated. A member that
+would not compile for some `T` is fine as long as nobody calls it:
+
+```cpp
+template<typename T>
+struct Lazy {
+    void ok() { }
+    void bad() { T::nonexistent(); }   // only an error if bad() is called
+};
+
+Lazy<int> l;
+l.ok();      // OK
+// l.bad();  // error: 'nonexistent' is not a member of 'int'
+```
+
+### 8. Friend functions
+
+A friend that is itself a function template needs a forward declaration of
+both templates, and the `<>` after the operator name:
+
+```cpp
+template<typename T> class Value;
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Value<T>& v);
+
+template<typename T>
+class Value {
+    T data;
+public:
+    Value(T d) : data(d) { }
+    friend std::ostream& operator<< <>(std::ostream& os, const Value<T>& v);
+};
+```
+
+Without the forward declaration, GCC rejects the friend line
+(`declaration of 'operator<<' as non-function`).
 
 ---
 
@@ -462,6 +527,7 @@ void Box<T>::set(T v) {  // ❌ Linker error!
 ```
 
 **Problem:** Template definitions must be visible at instantiation
+(GCC reports `undefined reference to 'Box<int>::set(int)'` at link time)
 
 **Fix:** Keep everything in header
 ```cpp
@@ -478,6 +544,18 @@ template<typename T>
 void Box<T>::set(T v) { value = v; }  // ✅ In header
 ```
 
+**Alternative:** keep the definitions in the `.cpp` and add an explicit
+instantiation for every type you need there. Then only those types work:
+
+```cpp
+// box.cpp
+template<typename T>
+void Box<T>::set(T v) { value = v; }
+
+template class Box<int>;     // ✅ Box<int> is generated here and can be linked
+// Box<double> would still give a linker error
+```
+
 ### ❌ Mistake 2: Forgetting Template Prefix
 
 **Bad:**
@@ -488,7 +566,7 @@ public:
     T getValue() const;
 };
 
-T Box<T>::getValue() const {  // ❌ Error!
+T Box<T>::getValue() const {  // ❌ Error: 'T' does not name a type
     return value;
 }
 ```
@@ -501,7 +579,9 @@ T Box<T>::getValue() const {
 }
 ```
 
-### ❌ Mistake 3: Wrong Syntax for Nested Types
+### ❌ Mistake 3: Missing `typename` for Dependent Nested Types
+
+`typename` is needed when the name depends on a template parameter *inside a template*:
 
 **Bad:**
 ```cpp
@@ -511,12 +591,25 @@ public:
     class Iterator { };
 };
 
-Container<int>::Iterator it;  // ❌ May not work
+template<typename T>
+void f() {
+    Container<T>::Iterator it;   // ❌ Error: need 'typename' ... because
+                                 //    'Container<T>' is a dependent scope
+}
 ```
 
 **Fix:**
 ```cpp
-typename Container<int>::Iterator it;  // ✅ Use typename
+template<typename T>
+void f() {
+    typename Container<T>::Iterator it;   // ✅ Use typename
+}
+```
+
+With a concrete type outside of a template no `typename` is needed:
+
+```cpp
+Container<int>::Iterator it;   // ✅ fine, Container<int> is a known class
 ```
 
 ### ❌ Mistake 4: Ignoring Copy/Move Semantics
@@ -570,8 +663,10 @@ Create a container with specialization for bool.
 
 ### Compile:
 ```bash
-g++ -std=c++17 class_templates.cpp -o class_templates
+g++ -std=c++23 main.cpp -o class_templates
 ```
+
+`std::println` needs C++23 and a standard library that ships `<print>` (GCC 14+, recent Clang/MSVC).
 
 ### Run:
 ```bash
@@ -709,8 +804,8 @@ template<typename T>
 class Container {
 private:
     T* data;
-    size_t capacity;
-    size_t length;
+    std::size_t capacity;
+    std::size_t length;
     
 public:
     // Constructor
@@ -724,7 +819,7 @@ public:
         capacity = other.capacity;
         length = other.length;
         data = new T[capacity];
-        for (size_t i = 0; i < length; ++i) {
+        for (std::size_t i = 0; i < length; ++i) {
             data[i] = other.data[i];
         }
     }
@@ -736,7 +831,7 @@ public:
             capacity = other.capacity;
             length = other.length;
             data = new T[capacity];
-            for (size_t i = 0; i < length; ++i) {
+            for (std::size_t i = 0; i < length; ++i) {
                 data[i] = other.data[i];
             }
         }
@@ -775,22 +870,22 @@ public:
     }
     
     // Access element
-    T& operator[](size_t index) {
+    T& operator[](std::size_t index) {
         return data[index];
     }
     
-    const T& operator[](size_t index) const {
+    const T& operator[](std::size_t index) const {
         return data[index];
     }
     
     // Size
-    size_t size() const { return length; }
+    std::size_t size() const { return length; }
     
 private:
     void resize() {
         capacity = capacity == 0 ? 1 : capacity * 2;
         T* newData = new T[capacity];
-        for (size_t i = 0; i < length; ++i) {
+        for (std::size_t i = 0; i < length; ++i) {
             newData[i] = data[i];
         }
         delete[] data;
@@ -802,7 +897,7 @@ private:
 Container<int> ints;
 ints.push_back(42);
 
-Container<string> strings;
+Container<std::string> strings;
 strings.push_back("Hello");
 ```
 
@@ -831,7 +926,7 @@ template<typename K, typename V>
 class Map { };
 
 // === DEFAULT PARAM ===
-template<typename T, typename C = vector<T>>
+template<typename T, typename C = std::vector<T>>
 class Stack { };
 
 // === NON-TYPE PARAM ===
@@ -857,7 +952,7 @@ int Counter<T>::count = 0;
 
 // === INSTANTIATION ===
 Box<int> b1(42);
-Box<string> b2("Hi");
+Box<std::string> b2("Hi");
 ```
 
 ---
@@ -897,9 +992,9 @@ Box<string> b2("Hi");
 ### STL Containers
 ```cpp
 template<typename T>
-class vector {
+class std::vector {
     T* data;
-    size_t size, capacity;
+    std::size_t size, capacity;
     // Dynamic array
 };
 ```
@@ -907,7 +1002,7 @@ class vector {
 ### Smart Pointers
 ```cpp
 template<typename T>
-class unique_ptr {
+class std::unique_ptr {
     T* ptr;
     // RAII wrapper
 };
@@ -916,7 +1011,7 @@ class unique_ptr {
 ### Optional Values
 ```cpp
 template<typename T>
-class optional {
+class std::optional {
     bool has_value;
     T value;
     // May or may not have value
@@ -927,8 +1022,8 @@ class optional {
 ```cpp
 template<typename T>
 class ThreadSafeQueue {
-    queue<T> data;
-    mutable mutex mtx;
+    std::queue<T> data;
+    mutable std::mutex mtx;
     // Thread-safe operations
 };
 ```
@@ -1003,3 +1098,48 @@ class ThreadSafeQueue {
 *Difficulty: Intermediate-Advanced*
 *Prerequisites: Function templates, classes*
 *CRITICAL for Understanding STL*
+
+---
+
+## Notes moved from main.cpp
+
+The title/description comment at the top of `main.cpp` ("WHAT ARE CLASS TEMPLATES?") stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `#include <print>` added, `<iostream>`, `<memory>` and `<algorithm>` removed (unused). `using namespace std;` is gone, every standard name is written with `std::`.
+- Each example has a `// === EXAMPLE n: … ===` title comment.
+- **Printed lecture text removed from the program** (it is covered by the sections above):
+  - the "✅ CLASS TEMPLATE" and "💡 …" bullet lists at the end of Examples 1–8 and 10 → *Concept Explanation*, *Key Concepts*;
+  - the whole **COMPREHENSIVE EXPLANATION** block printed by `main()` (What are class templates, Instantiation, Member functions, Multiple parameters, Default parameters, Non-type parameters, Specialization, Static members, Best practices, Common patterns, Quick reference, Key takeaways, Golden rules) → *Basic Syntax*, *Key Concepts*, *Best Practices*, *Real-World Applications*, *Quick Reference Card*, *Key Takeaways*, *THE GOLDEN RULES*.
+- Example 9 renders `Value<int>` through a small `toString()` helper (`std::ostringstream`), because `std::println` can only format types that have a `std::formatter`, not types that only have `operator<<`.
+- All 10 examples still run in the same order; the program output is the same as before apart from the removed bullet lists and explanation block.
+
+### Corrections to the original files
+
+- **Explicit vs implicit instantiation:** the old printed text called `Box<int> b1;` an "explicit instantiation". That is an implicit instantiation; the explicit form is `template class Box<int>;`. Fixed, and the explicit form is now shown. (`Box<int> b1;` also would not compile with a `Box` that only has `Box(T v)`.)
+- **Mistake 3 (`typename`):** the README claimed `Container<int>::Iterator it;` "may not work". It compiles fine; `typename` is only required for dependent names inside a template (`Container<T>::Iterator`). Rewritten.
+- **Non-type parameters:** floating-point and literal class types are allowed since C++20; the old list said only integral types, enums, pointers and references.
+- **Partial specialization:** "only for class templates" → class *and variable* templates, not function templates.
+- **Mistake 1 (definitions in .cpp):** added the explicit-instantiation alternative.
+- **Compile command:** `-std=c++17 class_templates.cpp` → `-std=c++23 main.cpp` (`<print>` needs C++23).
+- **Added:** CTAD, `inline static` members, lazy member instantiation, friend-template forward declaration.
+- Raw `Box<int> != Box<double>` / `Array<int, 5> != Array<int, 10>` lines were not valid C++; they are now comments or a `static_assert`.
+
+### What was tested (GCC 13.3, `-Wall -Wextra`, ASan/UBSan)
+
+Verified by compiling and running:
+
+- `main.cpp` builds without warnings; output matches the original program.
+- Static counters are separate per type (`Counter<int>` vs `Counter<std::string>`).
+- `sizeof(Array<int,5>) == 5 * sizeof(int)` (no overhead from the template itself).
+- `Box<int>` and `Box<double>` are different types; CTAD deduces `Box<int>`.
+- Definition in a `.cpp` → linker error `undefined reference to 'Box<int>::set(int)'`; adding `template class Box<int>;` fixes it.
+- Missing `template<typename T>` prefix → `'T' does not name a type`.
+- Missing `typename` in `Container<T>::Iterator` → error; `Container<int>::Iterator` and `typename Container<int>::Iterator` both compile.
+- Friend `operator<< <>` without the forward declaration → error.
+- Function-template partial specialization → error (`non-class, non-variable partial specialization … is not allowed`); variable-template partial specialization works.
+- `template<double D>` fails with `-std=c++17` and works with `-std=c++23`.
+- Lazy instantiation: unused `bad()` compiles, calling it errors.
+- `Stack<int, std::deque<int>>`, enum / `bool` / `char` / pointer / reference non-type parameters, `inline static` counters compile and run.
+- The "Complete Pattern" `Container` (copy, move, assignment, `push_back`) runs clean under ASan/UBSan.
+
+Not tested: Clang / MSVC behavior, and the claims in prose about STL internals (e.g. `std::vector`'s allocator parameter) and about compile times / code size.

@@ -2,11 +2,15 @@
 
 ## 📚 Overview
 
-This folder introduces **Function Templates** - the foundation of generic programming in C++. Templates allow you to write code once that works with any type, providing type-safe generics with zero runtime overhead. They're the backbone of the Standard Template Library (STL) and essential for modern C++ development.
+This folder introduces **Function Templates** - the foundation of generic programming in C++. Templates allow you to write code once that works with any type, providing type-safe generics with no runtime cost for the abstraction itself. They're the backbone of the Standard Template Library (STL) and essential for modern C++ development.
 
 **Function Templates** = Write once, use with any type
 
 This is **ESSENTIAL** for generic programming and understanding the STL.
+
+> **Status marks**
+> ✅ *tested* = compiled and run with GCC 13.3 (`-std=c++23`, `-Wall -Wextra`, AddressSanitizer, UBSan).
+> ⚠️ *not tested* = from the language rules or common practice, not run here.
 
 ---
 
@@ -16,11 +20,11 @@ This is **ESSENTIAL** for generic programming and understanding the STL.
 - Template syntax and type parameters
 - Type deduction (implicit and explicit)
 - Multiple template parameters
-- Template specialization
+- Template specialization (and why overloads are often better)
 - Overloading with templates
 - Non-type template parameters
 - Return type deduction
-- Template constraints (SFINAE)
+- Template constraints (SFINAE, `if constexpr`, concepts)
 - Real-world usage patterns
 - Best practices and common pitfalls
 
@@ -36,7 +40,7 @@ This is **ESSENTIAL** for generic programming and understanding the STL.
 // Without templates - need separate functions
 int maxInt(int a, int b) { return (a > b) ? a : b; }
 double maxDouble(double a, double b) { return (a > b) ? a : b; }
-string maxString(string a, string b) { return (a > b) ? a : b; }
+std::string maxString(std::string a, std::string b) { return (a > b) ? a : b; }
 // Duplicated code! 💥
 
 // With templates - one function for all types
@@ -44,15 +48,16 @@ template<typename T>
 T maximum(T a, T b) {
     return (a > b) ? a : b;
 }
-// Works with any type! ✅
+// Works with any type that has operator>! ✅
 ```
 
 **Key Properties:**
 - Template is a blueprint, not actual code
-- Compiler generates specific functions
+- Compiler generates specific functions (instantiations)
 - Type-safe (compile-time checking)
-- Zero runtime overhead
+- No runtime overhead from the abstraction itself (the cost is paid at compile time, and in code size if you instantiate many types)
 - One template → many functions
+- `class` and `typename` mean the same in `template<class T>` / `template<typename T>`
 
 ### How Templates Work
 
@@ -90,8 +95,10 @@ COMPILATION PROCESS:
 4. Result
    One template → Multiple functions
    Generated at compile time
-   Each type gets optimized version
+   Each type gets its own function
 ```
+
+✅ Tested: calling `maximum` with `int`, `double` and `char` (at `-O0`) leaves three separate functions in the binary: `maximum<int>`, `maximum<double>`, `maximum<char>` (visible with `nm -C`). With optimization the compiler may inline them instead. The old text said "each type gets an *optimized* version"; what is true is that each type gets its *own* version, which is then optimized like any other function.
 
 ### Real-World Analogy
 
@@ -139,12 +146,13 @@ char m3 = maximum('a', 'z');        // T = char
 ```cpp
 template<typename T1, typename T2>
 void printPair(T1 first, T2 second) {
-    cout << first << ", " << second << "\n";
+    std::println("{}, {}", first, second);
 }
 
 // Different types
 printPair(42, 3.14);        // T1=int, T2=double
 printPair("Age", 25);       // T1=const char*, T2=int
+printPair(true, "Success"); // T1=bool, T2=const char*
 ```
 
 ### Explicit Type Specification
@@ -158,6 +166,8 @@ maximum<int>(10, 20);       // T explicitly int
 maximum<double>(5, 10);     // T explicitly double (converts args)
 ```
 
+✅ `maximum<double>(5, 10)` returns `10` as a `double`.
+
 ---
 
 ## 🔍 Key Concepts
@@ -168,19 +178,20 @@ The compiler automatically determines the type parameter based on arguments:
 
 ```cpp
 template<typename T>
-void print(T value) {
-    cout << value << "\n";
+void show(T value) {
+    std::println("{}", value);
 }
 
-print(42);          // T = int
-print(3.14);        // T = double
-print("Hello");     // T = const char*
-print(string("Hi"));// T = string
+show(42);          // T = int
+show(3.14);        // T = double
+show("Hello");     // T = const char*
+show(std::string("Hi")); // T = std::string
 ```
 
 **Rules:**
-- Types must match exactly
-- No implicit conversions in deduction
+- Every use of `T` must deduce to the same type, otherwise deduction fails
+- Implicit conversions between argument types are not tried to make them match
+- Deduction itself still applies a few adjustments: arrays and functions decay to pointers, and top-level `const` is dropped for by-value parameters (this is why `"Hello"` becomes `const char*`)
 - Can specify explicitly when needed
 
 **Example of deduction rules:**
@@ -193,6 +204,24 @@ add(5, 10.5);     // ❌ Error - int and double don't match
 add<double>(5, 10.5);  // ✅ OK - explicit type
 ```
 
+✅ Tested: `add(5, 10.5)` → `no matching function for call to 'add(int, double)'`; `add<double>(5, 10.5)` compiles.
+
+`typeid(T).name()` (used in Examples 3 and 4) is implementation-defined. GCC prints mangled names (`i`, `d`, `PKc`, ...); MSVC prints readable ones. ✅ GCC output: `i`, `d`, `PKc` for `int`, `double`, `const char*`.
+
+#### ⚠️ Pitfall: string literals deduce `const char*`, not `string`
+
+```cpp
+template<typename T>
+T maximum(T a, T b) { return (a > b) ? a : b; }
+
+maximum("apple", "banana");   // T = const char*  →  compares POINTERS, not text!
+maximum(std::string("apple"), std::string("banana"));   // ✅ compares text
+```
+
+✅ Tested: `maximum("apple", "banana")` and `maximum("zebra", "ant")` compile without any warning and return whichever literal has the higher address, which is not guaranteed to be alphabetical (they happened to return `apple` and `zebra`, i.e. the *wrong* answer for the first). The old lecture text in `main.cpp` claimed `string m3 = maximum("a", "b"); // T = string`, which is incorrect: `T` is `const char*`. This is why `main.cpp` Example 2 passes `string("apple")`.
+
+With `const T&` parameters the situation is different: literals of different lengths have different array types (`const char[6]` vs `const char[7]`), so deduction fails with `no matching function for call to 'maxRef(const char [6], const char [7])'` ✅.
+
 ### 2. Template Specialization
 
 Sometimes you need custom behavior for specific types:
@@ -204,15 +233,21 @@ T add(T a, T b) {
     return a + b;
 }
 
-// Specialization for const char*
+// Real specialization for bool: same signature as the template with T = bool
 template<>
-string add<const char*>(const char* a, const char* b) {
-    return string(a) + string(b);  // Custom behavior
+bool add<bool>(bool a, bool b) {
+    return a || b;
+}
+
+// Plain overload (NOT a specialization) for string literals
+std::string add(const char* a, const char* b) {
+    return std::string(a) + std::string(b);
 }
 
 // Usage
-add(10, 20);           // Uses generic - returns 30
-add("Hello", " World");// Uses specialization - concatenates
+add(10, 20);            // generic - returns 30
+add(true, false);       // specialization - logical OR
+add("Hello", " World"); // the overload - concatenates
 ```
 
 **Syntax:**
@@ -223,6 +258,17 @@ ReturnType FunctionName<SpecificType>(parameters) {
 }
 ```
 
+**Correction.** The old README (and a comment in `main.cpp`) wrote the string case as a specialization:
+
+```cpp
+template<>
+std::string add<const char*>(const char* a, const char* b) { ... }   // ❌ does not compile
+```
+
+✅ GCC: `template-id 'add<const char*>' for 'std::string add(const char*, const char*)' does not match any template declaration`. A specialization must have exactly the signature the template would have for that `T`: for `T = const char*` the return type is `const char*`, not `string`. A specialization with the right signature (`const char* add<const char*>(const char*, const char*)`) does compile ✅, but for string literals the **plain overload** is what you want, and `main.cpp` Example 5 uses exactly that (the comment there now says "overload, not specialization").
+
+⚠️ General advice (not tested here): prefer overloads to function template specializations. Specializations do not take part in overload resolution; only the primary template does, which can lead to surprising choices.
+
 ### 3. Overloading with Templates
 
 You can have both template and regular functions with the same name:
@@ -231,24 +277,36 @@ You can have both template and regular functions with the same name:
 // Template version
 template<typename T>
 void display(T value) {
-    cout << "Template: " << value << "\n";
+    std::println("Template: {}", value);
 }
 
 // Regular version
 void display(int value) {
-    cout << "Regular: " << value << "\n";
+    std::println("Regular: {}", value);
 }
 
-display(42);      // Calls regular (exact match preferred)
+display(42);      // Calls regular (same match quality, non-template wins)
 display(3.14);    // Calls template (no double overload)
 display("Hi");    // Calls template
 ```
 
-**Overload Resolution Priority:**
-1. Exact match with non-template function
-2. Template with exact match
-3. Template with conversion
-4. Non-template with conversion
+**Overload resolution, in the right order:**
+1. Candidates are the regular functions **and** the templates (after deduction).
+2. The one with the **better conversion sequences** wins. A template that matches *exactly* beats a regular function that needs a conversion.
+3. Only if that is a tie, a **non-template** beats a template.
+4. If both are templates, the more specialized one wins. (⚠️ not tested here)
+
+The old list ("1 exact non-template, 2 template exact, 3 template with conversion, 4 non-template with conversion") was wrong at the end: a non-template that needs a conversion *loses* to a template that is an exact match. ✅ Tested with `template<T> display(T)` and `display(int)`:
+
+| Call | Chosen | Why |
+|------|--------|-----|
+| `display(42)` | regular int | tie → non-template wins |
+| `display('x')` | **template** (`T = char`) | exact match beats the promotion `char → int` |
+| `display(3.14)` | template | `double → int` would be a conversion |
+| `display(42L)` | **template** (`T = long`) | exact match beats the conversion `long → int` |
+| `display<>(42)` | template | `<>` forces the template |
+
+So "regular functions preferred" is only a tie-breaker, not a rule that beats everything. `main.cpp` Example 6 (which has both `display(int)` and `display(double)`) shows `display('x')` going to the template.
 
 ### 4. Non-Type Template Parameters
 
@@ -272,6 +330,11 @@ Array<double, 10> arr2; // double array, size 10
 - Pointers
 - References
 - Must be compile-time constants!
+- Since C++20 also floating-point values and "structural" class types; since C++17 `template<auto N>` deduces the type of the value ✅ (`template<double D>` and `template<auto N>` compile with `-std=c++20`; with `-std=c++17` GCC says `'double' is not a valid type for a template non-type parameter`).
+
+The value is part of the type: `Array<int, 5>` and `Array<int, 6>` are different types. Typical uses: array sizes, matrix dimensions, buffer sizes, compile-time options.
+
+`printArray(const T (&arr)[Size])` (Example 7) deduces both `T` and `Size` from an array argument, because taking the array **by reference** stops it from decaying to a pointer.
 
 ### 5. Return Type Deduction
 
@@ -291,39 +354,41 @@ auto add(T1 a, T2 b) {
 }
 ```
 
+`decltype(a + b)` is "the type of the expression `a + b`": `int + int` → `int`, `int + double` → `double`. ✅ Example 8 prints `Results: 30, 12.5, 4` and `Results: 50, 10`.
+
+### 6. Constraining a template (C++11 → C++20)
+
+```cpp
+// SFINAE (works since C++11)
+template<typename T>
+typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+safeAdd(T a, T b) { return a + b; }
+
+// Concepts (C++20) - same idea, readable
+template<typename T> requires is_arithmetic_v<T>
+T safeAdd(T a, T b) { return a + b; }
+```
+
+✅ Both reject `safeAdd("a", "b")` with `no matching function for call to 'safeAdd(const char [2], const char [2])'`.
+
+**`if` versus `if constexpr`.** `checkType` in Example 9 uses a plain `if (is_integral<T>::value)`. A plain `if` still **compiles every branch for every `T`**, so the template only works if all branches are valid for every type. ✅ Tested with a non-streamable struct: `if (is_integral<T>::value) cout << v;` fails with `no match for 'operator<<'`, while `if constexpr (is_integral_v<T>) cout << v;` compiles because the false branch is discarded. Use `if constexpr` (C++17) when branches only make sense for some types.
+
 ---
 
 ## 📋 Examples in This Folder
 
-### Example 1: The Problem Without Templates
-Shows code duplication with separate functions.
+`main.cpp` has 10 examples:
 
-### Example 2: Basic Function Template
-One template for all types.
-
-### Example 3: Type Deduction
-Implicit vs explicit type specification.
-
-### Example 4: Multiple Template Parameters
-Different types in one template.
-
-### Example 5: Template Specialization
-Custom behavior for specific types.
-
-### Example 6: Overloading with Templates
-Templates and regular functions together.
-
-### Example 7: Non-Type Template Parameters
-Compile-time constants in templates.
-
-### Example 8: Return Type Deduction
-Auto and decltype with templates.
-
-### Example 9: Template Constraints
-SFINAE and type restrictions.
-
-### Example 10: Real-World Examples
-Practical usage patterns.
+1. **The Problem Without Templates** - separate function per type
+2. **Basic Function Template** - one template for all types
+3. **Type Deduction** - implicit vs explicit
+4. **Multiple Template Parameters** - different types in one template
+5. **Template Specialization** - the `bool` specialization and the `const char*` overload
+6. **Overloading with Templates** - templates and regular functions together
+7. **Non-Type Template Parameters** - compile-time constants
+8. **Return Type Deduction** - `auto` and `decltype`
+9. **Template Constraints** - SFINAE and type checking
+10. **Real-World Examples** - swap, print container, find, sum
 
 ---
 
@@ -334,7 +399,7 @@ Practical usage patterns.
 **Generic algorithms:**
 ```cpp
 template<typename T>
-void sort(T* array, int size) {
+void sort(T* std::array, int size) {
     // Works with any comparable type
 }
 ```
@@ -342,7 +407,7 @@ void sort(T* array, int size) {
 **Type-independent operations:**
 ```cpp
 template<typename T>
-void swap(T& a, T& b) {
+void mySwap(T& a, T& b) {
     T temp = a;
     a = b;
     b = temp;
@@ -361,7 +426,7 @@ class Vector {
 **Code reuse:**
 ```cpp
 template<typename T>
-T min(T a, T b) { return (a < b) ? a : b; }
+T minimum(T a, T b) { return (a < b) ? a : b; }
 // One function for all types
 ```
 
@@ -387,7 +452,7 @@ T add(T a, T b) { return a + b; }
 add(5, 10.5);  // ❌ Error: int and double don't match
 ```
 
-**Problem:** Type deduction requires exact match
+**Problem:** every use of `T` must deduce to the same type
 
 **Fix:**
 ```cpp
@@ -405,14 +470,16 @@ auto add(T1 a, T2 b) -> decltype(a + b) {
 ```cpp
 template<typename T>
 T maximum(T a, T b) {
-    return (a > b) ? a : b;  // Assumes operator<
+    return (a > b) ? a : b;  // Assumes operator>
 }
 
 struct NoCompare { int x; };
 maximum(NoCompare{1}, NoCompare{2});  // ❌ Error!
 ```
 
-**Problem:** T must support operator>
+**Problem:** T must support `operator>` (the old comment said `operator<`, but the code uses `>`)
+
+✅ GCC: `no match for 'operator>' (operand types are 'NoCompare' and 'NoCompare')`, reported inside the template, which is why concepts give better messages.
 
 **Fix:** Document requirements or use concepts (C++20)
 
@@ -434,7 +501,14 @@ T maximum(T a, T b) {
 
 **Problem:** Templates must be in header or explicitly instantiated
 
-**Fix:** Keep template definition in header
+✅ Tested: `main.cpp` calling `maximum(3, 7)` fails at link time with `undefined reference to 'int maximum<int>(int, int)'`, because `implementation.cpp` never instantiated it.
+
+**Fix:** Keep the template definition in the header, **or** explicitly instantiate the types you need in the `.cpp`:
+```cpp
+template int maximum<int>(int, int);
+template double maximum<double>(double, double);
+```
+✅ Tested: with these two lines the program links and prints `7`. Only those two types will work.
 
 ### ❌ Mistake 4: Unnecessary Copies
 
@@ -453,6 +527,24 @@ void process(const T& value) {  // ✅ Reference
     // Use value
 }
 ```
+
+(For small types like `int` a by-value parameter is just as good. And remember the side effect from above: with `const T&`, array arguments no longer decay, so `process("a", "bc")`-style calls with two parameters of the same `T` fail.)
+
+### ❌ Mistake 5: Comparing string literals
+
+See [the pitfall above](#️-pitfall-string-literals-deduce-const-char-not-string) ✅.
+
+### ❌ Mistake 6: Reusing standard names together with `using namespace std`
+
+```cpp
+template<typename T, typename... A>
+std::unique_ptr<T> std::make_unique(A&&... a) { ... }   // your own version
+
+auto p = std::make_unique<int>(5);   // ❌ ambiguous with std::make_unique
+```
+✅ GCC: `call of overloaded 'make_unique<int>(int)' is ambiguous`.
+
+The same happened to the original `main.cpp`: it defined its own `accumulate`, which compiled only because `<numeric>` was not included. ✅ Adding `#include <numeric>` makes `accumulate(numbers.begin(), numbers.end(), 0)` fail with `call of overloaded 'accumulate(...)' is ambiguous` (the vector iterators belong to `std`, so `std::accumulate` is found through argument-dependent lookup). The function is now called `sumRange`. For the same reason the example swap is called `mySwap`, not `swap`.
 
 ---
 
@@ -479,10 +571,10 @@ Create a comparison template with proper specializations.
 
 ### Compile:
 ```bash
-g++ -std=c++14 function_templates.cpp -o function_templates
+g++ -std=c++23 -Wall -Wextra main.cpp -o function_templates
 ```
 
-Note: Requires C++11 minimum, C++14 for some features
+`main.cpp` prints with `std::println` (`<print>`), so it needs **C++23 and GCC 14+** (or another standard library that ships `<print>`). The templates themselves need C++11 at minimum; the trailing `decltype` form is C++11, `auto` return deduction is C++14, `if constexpr` is C++17, concepts are C++20.
 
 ### Run:
 ```bash
@@ -501,6 +593,10 @@ The program demonstrates:
 8. Return type deduction
 9. Constraints (SFINAE)
 10. Real-world patterns
+
+**Output differs from the old `cout` version in two ways** (both come from `std::println`, not from the templates):
+- The `"  maxInt called"` style messages now appear **before** the line that uses the result. Old output: `Max int:   maxInt called` followed by `20` on the next line (the function printed in the middle of the `cout` chain). New output: `  maxInt called`, then `Max int: 20`. This is because `println` evaluates its arguments first.
+- `bool` values print as `true` / `false` instead of `1` / `0` (`add(true, false)` → `true`; `printPair(true, "Success")` → `Pair: (true, Success)`).
 
 ---
 
@@ -529,7 +625,7 @@ TEMPLATE:
 
 One template → Multiple functions
 Generated at compile time
-Each type gets optimized version
+Each type gets its own function
 ```
 
 ### Type Deduction
@@ -553,21 +649,21 @@ Instantiate: int maximum(int a, int b)
 ```
 display(42)
     │
-    ├─ Check exact match non-template
-    │  → void display(int) exists ✅
-    │  → USE THIS
+    ├─ Candidates: display(int) AND display<int>(int)
+    │  → both exact matches (a tie)
+    │  → tie-breaker: non-template wins
+    │  → void display(int) ✅ USE THIS
     │
-    └─ Don't check template
-
+display('x')
+    │
+    ├─ display(int):      needs promotion char → int
+    ├─ display<char>(char): exact match ✅
+    │  → better conversion sequence wins
+    │  → template ✅ USE THIS
+    │
 display(3.14)
     │
-    ├─ Check exact match non-template
-    │  → No void display(double) ❌
-    │
-    └─ Check template
-       → template<typename T>
-       → T = double ✅
-       → USE THIS
+    └─ no display(double) → template with T = double ✅
 ```
 
 ---
@@ -596,14 +692,14 @@ display(3.14)
 ### What We Learned:
 
 ✅ **Templates** are blueprints for functions
-✅ **Write once**, use with any type
-✅ **Type deduction** is automatic
-✅ **Compiler generates** specific functions
-✅ **Specialization** for custom behavior
-✅ **Overloading** with regular functions
+✅ **Write once**, use with any type (that supports the operations used)
+✅ **Type deduction** is automatic, and must agree for every use of `T`
+✅ **Compiler generates** a specific function per type
+✅ **Specialization** for custom behavior (often an overload is simpler)
+✅ **Overloading** with regular functions (better match first, non-template as tie-breaker)
 ✅ **Non-type parameters** for constants
 ✅ **Return type deduction** with auto/decltype
-✅ **Zero overhead** - compile-time only
+✅ **No runtime overhead** from the abstraction - the work happens at compile time
 ✅ **Foundation of STL** and generic programming
 
 ### The Complete Pattern:
@@ -622,7 +718,7 @@ T maximum(T a, T b) {
 // 2. MULTIPLE PARAMETERS
 template<typename T1, typename T2>
 void printPair(T1 first, T2 second) {
-    cout << first << ", " << second << "\n";
+    std::println("{}, {}", first, second);
 }
 
 // 3. CONST REFERENCES (efficient)
@@ -637,22 +733,24 @@ auto add(T1 a, T2 b) -> decltype(a + b) {
     return a + b;
 }
 
-// 5. SPECIALIZATION
+// 5. SPECIALIZATION (same signature as the template for that T)
 template<typename T>
 T func(T param) {
     // Generic implementation
+    return param;
 }
 
 template<>
-string func<string>(string param) {
+std::string func<std::string>(std::string param) {
     // Custom for string
+    return param + "!";
 }
 
 // 6. NON-TYPE PARAMETER
 template<typename T, int Size>
 void printArray(T (&arr)[Size]) {
     for (int i = 0; i < Size; ++i) {
-        cout << arr[i] << " ";
+        std::print("{} ", arr[i]);
     }
 }
 
@@ -660,13 +758,13 @@ void printArray(T (&arr)[Size]) {
 template<typename T>
 void display(T value) { }  // Template
 
-void display(int value) { }  // Regular (preferred for int)
+void display(int value) { }  // Regular (wins ties, e.g. for int)
 
 // 8. GENERIC ALGORITHMS
 template<typename Container>
 void printAll(const Container& c) {
     for (const auto& item : c) {
-        cout << item << " ";
+        std::print("{} ", item);
     }
 }
 ```
@@ -706,10 +804,14 @@ auto func(T1 a, T2 b) -> decltype(a+b) {
 template<typename T>
 void func(const T& param) { }
 
+// === CONSTRAINT (C++20) ===
+template<typename T> requires is_arithmetic_v<T>
+T func(T a, T b) { return a + b; }
+
 // === TYPE REQUIREMENTS ===
 // T must support:
 // - Copy constructor
-// - operator< (for comparisons)
+// - operator> (for comparisons)
 // - operator+ (for addition)
 // Document these!
 ```
@@ -721,15 +823,17 @@ void func(const T& param) { }
 ### ✅ DO:
 
 - **Use meaningful names** (T, U, V or Value, Key)
-- **Prefer const references** for parameters
-- **Document type requirements** 
+- **Prefer const references** for large parameters (small types can be passed by value)
+- **Document type requirements** (or express them with concepts)
 - **Keep templates simple**
 - **Test with multiple types**
-- **Put templates in headers**
+- **Put templates in headers** (or explicitly instantiate)
 - **Use auto for return types** when appropriate
-- **Specialize when needed**
+- **Prefer overloads over specializations** when you can
+- **Use `if constexpr`** when branches depend on the type
 - **Consider concepts** (C++20)
 - **Provide good error messages**
+- **Don't reuse standard names** (`swap`, `accumulate`, `make_unique`) together with `using namespace std`
 
 ### ❌ DON'T:
 
@@ -761,12 +865,13 @@ void for_each(Iter begin, Iter end, Func f) {
 ### Generic Swap
 ```cpp
 template<typename T>
-void swap(T& a, T& b) {
+void mySwap(T& a, T& b) {
     T temp = std::move(a);
     a = std::move(b);
     b = std::move(temp);
 }
 ```
+(`std::swap` already does this; the example is called `mySwap` to avoid a name clash.)
 
 ### Container Operations
 ```cpp
@@ -783,10 +888,11 @@ typename Container::value_type sum(const Container& c) {
 ### Generic Factories
 ```cpp
 template<typename T, typename... Args>
-unique_ptr<T> make_unique(Args&&... args) {
-    return unique_ptr<T>(new T(forward<Args>(args)...));
+std::unique_ptr<T> makeUnique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 ```
+(`std::make_unique` already exists, see Mistake 6; the `Args&&...` part is a variadic template, covered in 35_VariadicTemplates.)
 
 ---
 
@@ -805,9 +911,9 @@ unique_ptr<T> make_unique(Args&&... args) {
 2. **Write once**, use with any type
 3. **Type deduction** happens automatically
 4. **Compiler generates** specific functions
-5. **Zero runtime overhead** - compile-time feature
+5. **No runtime overhead** from the abstraction - it is a compile-time feature
 6. **Type requirements** must be met
-7. **Specialization** for custom behavior
+7. **Specialization** for custom behavior (overloads are often simpler)
 8. **Keep in headers** (usually)
 9. **Foundation of STL** algorithms
 10. **Essential for** modern C++
@@ -819,31 +925,36 @@ unique_ptr<T> make_unique(Args&&... args) {
 ```
 ⚠️  RULE 1: Template is a blueprint
    Not actual code until used!
-   
+
    Compiler generates functions on demand
+   One template → many functions
 
 ⚠️  RULE 2: Type must support operations
    Document requirements!
-   
-   max(a,b) needs operator>
+
+   maximum(a,b) needs operator>
    sort needs operator<
 
 ⚠️  RULE 3: Prefer const references
-   For efficiency!
-   
+   For large types!
+
    template<typename T>
    void func(const T& param)
 
 ⚠️  RULE 4: Keep in headers
    Or explicitly instantiate!
-   
+
    Templates need full definition visible
 
 ⚠️  RULE 5: Test with multiple types
    Don't assume it works!
-   
+
    Test int, double, string, custom types
-   
+
+⚠️  RULE 6: Better match first
+   In overload resolution a non-template only wins ties.
+   Exact match beats a conversion, template or not.
+
    USE TEMPLATES FOR CODE REUSE AND TYPE SAFETY!
 ```
 
@@ -852,6 +963,41 @@ unique_ptr<T> make_unique(Args&&... args) {
 **Previous Topic:** [31_InitializerLists](../31_InitializerLists/) - Uniform Initialization
 
 **Next Topic:** [33_ClassTemplates](../33_ClassTemplates/) - Template Classes
+
+---
+
+## Notes moved from main.cpp
+
+The title/description comment at the top of `main.cpp` ("WHAT ARE FUNCTION TEMPLATES?") stays. What changed:
+
+- `std::cout` → `std::println` / `std::print`; `#include <print>` added, `<iostream>` removed. `<typeinfo>` added (`typeid` was used without it), the unused `<algorithm>` removed.
+- Each example has a `// === EXAMPLE n: … ===` title comment.
+- **Printed lecture text removed from the program** (it is covered by the sections above):
+  - the "❌ PROBLEMS", "✅ TEMPLATE SOLUTION" and "💡 …" bullet lists at the end of Examples 1–10 → *When to use templates*, *Key Concepts* (type deduction, specialization, overloading, non-type parameters, return type deduction, constraints);
+  - the whole **COMPREHENSIVE EXPLANATION** block printed by `main()` (What are function templates, Why templates, How templates work, Type deduction, Multiple parameters, Specialization, Overload resolution, Non-type parameters, Best practices, Common patterns, Quick reference, Key takeaways, Golden rules) → *Concept Explanation*, *Basic Syntax*, *Key Concepts*, *Best Practices*, *Quick Reference Card*, *Key Takeaways*, *THE GOLDEN RULES*.
+- Example numbering is unchanged (all 10 examples run).
+
+### Corrections to the original files
+
+1. **Invalid specialization** `template<> string add<const char*>(...)` (README) and the wrong comment "Specialization for const char*" (`main.cpp`): that function is an **overload**. Fixed in both.
+2. **Overload priority list** was wrong (a non-template with a conversion does not beat an exact-match template). Rewritten, with a test table.
+3. **`maximum("a", "b")` is not `T = string`** (lecture text in `main.cpp`): it is `const char*` and compares pointers.
+4. **`accumulate` renamed `sumRange`** (ambiguous with `std::accumulate` as soon as `<numeric>` is included).
+5. **`typeid` without `<typeinfo>`**: include added; the printed names are implementation-defined.
+6. **"Type deduction: types must match exactly / no conversions"** was too absolute: arrays and functions decay, top-level `const` is dropped.
+7. **"Each type gets optimized version" / "Zero runtime overhead"** reworded: each type gets its own function; the cost moves to compile time and code size.
+8. **Comment in Mistake 2** said `operator<` while the code uses `>`.
+9. **`if` vs `if constexpr`:** `checkType` uses a plain `if`; noted in the constraints section.
+10. **`swap` and `make_unique`** examples clashed with `std` names under `using namespace std`: renamed (`mySwap`, `makeUnique`).
+11. **Compile command** `-std=c++14` → `-std=c++23` because of `<print>`.
+12. **Output order and bool formatting changed** with `println` (see *Expected Output*).
+
+### Tested
+
+✅ `g++ -std=c++23 -Wall -Wextra` with AddressSanitizer + UBSan: no warnings, no errors.
+✅ Output compared line by line with the original run: identical except the reordered function messages, `true`/`false` instead of `1`/`0`, three changed sub-headings (Examples 5 and 10) and the removed lecture lines. All numeric values match (for example `7.2`, `6`, `12.5`).
+✅ Claims marked ✅ above: deduction error for `add(5, 10.5)`, invalid specialization, valid specialization, pointer comparison with string literals, `const T&` with literals of different length, missing `operator>`, template in a `.cpp` (link error and explicit-instantiation fix), overload table (`42`, `'x'`, `3.14`, `42L`, `<>`), C++20 floating-point and `auto` non-type parameters (and the C++17 error), `if` versus `if constexpr`, SFINAE versus concepts error messages, `make_unique` and `accumulate` ambiguity, separate instantiations in the binary.
+⚠️ Not tested: partial ordering between two templates, "prefer overloads over specializations", compile-time and code-size cost, and `std::println` with GCC 14 itself (the sandbox has GCC 13; a small stand-in header with the same behavior was used).
 
 ---
 
