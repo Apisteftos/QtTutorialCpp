@@ -12,24 +12,23 @@
 ```mermaid
 flowchart TD
     subgraph CONTRACT["Interface = Contract"]
-        I["«interface»\nIAudioCodec\n─────────────\n+encode(pcm) bytes\n+decode(bytes) pcm\n+bitrate() int\n+name() string"]
+        I["«interface»\nICompressor\n─────────────\n+encode(samples) bytes\n+decode(bytes) samples\n+keptPercent() int\n+name() string"]
     end
 
     subgraph IMPL["Implementations — swap freely"]
-        A[OpusCodec]
-        B[AMRCodec]
-        C[EVRCCodec]
-        D[MockCodec\nfor testing]
+        A[HalfCompressor]
+        B[QuarterCompressor]
+        D[MockCompressor\nfor testing]
     end
 
     subgraph USER["Users — know only the interface"]
-        E[AudioEngine]
-        F[RecorderModule]
-        G[QualityMonitor]
+        E[DataLink]
+        F["BackupWriter\n(hypothetical)"]
+        G["QualityMonitor\n(hypothetical)"]
     end
 
-    I --> A & B & C & D
-    E & F & G -->|"IAudioCodec&"| I
+    I --> A & B & D
+    E & F & G -->|"ICompressor&"| I
 
     style I fill:#FF9800,color:#fff
     style CONTRACT fill:#FFF3E0
@@ -106,3 +105,13 @@ flowchart TD
 | Do multiple classes do the same thing differently? | ✅ |
 | Is this a stable, well-understood contract? | ✅ |
 | Is there only ever one implementation and it never changes? | ❌ skip it |
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

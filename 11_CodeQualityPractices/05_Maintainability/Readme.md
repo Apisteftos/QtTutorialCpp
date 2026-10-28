@@ -927,3 +927,394 @@ Total: ___/100
 ```
 
 Remember: **Maintainability is not optional - it's essential!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 MAINTAINABILITY PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Write code for humans first,  
+computers second. Your future self will thank you!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_readability()`
+
+- ❌ BAD CODE (Hard to Read):
+
+```cpp
+
+```cpp
+double calc(double a, double b, int t) {
+    if (t == 1) return a * 0.1 + b;
+    else if (t == 2) return a * 0.15 + b * 1.2;
+    // What are a, b, t? What are the magic numbers?
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Unclear variable names (a, b, t)
+  - Magic numbers (0.1, 0.15, 1.2)
+  - No comments explaining logic
+  - Hard to understand intent
+
+- ✅ GOOD CODE (Clear and Readable):
+
+```cpp
+
+```cpp
+enum CustomerType { REGULAR, PREMIUM, VIP };
+const double REGULAR_TAX_RATE = 0.10;
+```
+
+double calculateTotalPrice(double basePrice,  
+double discount,
+
+```cpp
+                          CustomerType type) {
+    // Clear intent, meaningful names
+}
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_readability()`
+
+**✨ BENEFITS:**
+
+  - Immediately understand what code does
+  - Self-documenting with clear names
+  - Easy to modify or extend
+  - Anyone can maintain it
+
+### From `processOrder()`
+
+📦 Updating inventory  
+📧 Sending confirmation email  
+📝 Logging transaction
+
+- ✅ Order processed successfully
+
+### From `example2_small_functions()`
+
+- ❌ BAD CODE:
+
+One large function doing:
+
+  - Validation
+  - Price calculation
+  - Inventory check
+  - Payment processing
+  - Email sending
+  - Logging
+
+All in 50+ lines!
+
+- ✅ GOOD CODE:
+
+Separate functions for each task:
+
+  - validateOrderId()
+  - calculateTotal()
+  - checkInventory()
+  - processPayment()
+  - sendConfirmationEmail()
+  - logTransaction()
+
+Each function: 3-5 lines, single purpose
+
+**✨ DEMONSTRATION:**
+
+### From `example2_small_functions()`
+
+**✨ BENEFITS:**
+
+  - Easy to understand each step
+  - Easy to test individual functions
+  - Easy to modify one aspect
+  - Reusable functions
+  - Clear intent
+
+### From `example3_error_handling()`
+
+- ❌ BAD CODE:
+
+```cpp
+int divide(int a, int b) {
+    return a / b;  // 🚨 Crashes if b == 0
+}
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+Result divide(int a, int b) {
+    if (b == 0) {
+        return Result(false, 0, "Division by zero");
+    }
+    return Result(true, a / b);
+}
+```
+
+**✨ DEMONSTRATION:**
+
+Valid division (10 / 2):
+
+### From `example3_error_handling()`
+
+**✨ BENEFITS:**
+
+  - No crashes from unexpected input
+  - Clear error messages
+  - Easy to debug problems
+  - Graceful degradation
+
+### From `example4_comments()`
+
+- ❌ BAD COMMENTS:
+
+```cpp
+// Set the balance     🚨 Obvious
+void setBalance(double b) { balance = b; }
+// Calculate           🚨 Calculate what?
+double calc() { }
+// TODO: Fix this      🚨 What needs fixing?
+```
+
+- ✅ GOOD COMMENTS:
+
+```cpp
+// Monthly bonus: $10 reward for account activity
+// Explains WHY, not WHAT
+// Apply 5% annual interest rate
+// Rate set by financial regulation XYZ-2024
+// Provides context and reason
+// Business rule: Maintain minimum $50 balance
+// Explains business logic
+```
+
+- 💡 COMMENT GUIDELINES:
+- ✅ DO comment:
+    - WHY code does something (intent)
+    - Business rules and constraints
+    - Complex algorithms
+    - Workarounds and their reasons
+- ❌ DON'T comment:
+    - WHAT code does (should be obvious)
+    - Obvious operations
+    - Redundant information
+    - Outdated TODOs
+
+### From `example5_consistency()`
+
+- ❌ BAD CODE (Inconsistent):
+
+```cpp
+class user {              // lowercase
+    string Name;          // Capital N
+    void SetName(string n){  // no space
+        Name=n;}          // no spaces
+    int GetAge()          // different style
+    {                     // different brace
+};
+```
+
+- ✅ GOOD CODE (Consistent):
+
+```cpp
+class User {              // PascalCase
+    string name;          // camelCase
+    void setName(const string& newName) {
+        name = newName;
+    }
+    int getAge() const {
+        return age;
+    }
+};
+```
+
+**📐 CONSISTENCY MATTERS:**
+
+- ✅ Naming conventions (PascalCase, camelCase)
+- ✅ Brace placement (same style everywhere)
+- ✅ Spacing (consistent indentation)
+- ✅ Parameter passing (const references)
+- ✅ Const correctness (mark what doesn't change)
+
+- 💡 BENEFITS:
+  - Predictable code structure
+  - Faster to read and understand
+  - Easier to spot anomalies
+  - Professional appearance
+
+### From `example5_consistency()`
+
+💾 Saving to real database...  
+📧 Sending real email...  
+🕐 Using current time...
+
+### From `example6_testability()`
+
+- ❌ BAD CODE:
+
+```cpp
+class OrderProcessor {
+    void process(int orderId) {
+        // Direct database access 🚨
+        // Direct email sending 🚨
+        // Current time dependency 🚨
+        // Can't test without real resources!
+    }
+};
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+class OrderProcessor {
+    IDatabase* database;        // Injected
+    IEmailService* email;       // Injected
+    ITimeProvider* time;        // Injected
+    OrderProcessor(IDatabase*, IEmailService*, ITimeProvider*);
+    // Can inject mocks for testing!
+};
+```
+
+**✨ DEMONSTRATION (Testing with Mocks):**
+
+### From `example6_testability()`
+
+**✨ BENEFITS:**
+
+  - Easy to write unit tests
+  - No need for real database/email
+  - Fast test execution
+  - Predictable test results
+  - Better confidence in code
+
+### From `example7_metrics()`
+
+**📊 KEY MAINTAINABILITY METRICS:**
+
+1. CYCLOMATIC COMPLEXITY:
+
+Measures number of paths through code
+
+  - 1-10:  Simple, easy to maintain ✅
+  - 11-20: Moderate complexity ⚠️
+  - 21+:   High complexity, hard to maintain 🚨
+
+2. LINES OF CODE PER FUNCTION:
+  - 1-20 lines:  Ideal ✅
+  - 21-50 lines: Acceptable ⚠️
+  - 51+ lines:   Too long, split it 🚨
+
+3. NESTING DEPTH:
+
+How many levels of if/for/while
+
+  - 1-2 levels: Good ✅
+  - 3 levels:   Maximum acceptable ⚠️
+  - 4+ levels:  Too deep, refactor 🚨
+
+4. CODE CHURN:
+
+How often code changes
+
+  - Low churn:  Stable code ✅
+  - High churn: Potential quality issues 🚨
+
+5. TEST COVERAGE:
+  - 80-100%: Excellent ✅
+  - 60-79%:  Good ⚠️
+  - <60%:    Risky 🚨
+
+6. COMMENT DENSITY:
+  - 10-20%:  Good balance ✅
+  - <5%:     Needs more explanation ⚠️
+  - >30%:    Overly commented or unclear code 🚨
+
+- 💡 MAINTAINABILITY INDEX:
+
+Combined metric from above factors:
+
+  - 85-100: Highly maintainable ✅
+  - 65-84:  Moderately maintainable ⚠️
+  - 0-64:   Difficult to maintain 🚨
+
+### From `example8_best_practices()`
+
+- ✅ BEST PRACTICES FOR MAINTAINABILITY:
+
+1. WRITE SELF-DOCUMENTING CODE:
+  - Meaningful variable names
+  - Clear function names
+  - Obvious control flow
+  - Named constants instead of magic numbers
+
+2. KEEP FUNCTIONS SMALL:
+  - One function, one purpose
+  - 10-20 lines ideal
+  - Easy to understand at a glance
+  - Easy to test
+
+3. MINIMIZE NESTING:
+  - Use early returns
+  - Extract nested logic to functions
+  - Avoid deep if-else chains
+  - Use guard clauses
+
+4. HANDLE ERRORS PROPERLY:
+  - Check for error conditions
+  - Provide meaningful error messages
+  - Don't ignore errors
+  - Fail gracefully
+
+5. WRITE TESTS:
+  - Unit tests for functions
+  - Integration tests for components
+  - Tests document expected behavior
+  - Confidence to refactor
+
+6. USE CONSISTENT STYLE:
+  - Follow project conventions
+  - Use code formatters
+  - Consistent naming
+  - Consistent structure
+
+7. AVOID PREMATURE OPTIMIZATION:
+  - Write clear code first
+  - Optimize only if needed
+  - Measure before optimizing
+  - Clear code > Clever code
+
+8. DOCUMENT DECISIONS:
+  - Why you chose an approach
+  - Known limitations
+  - Future considerations
+  - Business rules and constraints
+
+**🎯 GOLDEN RULE:**
+
+"Always code as if the person who ends up maintaining  
+your code is a violent psychopath who knows where  
+you live."  
+— Martin Golding
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

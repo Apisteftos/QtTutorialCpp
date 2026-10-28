@@ -97,4 +97,14 @@ mindmap
 
 Simulated in-process using a **MessageBroker** class (queue + dispatch).  
 Each `Service` class runs in its own method scope — simulating independent deployment.  
-In production: replace `MessageBroker` with RabbitMQ, Kafka, or MCX message queue.
+In production: replace `MessageBroker` with RabbitMQ, Kafka, or another message queue.
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

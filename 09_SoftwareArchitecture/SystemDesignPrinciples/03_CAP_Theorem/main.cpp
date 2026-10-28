@@ -12,13 +12,13 @@
 // After partition heals: both models sync and converge (eventual consistency).
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <optional>
 #include <cassert>
 #include <stdexcept>
+#include <print>
 
 // =============================================================================
 // Network Partition simulation
@@ -27,8 +27,8 @@
 class Network {
 public:
     bool partitioned() const { return partitioned_; }
-    void partition()         { partitioned_ = true;  std::cout << "  ⚡ NETWORK PARTITION\n"; }
-    void heal()              { partitioned_ = false; std::cout << "  ✅ PARTITION HEALED\n"; }
+    void partition()         { partitioned_ = true;  std::println("  ⚡ NETWORK PARTITION"); }
+    void heal()              { partitioned_ = false; std::println("  ✅ PARTITION HEALED"); }
 
 private:
     bool partitioned_{false};
@@ -46,21 +46,18 @@ public:
     void write(const std::string& key, const std::string& value) {
         store_[key]   = value;
         version_[key] = ++global_version_;
-        std::cout << "  [CP:" << id_ << "] write(" << key << "=" << value
-                  << " v" << version_[key] << ")\n";
+        std::println("  [CP:{}] write({}={} v{})", id_, key, value, version_[key]);
     }
 
     // During partition: returns error rather than potentially stale data
     std::optional<std::string> read(const std::string& key) const {
         if (net_.partitioned() && !is_primary_) {
-            std::cout << "  [CP:" << id_ << "] read(" << key
-                      << ") → ERROR: partition — refusing stale read\n";
+            std::println("  [CP:{}] read({}) → ERROR: partition — refusing stale read", id_, key);
             return std::nullopt;  // CP choice: error over stale data
         }
         auto it = store_.find(key);
         if (it == store_.end()) return std::nullopt;
-        std::cout << "  [CP:" << id_ << "] read(" << key
-                  << ") → " << it->second << " (v" << version_.at(key) << ")\n";
+        std::println("  [CP:{}] read({}) → {} (v{})", id_, key, it->second, version_.at(key));
         return it->second;
     }
 
@@ -72,7 +69,7 @@ public:
                 version_[k] = primary.version_.at(k);
             }
         }
-        std::cout << "  [CP:" << id_ << "] synced from " << primary.id_ << '\n';
+        std::println("  [CP:{}] synced from {}", id_, primary.id_);
     }
 
     void setPrimary(bool p) { is_primary_ = p; }
@@ -99,8 +96,7 @@ public:
     void write(const std::string& key, const std::string& value) {
         store_[key]   = value;
         version_[key] = ++global_version_;
-        std::cout << "  [AP:" << id_ << "] write(" << key << "=" << value
-                  << " v" << version_[key] << ")\n";
+        std::println("  [AP:{}] write({}={} v{})", id_, key, value, version_[key]);
     }
 
     // During partition: returns last known value (may be stale) — never errors
@@ -109,9 +105,8 @@ public:
         if (it == store_.end()) return std::nullopt;
 
         bool stale = net_.partitioned() && !is_primary_;
-        std::cout << "  [AP:" << id_ << "] read(" << key << ") → " << it->second
-                  << " (v" << version_.at(key) << ")"
-                  << (stale ? " ⚠️  possibly stale" : "") << "\n";
+        std::println("  [AP:{}] read({}) → {} (v{}){}",
+            id_, key, it->second, version_.at(key), (stale ? " ⚠️  possibly stale" : ""));
         return it->second;
     }
 
@@ -124,7 +119,7 @@ public:
                 version_[k] = other.version_.at(k);
             }
         }
-        std::cout << "  [AP:" << id_ << "] merged from " << other.id_ << " (eventual consistency)\n";
+        std::println("  [AP:{}] merged from {} (eventual consistency)", id_, other.id_);
     }
 
     void setPrimary(bool p) { is_primary_ = p; }
@@ -149,19 +144,21 @@ private:
 
 int main()
 {
-    std::cout << "=== CAP Theorem Demo ===\n\n";
+    std::println("=== CAP Theorem Demo ===");
+    std::println("");
 
     Network net;
 
     // ── CP System Demo ────────────────────────────────────────────────────────
-    std::cout << "=== CP System: Bank Account ===\n";
+    std::println("=== CP System: Bank Account ===");
     {
         CPNode primary("Primary", net);
         CPNode replica("Replica", net);
         primary.setPrimary(true);
 
         // Normal operation
-        std::cout << "\n-- Normal operation --\n";
+        std::println("");
+        std::println("-- Normal operation --");
         primary.write("balance", "1000");
         replica.syncFrom(primary);
 
@@ -169,7 +166,8 @@ int main()
         assert(r1.has_value() && *r1 == "1000");
 
         // Partition — primary gets new write, replica refuses reads
-        std::cout << "\n-- During partition --\n";
+        std::println("");
+        std::println("-- During partition --");
         net.partition();
 
         primary.write("balance", "800");  // write on primary during partition
@@ -177,27 +175,30 @@ int main()
         // Replica REFUSES to read — CP choice: error over stale data
         auto r2 = replica.read("balance");
         assert(!r2.has_value());  // returns nullopt — consistent behaviour
-        std::cout << "  CP: replica refused stale read ✓\n";
+        std::println("  CP: replica refused stale read ✓");
 
         // Heal + sync
-        std::cout << "\n-- After partition heals --\n";
+        std::println("");
+        std::println("-- After partition heals --");
         net.heal();
         replica.syncFrom(primary);
 
         auto r3 = replica.read("balance");
         assert(r3.has_value() && *r3 == "800");
-        std::cout << "  CP: both nodes agree on balance=800 ✓\n";
+        std::println("  CP: both nodes agree on balance=800 ✓");
     }
 
     // ── AP System Demo ────────────────────────────────────────────────────────
-    std::cout << "\n=== AP System: Social Media Like Count ===\n";
+    std::println("");
+    std::println("=== AP System: Social Media Like Count ===");
     {
         APNode node1("Node1", net);
         APNode node2("Node2", net);
         node1.setPrimary(true);
 
         // Normal operation
-        std::cout << "\n-- Normal operation --\n";
+        std::println("");
+        std::println("-- Normal operation --");
         node1.write("post_42_likes", "1500");
         node2.mergeFrom(node1);
 
@@ -205,7 +206,8 @@ int main()
         assert(r1.has_value() && *r1 == "1500");
 
         // Partition — node1 gets updates, node2 serves stale but stays available
-        std::cout << "\n-- During partition --\n";
+        std::println("");
+        std::println("-- During partition --");
         net.partition();
 
         node1.write("post_42_likes", "1523");  // new likes come in
@@ -213,23 +215,17 @@ int main()
         // Node2 STILL RESPONDS with stale data — AP choice: availability over consistency
         auto r2 = node2.read("post_42_likes");
         assert(r2.has_value() && *r2 == "1500");  // stale, but not an error
-        std::cout << "  AP: node2 served stale value (1500 instead of 1523) but stayed available ✓\n";
+        std::println("  AP: node2 served stale value (1500 instead of 1523) but stayed available ✓");
 
         // Heal + merge (eventual consistency)
-        std::cout << "\n-- After partition heals (eventual consistency) --\n";
+        std::println("");
+        std::println("-- After partition heals (eventual consistency) --");
         net.heal();
         node2.mergeFrom(node1);
 
         auto r3 = node2.read("post_42_likes");
         assert(r3.has_value() && *r3 == "1523");  // now converged
-        std::cout << "  AP: both nodes converged to 1523 ✓\n";
+        std::println("  AP: both nodes converged to 1523 ✓");
     }
-
-    // ── Summary ───────────────────────────────────────────────────────────────
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "  CP: during partition → replica returned ERROR (no stale reads)\n";
-    std::cout << "  AP: during partition → node served STALE DATA (always available)\n";
-    std::cout << "  Both: after heal → data converged (eventual consistency)\n";
-    std::cout << "\nAll assertions passed.\n";
     return 0;
 }

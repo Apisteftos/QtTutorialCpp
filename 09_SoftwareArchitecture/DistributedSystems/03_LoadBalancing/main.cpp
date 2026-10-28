@@ -10,7 +10,6 @@
 // from rotation automatically — adding them back on recovery.
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -19,6 +18,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <functional>
+#include <print>
 
 // =============================================================================
 // Backend Server simulation
@@ -79,8 +79,7 @@ public:
 
     void addServer(BackendServer* server) {
         pool_.push_back(server);
-        std::cout << "  [LB] added server: " << server->id()
-                  << " (weight=" << server->weight() << ")\n";
+        std::println("  [LB] added server: {} (weight={})", server->id(), server->weight());
     }
 
     // Run health checks on all servers
@@ -90,9 +89,9 @@ public:
             bool wasHealthy = s->isHealthy();
             // Health state is managed by the server in this simulation
             if (!wasHealthy && resp.statusCode == 200)
-                std::cout << "  [LB] ✅ " << s->id() << " recovered — back in rotation\n";
+                std::println("  [LB] ✅ {} recovered — back in rotation", s->id());
             else if (wasHealthy && resp.statusCode != 200)
-                std::cout << "  [LB] ❌ " << s->id() << " failed health check — removed\n";
+                std::println("  [LB] ❌ {} failed health check — removed", s->id());
         }
     }
 
@@ -102,15 +101,15 @@ public:
         if (!server)
             return {503, "No healthy servers available"};
 
-        std::cout << "  [LB] → " << server->id() << " : " << request << '\n';
+        std::println("  [LB] → {} : {}", server->id(), request);
         try {
             return server->handle(request);
         } catch (const std::exception& e) {
-            std::cout << "  [LB] ⚠️  " << server->id() << " failed: " << e.what() << '\n';
+            std::println("  [LB] ⚠️  {} failed: {}", server->id(), e.what());
             // Retry once with a different server
             auto* fallback = selectExcluding(server);
             if (!fallback) return {503, "All servers failed"};
-            std::cout << "  [LB] ↩️  retry → " << fallback->id() << '\n';
+            std::println("  [LB] ↩️  retry → {}", fallback->id());
             return fallback->handle(request);
         }
     }
@@ -121,11 +120,11 @@ public:
     }
 
     void printStats() const {
-        std::cout << "\n  Load distribution:\n";
+        std::println("");
+        std::println("  Load distribution:");
         for (auto* s : pool_) {
-            std::cout << "    " << s->id()
-                      << (s->isHealthy() ? " [UP]  " : " [DOWN] ")
-                      << "requests=" << s->totalRequests() << '\n';
+            std::println("    {}{}requests={}",
+                s->id(), (s->isHealthy() ? " [UP]  " : " [DOWN] "), s->totalRequests());
         }
     }
 
@@ -200,10 +199,11 @@ private:
 
 int main()
 {
-    std::cout << "=== Load Balancing Demo ===\n\n";
+    std::println("=== Load Balancing Demo ===");
+    std::println("");
 
     // ── Strategy 1: Round-Robin ───────────────────────────────────────────────
-    std::cout << "--- Strategy 1: Round-Robin ---\n";
+    std::println("--- Strategy 1: Round-Robin ---");
     {
         BackendServer sa("Server-A"), sb("Server-B"), sc("Server-C");
         LoadBalancer lb(Strategy::RoundRobin);
@@ -219,11 +219,12 @@ int main()
         assert(sa.totalRequests() == 2);
         assert(sb.totalRequests() == 2);
         assert(sc.totalRequests() == 2);
-        std::cout << "  ✓ Round-Robin: even distribution\n";
+        std::println("  ✓ Round-Robin: even distribution");
     }
 
     // ── Strategy 2: Failover during round-robin ───────────────────────────────
-    std::cout << "\n--- Failover: Server goes down mid-flight ---\n";
+    std::println("");
+    std::println("--- Failover: Server goes down mid-flight ---");
     {
         BackendServer sa("Server-A"), sb("Server-B"), sc("Server-C");
         LoadBalancer lb(Strategy::RoundRobin);
@@ -249,11 +250,12 @@ int main()
 
         lb.printStats();
         assert(lb.healthyCount() == 3);
-        std::cout << "  ✓ Failover handled correctly\n";
+        std::println("  ✓ Failover handled correctly");
     }
 
     // ── Strategy 3: Weighted ──────────────────────────────────────────────────
-    std::cout << "\n--- Strategy 3: Weighted ---\n";
+    std::println("");
+    std::println("--- Strategy 3: Weighted ---");
     {
         // Server-A is 3x stronger than Server-B
         BackendServer sa("Server-A(w=3)", 3);
@@ -269,13 +271,13 @@ int main()
         lb.printStats();
         assert(sa.totalRequests() == 6);
         assert(sb.totalRequests() == 2);
-        std::cout << "  ✓ Weighted: Server-A got "
-                  << sa.totalRequests() << "/8, Server-B got "
-                  << sb.totalRequests() << "/8\n";
+        std::println("  ✓ Weighted: Server-A got {}/8, Server-B got {}/8",
+            sa.totalRequests(), sb.totalRequests());
     }
 
     // ── No healthy servers ────────────────────────────────────────────────────
-    std::cout << "\n--- All servers down ---\n";
+    std::println("");
+    std::println("--- All servers down ---");
     {
         BackendServer sa("Server-A");
         LoadBalancer lb;
@@ -284,9 +286,10 @@ int main()
 
         auto resp = lb.route("req-1");
         assert(resp.statusCode == 503);
-        std::cout << "  ✓ 503 returned when all servers down\n";
+        std::println("  ✓ 503 returned when all servers down");
     }
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

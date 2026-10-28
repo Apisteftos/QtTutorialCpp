@@ -10,13 +10,13 @@
 //   - MockDatabase enables unit testing with zero real DB
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <memory>
 #include <cassert>
 #include <stdexcept>
+#include <print>
 
 // =============================================================================
 // ❌ BEFORE — Tight Coupling examples
@@ -45,9 +45,9 @@ public:
     void log(const std::string& msg, bool isError, bool toFile, bool toConsole) {
         // Caller controls internal behavior via flags — control coupling
         if (isError && toConsole)
-            std::cout << "  [ERROR] " << msg << '\n';
+            std::println("  [ERROR] {}", msg);
         else if (toConsole)
-            std::cout << "  [INFO]  " << msg << '\n';
+            std::println("  [INFO]  {}", msg);
         if (toFile)
             file_log_.push_back(msg);
     }
@@ -59,7 +59,7 @@ class MySqlDatabase {
 public:
     void saveOrder(int id, const std::string& item) {
         store_[id] = item;
-        std::cout << "  [MySql] saved order #" << id << '\n';
+        std::println("  [MySql] saved order #{}", id);
     }
     std::string getOrder(int id) const {
         auto it = store_.find(id);
@@ -112,7 +112,7 @@ class MySqlDatabase : public IDatabase {
 public:
     void saveOrder(int id, const std::string& item) override {
         store_[id] = item;
-        std::cout << "  [MySql]    saved order #" << id << '\n';
+        std::println("  [MySql]    saved order #{}", id);
     }
     std::string getOrder(int id) const override {
         auto it = store_.find(id);
@@ -147,10 +147,10 @@ private:
 class ConsoleLogger : public ILogger {
 public:
     void info (const std::string& m) override {
-        std::cout << "  [INFO]  " << m << '\n'; info_count_++;
+        std::println("  [INFO]  {}", m); info_count_++;
     }
     void error(const std::string& m) override {
-        std::cout << "  [ERROR] " << m << '\n'; error_count_++;
+        std::println("  [ERROR] {}", m); error_count_++;
     }
     int infoCount()  const { return info_count_; }
     int errorCount() const { return error_count_; }
@@ -201,10 +201,11 @@ private:
 
 int main()
 {
-    std::cout << "=== Coupling Demo ===\n\n";
+    std::println("=== Coupling Demo ===");
+    std::println("");
 
     // ── TIGHT ────────────────────────────────────────────────────────────────
-    std::cout << "--- TIGHT Coupling (before) ---\n";
+    std::println("--- TIGHT Coupling (before) ---");
 
     // Content coupling — direct field access, no control, no validation
     tight::BankAccount acc1{"Alice", 1000.0};
@@ -215,19 +216,20 @@ int main()
     tight::BankAccount a1{"Alice", 1000.0};
     tight::BankAccount a2{"Bob", 500.0};
     transfer.transfer(a1, a2, 200.0);
-    std::cout << "  Alice: " << a1.balance << "  Bob: " << a2.balance << '\n';
+    std::println("  Alice: {}  Bob: {}", a1.balance, a2.balance);
 
     // Tight OrderService — cannot test without real MySql
     tight::TightOrderService tightSvc;
     tightSvc.placeOrder(1, "widget");
 
-    std::cout << '\n';
+    std::println("");
 
     // ── LOOSE ────────────────────────────────────────────────────────────────
-    std::cout << "--- LOOSE Coupling (after) ---\n\n";
+    std::println("--- LOOSE Coupling (after) ---");
+    std::println("");
 
     // Scenario 1: production — real DB + console logger
-    std::cout << "Scenario 1: Production\n";
+    std::println("Scenario 1: Production");
     {
         loose::MySqlDatabase  db;
         loose::ConsoleLogger  logger;
@@ -240,12 +242,13 @@ int main()
         assert(svc.getOrder(1)              == "widget");
         assert(logger.infoCount()           == 2);
         assert(logger.errorCount()          == 1);
-        std::cout << "  ✓ Production scenario passed\n\n";
+        std::println("  ✓ Production scenario passed");
+        std::println("");
     }
 
     // Scenario 2: unit test — MockDB + NullLogger
     // OrderService code is IDENTICAL — only injected deps change
-    std::cout << "Scenario 2: Unit Test (Mock)\n";
+    std::println("Scenario 2: Unit Test (Mock)");
     {
         loose::MockDatabase  mockDb;
         loose::NullLogger    nullLog;
@@ -257,17 +260,8 @@ int main()
         assert(mockDb.saveCalls()   == 2);
         assert(mockDb.orderCount()  == 2);
         assert(mockDb.getOrder(10)  == "alpha");
-        std::cout << "  ✓ Unit test scenario passed (no console spam)\n\n";
+        std::println("  ✓ Unit test scenario passed (no console spam)");
+        std::println("");
     }
-
-    std::cout << "Key difference:\n";
-    std::cout << "  TIGHT — OrderService hardcodes MySqlDatabase\n";
-    std::cout << "          Cannot test without a real DB\n";
-    std::cout << "          Cannot swap DB without editing OrderService\n\n";
-    std::cout << "  LOOSE — OrderService knows only IDatabase + ILogger\n";
-    std::cout << "          Swap MySql→Postgres: zero changes to OrderService\n";
-    std::cout << "          Unit test with Mock: zero changes to OrderService\n";
-
-    std::cout << "\nAll assertions passed.\n";
     return 0;
 }

@@ -9,27 +9,29 @@
  * - Imperative: Focus on HOW (step-by-step instructions)
  * - Functional: Focus on WHAT (declarative transformations)
  *
- * Compile: g++ -std=c++20 -Wall -Wextra imperative_vs_functional.cpp -o imperative_vs_functional
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <numeric>
 #include <ranges>
 #include <string>
+#include <print>
 
 // ============================================================================
 // EXAMPLE 1: Filtering - Get even numbers
 // ============================================================================
 
 void example1_filtering() {
-    std::cout << "\n=== Example 1: Filtering Even Numbers ===\n";
+    std::println("");
+    std::println("=== Example 1: Filtering Even Numbers ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW): ";
+    std::println("");
+    std::print("Imperative (HOW): ");
     std::vector<int> evens_imperative;
     for (const auto& n : numbers) {
         if (n % 2 == 0) {                    // Manual condition checking
@@ -37,19 +39,20 @@ void example1_filtering() {
         }
     }
     for (const auto& n : evens_imperative) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // FUNCTIONAL STYLE (C++20 Ranges)
-    std::cout << "\nFunctional (WHAT): ";
+    std::println("");
+    std::print("Functional (WHAT): ");
     auto evens_functional = numbers
                             | std::views::filter([](int n) { return n % 2 == 0; });
 
     for (const auto& n : evens_functional) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\n\n✅ Functional is more declarative - says WHAT not HOW\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -57,41 +60,45 @@ void example1_filtering() {
 // ============================================================================
 
 void example2_transformation() {
-    std::cout << "\n=== Example 2: Squaring Numbers ===\n";
+    std::println("");
+    std::println("=== Example 2: Squaring Numbers ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5};
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW): ";
+    std::println("");
+    std::print("Imperative (HOW): ");
     std::vector<int> squared_imperative;
     for (const auto& n : numbers) {
         int result = n * n;                      // Manual calculation
         squared_imperative.push_back(result);     // Manual insertion
     }
     for (const auto& n : squared_imperative) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // FUNCTIONAL STYLE (STL Algorithm)
-    std::cout << "\nFunctional (STL): ";
+    std::println("");
+    std::print("Functional (STL): ");
     std::vector<int> squared_stl(numbers.size());
     std::transform(numbers.begin(), numbers.end(),
                    squared_stl.begin(),
                    [](int n) { return n * n; });
     for (const auto& n : squared_stl) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // FUNCTIONAL STYLE (C++20 Ranges)
-    std::cout << "\nFunctional (Ranges): ";
+    std::println("");
+    std::print("Functional (Ranges): ");
     auto squared_ranges = numbers
                           | std::views::transform([](int n) { return n * n; });
 
     for (const auto& n : squared_ranges) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\n\n✅ Functional expresses transformation clearly\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -99,12 +106,14 @@ void example2_transformation() {
 // ============================================================================
 
 void example3_filter_and_transform() {
-    std::cout << "\n=== Example 3: Filter Even + Square ===\n";
+    std::println("");
+    std::println("=== Example 3: Filter Even + Square ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW): ";
+    std::println("");
+    std::print("Imperative (HOW): ");
     std::vector<int> result_imperative;
     for (const auto& n : numbers) {
         if (n % 2 == 0) {                        // Step 1: Filter
@@ -112,20 +121,21 @@ void example3_filter_and_transform() {
         }
     }
     for (const auto& n : result_imperative) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // FUNCTIONAL STYLE - Pipeline
-    std::cout << "\nFunctional (Pipeline): ";
+    std::println("");
+    std::print("Functional (Pipeline): ");
     auto result_functional = numbers
                              | std::views::filter([](int n) { return n % 2 == 0; })   // Step 1
                              | std::views::transform([](int n) { return n * n; });    // Step 2
 
     for (const auto& n : result_functional) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\n\n✅ Pipeline clearly shows data flow: filter → transform\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -133,20 +143,23 @@ void example3_filter_and_transform() {
 // ============================================================================
 
 void example4_reduction() {
-    std::cout << "\n=== Example 4: Sum of Squares ===\n";
+    std::println("");
+    std::println("=== Example 4: Sum of Squares ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5};
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW): ";
+    std::println("");
+    std::print("Imperative (HOW): ");
     int sum_imperative = 0;
     for (const auto& n : numbers) {
         sum_imperative += (n * n);    // Manual accumulation
     }
-    std::cout << sum_imperative;
+    std::print("{}", sum_imperative);
 
     // FUNCTIONAL STYLE
-    std::cout << "\nFunctional (WHAT): ";
+    std::println("");
+    std::print("Functional (WHAT): ");
     auto squared = numbers
                    | std::views::transform([](int n) { return n * n; });
     int sum_functional = std::accumulate(
@@ -154,9 +167,9 @@ void example4_reduction() {
         std::ranges::end(squared),
         0
         );
-    std::cout << sum_functional;
+    std::print("{}", sum_functional);
 
-    std::cout << "\n\n✅ Functional separates transformation from aggregation\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -164,12 +177,14 @@ void example4_reduction() {
 // ============================================================================
 
 void example5_finding() {
-    std::cout << "\n=== Example 5: Finding First Element > 50 ===\n";
+    std::println("");
+    std::println("=== Example 5: Finding First Element > 50 ===");
 
     std::vector<int> numbers = {10, 25, 38, 42, 55, 68, 72};
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW): ";
+    std::println("");
+    std::print("Imperative (HOW): ");
     int found_imperative = -1;
     for (const auto& n : numbers) {
         if (n > 50) {
@@ -177,16 +192,17 @@ void example5_finding() {
             break;                    // Manual early exit
         }
     }
-    std::cout << found_imperative;
+    std::print("{}", found_imperative);
 
     // FUNCTIONAL STYLE
-    std::cout << "\nFunctional (WHAT): ";
+    std::println("");
+    std::print("Functional (WHAT): ");
     auto found = std::ranges::find_if(numbers, [](int n) { return n > 50; });
     if (found != numbers.end()) {
-        std::cout << *found;
+        std::print("{}", *found);
     }
 
-    std::cout << "\n\n✅ Functional is more expressive about intent\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -200,8 +216,9 @@ struct Person {
 };
 
 void example6_complex_pipeline() {
-    std::cout << "\n=== Example 6: Complex Data Processing ===\n";
-    std::cout << "Task: Get names of people over 30 with salary > 50000\n";
+    std::println("");
+    std::println("=== Example 6: Complex Data Processing ===");
+    std::println("Task: Get names of people over 30 with salary > 50000");
 
     std::vector<Person> people = {
         {"Alice", 28, 45000},
@@ -212,7 +229,8 @@ void example6_complex_pipeline() {
     };
 
     // IMPERATIVE STYLE
-    std::cout << "\nImperative (HOW):\n";
+    std::println("");
+    std::println("Imperative (HOW):");
     std::vector<std::string> result_imperative;
     for (const auto& person : people) {
         if (person.age > 30 && person.salary > 50000) {    // Multiple conditions
@@ -220,11 +238,12 @@ void example6_complex_pipeline() {
         }
     }
     for (const auto& name : result_imperative) {
-        std::cout << "  " << name << "\n";
+        std::println("  {}", name);
     }
 
     // FUNCTIONAL STYLE
-    std::cout << "\nFunctional (WHAT):\n";
+    std::println("");
+    std::println("Functional (WHAT):");
     auto result_functional = people
                              | std::views::filter([](const Person& p) {
                                    return p.age > 30 && p.salary > 50000;
@@ -234,11 +253,9 @@ void example6_complex_pipeline() {
                                });
 
     for (const auto& name : result_functional) {
-        std::cout << "  " << name << "\n";
+        std::println("  {}", name);
     }
 
-    std::cout << "\n✅ Functional pipeline reads like English:\n";
-    std::cout << "   'people' | filter(conditions) | transform(extract name)\n";
 }
 
 // ============================================================================
@@ -246,12 +263,14 @@ void example6_complex_pipeline() {
 // ============================================================================
 
 void example7_sorting() {
-    std::cout << "\n=== Example 7: Sorting ===\n";
+    std::println("");
+    std::println("=== Example 7: Sorting ===");
 
     std::vector<int> numbers = {5, 2, 8, 1, 9, 3, 7, 4, 6};
 
     // IMPERATIVE STYLE (Bubble Sort - for demonstration)
-    std::cout << "\nImperative (Bubble Sort): ";
+    std::println("");
+    std::print("Imperative (Bubble Sort): ");
     std::vector<int> sorted_imperative = numbers;
     for (size_t i = 0; i < sorted_imperative.size(); ++i) {
         for (size_t j = 0; j < sorted_imperative.size() - i - 1; ++j) {
@@ -261,18 +280,19 @@ void example7_sorting() {
         }
     }
     for (const auto& n : sorted_imperative) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // FUNCTIONAL STYLE
-    std::cout << "\nFunctional (STL): ";
+    std::println("");
+    std::print("Functional (STL): ");
     std::vector<int> sorted_functional = numbers;
     std::ranges::sort(sorted_functional);
     for (const auto& n : sorted_functional) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\n\n✅ Functional hides complexity, focuses on intent\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -280,26 +300,28 @@ void example7_sorting() {
 // ============================================================================
 
 void example8_state_management() {
-    std::cout << "\n=== Example 8: Counting Occurrences ===\n";
+    std::println("");
+    std::println("=== Example 8: Counting Occurrences ===");
 
     std::vector<int> numbers = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
 
     // IMPERATIVE STYLE - Mutable state
-    std::cout << "\nImperative (Mutable State):\n";
+    std::println("");
+    std::println("Imperative (Mutable State):");
     int count_imperative = 0;
     for (const auto& n : numbers) {
         if (n == 3) {
             count_imperative++;    // Mutable counter
         }
     }
-    std::cout << "  Count of 3: " << count_imperative << "\n";
+    std::println("  Count of 3: {}", count_imperative);
 
     // FUNCTIONAL STYLE - No mutable state
-    std::cout << "\nFunctional (No Mutable State):\n";
+    std::println("");
+    std::println("Functional (No Mutable State):");
     auto count_functional = std::ranges::count(numbers, 3);
-    std::cout << "  Count of 3: " << count_functional << "\n";
+    std::println("  Count of 3: {}", count_functional);
 
-    std::cout << "\n✅ Functional avoids mutable state\n";
 }
 
 // ============================================================================
@@ -307,13 +329,15 @@ void example8_state_management() {
 // ============================================================================
 
 void example9_lazy_evaluation() {
-    std::cout << "\n=== Example 9: Lazy Evaluation ===\n";
-    std::cout << "Processing first 3 elements after filtering\n";
+    std::println("");
+    std::println("=== Example 9: Lazy Evaluation ===");
+    std::println("Processing first 3 elements after filtering");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // IMPERATIVE STYLE - Processes everything
-    std::cout << "\nImperative (Eager): ";
+    std::println("");
+    std::print("Imperative (Eager): ");
     std::vector<int> result_imperative;
     for (const auto& n : numbers) {
         if (n % 2 == 0) {
@@ -322,23 +346,24 @@ void example9_lazy_evaluation() {
     }
     // Then take first 3
     for (size_t i = 0; i < std::min(size_t(3), result_imperative.size()); ++i) {
-        std::cout << result_imperative[i] << " ";
+        std::print("{} ", result_imperative[i]);
     }
-    std::cout << "(processed all " << numbers.size() << " elements)";
+    std::print("(processed all {} elements)", numbers.size());
 
     // FUNCTIONAL STYLE - Lazy evaluation
-    std::cout << "\nFunctional (Lazy): ";
+    std::println("");
+    std::print("Functional (Lazy): ");
     auto result_functional = numbers
                              | std::views::filter([](int n) { return n % 2 == 0; })
                              | std::views::transform([](int n) { return n * n; })
                              | std::views::take(3);
 
     for (const auto& n : result_functional) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
-    std::cout << "(stopped after finding 3 matches)";
+    std::print("(stopped after finding 3 matches)");
 
-    std::cout << "\n\n✅ Ranges are lazy - compute only what's needed!\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -346,7 +371,8 @@ void example9_lazy_evaluation() {
 // ============================================================================
 
 void example10_composition() {
-    std::cout << "\n=== Example 10: Function Composition ===\n";
+    std::println("");
+    std::println("=== Example 10: Function Composition ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
@@ -355,7 +381,8 @@ void example10_composition() {
     auto square = [](int n) { return n * n; };
     auto is_large = [](int n) { return n > 20; };
 
-    std::cout << "\nImperative (Nested conditions): ";
+    std::println("");
+    std::print("Imperative (Nested conditions): ");
     std::vector<int> result_imperative;
     for (const auto& n : numbers) {
         if (n % 2 == 0) {                    // Check even
@@ -366,20 +393,21 @@ void example10_composition() {
         }
     }
     for (const auto& n : result_imperative) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\nFunctional (Composed pipeline): ";
+    std::println("");
+    std::print("Functional (Composed pipeline): ");
     auto result_functional = numbers
                              | std::views::filter(is_even)        // Reusable predicate
                              | std::views::transform(square)      // Reusable transformation
                              | std::views::filter(is_large);      // Reusable predicate
 
     for (const auto& n : result_functional) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
-    std::cout << "\n\n✅ Functional allows reusable, composable operations\n";
+    std::println("");
 }
 
 // ============================================================================
@@ -387,9 +415,9 @@ void example10_composition() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║   IMPERATIVE vs FUNCTIONAL PROGRAMMING IN C++       ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║   IMPERATIVE vs FUNCTIONAL PROGRAMMING IN C++         ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_filtering();
     example2_transformation();
@@ -402,41 +430,5 @@ int main() {
     example9_lazy_evaluation();
     example10_composition();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "KEY TAKEAWAYS:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Functional style is more DECLARATIVE (WHAT not HOW)\n";
-    std::cout << "✅ Pipelines are COMPOSABLE and REUSABLE\n";
-    std::cout << "✅ Ranges provide LAZY EVALUATION (better performance)\n";
-    std::cout << "✅ No MUTABLE STATE (fewer bugs)\n";
-    std::cout << "✅ Code is more READABLE and MAINTAINABLE\n";
-    std::cout << "✅ Better for PARALLEL processing (no shared state)\n";
-    std::cout << "\n💡 think-cell Philosophy:\n";
-    std::cout << "   'Prefer functional-style generic algorithms and ranges\n";
-    std::cout << "    over imperative programming.'\n";
-    std::cout << std::string(60, '=') << "\n\n";
-
     return 0;
 }
-
-/*
- * COMPILE AND RUN:
- * ===============
- * g++ -std=c++20 -Wall -Wextra imperative_vs_functional.cpp -o imperative_vs_functional
- * ./imperative_vs_functional
- *
- * EXPECTED OUTPUT:
- * ===============
- * Clear side-by-side comparisons showing:
- * - How imperative focuses on steps (HOW)
- * - How functional focuses on transformations (WHAT)
- * - Benefits of functional style
- *
- * KEY LEARNING POINTS:
- * ===================
- * 1. Imperative = step-by-step instructions, mutable state
- * 2. Functional = declarative transformations, immutable data
- * 3. Ranges = lazy evaluation + composition
- * 4. Pipelines = readable data flow
- * 5. think-cell heavily uses this style!
- */

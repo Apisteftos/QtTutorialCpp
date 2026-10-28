@@ -24,6 +24,7 @@
 #include <cctype>
 #include <optional>
 #include <memory>
+#include <print>
 
 // =============================================================================
 // Data packet — passed through the pipeline
@@ -110,15 +111,14 @@ public:
         if (rec.id.find("temp") != std::string::npos) {
             if (rec.value < -50.0 || rec.value > 500.0) {
                 rec.valid = false;
-                std::cout << "  [Validate] ✗ OUT OF RANGE: "
-                          << rec.id << " = " << rec.value << '\n';
+                std::println("  [Validate] ✗ OUT OF RANGE: {} = {}", rec.id, rec.value);
             }
         }
         // Pressure sensors: must be positive
         if (rec.id.find("pres") != std::string::npos) {
             if (rec.value < 0.0) {
                 rec.valid = false;
-                std::cout << "  [Validate] ✗ NEGATIVE PRESSURE: " << rec.id << '\n';
+                std::println("  [Validate] ✗ NEGATIVE PRESSURE: {}", rec.id);
             }
         }
         return rec;
@@ -225,7 +225,8 @@ private:
 
 int main()
 {
-    std::cout << "=== Pipe and Filter Architecture — Sensor Pipeline ===\n\n";
+    std::println("=== Pipe and Filter Architecture — Sensor Pipeline ===");
+    std::println("");
 
     // Raw sensor data — messy, mixed formats, some invalid
     std::vector<std::string> raw_inputs = {
@@ -247,11 +248,12 @@ int main()
 
     auto results = pipeline.run(raw_inputs);
 
-    std::cout << "\n=== Pipeline Results (" << results.size()
-              << " of " << raw_inputs.size() << " records passed) ===\n\n";
+    std::println("");
+    std::println("=== Pipeline Results ({} of {} records passed) ===", results.size(), raw_inputs.size());
+    std::println("");
 
     for (const auto& r : results)
-        std::cout << r.output << '\n';
+        std::println("{}", r.output);
 
     // Verify
     assert(results.size() == 4);  // 3 invalid dropped
@@ -259,6 +261,7 @@ int main()
     assert(results[1].status == "ok");         // 25°C
     assert(results[3].status == "ok");         // 37.5°C
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

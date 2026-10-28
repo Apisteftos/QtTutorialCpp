@@ -10,18 +10,15 @@ Modern C++ (C++11 and beyond) introduced powerful features that enable new progr
 - **Zero-Cost Abstractions** - High-level code with no runtime overhead
 - **Generic Programming** - Writing code that works with any type
 
-## 🎯 Philosophy: The think-cell Approach
+## 🎯 Philosophy: Ranges and Generic Style
 
-This section is inspired by **think-cell**, a Berlin-based company known for their exceptionally high-quality C++ code. Their approach emphasizes:
+This section follows a style that emphasizes:
 
 1. **Functional-style over imperative** - Prefer algorithms and ranges over raw loops
 2. **Generic programming** - Write code that works with any type
 3. **Zero-cost abstractions** - High-level code with performance of hand-written code
 4. **Template metaprogramming** - Use compile-time computation when possible
 5. **Modern C++ standards** - Always use latest C++ features as they become available
-
-> "We prefer functional-style generic algorithms and ranges over imperative programming. We're not afraid of advanced template metaprogramming or macros when they avoid code duplication or lead to cleaner, more readable code."
-> — think-cell development philosophy
 
 ## 📂 Directory Structure
 
@@ -38,9 +35,9 @@ ModernCppDesignPatterns/
 │   ├── compile_time_computation.cpp
 │   └── SFINAE_examples.cpp
 │
-├── ThinkCellPhilosophy/            # Real-world examples from think-cell
-│   ├── think_cell_ranges.cpp
-│   └── think_cell_templates.cpp
+├── RangesAndGenericStyle/           # Ranges and generic-programming style
+│   ├── 01_generic_templates/
+│   └── 02_range_pipelines/
 │
 └── ZeroCostAbstractions/            # Performance with abstraction
     └── abstraction_performance.cpp
@@ -61,7 +58,7 @@ ModernCppDesignPatterns/
 **Advanced Level:**
 7. Deep dive into `TemplateMeta/compile_time_computation.cpp`
 8. Master `SFINAE_examples.cpp`
-9. Study real-world patterns in `ThinkCellPhilosophy/`
+9. Study real-world patterns in `RangesAndGenericStyle/`
 
 ## 🎓 Key Concepts
 
@@ -134,7 +131,6 @@ for (size_t i = 0; i < vec.size(); ++i) {
 ## 🏢 Real-World Applications
 
 Companies using these patterns:
-- **think-cell** - Chart generation software (Berlin)
 - **Bloomberg** - Financial software
 - **Google** - Chrome, TensorFlow
 - **Facebook/Meta** - Infrastructure
@@ -144,7 +140,7 @@ Companies using these patterns:
 
 1. **Better Code Quality** - More maintainable and readable
 2. **Higher Performance** - Zero-cost abstractions
-3. **Career Opportunities** - Companies like think-cell seek these skills
+3. **Career Opportunities** - Many C++ employers look for these skills
 4. **Future-Proof** - Direction C++ is heading
 5. **Problem Solving** - New ways to approach problems
 
@@ -161,7 +157,7 @@ As you learn these patterns:
 - 🟢 **Beginner**: Functional Programming basics
 - 🟡 **Intermediate**: Ranges, Lambda composition
 - 🔴 **Advanced**: Template Metaprogramming
-- ⚫ **Expert**: Think-cell level patterns
+- ⚫ **Expert**: Combining ranges, templates and API design
 
 ## 📝 Practice Projects
 

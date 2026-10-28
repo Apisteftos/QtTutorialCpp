@@ -1,7 +1,7 @@
-#include <iostream>
 #include <thread>
 #include <chrono>
 #include <string>
+#include <print>
 
 // ============================================================
 // SIMPLE THREAD — Fundamentals of std::thread in C++23
@@ -34,7 +34,7 @@ void sleepMs(int ms)
 // ============================================================
 void helloFromThread()
 {
-    std::cout << "[thread] Hello from a worker thread!\n";
+    std::println("[thread] Hello from a worker thread!");
 }
 
 
@@ -43,7 +43,7 @@ void helloFromThread()
 // ============================================================
 void printMessage(int id, const std::string& msg)
 {
-    std::cout << "[thread " << id << "] " << msg << '\n';
+    std::println("[thread {}] {}", id, msg);
 }
 
 
@@ -53,7 +53,7 @@ void printMessage(int id, const std::string& msg)
 void workerA()
 {
     for (int i = 0; i < 5; ++i) {
-        std::cout << "[A] step " << i << '\n';
+        std::println("[A] step {}", i);
         sleepMs(10);
     }
 }
@@ -61,7 +61,7 @@ void workerA()
 void workerB()
 {
     for (int i = 0; i < 5; ++i) {
-        std::cout << "[B] step " << i << '\n';
+        std::println("[B] step {}", i);
         sleepMs(15);
     }
 }
@@ -76,10 +76,8 @@ void showStack(int threadId)
     int localVar  = threadId * 100;   // private to THIS thread's stack
     int localVar2 = threadId * 200;
 
-    std::cout << "[thread " << threadId << "] "
-              << "localVar="  << localVar
-              << " localVar2=" << localVar2
-              << " (stack address: " << &localVar << ")\n";
+    std::println("[thread {}] localVar={} localVar2={} (stack address: {})",
+        threadId, localVar, localVar2, static_cast<const void*>(&localVar));
 }
 
 
@@ -89,7 +87,7 @@ void showStack(int threadId)
 void backgroundTask(int id)
 {
     sleepMs(50);
-    std::cout << "[detached " << id << "] background task done\n";
+    std::println("[detached {}] background task done", id);
 }
 
 
@@ -115,21 +113,22 @@ int main()
     // There is no .start() method — it runs right away.
     // -------------------------------------------------------
 
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Simplest thread — free function\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Simplest thread — free function");
+    std::println("=====================================================");
 
-    std::cout << "[main] About to create thread...\n";
+    std::println("[main] About to create thread...");
     std::thread t1(helloFromThread);    // thread starts HERE immediately
-    std::cout << "[main] Thread created — now calling join()\n";
+    std::println("[main] Thread created — now calling join()");
     t1.join();                          // main waits here until t1 finishes
-    std::cout << "[main] Thread finished — continuing\n";
+    std::println("[main] Thread finished — continuing");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Thread with parameters\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Thread with parameters");
+    std::println("=====================================================");
 
     // Arguments are passed after the callable
     // They are COPIED into the thread by default
@@ -141,45 +140,48 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Lambda thread\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Lambda thread");
+    std::println("=====================================================");
 
     // Lambdas are the most common way to create threads
     std::thread t4([]() {
-        std::cout << "[lambda thread] Running inline code\n";
+        std::println("[lambda thread] Running inline code");
     });
     t4.join();
 
     // Lambda with capture
     int value = 42;
     std::thread t5([value]() {
-        std::cout << "[lambda thread] Captured value = " << value << '\n';
+        std::println("[lambda thread] Captured value = {}", value);
     });
     t5.join();
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Concurrency — order is NOT guaranteed\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Concurrency — order is NOT guaranteed");
+    std::println("=====================================================");
 
-    std::cout << "[main] Starting workerA and workerB — watch the interleaving:\n";
+    std::println("[main] Starting workerA and workerB — watch the interleaving:");
     std::thread tA(workerA);
     std::thread tB(workerB);
 
     // Both run concurrently — you will see A and B steps mixed
     tA.join();
     tB.join();
-    std::cout << "[main] Both workers done\n";
+    std::println("[main] Both workers done");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Each thread has its own STACK\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Each thread has its own STACK");
+    std::println("=====================================================");
 
-    std::cout << "[main] Launching 3 threads — each has own local variables:\n";
+    std::println("[main] Launching 3 threads — each has own local variables:");
     std::thread ts1(showStack, 1);
     std::thread ts2(showStack, 2);
     std::thread ts3(showStack, 3);
@@ -187,52 +189,55 @@ int main()
     ts1.join();
     ts2.join();
     ts3.join();
-    std::cout << "[main] Notice: different stack addresses for each thread\n";
+    std::println("[main] Notice: different stack addresses for each thread");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Thread ID\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Thread ID");
+    std::println("=====================================================");
 
-    std::cout << "[main] Main thread ID: " << std::this_thread::get_id() << '\n';
+    std::println("[main] Main thread ID: {}", std::this_thread::get_id());
 
     std::thread tid1([]() {
-        std::cout << "[thread] My ID: " << std::this_thread::get_id() << '\n';
+        std::println("[thread] My ID: {}", std::this_thread::get_id());
     });
     std::thread tid2([]() {
-        std::cout << "[thread] My ID: " << std::this_thread::get_id() << '\n';
+        std::println("[thread] My ID: {}", std::this_thread::get_id());
     });
 
-    std::cout << "[main] tid1 ID (from outside): " << tid1.get_id() << '\n';
-    std::cout << "[main] tid2 ID (from outside): " << tid2.get_id() << '\n';
+    std::println("[main] tid1 ID (from outside): {}", tid1.get_id());
+    std::println("[main] tid2 ID (from outside): {}", tid2.get_id());
 
     tid1.join();
     tid2.join();
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: joinable() check\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: joinable() check");
+    std::println("=====================================================");
 
     std::thread tj([]() { sleepMs(20); });
 
-    std::cout << "Before join — joinable: " << (tj.joinable() ? "YES" : "NO") << '\n';
+    std::println("Before join — joinable: {}", (tj.joinable() ? "YES" : "NO"));
     tj.join();
-    std::cout << "After  join — joinable: " << (tj.joinable() ? "YES" : "NO") << '\n';
+    std::println("After  join — joinable: {}", (tj.joinable() ? "YES" : "NO"));
 
     // Default constructed thread — no associated thread
     std::thread empty;
-    std::cout << "Default thread — joinable: " << (empty.joinable() ? "YES" : "NO") << '\n';
+    std::println("Default thread — joinable: {}", (empty.joinable() ? "YES" : "NO"));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: detach() — fire and forget\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: detach() — fire and forget");
+    std::println("=====================================================");
 
-    std::cout << "[main] Launching detached background threads...\n";
+    std::println("[main] Launching detached background threads...");
 
     std::thread td1(backgroundTask, 1);
     std::thread td2(backgroundTask, 2);
@@ -240,44 +245,27 @@ int main()
     td1.detach();   // runs independently — main does NOT wait
     td2.detach();
 
-    std::cout << "[main] Detached — main continues without waiting\n";
-    std::cout << "[main] td1 joinable after detach: "
-              << (td1.joinable() ? "YES" : "NO") << '\n';
+    std::println("[main] Detached — main continues without waiting");
+    std::println("[main] td1 joinable after detach: {}", (td1.joinable() ? "YES" : "NO"));
 
     // Give detached threads time to finish before main exits
     // In real code you would use a synchronization mechanism instead
     sleepMs(200);
-    std::cout << "[main] (gave detached threads time to finish)\n";
+    std::println("[main] (gave detached threads time to finish)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: What happens WITHOUT join or detach\n";
-    std::cout << "=====================================================\n";
-
-    // If a joinable thread goes out of scope: std::terminate() → crash
-    // This is commented out to avoid crashing the program:
-    //
-    // {
-    //     std::thread bad([]() { sleepMs(100); });
-    // }  // CRASH — bad is joinable but neither joined nor detached
-    //
-    // Always join or detach every thread.
-
-    std::cout << "[main] (crash example skipped — see comments in code)\n";
-    std::cout << "[main] Rule: EVERY thread must be joined OR detached\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: hardware_concurrency\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: hardware_concurrency");
+    std::println("=====================================================");
 
     unsigned int cores = std::thread::hardware_concurrency();
-    std::cout << "Logical CPU cores available: " << cores << '\n';
-    std::cout << "This is the ideal number of threads for CPU-bound work\n";
+    std::println("Logical CPU cores available: {}", cores);
+    std::println("This is the ideal number of threads for CPU-bound work");
 
 
-    std::cout << "\n=== SimpleThread complete ===\n";
+    std::println("");
+    std::println("=== SimpleThread complete ===");
     return 0;
 }

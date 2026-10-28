@@ -256,3 +256,40 @@ use `std::move()` to transfer ownership into the thread.
 | `std::bind` | `thread t(bound, args...)` | Prefer lambda instead |
 | Move-only args | `thread t(func, std::move(obj))` | unique_ptr etc. |
 | Reference args | `thread t(func, std::ref(var))` | Modifies original |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Closing summary
+
+=== SUMMARY OF CALLABLES ===
+
+1. Regular function
+2. Function with parameters
+3. Function with return value
+4. Function with reference parameters
+5. Function pointer
+6. Lambda expressions (with captures)
+7. Functors (callable objects)
+8. Stateful functors
+9. Class member functions
+10. Static member functions
+
+```cpp
+11. std::function wrappers
+12. std::bind bound functions
+```
+
+13. Variadic template functions
+14. Functions with move-only parameters
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

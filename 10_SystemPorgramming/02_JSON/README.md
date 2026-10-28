@@ -8,10 +8,10 @@ standard format for config files, REST APIs, and inter-process data.
 
 ```json
 {
-  "name": "MCXApp",
-  "port": 5060,
+  "name": "MyApp",
+  "port": 8080,
   "tls": true,
-  "groups": ["ALPHA", "BETA"]
+  "tags": ["alpha", "beta"]
 }
 ```
 
@@ -67,14 +67,14 @@ flowchart LR
 ```cpp
 // Method 1 — assign keys
 json config;
-config["app"]  = "MCXApp";
-config["port"] = 5060;
+config["app"]  = "MyApp";
+config["port"] = 8080;
 
 // Method 2 — initializer list
-json config = {{"app","MCXApp"}, {"port",5060}};
+json config = {{"app","MyApp"}, {"port",8080}};
 
 // Method 3 — parse string
-json config = json::parse(R"({"app":"MCXApp","port":5060})");
+json config = json::parse(R"({"app":"MyApp","port":8080})");
 
 // Method 4 — parse file
 std::ifstream f("config.json");
@@ -95,7 +95,7 @@ flowchart TD
 ```
 
 ```cpp
-json data = {{"host","192.168.1.1"}, {"port",5060}};
+json data = {{"host","192.168.1.1"}, {"port",8080}};
 
 // [] — no bounds check
 std::string host = data["host"].get<std::string>();
@@ -116,24 +116,24 @@ if (data.contains("tls")) { ... }
 
 ```mermaid
 flowchart LR
-    root["json session"]
-    root --> id["session['id'] = 'SES-001'"]
-    root --> group["session['group']['id'] = 'GRP-ALPHA'\nsession['group']['name'] = 'Alpha'"]
-    root --> server["session['server']['host'] = '192.168.1.1'\nsession['server']['port'] = 5060"]
+    root["json service"]
+    root --> id["service['id'] = 'SVC-001'"]
+    root --> team["service['team']['id'] = 'TEAM-A'\nservice['team']['name'] = 'Platform'"]
+    root --> server["service['server']['host'] = '192.168.1.1'\nservice['server']['port'] = 8080"]
 ```
 
 ```cpp
-json session;
-session["id"]             = "SES-001";
-session["group"]["id"]    = "GRP-ALPHA";
-session["server"]["host"] = "192.168.1.1";
-session["server"]["port"] = 5060;
+json service;
+service["id"]             = "SVC-001";
+service["team"]["id"]    = "TEAM-A";
+service["server"]["host"] = "192.168.1.1";
+service["server"]["port"] = 8080;
 
 // Access nested
-std::string groupId = session["group"]["id"].get<std::string>();
+std::string teamId = service["team"]["id"].get<std::string>();
 
 // Iterate nested object
-for (auto& [key, val] : session["server"].items())
+for (auto& [key, val] : service["server"].items())
     std::cout << key << " = " << val.dump() << '\n';
 ```
 
@@ -144,8 +144,8 @@ for (auto& [key, val] : session["server"].items())
 ```mermaid
 flowchart LR
     subgraph ToJSON ["std::vector → JSON"]
-        V1["vector&lt;string&gt; groups\n= {'ALPHA','BETA'}"]
-        J1["json groupJson = groups"]
+        V1["vector&lt;string&gt; tags\n= {'alpha','beta'}"]
+        J1["json tagJson = tags"]
         V1 --> J1
     end
 
@@ -158,8 +158,8 @@ flowchart LR
 
 ```cpp
 // vector → JSON
-std::vector<std::string> groups = {"ALPHA", "BETA"};
-json j = groups;
+std::vector<std::string> tags = {"alpha", "beta"};
+json j = tags;
 
 // JSON → vector
 json nums = {10, 20, 30};
@@ -179,9 +179,9 @@ for (const auto& u : users)
 ## Serialize — dump()
 
 ```cpp
-json obj = {{"name","MCXApp"}, {"port",5060}};
+json obj = {{"name","MyApp"}, {"port",8080}};
 
-obj.dump()    // compact: {"name":"MCXApp","port":5060}
+obj.dump()    // compact: {"name":"MyApp","port":8080}
 obj.dump(2)   // pretty 2-space indent
 obj.dump(4)   // pretty 4-space indent
 ```
@@ -254,31 +254,31 @@ if (result.is_discarded()) { /* invalid */ }
 
 ---
 
-## Real use case — MCX config file
+## Real use case — service config file
 
 ```json
 {
-  "session": {
-    "id": "MCX-SES-001",
-    "group": "GRP-BOS-Network-ALPHA",
+  "service": {
+    "id": "SVC-001",
+    "team": "TEAM-PLATFORM",
     "priority": 1,
-    "floor_timeout": 30
+    "request_timeout": 30
   },
   "network": {
     "host": "192.168.100.1",
-    "port": 5060,
-    "protocol": "UDP",
+    "port": 8080,
+    "protocol": "TCP",
     "tls": true
   },
-  "codec": {
-    "name": "AMR-WB",
-    "bitrate": 23850,
-    "sample_rate": 16000
+  "compression": {
+    "name": "zstd",
+    "level": 3,
+    "block_size": 65536
   },
-  "participants": [
-    {"id": "PTT-001", "role": "dispatcher"},
-    {"id": "PTT-002", "role": "unit"},
-    {"id": "PTT-003", "role": "unit"}
+  "users": [
+    {"id": "USER-001", "role": "admin"},
+    {"id": "USER-002", "role": "member"},
+    {"id": "USER-003", "role": "member"}
   ]
 }
 ```
@@ -312,8 +312,18 @@ if (result.is_discarded()) { /* invalid */ }
 ✅ REST API — send/receive data over HTTP
 ✅ Inter-process data exchange
 ✅ Logging structured data
-✅ MCX/MCPTT session configuration
+✅ Service configuration
 
 ❌ Binary data — use binary formats (protobuf, msgpack)
 ❌ Very large datasets — JSON is verbose, use binary
 ❌ Real-time high-frequency data — parsing overhead
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

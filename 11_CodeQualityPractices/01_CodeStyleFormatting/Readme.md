@@ -867,3 +867,1301 @@ After mastering code style and formatting:
 - **LLVM Coding Standards:** https://llvm.org/docs/CodingStandards.html
 - **C++ Core Guidelines:** https://isocpp.github.io/CppCoreGuidelines/
 - **clang-format:** https://clang.llvm.org/docs/ClangFormat.html
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 CODE STYLE & FORMATTING COMPLETE! 🎉 (closing summary)
+
+You've mastered professional code formatting!  
+Your code will look clean and consistent!
+
+Next: Apply these principles with clang-format!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_naming_conventions()`
+
+- ❌ BAD CODE (Inconsistent):
+
+```cpp
+
+```cpp
+// Mixing styles randomly
+int UserAge;            // PascalCase for variable (wrong!)
+string customer_name;   // snake_case
+double TotalPrice;      // PascalCase again
+bool isactive;          // no separators
+
+void Calculate_Total() { }  // Mixed style
+void processOrder() { }     // Different style
+
+class user_account { };     // snake_case for class (wrong!)
+class OrderManager { };     // PascalCase
+
+const double tax_rate = 0.19;  // Should be UPPER
+const int MAX_USERS = 100;     // Correct
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Mixing camelCase, PascalCase, snake_case randomly
+  - No clear pattern
+  - Confusing for readers
+  - Hard to remember which style to use
+
+- ✅ GOOD CODE (C++ Standard Style):
+
+```cpp
+
+```cpp
+// Variables and functions: snake_case (like STL)
+int user_age;
+string customer_name;
+double total_price;
+bool is_active;
+
+void calculate_total() { }
+void process_order() { }
+
+// Classes: PascalCase
+class UserAccount { };
+class OrderManager { };
+
+// Constants: UPPER_SNAKE_CASE
+const double TAX_RATE = 0.19;
+const int MAX_USERS = 100;
+
+// Private members: trailing underscore (optional)
+class MyClass {
+```
+
+**private:**
+
+```cpp
+int value_;        // Private member
+string name_;
+```
+
+**public:**
+
+```cpp
+    int getValue() const { return value_; }
+};
+```
+
+```
+
+- ✅ ALTERNATIVE (Google C++ Style):
+
+```cpp
+
+```cpp
+// Variables and functions: snake_case
+int user_age;
+void calculate_total() { }
+
+// Classes: PascalCase
+class UserAccount { };
+
+// Constants: kConstantName (Google style)
+const double kTaxRate = 0.19;
+const int kMaxUsers = 100;
+
+// Private members: trailing underscore
+class MyClass {
+```
+
+**private:**
+
+```cpp
+    int value_;
+};
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Consistent style throughout
+- ✅ Easy to recognize types (class vs variable)
+- ✅ Follows established conventions
+- ✅ Clear distinction between public/private
+
+- 💡 KEY PRINCIPLE:
+
+"Pick ONE naming convention and use it consistently!  
+Follow your team's or project's style guide."
+
+### From `example2_brace_styles()`
+
+- ❌ BAD CODE (Inconsistent Braces):
+
+```cpp
+
+```cpp
+void function1() {  // K&R style
+    if (condition) {
+        doSomething();
+    }
+}
+
+void function2()    // Allman style
+{
+```
+
+if (condition)
+
+```cpp
+    {
+        doSomething();
+    }
+}
+
+void function3() {  // Mixed!
+```
+
+if (condition)
+
+```cpp
+    {
+        doSomething(); }
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Three different brace styles in same file
+  - Inconsistent and confusing
+  - Makes code look messy
+  - Harder to scan visually
+
+- ✅ GOOD CODE (K&R Style - Most Popular):
+
+```cpp
+
+```cpp
+void function1() {
+    if (condition) {
+        doSomething();
+    } else {
+        doSomethingElse();
+    }
+}
+
+void function2() {
+    for (int i = 0; i < n; i++) {
+        process(i);
+    }
+}
+
+class MyClass {
+```
+
+**public:**
+
+```cpp
+    void method() {
+        // Implementation
+    }
+};
+```
+
+```
+
+- ✅ ALTERNATIVE (Allman Style):
+
+```cpp
+
+```cpp
+void function1()
+{
+```
+
+if (condition)
+
+```cpp
+{
+    doSomething();
+}
+```
+
+else
+
+```cpp
+    {
+        doSomethingElse();
+    }
+}
+
+class MyClass
+{
+```
+
+**public:**
+
+```cpp
+    void method()
+    {
+        // Implementation
+    }
+};
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Consistent style throughout file
+- ✅ Easy to scan and read
+- ✅ Professional appearance
+- ✅ Matches team/project style
+
+**📋 BRACE STYLE COMPARISON:**
+
+K&R (Kernighan & Ritchie):
+
+  - Opening brace on same line
+  - Most compact
+  - Most popular in C++
+  - Used by Google, LLVM
+
+Allman:
+
+  - Opening brace on new line
+  - More vertical space
+  - Popular in C#, some C++
+  - Clearer structure visibility
+
+- 💡 KEY PRINCIPLE:
+
+"Pick K&R or Allman, use it everywhere!  
+Most C++ projects use K&R."
+
+### From `example3_indentation()`
+
+- ❌ BAD CODE (Inconsistent Indentation):
+
+```cpp
+
+```cpp
+void processData() {
+  if (condition1) {    // 2 spaces
+      doSomething();   // 6 spaces
+    if (condition2) {  // 4 spaces
+       doMore();       // 7 spaces
+    }
+  }
+}
+
+// Mixing tabs and spaces (disaster!)
+void mixedIndentation() {
+```
+
+- →   if (x) {        // Tab + spaces
+- →   doIt();    // Spaces + tab
+
+```cpp
+    }
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Random indentation levels
+  - Mixing tabs and spaces (worst!)
+  - Hard to see code structure
+  - Looks unprofessional
+  - Editor-dependent appearance
+
+- ✅ GOOD CODE (4 Spaces - Most Common):
+
+```cpp
+
+```cpp
+void processData() {
+    if (condition1) {
+        doSomething();
+        if (condition2) {
+            doMore();
+        }
+    }
+}
+
+class MyClass {
+```
+
+**public:**
+
+```cpp
+void method() {
+    for (int i = 0; i < n; i++) {
+        process(i);
+    }
+}
+```
+
+**private:**
+
+```cpp
+    int value_;
+};
+```
+
+```
+
+- ✅ ALTERNATIVE (2 Spaces - Google Style):
+
+```cpp
+
+```cpp
+void processData() {
+  if (condition1) {
+    doSomething();
+    if (condition2) {
+      doMore();
+    }
+  }
+}
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Consistent indentation level
+- ✅ Clear visual hierarchy
+- ✅ Easy to spot structure
+- ✅ Same in all editors
+
+**📊 INDENTATION GUIDELINES:**
+
+  - Use spaces (not tabs) for consistency
+  - 4 spaces: Most common (LLVM, Mozilla)
+  - 2 spaces: More compact (Google)
+  - Configure editor to insert spaces
+  - Never mix tabs and spaces!
+
+- 💡 KEY PRINCIPLE:
+
+"Use 2 or 4 spaces consistently. Never tabs!  
+Configure your editor properly."
+
+### From `example4_spacing()`
+
+- ❌ BAD CODE (Poor Spacing):
+
+```cpp
+
+```cpp
+int calculate(int x,int y){  // No spaces!
+    int result=x+y*2;        // Cramped
+    if(result>100){          // Hard to read
+        result=result-10;
+    }
+    return result;
+}
+
+void processArray(vector<int>&v){
+    for(int i=0;i<v.size();i++){
+        v[i]=v[i]*2;
+    }
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - No spaces around operators
+  - No spaces after commas
+  - No space before opening brace
+  - Cramped and hard to read
+  - Looks unprofessional
+
+- ✅ GOOD CODE (Proper Spacing):
+
+```cpp
+
+```cpp
+int calculate(int x, int y) {
+    int result = x + y * 2;
+    if (result > 100) {
+        result = result - 10;
+    }
+    return result;
+}
+
+void processArray(vector<int>& v) {
+    for (int i = 0; i < v.size(); i++) {
+        v[i] = v[i] * 2;
+    }
+}
+
+// Logical grouping with blank lines
+void complexFunction() {
+    // Initialize variables
+    int total = 0;
+    int count = 0;
+    // Process data
+    for (auto value : data) {
+        total += value;
+        count++;
+    }
+    // Calculate result
+    double average = static_cast<double>(total) / count;
+    return average;
+}
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Space after comma
+- ✅ Space around operators (=, +, -, *, <, >)
+- ✅ Space before opening brace
+- ✅ Space after keywords (if, for, while)
+- ✅ Blank lines between logical sections
+
+**📋 SPACING RULES:**
+
+- ✅ Space after comma: foo(a, b, c)
+- ✅ Space around binary operators: a + b
+- ✅ Space after keywords: if (condition)
+- ✅ Space before opening brace: void func() {
+- ❌ No space after function name: foo()
+- ❌ No space inside parentheses: if (x)
+- ✅ Blank line between functions
+- ✅ Blank line between logical sections
+
+- 💡 KEY PRINCIPLE:
+
+"Breathing room makes code readable!  
+Space around operators and after commas."
+
+### From `example5_line_length()`
+
+- ❌ BAD CODE (Lines Too Long):
+
+```cpp
+
+```cpp
+void processUserData(string firstName, string lastName, string email, string phoneNumber, string address, string city, string zipCode, string country, int age, bool isActive) { // 180+ characters!
+    if (firstName.empty() || lastName.empty() || email.empty() || phoneNumber.empty() || address.empty() || city.empty() || zipCode.empty() || country.empty()) { // Impossible to read!
+        throw invalid_argument("All fields are required: firstName, lastName, email, phoneNumber, address, city, zipCode, country");
+    }
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Lines over 120 characters
+  - Horizontal scrolling required
+  - Hard to read on smaller screens
+  - Can't see code in split view
+  - Difficult in code reviews
+
+- ✅ GOOD CODE (Proper Line Breaks):
+
+```cpp
+
+```cpp
+// Use struct for many parameters
+struct UserData {
+    string firstName, lastName;
+    string email, phoneNumber;
+    string address, city, zipCode, country;
+    int age;
+    bool isActive;
+};
+
+void processUserData(const UserData& user) {
+    if (user.firstName.empty() ||
+        user.lastName.empty() ||
+        user.email.empty()) {
+```
+
+throw invalid_argument(  
+"First name, last name, and email are required"
+
+```cpp
+        );
+    }
+}
+
+// Break long chains
+auto result = data
+    .filter([](int x) { return x > 0; })
+    .map([](int x) { return x * 2; })
+    .reduce(0, [](int a, int b) { return a + b; });
+
+// Break long conditions
+```
+
+if (isValidUser(user) &&  
+hasPermission(user) &&
+
+```cpp
+    isWithinBusinessHours() &&
+    !isMaintenanceMode()) {
+    processRequest();
+}
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Lines under 80-100 characters
+- ✅ No horizontal scrolling
+- ✅ Readable on all screens
+- ✅ Works in split view
+- ✅ Better for code reviews
+
+**📏 LINE LENGTH GUIDELINES:**
+
+  - 80 characters: Traditional (still common)
+  - 100 characters: Modern compromise
+  - 120 characters: Maximum for most teams
+  - Break at logical points (operators, commas)
+  - Indent continued lines
+
+- 💡 KEY PRINCIPLE:
+
+"Keep lines under 100 characters.  
+Break long lines at logical points."
+
+### From `example6_organization()`
+
+- ❌ BAD CODE (Poor Organization):
+
+```cpp
+
+```cpp
+class UserManager {
+    int count;  // Public data (bad!)
+```
+
+**public:**
+
+```cpp
+void save() { }
+```
+
+**private:**
+
+```cpp
+string name;
+```
+
+**public:**
+
+```cpp
+void load() { }
+void delete() { }
+```
+
+**private:**
+
+```cpp
+void helper() { }
+```
+
+**public:**
+
+```cpp
+    int getValue() { return count; }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - public/private sections mixed randomly
+  - Related methods separated
+  - Hard to find methods
+  - Confusing structure
+
+- ✅ GOOD CODE (Well-Organized Class):
+
+```cpp
+
+```cpp
+class UserManager {
+```
+
+**public:**
+
+```cpp
+// Constructors
+UserManager();
+~UserManager();
+// Public interface (grouped logically)
+void save();
+void load();
+void remove();
+// Getters/Setters
+int getCount() const { return count_; }
+string getName() const { return name_; }
+```
+
+**private:**
+
+```cpp
+    // Helper methods
+    void validateData();
+    void notifyObservers();
+    // Member variables (at end)
+    int count_;
+    string name_;
+    vector<Observer*> observers_;
+};
+
+// Source file organization
+// 1. Constructors/Destructors
+UserManager::UserManager() : count_(0) { }
+UserManager::~UserManager() { }
+
+// 2. Public methods (in header order)
+void UserManager::save() { }
+void UserManager::load() { }
+void UserManager::remove() { }
+
+// 3. Private methods
+void UserManager::validateData() { }
+void UserManager::notifyObservers() { }
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Clear section separation
+- ✅ Public interface first
+- ✅ Related methods grouped
+- ✅ Easy to navigate
+- ✅ Logical order
+
+**📋 CLASS ORGANIZATION ORDER:**
+
+1. public section:
+    - Constructors/Destructors
+    - Public methods (grouped logically)
+    - Getters/Setters
+2. protected section (if needed)
+3. private section:
+    - Helper methods
+    - Member variables (at end)
+
+- 💡 KEY PRINCIPLE:
+
+"Organize logically: Public first, private last.  
+Group related methods together."
+
+### From `example7_file_organization()`
+
+- ❌ BAD CODE (Random Header Order):
+
+```cpp
+
+```cpp
+#include "MyClass.h"
+#include <vector>
+#include "Utility.h"
+#include <iostream>
+#include <string>
+#include "../other/Helper.h"
+#include <algorithm>
+using namespace std;  // In header (bad!)
+
+// No logical organization
+// Hard to spot missing includes
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Random include order
+  - Mixed system and local headers
+  - Hard to find duplicates
+  - Using namespace in header (bad!)
+
+- ✅ GOOD CODE (Organized Headers):
+
+```cpp
+
+```cpp
+// ============================================
+// MyClass.cpp
+// Description: User management class
+// Author: Your Name
+// Date: 2024-11-18
+// ============================================
+
+// Related header first
+#include "MyClass.h"
+
+// C++ standard library (alphabetical)
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+// Third-party libraries
+#include <boost/filesystem.hpp>
+
+// Project headers (alphabetical)
+#include "Helper.h"
+#include "Utility.h"
+
+// Namespace usage (only in .cpp, never in .h)
+using namespace std;
+
+// Constants
+namespace {
+    const int MAX_RETRIES = 3;
+    const double TIMEOUT = 30.0;
+}
+
+// Implementation follows...
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Clear header comment
+- ✅ Logical include order
+- ✅ Grouped by category
+- ✅ Alphabetical within groups
+- ✅ Easy to spot missing includes
+
+**📂 INCLUDE ORDER:**
+
+1. Related header (MyClass.h for MyClass.cpp)
+2. C standard library (<cstdio>, <cmath>)
+3. C++ standard library (<iostream>, <vector>)
+4. Third-party libraries (<boost/...>)
+5. Project headers ("MyHeader.h")
+  - Alphabetical within each group
+  - Blank line between groups
+  - System headers: <...>
+  - Local headers: "..."
+
+- 💡 KEY PRINCIPLE:
+
+"Organize includes logically and alphabetically.  
+Never 'using namespace' in headers!"
+
+### From `example8_comment_style()`
+
+- ❌ BAD CODE (Poor Comments):
+
+```cpp
+
+```cpp
+// add two numbers
+int add(int a, int b) {  // function
+    return a + b;  // return sum
+}
+
+//calculate price
+double calc ( int x , int y )  //x is quantity
+{//y is price per unit
+return x*y;//multiply
+}
+```
+
+/* This is a comment  
+that explains  
+obvious code */
+
+```cpp
+int x = 5;  // Set x to 5
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Comments state the obvious
+  - Inconsistent spacing
+  - No capitalization or punctuation
+  - Comments explain WHAT, not WHY
+
+- ✅ GOOD CODE (Good Comments):
+
+```cpp  
+/**
+
+- Calculate the total price including bulk discounts.
+
+*
+
+- Bulk discount rules:
+- - 10% off for quantities >= 100
+- - 20% off for quantities >= 500
+
+*
+
+- @param quantity Number of items
+- @param pricePerUnit Price of single item
+- @return Total price after discounts
+
+*/
+
+```cpp
+double calculateBulkPrice(int quantity, double pricePerUnit) {
+    double total = quantity * pricePerUnit;
+    // Apply bulk discounts
+    if (quantity >= 500) {
+        total *= 0.8;  // 20% discount
+    } else if (quantity >= 100) {
+        total *= 0.9;  // 10% discount
+    }
+    return total;
+}
+
+// FIXME: This algorithm is O(n²), needs optimization
+void slowSort(vector<int>& data) {
+    // Bubble sort implementation
+}
+
+// TODO: Add input validation
+void processInput(string input) {
+    // Current implementation
+}
+
+// HACK: Workaround for bug in external library v1.2
+// Remove this when library is updated to v1.3
+void workaround() {
+    // Temporary fix
+}
+```
+
+```
+
+📌 SECTION MARKERS — for large file organization  
+Use when a file has multiple logical sections  
+that benefit from clear visual separation.  
+Common in:
+
+  - Files with 200+ lines
+  - Multiple class definitions
+  - Mixed concerns (types, helpers, main logic)
+
+- ❌ BAD - no visual separation in a large file:
+
+```cpp
+
+```cpp
+void connectDatabase() { }
+int calculatePrice() { }
+void sendEmail() { }
+void validateInput() { }
+class UserManager { };
+class OrderManager { };
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - No visual separation between unrelated functions
+  - Hard to navigate in large files
+  - Mixed concerns with no grouping
+
+- ✅ GOOD - clear sections make navigation easy:
+
+```cpp
+
+```cpp
+// ============================================
+// DATABASE
+// ============================================
+void connectDatabase() { }
+void disconnectDatabase() { }
+
+// ============================================
+// BUSINESS LOGIC
+// ============================================
+int calculatePrice() { }
+void validateInput() { }
+
+// ============================================
+// COMMUNICATION
+// ============================================
+void sendEmail() { }
+void sendNotification() { }
+
+// ============================================
+// MANAGERS
+// ============================================
+class UserManager { };
+class OrderManager { };
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Clear visual separation between sections
+- ✅ Related functions grouped together
+- ✅ Easy to navigate in large files
+- ✅ Immediately clear what each section contains
+
+- 💡 RULE OF THUMB:
+
+File under ~100 lines  → no section markers needed  
+File over  ~200 lines  → section markers help navigation  
+File with mixed topics → section markers are essential
+
+- ⚠️  BAD USE (overkill for small files):
+
+```cpp
+
+```cpp
+// ============================================
+// ADD FUNCTION
+// ============================================
+int add(int a, int b) { return a + b; }  // no section needed!
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Doxygen-style documentation
+- ✅ Explains WHY, not WHAT
+- ✅ Proper capitalization and punctuation
+- ✅ Consistent spacing
+- ✅ Useful markers (TODO, FIXME, HACK)
+
+**📝 COMMENT GUIDELINES:**
+
+- ✅ Document WHY, not WHAT
+- ✅ Use Doxygen for public API
+- ✅ Capitalize and punctuate
+- ✅ Space after // or /*
+- ✅ Use TODO, FIXME, HACK markers
+- ❌ Don't comment obvious code
+- ❌ Don't leave commented-out code
+- ❌ Don't use comments to fix bad names
+
+- 💡 KEY PRINCIPLE:
+
+"Good code documents itself. Comments explain WHY,  
+not WHAT. Use Doxygen for public APIs."
+
+### From `example9_consistency()`
+
+**🎯 WHY CONSISTENCY MATTERS:**
+
+  - Reduces cognitive load
+  - Easier to spot patterns and errors
+  - Faster code reviews
+  - Team collaboration
+  - Professional appearance
+
+**📋 CONSISTENCY CHECKLIST:**
+
+NAMING:  
+□ One naming convention (not mixed)  
+□ Variables: snake_case or camelCase  
+□ Classes: PascalCase  
+□ Constants: UPPER_SNAKE_CASE  
+□ Private members: trailing_ or leading m_
+
+FORMATTING:  
+□ One brace style (K&R or Allman)  
+□ Consistent indentation (2 or 4 spaces)  
+□ Space after comma, around operators  
+□ Lines under 100-120 characters  
+□ Blank lines between functions
+
+ORGANIZATION:  
+□ Consistent include order  
+□ Public before private  
+□ Logical grouping of methods  
+□ Related functions together
+
+COMMENTS:  
+□ Doxygen for public API  
+□ Consistent comment style  
+□ Proper capitalization  
+□ Explain WHY, not WHAT
+
+**🔧 TOOLS TO ENFORCE CONSISTENCY:**
+
+  - clang-format: Auto-format code
+
+$ clang-format -i file.cpp
+
+  - .clang-format file: Team-wide settings
+
+  - EditorConfig: Editor settings
+
+  - Pre-commit hooks: Enforce before commit
+
+  - CI/CD checks: Verify in pipeline
+
+- 💡 KEY PRINCIPLE:
+
+"Pick a style and stick to it!  
+Consistency > Personal preference."
+
+### From `example10_modern_cpp_style()`
+
+**✨ MODERN C++ STYLE:**
+
+1. USE auto APPROPRIATELY:
+- ✅ auto x = 5;                    // Clear type
+- ✅ auto v = vector<int>{1, 2, 3}; // Obvious
+- ✅ auto it = map.begin();         // Iterator
+- ❌ auto x = calculatePrice();     // Not clear!
+- ✅ double x = calculatePrice();   // Clear
+
+2. USE nullptr (NOT NULL):
+- ❌ int* ptr = NULL;   // Old C style
+- ✅ int* ptr = nullptr; // Modern C++
+
+3. USE enum class (NOT enum):
+- ❌ enum Color { RED, GREEN };  // Pollutes namespace
+- ✅ enum class Color { Red, Green };  // Type-safe
+
+4. USE range-based for:
+- ❌ for (int i = 0; i < v.size(); i++)  // Old
+- ✅ for (const auto& item : v)          // Modern
+
+5. USE uniform initialization:
+- ❌ vector<int> v(10);      // May be confusing
+- ✅ vector<int> v{10};      // Clear
+- ✅ int x{5};               // Modern
+
+6. USE smart pointers:
+- ❌ Widget* w = new Widget();  // Manual management
+- ✅ auto w = make_unique<Widget>();  // RAII
+
+7. USE [[nodiscard]] for important returns:
+
+```cpp
+[[nodiscard]] bool save() { /* ... */ }
+```
+
+8. USE constexpr when possible:
+- ❌ const double PI = 3.14159;
+- ✅ constexpr double PI = 3.14159;
+
+9. USE structured bindings (C++17):
+- ❌ auto pair = getCoordinates();
+
+```cpp
+int x = pair.first;
+int y = pair.second;
+```
+
+- ✅ auto [x, y] = getCoordinates();
+
+10. USE trailing return type (when clearer):
+- ❌ template<typename T, typename U>
+
+```cpp
+decltype(t + u) add(T t, U u);
+```
+
+- ✅ template<typename T, typename U>
+
+```cpp
+auto add(T t, U u) -> decltype(t + u);
+```
+
+- 💡 KEY PRINCIPLE:
+
+"Use modern C++ features for clarity and safety!  
+Embrace C++11/14/17/20 improvements."
+
+### From `example11_clang_format()`
+
+**🔧 USING CLANG-FORMAT:**
+
+1. INSTALL:
+
+$ sudo apt install clang-format  # Ubuntu/Debian  
+$ brew install clang-format      # macOS
+
+2. FORMAT A FILE:
+
+$ clang-format -i file.cpp  # Format in-place  
+$ clang-format file.cpp     # Show formatted output
+
+3. USE PREDEFINED STYLE:
+
+$ clang-format -style=Google -i file.cpp  
+$ clang-format -style=LLVM -i file.cpp  
+$ clang-format -style=Mozilla -i file.cpp
+
+4. CREATE .clang-format FILE:
+
+```yaml  
+# .clang-format  
+---  
+BasedOnStyle: LLVM  
+IndentWidth: 4  
+ColumnLimit: 100  
+PointerAlignment: Left  
+BreakBeforeBraces: Attach  
+AllowShortFunctionsOnASingleLine: Empty  
+AllowShortIfStatementsOnASingleLine: Never  
+SpaceAfterCStyleCast: true  
+SpacesInParentheses: false  
+```
+
+5. INTEGRATE WITH EDITOR:
+  - VS Code: C/C++ extension
+  - CLion: Built-in support
+  - Vim: vim-clang-format plugin
+  - Format on save
+
+6. PRE-COMMIT HOOK:
+
+```bash  
+#!/bin/bash  
+# .git/hooks/pre-commit  
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.cpp$\|\.h$')
+
+```cpp
+for FILE in $FILES; do
+```
+
+clang-format -i $FILE  
+git add $FILE  
+done  
+```
+
+**📊 POPULAR STYLE GUIDES:**
+
+  - Google C++ Style:
+    - 2-space indentation
+    - K&R bracing
+    - 80 character limit
+
+  - LLVM Style:
+    - 2-space indentation
+    - K&R bracing
+    - 80 character limit
+
+  - Mozilla Style:
+    - 2-space indentation
+    - Allman bracing
+    - 80 character limit
+
+- 💡 KEY PRINCIPLE:
+
+"Automate formatting with clang-format!  
+Spend time on logic, not formatting."
+
+### From `example12_summary()`
+
+- ✅ CODE STYLE CHECKLIST:
+
+**📝 NAMING:**
+
+- ✅ Consistent convention (snake_case or camelCase)
+- ✅ Classes: PascalCase
+- ✅ Constants: UPPER_SNAKE_CASE
+- ✅ Private members: trailing underscore
+- ✅ Descriptive names (no x, tmp, data)
+
+**🎨 FORMATTING:**
+
+- ✅ One brace style (K&R recommended)
+- ✅ 4 spaces indentation (or 2)
+- ✅ Space after comma, around operators
+- ✅ Lines under 100 characters
+- ✅ Blank lines between functions
+- ✅ Blank lines between logical sections
+
+**📂 ORGANIZATION:**
+
+- ✅ Includes: Related → STL → Third-party → Project
+- ✅ Alphabetical within groups
+- ✅ Classes: Public → Private
+- ✅ Member variables at end
+
+**💬 COMMENTS:**
+
+- ✅ Doxygen for public API
+- ✅ Explain WHY, not WHAT
+- ✅ Proper capitalization
+- ✅ TODO/FIXME/HACK markers
+- ❌ No commented-out code
+
+**✨ MODERN C++:**
+
+- ✅ Use auto (when clear)
+- ✅ Use nullptr (not NULL)
+- ✅ Use enum class
+- ✅ Use range-based for
+- ✅ Use smart pointers
+- ✅ Use constexpr
+
+**🔧 AUTOMATION:**
+
+- ✅ Use clang-format
+- ✅ .clang-format in repo
+- ✅ Format on save
+- ✅ Pre-commit hooks
+- ✅ CI/CD checks
+
+**🎯 GOLDEN RULES:**
+
+1. Consistency > Personal preference
+2. Follow team/project style guide
+3. Use automation (clang-format)
+4. Make code readable
+5. Keep it simple
+6. Modern C++ over legacy
+
+**📚 RECOMMENDED STYLE GUIDES:**
+
+  - Google C++ Style Guide
+  - LLVM Coding Standards
+  - Mozilla Coding Style
+  - C++ Core Guidelines
+
+- 💡 FINAL WISDOM:
+
+"Code formatting is like typography.  
+Done well, you don't notice it.  
+Done poorly, you can't read anything."
+
+**🎓 REMEMBER:**
+
+  - Formatting shows professionalism
+  - Consistency helps collaboration
+  - Tools automate the boring parts
+  - Good style makes code maintainable
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

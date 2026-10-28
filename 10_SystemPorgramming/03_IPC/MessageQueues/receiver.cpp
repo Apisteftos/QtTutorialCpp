@@ -1,8 +1,8 @@
-#include <iostream>
 #include <fcntl.h>
 #include <mqueue.h>
 #include <cstring>
 #include <unistd.h>
+#include <print>
 
 // ============================================
 // MESSAGE QUEUE RECEIVER
@@ -21,9 +21,10 @@ struct Message {
 };
 
 int main() {
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║    IPC — Message Queue Receiver      ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n\n";
+    std::println("╔══════════════════════════════════════╗");
+    std::println("║    IPC — Message Queue Receiver      ║");
+    std::println("╚══════════════════════════════════════╝");
+    std::println("");
 
     // 1. Open the existing queue for reading
     mqd_t mq = mq_open(QUEUE_NAME, O_RDONLY);
@@ -35,16 +36,17 @@ int main() {
     // 2. Get queue attributes to confirm state
     struct mq_attr attr;
     mq_getattr(mq, &attr);
-    std::cout << "Queue opened: " << QUEUE_NAME << "\n";
-    std::cout << "Messages waiting: " << attr.mq_curmsgs << "\n\n";
+    std::println("Queue opened: {}", QUEUE_NAME);
+    std::println("Messages waiting: {}", attr.mq_curmsgs);
+    std::println("");
 
     // 3. Receive all messages
     char buffer[MAX_MSG_SIZE];
     unsigned int priority;
     int received = 0;
 
-    std::cout << "Reading messages (sorted by priority, highest first):\n";
-    std::cout << std::string(55, '-') << "\n";
+    std::println("Reading messages (sorted by priority, highest first):");
+    std::println("{}", std::string(55, '-'));
 
     while (true) {
         ssize_t bytes = mq_receive(mq, buffer, MAX_MSG_SIZE, &priority);
@@ -55,19 +57,18 @@ int main() {
         }
 
         Message* msg = (Message*)buffer;
-        std::cout << "[Receiver] Got msg #" << msg->id
-                  << " priority=" << priority
-                  << " → \"" << msg->text << "\"\n";
+        std::println("[Receiver] Got msg #{} priority={} → \"{}\"", msg->id, priority, msg->text);
         received++;
     }
 
-    std::cout << std::string(55, '-') << "\n";
-    std::cout << "\nTotal received: " << received << " messages\n";
+    std::println("{}", std::string(55, '-'));
+    std::println("");
+    std::println("Total received: {} messages", received);
 
     // 4. Close and delete the queue
     mq_close(mq);
     mq_unlink(QUEUE_NAME);
-    std::cout << "[Receiver] Queue deleted. Done.\n";
+    std::println("[Receiver] Queue deleted. Done.");
 
     return 0;
 }

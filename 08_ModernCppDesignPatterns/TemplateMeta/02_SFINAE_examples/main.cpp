@@ -13,13 +13,14 @@
  * - Expression SFINAE
  * - Concepts-like constraints (pre-C++20)
  *
- * Compile: g++ -std=c++20 -Wall -Wextra SFINAE_examples.cpp -o sfinae
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
 #include <iostream>
 #include <vector>
 #include <type_traits>
 #include <string>
+#include <print>
 
 // ============================================================================
 // PART 1: Basic SFINAE - Function Overloading
@@ -31,32 +32,35 @@ namespace BasicSFINAE {
 template<typename T>
 std::enable_if_t<std::is_integral_v<T>, void>
 process(T value) {
-    std::cout << "Processing integer: " << value << " * 2 = " << value * 2 << "\n";
+    std::println("Processing integer: {} * 2 = {}", value, value * 2);
 }
 
 // Overload 2: For floating point types
 template<typename T>
 std::enable_if_t<std::is_floating_point_v<T>, void>
 process(T value) {
-    std::cout << "Processing float: " << value << " * 1.5 = " << value * 1.5 << "\n";
+    std::println("Processing float: {} * 1.5 = {}", value, value * 1.5);
 }
 
 // Overload 3: For string types
 template<typename T>
 std::enable_if_t<std::is_same_v<T, std::string>, void>
 process(const T& value) {
-    std::cout << "Processing string: \"" << value << "\" (length: " << value.size() << ")\n";
+    std::println("Processing string: \"{}\" (length: {})", value, value.size());
 }
 
 void demonstrate() {
-    std::cout << "\n=== Basic SFINAE: Function Overloading ===\n";
-    std::cout << "\nDifferent implementations based on type:\n";
+    std::println("");
+    std::println("=== Basic SFINAE: Function Overloading ===");
+    std::println("");
+    std::println("Different implementations based on type:");
 
     process(42);              // Calls integer version
     process(3.14);            // Calls float version
     process(std::string("Hello"));  // Calls string version
 
-    std::cout << "\n✅ SFINAE selects correct overload at compile-time!\n";
+    std::println("");
+    std::println("✅ SFINAE selects correct overload at compile-time!");
 }
 }
 
@@ -102,24 +106,29 @@ template<typename T>
 inline constexpr bool is_iterable_v = is_iterable<T>::value;
 
 void demonstrate() {
-    std::cout << "\n=== Detecting Member Functions ===\n";
+    std::println("");
+    std::println("=== Detecting Member Functions ===");
 
-    std::cout << "\nChecking for size():\n";
-    std::cout << "  std::vector has size(): " << has_size_v<std::vector<int>> << "\n";
-    std::cout << "  int has size(): " << has_size_v<int> << "\n";
-    std::cout << "  std::string has size(): " << has_size_v<std::string> << "\n";
+    std::println("");
+    std::println("Checking for size():");
+    std::println("  std::vector has size(): {}", has_size_v<std::vector<int>>);
+    std::println("  int has size(): {}", has_size_v<int>);
+    std::println("  std::string has size(): {}", has_size_v<std::string>);
 
-    std::cout << "\nChecking for push_back():\n";
-    std::cout << "  std::vector has push_back(): " << has_push_back_v<std::vector<int>> << "\n";
-    std::cout << "  std::string has push_back(): " << has_push_back_v<std::string> << "\n";
-    std::cout << "  int has push_back(): " << has_push_back_v<int> << "\n";
+    std::println("");
+    std::println("Checking for push_back():");
+    std::println("  std::vector has push_back(): {}", has_push_back_v<std::vector<int>>);
+    std::println("  std::string has push_back(): {}", has_push_back_v<std::string>);
+    std::println("  int has push_back(): {}", has_push_back_v<int>);
 
-    std::cout << "\nChecking if iterable:\n";
-    std::cout << "  std::vector is iterable: " << is_iterable_v<std::vector<int>> << "\n";
-    std::cout << "  std::string is iterable: " << is_iterable_v<std::string> << "\n";
-    std::cout << "  int is iterable: " << is_iterable_v<int> << "\n";
+    std::println("");
+    std::println("Checking if iterable:");
+    std::println("  std::vector is iterable: {}", is_iterable_v<std::vector<int>>);
+    std::println("  std::string is iterable: {}", is_iterable_v<std::string>);
+    std::println("  int is iterable: {}", is_iterable_v<int>);
 
-    std::cout << "\n✅ Can detect interface at compile-time!\n";
+    std::println("");
+    std::println("✅ Can detect interface at compile-time!");
 }
 }
 
@@ -149,28 +158,32 @@ auto getSize(const Container& c)
 template<typename Container>
 std::enable_if_t<DetectMembers::is_iterable_v<Container>, void>
 print(const Container& c) {
-    std::cout << "  [ ";
+    std::print("  [ ");
     for (const auto& item : c) {
-        std::cout << item << " ";
+        std::print("{} ", item);
     }
-    std::cout << "]\n";
+    std::println("]");
 }
 
 void demonstrate() {
-    std::cout << "\n=== Generic Container Operations ===\n";
+    std::println("");
+    std::println("=== Generic Container Operations ===");
 
     std::vector<int> vec = {1, 2, 3, 4, 5};
     std::string str = "Hello";
 
-    std::cout << "\nGet size:\n";
-    std::cout << "  vector size: " << getSize(vec) << "\n";
-    std::cout << "  string size: " << getSize(str) << "\n";
+    std::println("");
+    std::println("Get size:");
+    std::println("  vector size: {}", getSize(vec));
+    std::println("  string size: {}", getSize(str));
 
-    std::cout << "\nPrint containers:\n";
-    std::cout << "  vector: ";
+    std::println("");
+    std::println("Print containers:");
+    std::print("  vector: ");
     print(vec);
 
-    std::cout << "\n✅ One function works with any container!\n";
+    std::println("");
+    std::println("✅ One function works with any container!");
 }
 }
 
@@ -200,15 +213,18 @@ auto getValue(const T& t) -> std::enable_if_t<
 }
 
 void demonstrate() {
-    std::cout << "\n=== Return Type SFINAE ===\n";
+    std::println("");
+    std::println("=== Return Type SFINAE ===");
 
-    std::cout << "\nDifferent return types based on input:\n";
-    std::cout << "  getValue(5): " << getValue(5) << " (int)\n";
-    std::cout << "  getValue(3.14): " << getValue(3.14) << " (int from double)\n";
-    std::cout << "  getValue(\"test\"): " << getValue(std::string("test")) << " (string)\n";
-    std::cout << "  getValue(vector): " << getValue(std::vector<int>{1,2,3}) << " (size_t)\n";
+    std::println("");
+    std::println("Different return types based on input:");
+    std::println("  getValue(5): {} (int)", getValue(5));
+    std::println("  getValue(3.14): {} (int from double)", getValue(3.14));
+    std::println("  getValue(\"test\"): {} (string)", getValue(std::string("test")));
+    std::println("  getValue(vector): {} (size_t)", getValue(std::vector<int>{1,2,3}));
 
-    std::cout << "\n✅ Return type depends on input type!\n";
+    std::println("");
+    std::println("✅ Return type depends on input type!");
 }
 }
 
@@ -238,19 +254,19 @@ struct type_category {
 // Implementation for integral
 template<typename T>
 void process_impl(T value, integral_tag) {
-    std::cout << "  Processing integer: " << value << "\n";
+    std::println("  Processing integer: {}", value);
 }
 
 // Implementation for floating point
 template<typename T>
 void process_impl(T value, floating_tag) {
-    std::cout << "  Processing float: " << value << "\n";
+    std::println("  Processing float: {}", value);
 }
 
 // Implementation for other types
 template<typename T>
 void process_impl(const T& value, other_tag) {
-    std::cout << "  Processing other type\n";
+    std::println("  Processing other type");
     (void)value;
 }
 
@@ -261,14 +277,17 @@ void process(const T& value) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Tag Dispatching ===\n";
+    std::println("");
+    std::println("=== Tag Dispatching ===");
 
-    std::cout << "\nUsing tags for dispatch:\n";
+    std::println("");
+    std::println("Using tags for dispatch:");
     process(42);
     process(3.14);
     process(std::string("hello"));
 
-    std::cout << "\n✅ Tag dispatching = cleaner than SFINAE!\n";
+    std::println("");
+    std::println("✅ Tag dispatching = cleaner than SFINAE!");
 }
 }
 
@@ -308,27 +327,32 @@ safeAdd(T a, U b) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Expression SFINAE ===\n";
+    std::println("");
+    std::println("=== Expression SFINAE ===");
 
-    std::cout << "\nChecking if types are addable:\n";
-    std::cout << "  int + int: " << is_addable_v<int, int> << "\n";
-    std::cout << "  int + double: " << is_addable_v<int, double> << "\n";
-    std::cout << "  string + string: " << is_addable_v<std::string, std::string> << "\n";
-    std::cout << "  int + string: " << is_addable_v<int, std::string> << "\n";
+    std::println("");
+    std::println("Checking if types are addable:");
+    std::println("  int + int: {}", is_addable_v<int, int>);
+    std::println("  int + double: {}", is_addable_v<int, double>);
+    std::println("  string + string: {}", is_addable_v<std::string, std::string>);
+    std::println("  int + string: {}", is_addable_v<int, std::string>);
 
-    std::cout << "\nChecking if types are printable:\n";
-    std::cout << "  int is printable: " << is_printable_v<int> << "\n";
-    std::cout << "  string is printable: " << is_printable_v<std::string> << "\n";
-    std::cout << "  vector is printable: " << is_printable_v<std::vector<int>> << "\n";
+    std::println("");
+    std::println("Checking if types are printable:");
+    std::println("  int is printable: {}", is_printable_v<int>);
+    std::println("  string is printable: {}", is_printable_v<std::string>);
+    std::println("  vector is printable: {}", is_printable_v<std::vector<int>>);
 
-    std::cout << "\nSafe add:\n";
-    std::cout << "  safeAdd(5, 3): " << safeAdd(5, 3) << "\n";
-    std::cout << "  safeAdd(5, 3.14): " << safeAdd(5, 3.14) << "\n";
+    std::println("");
+    std::println("Safe add:");
+    std::println("  safeAdd(5, 3): {}", safeAdd(5, 3));
+    std::println("  safeAdd(5, 3.14): {}", safeAdd(5, 3.14));
 
     // This would NOT compile:
     // safeAdd(5, std::string("hello"));  // ❌ Not addable!
 
-    std::cout << "\n✅ Expression SFINAE validates operations!\n";
+    std::println("");
+    std::println("✅ Expression SFINAE validates operations!");
 }
 }
 
@@ -367,7 +391,8 @@ serialize(const T& container) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Generic Serializer ===\n";
+    std::println("");
+    std::println("=== Generic Serializer ===");
 
     int num = 42;
     double pi = 3.14159;
@@ -375,14 +400,16 @@ void demonstrate() {
     std::vector<int> vec = {1, 2, 3, 4, 5};
     std::vector<std::string> words = {"one", "two", "three"};
 
-    std::cout << "\nSerializing different types:\n";
-    std::cout << "  int: " << serialize(num) << "\n";
-    std::cout << "  double: " << serialize(pi) << "\n";
-    std::cout << "  string: " << serialize(text) << "\n";
-    std::cout << "  vector<int>: " << serialize(vec) << "\n";
-    std::cout << "  vector<string>: " << serialize(words) << "\n";
+    std::println("");
+    std::println("Serializing different types:");
+    std::println("  int: {}", serialize(num));
+    std::println("  double: {}", serialize(pi));
+    std::println("  string: {}", serialize(text));
+    std::println("  vector<int>: {}", serialize(vec));
+    std::println("  vector<string>: {}", serialize(words));
 
-    std::cout << "\n✅ One serialize function for all types!\n";
+    std::println("");
+    std::println("✅ One serialize function for all types!");
 }
 }
 
@@ -413,15 +440,18 @@ T add_integers(T a, T b) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== SFINAE vs C++20 Concepts ===\n";
+    std::println("");
+    std::println("=== SFINAE vs C++20 Concepts ===");
 
-    std::cout << "\nBoth work the same:\n";
-    std::cout << "  SFINAE: multiply(5, 3) = " << multiply_sfinae(5, 3) << "\n";
-    std::cout << "  Concept: multiply(5, 3) = " << multiply_concept(5, 3) << "\n";
-    std::cout << "  Integral: add(10, 20) = " << add_integers(10, 20) << "\n";
+    std::println("");
+    std::println("Both work the same:");
+    std::println("  SFINAE: multiply(5, 3) = {}", multiply_sfinae(5, 3));
+    std::println("  Concept: multiply(5, 3) = {}", multiply_concept(5, 3));
+    std::println("  Integral: add(10, 20) = {}", add_integers(10, 20));
 
-    std::cout << "\n✅ Concepts are cleaner but SFINAE still useful!\n";
-    std::cout << "   SFINAE = C++11+, Concepts = C++20+\n";
+    std::println("");
+    std::println("✅ Concepts are cleaner but SFINAE still useful!");
+    std::println("   SFINAE = C++11+, Concepts = C++20+");
 }
 }
 
@@ -430,9 +460,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║     SFINAE: Substitution Failure Is Not An Error    ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║     SFINAE: Substitution Failure Is Not An Error    ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     BasicSFINAE::demonstrate();
     DetectMembers::demonstrate();
@@ -443,27 +473,12 @@ int main() {
     GenericSerializer::demonstrate();
     SFINAEVsConcepts::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 SFINAE MASTERY:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ SFINAE = Compile-time function selection\n";
-    std::cout << "✅ Enable/disable functions based on type properties\n";
-    std::cout << "✅ Detect member functions and operations\n";
-    std::cout << "✅ Create truly generic code\n";
-    std::cout << "✅ Better error messages than template errors\n";
-    std::cout << "\n💡 Common SFINAE patterns:\n";
-    std::cout << "   - std::enable_if for conditional compilation\n";
-    std::cout << "   - std::void_t for member detection\n";
-    std::cout << "   - Tag dispatching for cleaner code\n";
-    std::cout << "   - Expression SFINAE for operation validation\n";
-    std::cout << "\n💡 think-cell uses SFINAE for:\n";
-    std::cout << "   - Generic algorithm selection\n";
-    std::cout << "   - Interface detection\n";
-    std::cout << "   - Type-safe APIs\n";
-    std::cout << "   - Zero-cost abstractions\n";
-    std::cout << "\n🚀 Modern C++20: Use concepts when possible!\n";
-    std::cout << "   Concepts are clearer, but SFINAE still relevant\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 SFINAE MASTERY:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }
@@ -521,5 +536,5 @@ int main() {
  * - Study type_list.cpp for advanced TMP
  * - Learn C++20 concepts (modern alternative)
  * - Practice with your own SFINAE patterns
- * - Read ThinkCellPhilosophy/ for real usage
+ * - Read ../../RangesAndGenericStyle/ for real usage
  */

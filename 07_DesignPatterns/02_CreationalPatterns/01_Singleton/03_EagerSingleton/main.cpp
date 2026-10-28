@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <mutex>
 #include <thread>
@@ -6,7 +5,7 @@
 #include <vector>
 #include <atomic>
 #include <memory>
-using namespace std;
+#include <print>
 
 // ============================================
 // TYPE 1: EAGER INITIALIZATION (CLASSIC)
@@ -26,8 +25,8 @@ private:
 
     // Private constructor prevents external instantiation
     EagerSingleton() : value(0) {
-        cout << "🏗️  EagerSingleton: Constructor called\n";
-        cout << "   Instance created at program startup\n";
+        std::println("🏗️  EagerSingleton: Constructor called");
+        std::println("   Instance created at program startup");
     }
 
     // Delete copy constructor and assignment operator
@@ -36,7 +35,7 @@ private:
 
 public:
     static EagerSingleton* getInstance() {
-        cout << "📞 EagerSingleton: getInstance() called\n";
+        std::println("📞 EagerSingleton: getInstance() called");
         return instance;
     }
 
@@ -44,7 +43,7 @@ public:
     int getValue() const { return value; }
 
     void doSomething() {
-        cout << "✨ EagerSingleton: Doing something with value = " << value << "\n";
+        std::println("✨ EagerSingleton: Doing something with value = {}", value);
     }
 };
 
@@ -68,9 +67,9 @@ private:
     int value;
 
     LazySingleton() : value(0) {
-        cout << "🏗️  LazySingleton: Constructor called\n";
-        cout << "   Instance created on first use (lazy)\n";
-        this_thread::sleep_for(chrono::milliseconds(100)); // Simulate work
+        std::println("🏗️  LazySingleton: Constructor called");
+        std::println("   Instance created on first use (lazy)");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate work
     }
 
     LazySingleton(const LazySingleton&) = delete;
@@ -78,11 +77,10 @@ private:
 
 public:
     static LazySingleton* getInstance() {
-        cout << "📞 LazySingleton: getInstance() called by thread "
-             << this_thread::get_id() << "\n";
+        std::println("📞 LazySingleton: getInstance() called by thread {}", std::this_thread::get_id());
 
         if (instance == nullptr) {
-            cout << "⚠️  Creating instance...\n";
+            std::println("⚠️  Creating instance...");
             instance = new LazySingleton();  // NOT THREAD-SAFE!
         }
         return instance;
@@ -92,7 +90,7 @@ public:
     int getValue() const { return value; }
 
     void doSomething() {
-        cout << "✨ LazySingleton: Doing something with value = " << value << "\n";
+        std::println("✨ LazySingleton: Doing something with value = {}", value);
     }
 };
 
@@ -112,13 +110,13 @@ LazySingleton* LazySingleton::instance = nullptr;
 class ThreadSafeSingleton {
 private:
     static ThreadSafeSingleton* instance;
-    static mutex mtx;
+    static std::mutex mtx;
     int value;
 
     ThreadSafeSingleton() : value(0) {
-        cout << "🏗️  ThreadSafeSingleton: Constructor called\n";
-        cout << "   Instance created safely with mutex\n";
-        this_thread::sleep_for(chrono::milliseconds(100));
+        std::println("🏗️  ThreadSafeSingleton: Constructor called");
+        std::println("   Instance created safely with mutex");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     ThreadSafeSingleton(const ThreadSafeSingleton&) = delete;
@@ -126,13 +124,12 @@ private:
 
 public:
     static ThreadSafeSingleton* getInstance() {
-        lock_guard<mutex> lock(mtx);  // Lock on EVERY call (slow!)
+        std::lock_guard<std::mutex> lock(mtx);  // Lock on EVERY call (slow!)
 
-        cout << "📞 ThreadSafeSingleton: getInstance() called by thread "
-             << this_thread::get_id() << "\n";
+        std::println("📞 ThreadSafeSingleton: getInstance() called by thread {}", std::this_thread::get_id());
 
         if (instance == nullptr) {
-            cout << "⚠️  Creating instance with mutex protection...\n";
+            std::println("⚠️  Creating instance with mutex protection...");
             instance = new ThreadSafeSingleton();
         }
         return instance;
@@ -142,12 +139,12 @@ public:
     int getValue() const { return value; }
 
     void doSomething() {
-        cout << "✨ ThreadSafeSingleton: Doing something with value = " << value << "\n";
+        std::println("✨ ThreadSafeSingleton: Doing something with value = {}", value);
     }
 };
 
 ThreadSafeSingleton* ThreadSafeSingleton::instance = nullptr;
-mutex ThreadSafeSingleton::mtx;
+std::mutex ThreadSafeSingleton::mtx;
 
 
 // ============================================
@@ -155,47 +152,54 @@ mutex ThreadSafeSingleton::mtx;
 // ============================================
 
 void demonstrateEagerSingleton() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  TYPE 1: EAGER SINGLETON           ║\n";
-    cout << "╚════════════════════════════════════╝\n";
-    cout << "Instance created BEFORE main() runs!\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  TYPE 1: EAGER SINGLETON           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("Instance created BEFORE main() runs!");
+    std::println("");
 
     auto s1 = EagerSingleton::getInstance();
     s1->setValue(42);
     s1->doSomething();
 
     auto s2 = EagerSingleton::getInstance();
-    cout << "s1 value: " << s1->getValue() << "\n";
-    cout << "s2 value: " << s2->getValue() << "\n";
-    cout << "s1 address: " << s1 << "\n";
-    cout << "s2 address: " << s2 << "\n";
-    cout << "Same instance? " << (s1 == s2 ? "✅ Yes" : "❌ No") << "\n";
+    std::println("s1 value: {}", s1->getValue());
+    std::println("s2 value: {}", s2->getValue());
+    std::println("s1 address: {}", static_cast<const void*>(s1));
+    std::println("s2 address: {}", static_cast<const void*>(s2));
+    std::println("Same instance? {}", (s1 == s2 ? "✅ Yes" : "❌ No"));
 }
 
 void demonstrateLazySingleton() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  TYPE 2: LAZY SINGLETON            ║\n";
-    cout << "╚════════════════════════════════════╝\n";
-    cout << "Instance created on FIRST use\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  TYPE 2: LAZY SINGLETON            ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("Instance created on FIRST use");
+    std::println("");
 
-    cout << "Before first call - instance doesn't exist yet\n";
+    std::println("Before first call - instance doesn't exist yet");
     auto s1 = LazySingleton::getInstance();
     s1->setValue(99);
     s1->doSomething();
 
     auto s2 = LazySingleton::getInstance();
-    cout << "Same instance? " << (s1 == s2 ? "✅ Yes" : "❌ No") << "\n";
+    std::println("Same instance? {}", (s1 == s2 ? "✅ Yes" : "❌ No"));
 
-    cout << "\n⚠️  WARNING: Not thread-safe! Multiple threads might create multiple instances!\n";
+    std::println("");
+    std::println("⚠️  WARNING: Not thread-safe! Multiple threads might create multiple instances!");
 }
 
 void demonstrateThreadSafeSingleton() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  TYPE 3: THREAD-SAFE SINGLETON     ║\n";
-    cout << "╚════════════════════════════════════╝\n";
-    cout << "Protected with mutex on EVERY call\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  TYPE 3: THREAD-SAFE SINGLETON     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("Protected with mutex on EVERY call");
+    std::println("");
 
-    vector<thread> threads;
+    std::vector<std::thread> threads;
     for (int i = 0; i < 3; i++) {
         threads.emplace_back([]() {
             auto s = ThreadSafeSingleton::getInstance();
@@ -207,7 +211,8 @@ void demonstrateThreadSafeSingleton() {
         t.join();
     }
 
-    cout << "\n✅ Thread-safe, but locks on every getInstance() call (slower)\n";
+    std::println("");
+    std::println("✅ Thread-safe, but locks on every getInstance() call (slower)");
 }
 
 
@@ -216,18 +221,13 @@ void demonstrateThreadSafeSingleton() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "SINGLETON PATTERN - ALL TYPES\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("SINGLETON PATTERN - ALL TYPES");
+    std::println("========================================");
 
     demonstrateEagerSingleton();
     demonstrateLazySingleton();
     demonstrateThreadSafeSingleton();
-
-
-    cout << "\n========================================\n";
-    cout << "⭐ RECOMMENDED: Use Meyers' Singleton!\n";
-    cout << "========================================\n";
 
     return 0;
 }

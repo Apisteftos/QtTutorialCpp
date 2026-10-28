@@ -1,7 +1,7 @@
-#include <iostream>
 #include <memory>
 #include <vector>
 #include <string>
+#include <print>
 
 // Receiver: Light
 class Light {
@@ -14,17 +14,17 @@ public:
 
     void on() {
         brightness = 100;
-        std::cout << location << " light is ON (100%)" << std::endl;
+        std::println("{} light is ON (100%)", location);
     }
 
     void off() {
         brightness = 0;
-        std::cout << location << " light is OFF" << std::endl;
+        std::println("{} light is OFF", location);
     }
 
     void dim(int level) {
         brightness = level;
-        std::cout << location << " light dimmed to " << level << "%" << std::endl;
+        std::println("{} light dimmed to {}%", location, level);
     }
 };
 
@@ -39,22 +39,22 @@ public:
 
     void high() {
         speed = 3;
-        std::cout << location << " fan speed is HIGH" << std::endl;
+        std::println("{} fan speed is HIGH", location);
     }
 
     void medium() {
         speed = 2;
-        std::cout << location << " fan speed is MEDIUM" << std::endl;
+        std::println("{} fan speed is MEDIUM", location);
     }
 
     void low() {
         speed = 1;
-        std::cout << location << " fan speed is LOW" << std::endl;
+        std::println("{} fan speed is LOW", location);
     }
 
     void off() {
         speed = 0;
-        std::cout << location << " fan is OFF" << std::endl;
+        std::println("{} fan is OFF", location);
     }
 };
 
@@ -163,14 +163,14 @@ public:
     MacroCommand(const std::vector<std::shared_ptr<Command>>& cmds) : commands(cmds) {}
 
     void execute() override {
-        std::cout << "Executing macro command..." << std::endl;
+        std::println("Executing macro command...");
         for (auto& cmd : commands) {
             cmd->execute();
         }
     }
 
     void undo() override {
-        std::cout << "Undoing macro command..." << std::endl;
+        std::println("Undoing macro command...");
         // Undo in reverse order
         for (auto it = commands.rbegin(); it != commands.rend(); ++it) {
             (*it)->undo();
@@ -215,7 +215,7 @@ public:
 
     void undoButtonPressed() {
         if (undoCommand) {
-            std::cout << "Undoing last command..." << std::endl;
+            std::println("Undoing last command...");
             undoCommand->undo();
         }
     }
@@ -252,38 +252,39 @@ int main() {
     remote.setCommand(3, partyOnMacro, partyOffMacro);
     remote.setCommand(4, livingLightDim, livingLightOn);
 
-    std::cout << "=== Smart Home Remote Control ===" << std::endl << std::endl;
+    std::println("=== Smart Home Remote Control ===");
+    std::println("");
 
     // Test individual commands
-    std::cout << "Pressing Living Room Light ON (Slot 0):" << std::endl;
+    std::println("Pressing Living Room Light ON (Slot 0):");
     remote.onButtonPressed(0);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Pressing Kitchen Light ON (Slot 1):" << std::endl;
+    std::println("Pressing Kitchen Light ON (Slot 1):");
     remote.onButtonPressed(1);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Pressing Fan HIGH (Slot 2):" << std::endl;
+    std::println("Pressing Fan HIGH (Slot 2):");
     remote.onButtonPressed(2);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Pressing UNDO:" << std::endl;
+    std::println("Pressing UNDO:");
     remote.undoButtonPressed();
-    std::cout << std::endl;
+    std::println("");
 
     // Test macro command
-    std::cout << "Pressing PARTY MODE ON (Slot 3):" << std::endl;
+    std::println("Pressing PARTY MODE ON (Slot 3):");
     remote.onButtonPressed(3);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Pressing UNDO (will undo entire party mode):" << std::endl;
+    std::println("Pressing UNDO (will undo entire party mode):");
     remote.undoButtonPressed();
-    std::cout << std::endl;
+    std::println("");
 
     // Test dim command
-    std::cout << "Dimming Living Room Light (Slot 4):" << std::endl;
+    std::println("Dimming Living Room Light (Slot 4):");
     remote.onButtonPressed(4);
-    std::cout << std::endl;
+    std::println("");
 
     // Cleanup
     delete livingRoomLight;

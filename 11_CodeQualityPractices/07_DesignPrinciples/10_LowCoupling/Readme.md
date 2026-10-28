@@ -1064,3 +1064,684 @@ Your future self will thank you.
 ---
 
 **Master Low Coupling, and you'll write code that's flexible, testable, and maintainable. 🚀**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 LOW COUPLING PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Minimize dependencies between  
+modules. Depend on abstractions, inject  
+dependencies, follow Law of Demeter, and keep  
+modules independent!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_tight_coupling()`
+
+- ❌ BAD CODE (Tight Coupling):
+
+```cpp
+
+```cpp
+class UserService {
+```
+
+**private:**
+
+```cpp
+MySQLDatabase database;  // 🚨 Tightly coupled!
+```
+
+**public:**
+
+```cpp
+    void saveUser(string username) {
+        database.connect();
+        database.query(...);
+    }
+};
+// 🚨 MUST use MySQL, can't switch!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - UserService locked to MySQL
+  - Can't test without real database
+  - Can't switch to PostgreSQL
+  - Changes in MySQL affect UserService
+  - Low reusability
+
+- ✅ GOOD CODE (Loose Coupling):
+
+```cpp
+
+```cpp
+class Database {  // Interface
+    virtual void connect() = 0;
+    virtual void query(string sql) = 0;
+};
+
+class UserService {
+```
+
+**private:**
+
+```cpp
+Database& database;  // ✅ Depends on interface!
+```
+
+**public:**
+
+```cpp
+    UserService(Database& db) : database(db) {}
+};
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_tight_coupling()`
+
+**✨ BENEFITS:**
+
+  - Can switch databases easily
+  - Can test with mock database
+  - UserService doesn't know about concrete database
+  - Changes in database don't affect service
+  - High reusability
+
+### From `example2_dependency_injection()`
+
+- ❌ BAD CODE (Internal Dependencies):
+
+```cpp
+
+```cpp
+class OrderService {
+```
+
+**private:**
+
+```cpp
+    EmailService emailService;  // Created here!
+    Logger logger;               // Created here!
+};
+// 🚨 Can't change implementations!
+// 🚨 Can't test with mocks!
+```
+
+```
+
+- ✅ GOOD CODE (Dependency Injection):
+
+```cpp
+
+```cpp
+class OrderService {
+```
+
+**private:**
+
+```cpp
+EmailService& emailService;  // Injected!
+Logger& logger;               // Injected!
+```
+
+**public:**
+
+OrderService(EmailService& email, Logger& log)
+
+```cpp
+        : emailService(email), logger(log) {}
+};
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example2_dependency_injection()`
+
+**✨ BENEFITS:**
+
+  - Can inject different implementations
+  - Easy to test with mocks
+  - OrderService doesn't control dependencies
+  - Loose coupling through interfaces
+  - Flexible and maintainable
+
+### From `example3_global_state()`
+
+- ❌ BAD CODE (Global State):
+
+```cpp
+
+```cpp
+int globalCounter = 0;  // 🚨 Global!
+
+class OrderProcessor {
+    void processOrder() {
+        globalCounter++;  // Hidden dependency!
+    }
+};
+
+class ReportGenerator {
+    void generateReport() {
+        cout << globalCounter;  // Hidden dependency!
+    }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Hidden coupling through global state
+  - Can't test independently (shared state)
+  - Race conditions in multi-threaded code
+  - Hard to reason about
+  - Violates encapsulation
+
+- ✅ GOOD CODE (Explicit Dependencies):
+
+```cpp
+
+```cpp
+class OrderCounter {
+    int count = 0;
+    void increment();
+    int getCount();
+};
+
+class OrderProcessor {
+    OrderCounter& counter;  // Explicit!
+    OrderProcessor(OrderCounter& c) : counter(c) {}
+};
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example3_global_state()`
+
+**✨ BENEFITS:**
+
+  - Explicit dependencies (no hidden coupling)
+  - Can test with different counter instances
+  - Thread-safe (no shared global state)
+  - Easy to reason about
+  - Proper encapsulation
+
+### From `example4_dependency_chain()`
+
+- ❌ BAD CODE (Exposed Chain):
+
+```cpp
+
+```cpp
+class UserController {
+```
+
+**public:**
+
+```cpp
+    UserService service;  // Public!
+    void handleRequest() {
+        // 🚨 Can access entire chain!
+        service.repository.database.query(...);
+    }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Can access entire dependency chain
+  - Violates Law of Demeter
+  - High coupling across layers
+  - No encapsulation
+  - Hard to refactor
+
+- ✅ GOOD CODE (Encapsulated):
+
+```cpp
+
+```cpp
+class UserController {
+```
+
+**private:**
+
+```cpp
+UserService& service;  // Private!
+```
+
+**public:**
+
+```cpp
+    UserController(UserService& svc) : service(svc) {}
+    void handleRequest() {
+        // ✅ Can only access service
+        service.getUser(...);
+    }
+};
+```
+
+```
+
+**✨ BENEFITS:**
+
+  - Controller only knows about service
+  - Proper encapsulation
+  - Low coupling
+  - Easy to refactor internals
+  - Follows Law of Demeter
+
+### From `example5_event_driven()`
+
+- ❌ BAD CODE (Direct Dependencies):
+
+```cpp
+
+```cpp
+class OrderService {
+    InventorySystem inventory;
+    ShippingSystem shipping;
+    NotificationSystem notifications;
+    void placeOrder() {
+        inventory.updateInventory();
+        shipping.scheduleShipment();
+        notifications.sendNotification();
+    }
+};
+// 🚨 Coupled to 3 systems!
+```
+
+```
+
+- ✅ GOOD CODE (Event-Driven):
+
+```cpp
+
+```cpp
+class OrderService {
+    vector<OrderEventListener*> listeners;
+    void placeOrder() {
+        OrderPlacedEvent event{...};
+        for (auto listener : listeners) {
+            listener->onOrderPlaced(event);
+        }
+    }
+};
+// ✅ Doesn't know about specific systems!
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example5_event_driven()`
+
+**✨ BENEFITS:**
+
+  - OrderService doesn't know about specific systems
+  - Can add new listeners without changing OrderService
+  - Can remove listeners easily
+  - Very loose coupling
+  - High flexibility
+
+### From `example6_law_of_demeter()`
+
+- ❌ BAD CODE (Violates Law of Demeter):
+
+```cpp
+
+```cpp
+class ShippingService {
+    void shipOrder(Order& order) {
+        // 🚨 Reaching through multiple objects!
+        string country = order.customer.address.country;
+        if (country == "USA") { ... }
+    }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - ShippingService knows internal structure
+  - Coupled to Order, Customer, AND Address
+  - Changes in any class affect ShippingService
+  - Violates "only talk to immediate friends"
+
+- ✅ GOOD CODE (Follows Law of Demeter):
+
+```cpp
+
+```cpp
+class Order {
+    bool isDomesticOrder() {  // Encapsulation!
+        return customer.hasDomesticAddress();
+    }
+};
+
+class ShippingService {
+    void shipOrder(Order& order) {
+        // ✅ Only talks to Order!
+        if (order.isDomesticOrder()) { ... }
+    }
+};
+```
+
+```
+
+- 💡 LAW OF DEMETER:
+
+"Only talk to your immediate friends"  
+A method should only call methods of:
+
+  - Itself
+  - Its parameters
+  - Objects it creates
+  - Its direct fields
+- ❌ Don't: object.getX().getY().getZ()
+- ✅ Do: object.doSomething()
+
+**✨ BENEFITS:**
+
+  - ShippingService only coupled to Order
+  - Changes in Customer/Address don't affect ShippingService
+  - Proper encapsulation
+  - Lower coupling
+
+### From `example7_interface_segregation()`
+
+- ❌ BAD CODE (Fat Interface):
+
+```cpp
+
+```cpp
+class Worker {
+    virtual void work() = 0;
+    virtual void eat() = 0;
+    virtual void sleep() = 0;
+    virtual void takeMeetings() = 0;
+    virtual void writeCode() = 0;
+    virtual void managePeople() = 0;
+};
+
+class Robot : public Worker {
+    // 🚨 Must implement ALL methods!
+    void eat() { throw "Robots don't eat"; }
+    void sleep() { throw "Robots don't sleep"; }
+};
+```
+
+```
+
+- ✅ GOOD CODE (Segregated Interfaces):
+
+```cpp
+
+```cpp
+class Workable { virtual void work() = 0; };
+class Eatable { virtual void eat() = 0; };
+class Sleepable { virtual void sleep() = 0; };
+
+class Robot : public Workable {
+    // ✅ Only implements what it needs!
+    void work() override { ... }
+};
+
+class Human : public Workable, Eatable, Sleepable {
+    // ✅ Implements what humans need!
+};
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example7_interface_segregation()`
+
+**✨ BENEFITS:**
+
+  - Clients only depend on interfaces they use
+  - Robot not coupled to eat/sleep methods
+  - Changes to one interface don't affect others
+  - Lower coupling
+  - Follows Interface Segregation Principle
+
+### From `example8_measuring_coupling()`
+
+**📊 COUPLING METRICS:**
+
+1. AFFERENT COUPLING (Ca):
+
+Number of classes that depend ON this class
+
+```cpp
+High Ca = Many classes depend on you (stable)
+```
+
+2. EFFERENT COUPLING (Ce):
+
+Number of classes this class depends on
+
+```cpp
+   High Ce = You depend on many (unstable)
+
+3. INSTABILITY (I = Ce / (Ca + Ce)):
+```
+
+Range: 0 to 1
+
+```cpp
+I = 0: Stable (many depend on you, you depend on few)
+I = 1: Unstable (few depend on you, you depend on many)
+```
+
+**📈 EXAMPLE:**
+
+Class A:
+
+  - 5 classes depend on A (Ca = 5)
+  - A depends on 2 classes (Ce = 2)
+  - Instability: I = 2 / (5 + 2) = 0.28 (Stable)
+
+Class B:
+
+  - 1 class depends on B (Ca = 1)
+  - B depends on 8 classes (Ce = 8)
+  - Instability: I = 8 / (1 + 8) = 0.89 (Unstable)
+
+**🎯 GOALS:**
+
+  - Keep coupling low (minimize dependencies)
+  - Stable classes should be abstract
+  - Unstable classes should be concrete
+  - Depend on stable abstractions
+
+**🚨 WARNING SIGNS:**
+
+  - Class depends on > 7 other classes
+  - Class is depended on by > 10 classes
+  - Circular dependencies
+  - Deep inheritance hierarchies (> 5 levels)
+
+### From `example9_dependency_inversion()`
+
+- ❌ BAD CODE (Depends on Concrete Class):
+
+```cpp
+
+```cpp
+class ReportGenerator {
+    MySQLDatabase database;  // High-level depends on low-level!
+};
+```
+
+```
+
+- ✅ GOOD CODE (Depends on Abstraction):
+
+```cpp
+
+```cpp
+class DatabaseInterface { ... };  // Abstraction
+
+class MySQLDatabase : public DatabaseInterface { ... };
+class MongoDatabase : public DatabaseInterface { ... };
+
+class ReportGenerator {
+    DatabaseInterface& database;  // Depends on abstraction!
+};
+```
+
+```
+
+- 💡 DEPENDENCY INVERSION PRINCIPLE:
+1. High-level modules should not depend on low-level modules
+
+Both should depend on abstractions
+
+2. Abstractions should not depend on details
+
+Details should depend on abstractions
+
+**✨ DEMONSTRATION:**
+
+### From `example9_dependency_inversion()`
+
+**✨ BENEFITS:**
+
+  - High-level logic independent of low-level details
+  - Can switch implementations easily
+  - Testable with mocks
+  - Low coupling
+  - Follows SOLID principles
+
+### From `example10_summary()`
+
+- ✅ BENEFITS OF LOW COUPLING:
+
+1. EASIER TO CHANGE:
+  - Changes don't ripple through system
+  - Modify one module without affecting others
+  - Lower risk when making changes
+
+2. EASIER TO TEST:
+  - Test modules independently
+  - Fewer dependencies to mock
+  - Faster test execution
+
+3. BETTER REUSABILITY:
+  - Modules work independently
+  - Can reuse in different contexts
+  - Don't drag along dependencies
+
+4. EASIER TO UNDERSTAND:
+  - Less to think about at once
+  - Clear interfaces
+  - Simpler mental model
+
+5. PARALLEL DEVELOPMENT:
+  - Teams work independently
+  - Less coordination needed
+  - Faster development
+
+6. BETTER MAINTAINABILITY:
+  - Bugs isolated to modules
+  - Easier to fix issues
+  - Lower long-term costs
+
+**📊 COUPLING SPECTRUM:**
+
+TIGHT COUPLING (Bad):
+
+  - Concrete class dependencies
+  - Global state
+  - Long dependency chains
+  - Violates Law of Demeter
+  - Fat interfaces
+
+LOOSE COUPLING (Good):
+
+  - Interface dependencies
+  - Dependency injection
+  - Event-driven
+  - Law of Demeter
+  - Interface segregation
+
+**🎯 KEY PRINCIPLES:**
+
+1. DEPEND ON ABSTRACTIONS:
+- ✅ Use interfaces, not concrete classes
+
+2. DEPENDENCY INJECTION:
+- ✅ Inject dependencies from outside
+
+3. LAW OF DEMETER:
+- ✅ Only talk to immediate friends
+
+4. INTERFACE SEGREGATION:
+- ✅ Many small interfaces > One large interface
+
+5. AVOID GLOBAL STATE:
+- ✅ Explicit dependencies > Hidden coupling
+
+6. EVENT-DRIVEN:
+- ✅ Publish events > Direct method calls
+
+- 💡 REMEMBER:
+
+"Good design is loosely coupled and highly cohesive."
+
+```cpp
+Low Coupling = Modules are independent
+High Cohesion = Related things stay together
+```
+
+Together, they create maintainable software!
+
+**🔍 CHECKLIST:**
+
+□ Do I depend on interfaces, not concrete classes?  
+□ Are dependencies injected?  
+□ Can I test this module independently?  
+□ Do I follow Law of Demeter?  
+□ Are my interfaces focused and small?  
+□ Do I avoid global state?  
+□ Can this module be reused elsewhere?
+
+- ⚠️ WARNING SIGNS:
+
+🚨 Changes in one class require changes in many  
+🚨 Hard to test without complex setup  
+🚨 Can't reuse without dragging dependencies
+
+```cpp
+🚨 Code like: obj.getX().getY().getZ()
+```
+
+🚨 Many concrete class dependencies
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

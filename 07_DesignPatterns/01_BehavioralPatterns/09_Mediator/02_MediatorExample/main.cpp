@@ -1,9 +1,8 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
 #include <map>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: CHAT ROOM MEDIATOR
@@ -22,7 +21,7 @@ public:
     virtual ~ChatMediator() {}
 
     // Send message from one user to another or to all
-    virtual void sendMessage(const string& message, User* sender) = 0;
+    virtual void sendMessage(const std::string& message, User* sender) = 0;
 
     // Add user to chat room
     virtual void addUser(User* user) = 0;
@@ -35,26 +34,25 @@ public:
 class User {
 protected:
     ChatMediator* mediator;  // Reference to mediator
-    string name;
+    std::string name;
 
 public:
-    User(const string& n, ChatMediator* med)
+    User(const std::string& n, ChatMediator* med)
         : name(n), mediator(med) {}
 
     virtual ~User() {}
 
-    string getName() const { return name; }
+    std::string getName() const { return name; }
 
     // Send message through mediator
-    virtual void send(const string& message) {
-        cout << "💬 " << name << " sends: " << message << "\n";
+    virtual void send(const std::string& message) {
+        std::println("💬 {} sends: {}", name, message);
         mediator->sendMessage(message, this);
     }
 
     // Receive message from mediator
-    virtual void receive(const string& message, const string& senderName) {
-        cout << "📩 " << name << " received from " << senderName
-             << ": " << message << "\n";
+    virtual void receive(const std::string& message, const std::string& senderName) {
+        std::println("📩 {} received from {}: {}", name, senderName, message);
     }
 };
 
@@ -64,17 +62,17 @@ public:
  */
 class ChatRoom : public ChatMediator {
 private:
-    vector<User*> users;  // All users in chat room
+    std::vector<User*> users;  // All users in chat room
 
 public:
     // Add user to chat room
     void addUser(User* user) override {
         users.push_back(user);
-        cout << "✅ " << user->getName() << " joined the chat room\n";
+        std::println("✅ {} joined the chat room", user->getName());
     }
 
     // Broadcast message to all users except sender
-    void sendMessage(const string& message, User* sender) override {
+    void sendMessage(const std::string& message, User* sender) override {
         for (User* user : users) {
             // Don't send message back to sender
             if (user != sender) {
@@ -121,49 +119,49 @@ public:
  */
 class Aircraft {
 protected:
-    string flightNumber;
+    std::string flightNumber;
     ATCMediator* atc;
 
 public:
-    Aircraft(const string& flight, ATCMediator* mediator)
+    Aircraft(const std::string& flight, ATCMediator* mediator)
         : flightNumber(flight), atc(mediator) {
         atc->registerAircraft(this);
     }
 
     virtual ~Aircraft() {}
 
-    string getFlightNumber() const { return flightNumber; }
+    std::string getFlightNumber() const { return flightNumber; }
 
     // Request to land
     void requestLanding() {
-        cout << "✈️  " << flightNumber << " requesting landing clearance...\n";
+        std::println("✈️  {} requesting landing clearance...", flightNumber);
         if (atc->requestLanding(this)) {
-            cout << "✅ " << flightNumber << " cleared to land\n";
+            std::println("✅ {} cleared to land", flightNumber);
             land();
         } else {
-            cout << "❌ " << flightNumber << " denied - runway busy\n";
+            std::println("❌ {} denied - runway busy", flightNumber);
         }
     }
 
     // Request to takeoff
     void requestTakeoff() {
-        cout << "🛫 " << flightNumber << " requesting takeoff clearance...\n";
+        std::println("🛫 {} requesting takeoff clearance...", flightNumber);
         if (atc->requestTakeoff(this)) {
-            cout << "✅ " << flightNumber << " cleared for takeoff\n";
+            std::println("✅ {} cleared for takeoff", flightNumber);
             takeoff();
         } else {
-            cout << "❌ " << flightNumber << " denied - runway busy\n";
+            std::println("❌ {} denied - runway busy", flightNumber);
         }
     }
 
 private:
     void land() {
-        cout << "🛬 " << flightNumber << " landing...\n";
+        std::println("🛬 {} landing...", flightNumber);
         atc->notifyLanded(this);
     }
 
     void takeoff() {
-        cout << "🚀 " << flightNumber << " taking off...\n";
+        std::println("🚀 {} taking off...", flightNumber);
         atc->notifyTakenOff(this);
     }
 };
@@ -174,7 +172,7 @@ private:
  */
 class ControlTower : public ATCMediator {
 private:
-    vector<Aircraft*> aircrafts;
+    std::vector<Aircraft*> aircrafts;
     bool runwayAvailable;
 
 public:
@@ -182,7 +180,7 @@ public:
 
     void registerAircraft(Aircraft* aircraft) override {
         aircrafts.push_back(aircraft);
-        cout << "📡 " << aircraft->getFlightNumber() << " registered with ATC\n";
+        std::println("📡 {} registered with ATC", aircraft->getFlightNumber());
     }
 
     bool requestLanding(Aircraft* aircraft) override {
@@ -202,12 +200,12 @@ public:
     }
 
     void notifyLanded(Aircraft* aircraft) override {
-        cout << "🏁 " << aircraft->getFlightNumber() << " has landed safely\n";
+        std::println("🏁 {} has landed safely", aircraft->getFlightNumber());
         runwayAvailable = true;  // Runway now free
     }
 
     void notifyTakenOff(Aircraft* aircraft) override {
-        cout << "🌤️  " << aircraft->getFlightNumber() << " has taken off\n";
+        std::println("🌤️  {} has taken off", aircraft->getFlightNumber());
         runwayAvailable = true;  // Runway now free
     }
 };
@@ -231,7 +229,7 @@ public:
     virtual void registerDevice(SmartDevice* device) = 0;
 
     // Notify hub of device state change
-    virtual void notify(SmartDevice* sender, const string& event) = 0;
+    virtual void notify(SmartDevice* sender, const std::string& event) = 0;
 };
 
 /**
@@ -239,20 +237,20 @@ public:
  */
 class SmartDevice {
 protected:
-    string name;
+    std::string name;
     SmartHomeMediator* hub;
 
 public:
-    SmartDevice(const string& n, SmartHomeMediator* mediator)
+    SmartDevice(const std::string& n, SmartHomeMediator* mediator)
         : name(n), hub(mediator) {
         hub->registerDevice(this);
     }
 
     virtual ~SmartDevice() {}
 
-    string getName() const { return name; }
+    std::string getName() const { return name; }
 
-    virtual void performAction(const string& action) = 0;
+    virtual void performAction(const std::string& action) = 0;
 };
 
 /**
@@ -260,15 +258,15 @@ public:
  */
 class MotionSensor : public SmartDevice {
 public:
-    MotionSensor(const string& n, SmartHomeMediator* mediator)
+    MotionSensor(const std::string& n, SmartHomeMediator* mediator)
         : SmartDevice(n, mediator) {}
 
     void detectMotion() {
-        cout << "🚶 " << name << " detected motion!\n";
+        std::println("🚶 {} detected motion!", name);
         hub->notify(this, "motion_detected");
     }
 
-    void performAction(const string& action) override {
+    void performAction(const std::string& action) override {
         // Motion sensor doesn't perform actions
     }
 };
@@ -281,16 +279,16 @@ private:
     bool isOn;
 
 public:
-    Light(const string& n, SmartHomeMediator* mediator)
+    Light(const std::string& n, SmartHomeMediator* mediator)
         : SmartDevice(n, mediator), isOn(false) {}
 
-    void performAction(const string& action) override {
+    void performAction(const std::string& action) override {
         if (action == "turn_on") {
             isOn = true;
-            cout << "💡 " << name << " turned ON\n";
+            std::println("💡 {} turned ON", name);
         } else if (action == "turn_off") {
             isOn = false;
-            cout << "🌑 " << name << " turned OFF\n";
+            std::println("🌑 {} turned OFF", name);
         }
     }
 };
@@ -303,16 +301,16 @@ private:
     int temperature;
 
 public:
-    Thermostat(const string& n, SmartHomeMediator* mediator)
+    Thermostat(const std::string& n, SmartHomeMediator* mediator)
         : SmartDevice(n, mediator), temperature(20) {}
 
-    void performAction(const string& action) override {
+    void performAction(const std::string& action) override {
         if (action == "increase_temp") {
             temperature += 2;
-            cout << "🌡️  " << name << " increased to " << temperature << "°C\n";
+            std::println("🌡️  {} increased to {}°C", name, temperature);
         } else if (action == "decrease_temp") {
             temperature -= 2;
-            cout << "❄️  " << name << " decreased to " << temperature << "°C\n";
+            std::println("❄️  {} decreased to {}°C", name, temperature);
         }
     }
 };
@@ -325,16 +323,16 @@ private:
     bool recording;
 
 public:
-    SecurityCamera(const string& n, SmartHomeMediator* mediator)
+    SecurityCamera(const std::string& n, SmartHomeMediator* mediator)
         : SmartDevice(n, mediator), recording(false) {}
 
-    void performAction(const string& action) override {
+    void performAction(const std::string& action) override {
         if (action == "start_recording") {
             recording = true;
-            cout << "📹 " << name << " started recording\n";
+            std::println("📹 {} started recording", name);
         } else if (action == "stop_recording") {
             recording = false;
-            cout << "⏹️  " << name << " stopped recording\n";
+            std::println("⏹️  {} stopped recording", name);
         }
     }
 };
@@ -345,28 +343,28 @@ public:
  */
 class SmartHomeHub : public SmartHomeMediator {
 private:
-    map<string, SmartDevice*> devices;
+    std::map<std::string, SmartDevice*> devices;
 
 public:
     void registerDevice(SmartDevice* device) override {
         devices[device->getName()] = device;
-        cout << "🏠 " << device->getName() << " registered with Smart Home Hub\n";
+        std::println("🏠 {} registered with Smart Home Hub", device->getName());
     }
 
-    void notify(SmartDevice* sender, const string& event) override {
-        cout << "🔔 Hub received: " << event << " from " << sender->getName() << "\n";
+    void notify(SmartDevice* sender, const std::string& event) override {
+        std::println("🔔 Hub received: {} from {}", event, sender->getName());
 
         // Coordinate responses based on events
         if (event == "motion_detected") {
             // Turn on lights
             for (auto& pair : devices) {
-                if (pair.first.find("Light") != string::npos) {
+                if (pair.first.find("Light") != std::string::npos) {
                     pair.second->performAction("turn_on");
                 }
             }
             // Start camera recording
             for (auto& pair : devices) {
-                if (pair.first.find("Camera") != string::npos) {
+                if (pair.first.find("Camera") != std::string::npos) {
                     pair.second->performAction("start_recording");
                 }
             }
@@ -374,7 +372,7 @@ public:
     }
 
     // Manual control through hub
-    void controlDevice(const string& deviceName, const string& action) {
+    void controlDevice(const std::string& deviceName, const std::string& action) {
         if (devices.find(deviceName) != devices.end()) {
             devices[deviceName]->performAction(action);
         }
@@ -403,29 +401,28 @@ public:
  */
 class Bidder {
 protected:
-    string name;
+    std::string name;
     AuctionMediator* auction;
 
 public:
-    Bidder(const string& n, AuctionMediator* med)
+    Bidder(const std::string& n, AuctionMediator* med)
         : name(n), auction(med) {
         auction->registerBidder(this);
     }
 
-    string getName() const { return name; }
+    std::string getName() const { return name; }
 
     void bid(int amount) {
-        cout << "💰 " << name << " bids $" << amount << "\n";
+        std::println("💰 {} bids ${}", name, amount);
         auction->placeBid(this, amount);
     }
 
-    void notifyOutbid(const string& bidderName, int amount) {
-        cout << "📢 " << name << " notified: " << bidderName
-             << " bid $" << amount << " (you were outbid)\n";
+    void notifyOutbid(const std::string& bidderName, int amount) {
+        std::println("📢 {} notified: {} bid ${} (you were outbid)", name, bidderName, amount);
     }
 
     void notifyWinner() {
-        cout << "🏆 " << name << " WON the auction!\n";
+        std::println("🏆 {} WON the auction!", name);
     }
 };
 
@@ -434,19 +431,18 @@ public:
  */
 class AuctionHouse : public AuctionMediator {
 private:
-    vector<Bidder*> bidders;
+    std::vector<Bidder*> bidders;
     Bidder* highestBidder;
     int highestBid;
-    string itemName;
+    std::string itemName;
 
 public:
-    AuctionHouse(const string& item)
+    AuctionHouse(const std::string& item)
         : itemName(item), highestBidder(nullptr), highestBid(0) {}
 
     void registerBidder(Bidder* bidder) override {
         bidders.push_back(bidder);
-        cout << "✅ " << bidder->getName() << " registered for auction: "
-             << itemName << "\n";
+        std::println("✅ {} registered for auction: {}", bidder->getName(), itemName);
     }
 
     void placeBid(Bidder* bidder, int amount) override {
@@ -459,18 +455,18 @@ public:
             highestBid = amount;
             highestBidder = bidder;
 
-            cout << "🔨 New highest bid: $" << amount << " by "
-                 << bidder->getName() << "\n";
+            std::println("🔨 New highest bid: ${} by {}", amount, bidder->getName());
         } else {
-            cout << "❌ Bid rejected: Must be higher than $" << highestBid << "\n";
+            std::println("❌ Bid rejected: Must be higher than ${}", highestBid);
         }
     }
 
     void closeAuction() {
-        cout << "\n🔚 Auction closed for: " << itemName << "\n";
+        std::println("");
+        std::println("🔚 Auction closed for: {}", itemName);
         if (highestBidder) {
             highestBidder->notifyWinner();
-            cout << "Final price: $" << highestBid << "\n";
+            std::println("Final price: ${}", highestBid);
         }
     }
 };
@@ -480,9 +476,11 @@ public:
 // ============================================
 
 void demonstrateChatRoom() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: CHAT ROOM              ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: CHAT ROOM              ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Create mediator
     ChatRoom* chatRoom = new ChatRoom();
@@ -497,7 +495,8 @@ void demonstrateChatRoom() {
     chatRoom->addUser(bob);
     chatRoom->addUser(charlie);
 
-    cout << "\n--- Chat Messages ---\n";
+    std::println("");
+    std::println("--- Chat Messages ---");
     alice->send("Hello everyone!");
     bob->send("Hi Alice!");
     charlie->send("Hey folks!");
@@ -510,9 +509,11 @@ void demonstrateChatRoom() {
 }
 
 void demonstrateAirTrafficControl() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: AIR TRAFFIC CONTROL    ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: AIR TRAFFIC CONTROL    ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Create mediator
     ControlTower* tower = new ControlTower();
@@ -522,12 +523,14 @@ void demonstrateAirTrafficControl() {
     Aircraft* flight2 = new Aircraft("UA202", tower);
     Aircraft* flight3 = new Aircraft("DL303", tower);
 
-    cout << "\n--- Flight Operations ---\n";
+    std::println("");
+    std::println("--- Flight Operations ---");
     flight1->requestLanding();
     flight2->requestLanding();  // Should be denied - runway busy
     flight3->requestTakeoff();   // Should be denied - runway busy
 
-    cout << "\n--- After Flight 1 Lands ---\n";
+    std::println("");
+    std::println("--- After Flight 1 Lands ---");
     flight2->requestTakeoff();   // Should succeed now
 
     // Cleanup
@@ -538,9 +541,11 @@ void demonstrateAirTrafficControl() {
 }
 
 void demonstrateSmartHome() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: SMART HOME SYSTEM      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: SMART HOME SYSTEM      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Create mediator
     SmartHomeHub* hub = new SmartHomeHub();
@@ -552,10 +557,12 @@ void demonstrateSmartHome() {
     SecurityCamera* camera = new SecurityCamera("Front Door Camera", hub);
     Thermostat* thermostat = new Thermostat("Main Thermostat", hub);
 
-    cout << "\n--- Motion Detected Event ---\n";
+    std::println("");
+    std::println("--- Motion Detected Event ---");
     sensor->detectMotion();  // Should trigger lights and camera
 
-    cout << "\n--- Manual Control ---\n";
+    std::println("");
+    std::println("--- Manual Control ---");
     hub->controlDevice("Main Thermostat", "increase_temp");
 
     // Cleanup
@@ -568,9 +575,11 @@ void demonstrateSmartHome() {
 }
 
 void demonstrateAuction() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: ONLINE AUCTION         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: ONLINE AUCTION         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Create mediator
     AuctionHouse* auction = new AuctionHouse("Vintage Guitar");
@@ -580,7 +589,8 @@ void demonstrateAuction() {
     Bidder* sarah = new Bidder("Sarah", auction);
     Bidder* mike = new Bidder("Mike", auction);
 
-    cout << "\n--- Bidding Process ---\n";
+    std::println("");
+    std::println("--- Bidding Process ---");
     john->bid(1000);
     sarah->bid(1200);
     mike->bid(1100);   // Should be rejected
@@ -601,128 +611,14 @@ void demonstrateAuction() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "MEDIATOR PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("MEDIATOR PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateChatRoom();
     demonstrateAirTrafficControl();
     demonstrateSmartHome();
     demonstrateAuction();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF MEDIATOR PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Single Responsibility: Centralizes communication logic\n";
-    cout << "✅ Open/Closed: Add new colleagues without changing others\n";
-    cout << "✅ Reduces coupling: Objects don't reference each other directly\n";
-    cout << "✅ Simplifies object protocols: One-to-many relationships\n";
-    cout << "✅ Reusable components: Colleagues are more reusable\n";
-    cout << "✅ Easier maintenance: Communication logic in one place\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE MEDIATOR\n";
-    cout << "========================================\n";
-    cout << "1. Objects communicate in complex but well-defined ways\n";
-    cout << "2. Reusing objects is difficult due to many dependencies\n";
-    cout << "3. Behavior distributed among classes should be customizable\n";
-    cout << "4. Too many relationships make system hard to understand\n";
-    cout << "5. Need centralized control over object interactions\n";
-
-    cout << "\n========================================\n";
-    cout << "MEDIATOR vs OBSERVER\n";
-    cout << "========================================\n";
-    cout << "Mediator Pattern:\n";
-    cout << "  • Two-way communication\n";
-    cout << "  • Colleagues can request actions from mediator\n";
-    cout << "  • Centralized control logic\n";
-    cout << "  • Example: Chat room coordinates user messages\n";
-    cout << "\nObserver Pattern:\n";
-    cout << "  • One-way communication (subject → observers)\n";
-    cout << "  • Observers just receive notifications\n";
-    cout << "  • Distributed notification logic\n";
-    cout << "  • Example: Newsletter notifies subscribers\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• Chat rooms and messaging apps\n";
-    cout << "• Air traffic control systems\n";
-    cout << "• Smart home automation hubs\n";
-    cout << "• Online auction platforms\n";
-    cout << "• GUI dialog boxes (coordinate widgets)\n";
-    cout << "• Game multiplayer servers\n";
-    cout << "• Stock exchange trading systems\n";
-    cout << "• Airport gate assignment systems\n";
-    cout << "• Conference call coordinators\n";
-    cout << "• Workflow management systems\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY COMPONENTS\n";
-    cout << "========================================\n";
-    cout << "1. Mediator Interface: Defines communication protocol\n";
-    cout << "2. Concrete Mediator: Implements coordination logic\n";
-    cout << "3. Colleague Classes: Objects that communicate via mediator\n";
-    cout << "4. Reference: Each colleague has reference to mediator\n";
-
-    cout << "\n========================================\n";
-    cout << "STRUCTURE\n";
-    cout << "========================================\n";
-    cout << "Without Mediator (N² connections):\n";
-    cout << "  Colleague1 ←→ Colleague2\n";
-    cout << "      ↕           ↕\n";
-    cout << "  Colleague3 ←→ Colleague4\n";
-    cout << "\nWith Mediator (N connections):\n";
-    cout << "  Colleague1 ←→ Mediator ←→ Colleague3\n";
-    cout << "                   ↕\n";
-    cout << "  Colleague2 ←→ Mediator ←→ Colleague4\n";
-
-    cout << "\n========================================\n";
-    cout << "ADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Decouples colleagues from each other\n";
-    cout << "• Reduces number of connections (N² → N)\n";
-    cout << "• Centralizes control logic\n";
-    cout << "• Simplifies object protocols\n";
-    cout << "• Easier to understand and maintain\n";
-    cout << "• Colleagues become more reusable\n";
-    cout << "• Can introduce new mediators without changing colleagues\n";
-
-    cout << "\n========================================\n";
-    cout << "DISADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Mediator can become a 'god object' (too complex)\n";
-    cout << "• May be harder to debug (centralized control)\n";
-    cout << "• Can reduce performance (extra indirection)\n";
-    cout << "• Mediator itself can be hard to maintain if too complex\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "• Keep mediator focused on coordination, not business logic\n";
-    cout << "• Use events/messages instead of direct method calls\n";
-    cout << "• Consider breaking complex mediators into smaller ones\n";
-    cout << "• Colleagues should be unaware of each other\n";
-    cout << "• Document the communication protocol clearly\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON IMPLEMENTATIONS\n";
-    cout << "========================================\n";
-    cout << "Event-Based Mediator:\n";
-    cout << "  • Colleagues send events to mediator\n";
-    cout << "  • Mediator dispatches to appropriate handlers\n";
-    cout << "  • Most flexible approach\n";
-    cout << "\nMethod-Based Mediator:\n";
-    cout << "  • Mediator has explicit methods for each interaction\n";
-    cout << "  • More type-safe\n";
-    cout << "  • Example: ATC with requestLanding(), requestTakeoff()\n";
-    cout << "\nMessage Queue Mediator:\n";
-    cout << "  • Asynchronous communication\n";
-    cout << "  • Useful for distributed systems\n";
-    cout << "  • Example: Message brokers (RabbitMQ, Kafka)\n";
 
     return 0;
 }

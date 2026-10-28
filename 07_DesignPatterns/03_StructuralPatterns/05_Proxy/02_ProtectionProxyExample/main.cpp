@@ -1,11 +1,11 @@
 // protection_proxy_example.cpp
 // Protection Proxy Pattern - Access Control for Sensitive Documents
 
-#include <iostream>
 #include <string>
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <print>
 
 // ===== USER CONTEXT =====
 enum class UserRole {
@@ -61,19 +61,19 @@ public:
         : title(t), content(c), classification(classif) {}
 
     void displayContent() override {
-        std::cout << "=== Document: " << title << " ===" << std::endl;
-        std::cout << "Classification: " << classification << std::endl;
-        std::cout << "Content: " << content << std::endl;
-        std::cout << "========================" << std::endl;
+        std::println("=== Document: {} ===", title);
+        std::println("Classification: {}", classification);
+        std::println("Content: {}", content);
+        std::println("========================");
     }
 
     void editContent(const std::string& newContent) override {
         content = newContent;
-        std::cout << "Document content updated successfully!" << std::endl;
+        std::println("Document content updated successfully!");
     }
 
     void deleteDocument() override {
-        std::cout << "Document '" << title << "' has been deleted!" << std::endl;
+        std::println("Document '{}' has been deleted!", title);
         content = "[DELETED]";
     }
 
@@ -92,7 +92,7 @@ private:
     // Access control logic
     bool canRead() const {
         if (!currentUser) {
-            std::cout << "❌ Access Denied: No user logged in" << std::endl;
+            std::println("❌ Access Denied: No user logged in");
             return false;
         }
 
@@ -107,19 +107,18 @@ private:
                 currentUser->getDepartment() == requiredDepartment) {
                 return true;
             }
-            std::cout << "❌ Access Denied: Wrong department (requires: "
-                      << requiredDepartment << ")" << std::endl;
+            std::println("❌ Access Denied: Wrong department (requires: {})", requiredDepartment);
             return false;
         }
 
         // Guests cannot read sensitive documents
-        std::cout << "❌ Access Denied: Guests cannot read sensitive documents" << std::endl;
+        std::println("❌ Access Denied: Guests cannot read sensitive documents");
         return false;
     }
 
     bool canEdit() const {
         if (!currentUser) {
-            std::cout << "❌ Access Denied: No user logged in" << std::endl;
+            std::println("❌ Access Denied: No user logged in");
             return false;
         }
 
@@ -133,19 +132,19 @@ private:
             return true;
         }
 
-        std::cout << "❌ Access Denied: Insufficient privileges to edit" << std::endl;
+        std::println("❌ Access Denied: Insufficient privileges to edit");
         return false;
     }
 
     bool canDelete() const {
         if (!currentUser) {
-            std::cout << "❌ Access Denied: No user logged in" << std::endl;
+            std::println("❌ Access Denied: No user logged in");
             return false;
         }
 
         // Only admins can delete
         if (currentUser->getRole() != UserRole::ADMIN) {
-            std::cout << "❌ Access Denied: Only admins can delete documents" << std::endl;
+            std::println("❌ Access Denied: Only admins can delete documents");
             return false;
         }
         return true;
@@ -153,9 +152,8 @@ private:
 
     void logAccess(const std::string& action) const {
         if (currentUser) {
-            std::cout << "📝 LOG: User '" << currentUser->getName()
-                      << "' (" << currentUser->getRoleString() << ") "
-                      << action << " document '" << document->getTitle() << "'" << std::endl;
+            std::println("📝 LOG: User '{}' ({}) {} document '{}'",
+                currentUser->getName(), currentUser->getRoleString(), action, document->getTitle());
         }
     }
 
@@ -168,14 +166,13 @@ public:
     void setUser(User* user) {
         currentUser = user;
         if (user) {
-            std::cout << "👤 User '" << user->getName()
-                      << "' logged in as " << user->getRoleString() << std::endl;
+            std::println("👤 User '{}' logged in as {}", user->getName(), user->getRoleString());
         }
     }
 
     void displayContent() override {
         if (canRead()) {
-            std::cout << "✅ Access Granted: Reading document" << std::endl;
+            std::println("✅ Access Granted: Reading document");
             logAccess("read");
             document->displayContent();
         }
@@ -183,7 +180,7 @@ public:
 
     void editContent(const std::string& newContent) override {
         if (canEdit()) {
-            std::cout << "✅ Access Granted: Editing document" << std::endl;
+            std::println("✅ Access Granted: Editing document");
             logAccess("edited");
             document->editContent(newContent);
         }
@@ -191,7 +188,7 @@ public:
 
     void deleteDocument() override {
         if (canDelete()) {
-            std::cout << "✅ Access Granted: Deleting document" << std::endl;
+            std::println("✅ Access Granted: Deleting document");
             logAccess("deleted");
             document->deleteDocument();
         }
@@ -217,7 +214,7 @@ public:
         documents.push_back(
             std::make_unique<DocumentProxy>(title, content, classification, dept)
             );
-        std::cout << "📄 Document '" << title << "' added to system" << std::endl;
+        std::println("📄 Document '{}' added to system", title);
     }
 
     void loginUser(User* user) {
@@ -230,12 +227,12 @@ public:
 
     void accessDocument(size_t index, const std::string& action) {
         if (index >= documents.size()) {
-            std::cout << "Document not found!" << std::endl;
+            std::println("Document not found!");
             return;
         }
 
-        std::cout << "\n--- Attempting to " << action
-                  << " document: " << documents[index]->getTitle() << " ---" << std::endl;
+        std::println("");
+        std::println("--- Attempting to {} document: {} ---", action, documents[index]->getTitle());
 
         if (action == "read") {
             documents[index]->displayContent();
@@ -248,23 +245,25 @@ public:
     }
 
     void listDocuments() {
-        std::cout << "\n=== Document List ===" << std::endl;
+        std::println("");
+        std::println("=== Document List ===");
         for (size_t i = 0; i < documents.size(); ++i) {
-            std::cout << i + 1 << ". " << documents[i]->getTitle() << std::endl;
+            std::println("{}. {}", i + 1, documents[i]->getTitle());
         }
     }
 };
 
 // ===== DEMONSTRATION =====
 int main() {
-    std::cout << "===== Protection Proxy Pattern Demo =====" << std::endl;
-    std::cout << "Document Management System with Access Control\n" << std::endl;
+    std::println("===== Protection Proxy Pattern Demo =====");
+    std::println("Document Management System with Access Control");
+    std::println("");
 
     // Create document system
     DocumentSystem system;
 
     // Add documents
-    std::cout << "Setting up documents:" << std::endl;
+    std::println("Setting up documents:");
     system.addDocument("Company Strategy 2024", "Confidential strategic plans...",
                        "TOP SECRET", "Management");
     system.addDocument("Employee Handbook", "General company policies...",
@@ -281,38 +280,35 @@ int main() {
     system.listDocuments();
 
     // Test 1: Guest tries to access
-    std::cout << "\n===== Test 1: Guest Access =====" << std::endl;
+    std::println("");
+    std::println("===== Test 1: Guest Access =====");
     system.loginUser(&guest);
     system.accessDocument(0, "read");    // Should fail
     system.accessDocument(1, "edit");    // Should fail
 
     // Test 2: Employee with wrong department
-    std::cout << "\n===== Test 2: Employee Wrong Department =====" << std::endl;
+    std::println("");
+    std::println("===== Test 2: Employee Wrong Department =====");
     system.loginUser(&hrEmployee);
     system.accessDocument(2, "read");    // Should fail (Finance document)
     system.accessDocument(1, "read");    // Should succeed (HR document)
     system.accessDocument(1, "edit");    // Should succeed
 
     // Test 3: Employee with correct department
-    std::cout << "\n===== Test 3: Employee Correct Department =====" << std::endl;
+    std::println("");
+    std::println("===== Test 3: Employee Correct Department =====");
     system.loginUser(&financeEmployee);
     system.accessDocument(2, "read");    // Should succeed
     system.accessDocument(2, "edit");    // Should succeed
     system.accessDocument(2, "delete");  // Should fail (not admin)
 
     // Test 4: Admin access
-    std::cout << "\n===== Test 4: Admin Access =====" << std::endl;
+    std::println("");
+    std::println("===== Test 4: Admin Access =====");
     system.loginUser(&admin);
     system.accessDocument(0, "read");    // Should succeed
     system.accessDocument(0, "edit");    // Should succeed
     system.accessDocument(0, "delete");  // Should succeed
-
-    std::cout << "\n===== Key Features Demonstrated =====" << std::endl;
-    std::cout << "✓ Access control based on user roles" << std::endl;
-    std::cout << "✓ Department-based restrictions" << std::endl;
-    std::cout << "✓ Logging of all access attempts" << std::endl;
-    std::cout << "✓ Different permissions for read/edit/delete" << std::endl;
-    std::cout << "✓ Transparent to client code" << std::endl;
 
     return 0;
 }

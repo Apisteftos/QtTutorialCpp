@@ -3,7 +3,7 @@
  * variants of the product must implement this interface.
  */
 #include <string>
-#include <iostream>
+#include <print>
 class AbstractProductA {
 public:
     virtual ~AbstractProductA(){};
@@ -135,19 +135,19 @@ public:
 void ClientCode(const AbstractFactory &factory) {
     const AbstractProductA *product_a = factory.CreateProductA();
     const AbstractProductB *product_b = factory.CreateProductB();
-    std::cout << product_b->UsefulFunctionB() << "\n";
-    std::cout << product_b->AnotherUsefulFunctionB(*product_a) << "\n";
+    std::println("{}", product_b->UsefulFunctionB());
+    std::println("{}", product_b->AnotherUsefulFunctionB(*product_a));
     delete product_a;
     delete product_b;
 }
 
 int main() {
-    std::cout << "Client: Testing client code with the first factory type:\n";
+    std::println("Client: Testing client code with the first factory type:");
     ConcreteFactory1 *f1 = new ConcreteFactory1();
     ClientCode(*f1);
     delete f1;
-    std::cout << std::endl;
-    std::cout << "Client: Testing the same client code with the second factory type:\n";
+    std::println("");
+    std::println("Client: Testing the same client code with the second factory type:");
     ConcreteFactory2 *f2 = new ConcreteFactory2();
     ClientCode(*f2);
     delete f2;

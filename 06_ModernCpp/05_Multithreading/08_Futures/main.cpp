@@ -1,4 +1,3 @@
-#include <iostream>
 #include <future>
 #include <thread>
 #include <chrono>
@@ -7,13 +6,14 @@
 #include <stdexcept>
 #include <numeric>
 #include <mutex>
+#include <print>
 
 using namespace std::chrono_literals;
 
 std::mutex g_coutMutex;
 void safePrint(const std::string& msg) {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 int computeSum(int from, int to) {
@@ -55,69 +55,75 @@ long long parallelSum(const std::vector<int>& data, int numTasks) {
 
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: std::async + std::future\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: std::async + std::future");
+    std::println("=====================================================");
     auto sumFuture = std::async(std::launch::async, computeSum, 1, 100);
-    std::cout << "[main] doing other work...\n";
+    std::println("[main] doing other work...");
     std::this_thread::sleep_for(20ms);
-    std::cout << "[main] sum result: " << sumFuture.get() << '\n';
+    std::println("[main] sum result: {}", sumFuture.get());
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: launch::async vs launch::deferred\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: launch::async vs launch::deferred");
+    std::println("=====================================================");
     auto f1 = std::async(std::launch::async, []() {
         safePrint("[async] runs immediately in new thread"); return 1; });
     auto f2 = std::async(std::launch::deferred, []() {
         safePrint("[deferred] runs at .get() in calling thread"); return 2; });
-    std::cout << "[main] before get()\n";
-    std::cout << "async=" << f1.get() << " deferred=" << f2.get() << '\n';
+    std::println("[main] before get()");
+    std::println("async={} deferred={}", f1.get(), f2.get());
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: std::promise + std::future\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: std::promise + std::future");
+    std::println("=====================================================");
     std::promise<int> prom; auto fut = prom.get_future();
     std::thread t1(workerWithPromise, std::move(prom), 21);
-    std::cout << "[main] got: " << fut.get() << '\n'; t1.join();
+    std::println("[main] got: {}", fut.get()); t1.join();
 
     std::promise<int> promEx; auto futEx = promEx.get_future();
     std::thread t2(workerWithException, std::move(promEx));
     try { futEx.get(); }
     catch (const std::exception& e) {
-        std::cout << "[main] caught from promise: " << e.what() << '\n'; }
+        std::println("[main] caught from promise: {}", e.what()); }
     t2.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: std::packaged_task\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: std::packaged_task");
+    std::println("=====================================================");
     std::packaged_task<int(int,int)> task(multiply);
     auto taskFut = task.get_future();
     std::thread t3(std::move(task), 6, 7);
-    std::cout << "packaged_task result: " << taskFut.get() << '\n'; t3.join();
+    std::println("packaged_task result: {}", taskFut.get()); t3.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Exception propagation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Exception propagation");
+    std::println("=====================================================");
     auto badTask = std::async(std::launch::async, []() -> int {
         throw std::runtime_error("async task failed!"); return 0; });
     try { badTask.get(); }
     catch (const std::exception& e) {
-        std::cout << "[main] caught from async: " << e.what() << '\n'; }
+        std::println("[main] caught from async: {}", e.what()); }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: wait_for / wait_until\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: wait_for / wait_until");
+    std::println("=====================================================");
     auto slowTask = std::async(std::launch::async, []() {
         std::this_thread::sleep_for(150ms); return 99; });
     auto status = slowTask.wait_for(50ms);
     if (status == std::future_status::timeout)
-        std::cout << "[main] not ready yet — timeout\n";
+        std::println("[main] not ready yet — timeout");
     slowTask.wait();
-    std::cout << "[main] now ready: " << slowTask.get() << '\n';
+    std::println("[main] now ready: {}", slowTask.get());
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: std::shared_future (multiple consumers)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: std::shared_future (multiple consumers)");
+    std::println("=====================================================");
     std::promise<std::string> sharedProm;
     std::shared_future<std::string> sharedFut = sharedProm.get_future().share();
     std::vector<std::thread> consumers;
@@ -128,9 +134,10 @@ int main()
     sharedProm.set_value("broadcast message");
     for (auto& c : consumers) c.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Parallel computation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Parallel computation");
+    std::println("=====================================================");
     const int SIZE = 1000000;
     std::vector<int> data(SIZE); std::iota(data.begin(), data.end(), 1);
     unsigned int cores = std::thread::hardware_concurrency();
@@ -138,8 +145,9 @@ int main()
     long long result = parallelSum(data, cores);
     double ms = std::chrono::duration<double,std::milli>(
                     std::chrono::high_resolution_clock::now()-t_start).count();
-    std::cout << "Parallel sum: " << result << " in " << ms << " ms\n";
+    std::println("Parallel sum: {} in {} ms", result, ms);
 
-    std::cout << "\n=== Futures complete ===\n";
+    std::println("");
+    std::println("=== Futures complete ===");
     return 0;
 }

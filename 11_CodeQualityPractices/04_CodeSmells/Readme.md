@@ -1295,3 +1295,564 @@ Remember:
 ---
 
 **The code you write today becomes the legacy code of tomorrow. Make it smell-free!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 CODE SMELLS PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Code smells are your early warning  
+system. Learn to recognize them, and refactor  
+proactively before small problems become big ones!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `file`
+
+📝 Logging registration event  
+📊 Updating user statistics
+
+- ✅ Registration successful!
+
+### From `example1_long_method()`
+
+- ❌ BAD CODE:
+
+```cpp
+void processUserRegistration(...) {
+    // Validate username (10 lines)
+    // Validate email (8 lines)
+    // Validate password (15 lines)
+    // Hash password
+    // Check database
+    // Save to database
+    // Send email
+    // Log event
+    // Update analytics
+    // 60+ lines in ONE method! 🚨
+}
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Method is 50+ lines long
+  - Does multiple unrelated things
+  - Hard to understand at a glance
+  - Difficult to test
+  - Hard to reuse parts of logic
+
+- ✅ GOOD CODE (Refactored):
+
+```cpp
+ValidationResult validateUsername(...);
+ValidationResult validateEmail(...);
+ValidationResult validatePassword(...);
+string hashPassword(...);
+void saveUser(...);
+void sendWelcomeEmail(...);
+void processUserRegistration(...) {
+    // Now it's clear and readable!
+    if (!validateUsername(...).valid) return;
+    if (!validateEmail(...).valid) return;
+    // ... orchestrates other methods
+}
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_long_method()`
+
+**✨ BENEFITS:**
+
+  - Each method has single responsibility
+  - Easy to test individually
+  - Reusable validation logic
+  - Clear and maintainable
+
+### From `example2_duplicate_code()`
+
+- ❌ BAD CODE:
+
+```cpp
+// Same calculation in 3 different methods!
+void calculateMonthlyPayment(...) {
+    double monthlyRate = rate / 12.0 / 100.0;
+    double payment = principal * monthlyRate * ...;
+}
+void calculateTotalPayment(...) {
+    double monthlyRate = rate / 12.0 / 100.0; 🚨
+    double payment = principal * monthlyRate * ...;
+}
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Same code appears multiple times
+  - Copy-paste programming
+  - Changes require multiple edits
+  - High chance of inconsistencies
+  - Violates DRY principle
+
+- ✅ GOOD CODE:
+
+```cpp
+// Extract common calculation
+double calculateMonthlyPayment(...) {
+    // Core calculation logic
+}
+void displayTotalPayment(...) {
+    double payment = calculateMonthlyPayment(...); ✅
+    double total = payment * months;
+}
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example2_duplicate_code()`
+
+**✨ BENEFITS:**
+
+  - Single source of truth
+  - Change once, affect everywhere
+  - Easier to maintain
+  - Reduced chance of bugs
+
+### From `example3_long_parameter_list()`
+
+- ❌ BAD CODE:
+
+```cpp
+void createUser(
+    const string& firstName,    // Parameter 1
+    const string& lastName,     // Parameter 2
+    const string& email,        // Parameter 3
+    const string& phone,        // Parameter 4
+    const string& address,      // Parameter 5
+    const string& city,         // Parameter 6
+    const string& country,      // Parameter 7
+    const string& postalCode,   // Parameter 8
+    int age,                    // Parameter 9
+    bool isActive               // Parameter 10 🚨
+);
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - More than 3-4 parameters
+  - Hard to remember parameter order
+  - Easy to pass wrong values
+  - Changes require updating all calls
+  - Poor readability at call site
+
+- ✅ GOOD CODE:
+
+```cpp
+struct UserInfo {
+    string firstName, lastName;
+    string email, phone;
+    Address address;
+    int age;
+    bool isActive;
+};
+void createUser(const UserInfo& user); ✅
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example3_long_parameter_list()`
+
+**✨ BENEFITS:**
+
+  - Clear and organized data
+  - Easy to add new fields
+  - Self-documenting
+  - Easier to test
+
+### From `example4_primitive_obsession()`
+
+- ❌ BAD CODE:
+
+```cpp
+void processPayment(
+    double amount,        // Just a number 🚨
+    string currency,      // Just a string 🚨
+    string cardNumber,    // Just a string 🚨
+    string cvv            // Just a string 🚨
+);
+processPayment(100.50, "USD", "1234", "123");
+// No type safety! Can pass anything!
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Using primitives for domain concepts
+  - Validation scattered everywhere
+  - No type safety
+  - Easy to make mistakes
+  - Difficult to enforce business rules
+
+- ✅ GOOD CODE:
+
+```cpp
+class Money {
+    double amount;
+    string currency;
+    // Validation in constructor
+    // Business operations (add, subtract)
+};
+class CreditCard {
+    string number;
+    // Validation and business logic
+};
+void processPayment(const Money&, const CreditCard&); ✅
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example4_primitive_obsession()`
+
+**✨ BENEFITS:**
+
+  - Type safety at compile time
+  - Validation in one place
+  - Business logic encapsulated
+  - Self-documenting code
+  - Prevents many bugs
+
+### From `example5_feature_envy()`
+
+- ❌ BAD CODE:
+
+```cpp
+class TransactionProcessor {
+    void processTransfer(Account& from, ...) {
+        if (from.balance < amount) {...}  🚨
+        from.balance -= amount;           🚨
+        // Accessing 'from' data too much!
+    }
+};
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Method uses another object's data excessively
+  - Behavior is in wrong class
+  - Violates encapsulation
+  - Poor cohesion
+  - Changes to data class affect this class
+
+- ✅ GOOD CODE:
+
+```cpp
+class Account {
+    bool hasEnoughBalance(double amount);
+    void withdraw(double amount);
+    void deposit(double amount);
+    // Behavior is with the data! ✅
+};
+class TransactionProcessor {
+    void processTransfer(Account& from, ...) {
+        from.withdraw(amount);  // Delegate!
+        to.deposit(amount);
+    }
+};
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example5_feature_envy()`
+
+**✨ BENEFITS:**
+
+  - Better encapsulation
+  - Behavior with data
+  - Easier to maintain
+  - Clearer responsibilities
+
+### From `example6_data_clumps()`
+
+- ❌ BAD CODE:
+
+```cpp
+void drawRectangle(int x, int y, int width, int height);
+void moveRectangle(int& x, int& y, int width, int height, ...);
+bool isInside(int x, int y, int width, int height, ...);
+// 🚨 x, y, width, height always together!
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Same parameters appear together repeatedly
+  - High coupling between unrelated functions
+  - Changes affect multiple function signatures
+  - Missing abstraction
+  - Poor cohesion
+
+- ✅ GOOD CODE:
+
+```cpp
+struct Point { int x, y; };
+struct Size { int width, height; };
+class Rectangle {
+    Point position;
+    Size dimensions;
+    void draw() const;
+    void move(const Point& delta);
+    bool contains(const Point& point) const;
+};
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example6_data_clumps()`
+
+**✨ BENEFITS:**
+
+  - Clear abstraction
+  - Reduced parameter count
+  - Better encapsulation
+  - Easier to extend
+
+### From `example7_comments_smell()`
+
+- ❌ BAD CODE:
+
+```cpp
+// Calculate total including tax and shipping
+// For premium customers apply discount 🚨
+double calc(double p, bool prem) {
+    double t = p * 0.1;  // tax 🚨
+    double s = p > 50 ? 0 : 5.99;  // shipping 🚨
+    // 🚨 If code needs this many comments...
+    // ... it's probably too unclear!
+}
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Excessive comments explaining WHAT code does
+  - Comments make up > 30% of file
+  - Outdated comments
+  - Comments compensating for bad names
+  - Code can't stand on its own
+
+- ✅ GOOD CODE:
+
+```cpp
+const double TAX_RATE = 0.10;
+double calculateTax(double price) {
+    return price * TAX_RATE;  // Clear! ✅
+}
+```
+
+double calculateTotalPrice(double basePrice,
+
+```cpp
+                          bool isPremiumCustomer) {
+    // Self-explanatory code ✅
+}
+// Only comment WHY:
+// BUSINESS RULE: Premium discount encourages upgrades
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example7_comments_smell()`
+
+**✨ BENEFITS:**
+
+  - Code speaks for itself
+  - Comments explain WHY, not WHAT
+  - Easier to maintain
+  - Less chance of outdated docs
+
+### From `example8_switch_statements()`
+
+- ❌ BAD CODE:
+
+```cpp
+double calculateSalary(EmployeeType type, ...) {
+    switch (type) {  🚨
+        case ENGINEER: return 80000 + ...;
+        case MANAGER: return 100000 + ...;
+    }
+}
+double calculateBonus(EmployeeType type, ...) {
+    switch (type) {  🚨 Same switch again!
+        case ENGINEER: return ...;
+        case MANAGER: return ...;
+    }
+}
+```
+
+**🚨 SMELL INDICATORS:**
+
+  - Same switch repeated in multiple places
+  - Adding new type requires multiple changes
+  - Violates Open-Closed Principle
+  - Poor extensibility
+  - Type-based branching
+
+- ✅ GOOD CODE:
+
+```cpp
+class Employee {
+    virtual double calculateSalary() const = 0;
+    virtual double calculateBonus() const = 0;
+};
+class Engineer : public Employee {
+    double calculateSalary() const override {...}
+    double calculateBonus() const override {...}
+};
+// Add new type? Just create new class! ✅
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example8_switch_statements()`
+
+**✨ BENEFITS:**
+
+  - No switch statements
+  - Easy to add new types
+  - Better encapsulation
+  - Open-Closed Principle
+  - Polymorphism power
+
+### From `example9_detection_summary()`
+
+**📋 QUICK REFERENCE GUIDE:**
+
+1. LONG METHOD:
+
+🔍 Detection: Method > 20 lines  
+💊 Cure: Extract smaller methods
+
+- ✅ Result: Single responsibility per method
+
+2. LARGE CLASS:
+
+🔍 Detection: Class > 200 lines, many methods  
+💊 Cure: Split into smaller classes
+
+- ✅ Result: High cohesion, low coupling
+
+3. DUPLICATE CODE:
+
+🔍 Detection: Copy-paste code blocks  
+💊 Cure: Extract to reusable functions
+
+- ✅ Result: DRY principle
+
+4. LONG PARAMETER LIST:
+
+🔍 Detection: > 3-4 parameters  
+💊 Cure: Parameter objects/builders
+
+- ✅ Result: Clear, manageable APIs
+
+5. FEATURE ENVY:
+
+🔍 Detection: Method uses other class's data  
+💊 Cure: Move method to data's class
+
+- ✅ Result: Better encapsulation
+
+6. DATA CLUMPS:
+
+🔍 Detection: Same parameters together  
+💊 Cure: Create data class
+
+- ✅ Result: Clear abstractions
+
+7. PRIMITIVE OBSESSION:
+
+🔍 Detection: Primitives for domain concepts  
+💊 Cure: Value objects
+
+- ✅ Result: Type safety, validation
+
+8. SWITCH STATEMENTS:
+
+🔍 Detection: Repeated type-based switches  
+💊 Cure: Polymorphism
+
+- ✅ Result: Open-Closed Principle
+
+9. EXCESSIVE COMMENTS:
+
+🔍 Detection: Comments explaining WHAT  
+💊 Cure: Self-documenting code
+
+- ✅ Result: Clear, maintainable code
+
+10. DEAD CODE:
+
+🔍 Detection: Unused methods/variables  
+💊 Cure: Delete it!
+
+- ✅ Result: Cleaner codebase
+
+### From `example10_refactoring_strategies()`
+
+**🔧 REFACTORING TECHNIQUES:**
+
+1. EXTRACT METHOD:
+  - Break large method into smaller ones
+  - Each method does one thing
+  - Improves readability and reusability
+
+2. EXTRACT CLASS:
+  - Split large class into focused classes
+  - Each class has single responsibility
+  - Better organization and maintenance
+
+3. INTRODUCE PARAMETER OBJECT:
+  - Group related parameters
+  - Reduce parameter lists
+  - Create meaningful abstractions
+
+4. REPLACE TYPE CODE WITH CLASS:
+  - Convert primitives to value objects
+  - Add validation and behavior
+  - Improve type safety
+
+5. MOVE METHOD:
+  - Relocate method to proper class
+  - Place behavior with data
+  - Fix feature envy
+
+6. REPLACE CONDITIONAL WITH POLYMORPHISM:
+  - Convert switch to inheritance
+  - Use polymorphism
+  - Easier to extend
+
+- 💡 REFACTORING WORKFLOW:
+
+1. Identify the smell 🔍
+2. Write tests first ✅
+3. Make small changes incrementally 🔧
+4. Run tests after each change 🧪
+5. Commit frequently 💾
+6. Review and iterate 🔄
+
+- ⚠️  REFACTORING RULES:
+
+  - Never refactor without tests
+  - Make small, incremental changes
+  - Keep code working at each step
+  - Refactor OR add features, not both
+  - Don't change behavior
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

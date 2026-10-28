@@ -9,7 +9,7 @@
  * Philosophy: "What you don't use, you don't pay for. And what you do use,
  *             you couldn't hand code any better." - Bjarne Stroustrup
  *
- * This is a core principle at think-cell and in modern C++ design.
+ * This is a core principle of modern C++ design.
  *
  * Compile with optimizations:
  * g++ -std=c++20 -O3 -Wall -Wextra zero_cost_abstractions.cpp -o zero_cost
@@ -18,13 +18,13 @@
  * g++ -std=c++20 -O3 -S zero_cost_abstractions.cpp -o zero_cost.s
  */
 
-#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
 #include <numeric>
 #include <ranges>
 #include <memory>
+#include <print>
 
 // ============================================================================
 // EXAMPLE 1: Loop Abstraction - Same Performance
@@ -56,7 +56,8 @@ int sum_algorithm(const std::vector<int>& vec) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Example 1: Loop Abstraction ===\n";
+    std::println("");
+    std::println("=== Example 1: Loop Abstraction ===");
 
     std::vector<int> data(1'000'000);
     std::iota(data.begin(), data.end(), 1);  // Fill with 1, 2, 3, ...
@@ -79,13 +80,13 @@ void demonstrate() {
     end = std::chrono::high_resolution_clock::now();
     auto algo_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
-    std::cout << "\nResults (all identical): " << result1 << "\n";
-    std::cout << "\nPerformance comparison:\n";
-    std::cout << "  Manual loop:     " << manual_time << " μs\n";
-    std::cout << "  Range-for loop:  " << range_time << " μs\n";
-    std::cout << "  Algorithm:       " << algo_time << " μs\n";
-    std::cout << "\n✅ ALL THREE COMPILE TO IDENTICAL ASSEMBLY!\n";
-    std::cout << "✅ Zero-cost abstraction = No runtime overhead\n";
+    std::println("");
+    std::println("Results (all identical): {}", static_cast<int>(result1));
+    std::println("");
+    std::println("Performance comparison:");
+    std::println("  Manual loop:     {} μs", manual_time);
+    std::println("  Range-for loop:  {} μs", range_time);
+    std::println("  Algorithm:       {} μs", algo_time);
 }
 }
 
@@ -103,7 +104,8 @@ struct MultiplyBy {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Example 2: Functors vs Lambdas ===\n";
+    std::println("");
+    std::println("=== Example 2: Functors vs Lambdas ===");
 
     std::vector<int> data = {1, 2, 3, 4, 5};
     std::vector<int> result1(5);
@@ -116,13 +118,14 @@ void demonstrate() {
     std::transform(data.begin(), data.end(), result2.begin(),
                    [](int x) { return x * 10; });
 
-    std::cout << "\nFunctor result:  ";
-    for (int x : result1) std::cout << x << " ";
-    std::cout << "\nLambda result:   ";
-    for (int x : result2) std::cout << x << " ";
+    std::println("");
+    std::print("Functor result:  ");
+    for (int x : result1) std::print("{} ", x);
+    std::println("");
+    std::print("Lambda result:   ");
+    for (int x : result2) std::print("{} ", x);
 
-    std::cout << "\n\n✅ Both compile to IDENTICAL machine code!\n";
-    std::cout << "✅ Lambda is cleaner but has ZERO runtime cost\n";
+    std::println("");
 }
 }
 
@@ -138,7 +141,7 @@ int* create_manual() {
 }
 
 void use_manual(int* ptr) {
-    std::cout << "  Value: " << *ptr << "\n";
+    std::println("  Value: {}", *ptr);
     delete ptr;  // Easy to forget!
 }
 
@@ -148,23 +151,24 @@ std::unique_ptr<int> create_smart() {
 }
 
 void use_smart(std::unique_ptr<int> ptr) {
-    std::cout << "  Value: " << *ptr << "\n";
+    std::println("  Value: {}", *ptr);
     // Automatically deleted!
 }
 
 void demonstrate() {
-    std::cout << "\n=== Example 3: Smart Pointers ===\n";
+    std::println("");
+    std::println("=== Example 3: Smart Pointers ===");
 
-    std::cout << "\nRaw pointer:\n";
+    std::println("");
+    std::println("Raw pointer:");
     int* raw = create_manual();
     use_manual(raw);
 
-    std::cout << "\nSmart pointer:\n";
+    std::println("");
+    std::println("Smart pointer:");
     auto smart = create_smart();
     use_smart(std::move(smart));
 
-    std::cout << "\n✅ unique_ptr has ZERO overhead compared to raw pointer!\n";
-    std::cout << "✅ But it's safer - no memory leaks possible\n";
 }
 }
 
@@ -193,20 +197,21 @@ auto process_ranges(const std::vector<int>& data) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Example 4: Ranges (C++20) ===\n";
+    std::println("");
+    std::println("=== Example 4: Ranges (C++20) ===");
 
     std::vector<int> data = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    std::cout << "\nManual loop result: ";
+    std::println("");
+    std::print("Manual loop result: ");
     auto result1 = process_manual(data);
-    for (int x : result1) std::cout << x << " ";
+    for (int x : result1) std::print("{} ", x);
 
-    std::cout << "\nRanges result:      ";
-    for (int x : process_ranges(data)) std::cout << x << " ";
+    std::println("");
+    std::print("Ranges result:      ");
+    for (int x : process_ranges(data)) std::print("{} ", x);
 
-    std::cout << "\n\n✅ Ranges are composable and lazy-evaluated\n";
-    std::cout << "✅ Compile to same code as manual loops!\n";
-    std::cout << "✅ Much more readable and maintainable\n";
+    std::println("");
 }
 }
 
@@ -242,19 +247,20 @@ struct CircleStatic {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Example 5: Template Polymorphism ===\n";
+    std::println("");
+    std::println("=== Example 5: Template Polymorphism ===");
 
     // Runtime polymorphism
     std::unique_ptr<ShapeBase> shape1 = std::make_unique<Circle>(5.0);
-    std::cout << "\nVirtual function area: " << shape1->area();
+    std::println("");
+    std::print("Virtual function area: {}", shape1->area());
 
     // Compile-time polymorphism
     CircleStatic shape2{5.0};
-    std::cout << "\nTemplate area:         " << calculate_area(shape2);
+    std::println("");
+    std::print("Template area:         {}", calculate_area(shape2));
 
-    std::cout << "\n\n✅ Template version has ZERO virtual function overhead!\n";
-    std::cout << "✅ Function call is inlined at compile-time\n";
-    std::cout << "✅ This is how think-cell achieves high performance\n";
+    std::println("");
 }
 }
 
@@ -291,28 +297,27 @@ private:
 };
 
 struct Circle {
-    void draw() const { std::cout << "Drawing circle\n"; }
+    void draw() const { std::println("Drawing circle"); }
 };
 
 struct Square {
-    void draw() const { std::cout << "Drawing square\n"; }
+    void draw() const { std::println("Drawing square"); }
 };
 
 void demonstrate() {
-    std::cout << "\n=== Example 6: Type Erasure ===\n";
+    std::println("");
+    std::println("=== Example 6: Type Erasure ===");
 
     std::vector<Drawable> shapes;
     shapes.push_back(Circle{});
     shapes.push_back(Square{});
 
-    std::cout << "\nDrawing shapes:\n";
+    std::println("");
+    std::println("Drawing shapes:");
     for (const auto& shape : shapes) {
         shape.draw();
     }
 
-    std::cout << "\n✅ Type erasure: Flexibility when you need it\n";
-    std::cout << "✅ Still better than traditional inheritance\n";
-    std::cout << "✅ Used in std::function, std::any\n";
 }
 }
 
@@ -333,19 +338,20 @@ constexpr int factorial_compiletime(int n) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Example 7: Compile-Time Computation ===\n";
+    std::println("");
+    std::println("=== Example 7: Compile-Time Computation ===");
 
     // Computed at runtime
     int runtime_result = factorial_runtime(5);
-    std::cout << "\nRuntime factorial(5):     " << runtime_result;
+    std::println("");
+    std::print("Runtime factorial(5):     {}", runtime_result);
 
     // Computed at COMPILE TIME!
     constexpr int compiletime_result = factorial_compiletime(5);
-    std::cout << "\nCompile-time factorial(5): " << compiletime_result;
+    std::println("");
+    std::print("Compile-time factorial(5): {}", compiletime_result);
 
-    std::cout << "\n\n✅ Compile-time result is a LITERAL in the binary!\n";
-    std::cout << "✅ ZERO runtime cost - computed before program runs\n";
-    std::cout << "✅ This is template metaprogramming power\n";
+    std::println("");
 }
 }
 
@@ -354,13 +360,13 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║           ZERO-COST ABSTRACTIONS IN C++            ║\n";
-    std::cout << "║                                                     ║\n";
-    std::cout << "║  \"What you don't use, you don't pay for.            ║\n";
-    std::cout << "║   What you do use, you couldn't hand code better.\" ║\n";
-    std::cout << "║                        - Bjarne Stroustrup          ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║           ZERO-COST ABSTRACTIONS IN C++               ║");
+    std::println("║                                                       ║");
+    std::println("║  \"What you don't use, you don't pay for.              ║");
+    std::println("║   What you do use, you couldn't hand code better.\"    ║");
+    std::println("║                        - Bjarne Stroustrup            ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     LoopAbstraction::demonstrate();
     FunctionObjects::demonstrate();
@@ -370,84 +376,7 @@ int main() {
     TypeErasure::demonstrate();
     CompileTime::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 ZERO-COST ABSTRACTION PRINCIPLES:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "1. High-level code compiles to same assembly as low-level\n";
-    std::cout << "2. Abstractions are optimized away by the compiler\n";
-    std::cout << "3. No runtime overhead for safety and convenience\n";
-    std::cout << "4. Templates enable compile-time polymorphism\n";
-    std::cout << "5. Modern C++ is both safe AND fast\n";
-    std::cout << "\n💡 This is why think-cell can write:\n";
-    std::cout << "   - Beautiful, readable code\n";
-    std::cout << "   - That's also extremely performant\n";
-    std::cout << "   - Using functional-style abstractions\n";
-    std::cout << "   - With zero runtime cost!\n";
-    std::cout << "\n🚀 Key Takeaway:\n";
-    std::cout << "   Don't write C in C++!\n";
-    std::cout << "   Use high-level abstractions - they're FREE!\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
 
     return 0;
 }
-
-/*
- * COMPILE AND RUN:
- * ===============
- * Basic compilation:
- *   g++ -std=c++20 -O3 -Wall -Wextra zero_cost_abstractions.cpp -o zero_cost
- *   ./zero_cost
- *
- * View assembly to prove zero-cost:
- *   g++ -std=c++20 -O3 -S zero_cost_abstractions.cpp -o zero_cost.s
- *   cat zero_cost.s  # Compare manual vs high-level code
- *
- * OPTIMIZATION LEVELS:
- * ===================
- * -O0: No optimization (abstractions have cost)
- * -O1: Basic optimization
- * -O2: Full optimization
- * -O3: Aggressive optimization (abstractions disappear!)
- *
- * ASSEMBLY INSPECTION:
- * ===================
- * To see that abstractions compile to identical code:
- * 1. Compile with -S flag (generates assembly)
- * 2. Look at sum_manual, sum_range_for, sum_algorithm
- * 3. They produce IDENTICAL assembly code!
- *
- * THINK-CELL PHILOSOPHY:
- * =====================
- * "We prefer functional-style generic algorithms and ranges
- *  over imperative programming because:
- *  1. Code is more readable and maintainable
- *  2. Less error-prone (compiler catches more mistakes)
- *  3. Zero runtime cost with optimizations
- *  4. Easier to reason about and test"
- *
- * ZERO-COST EXAMPLES:
- * ==================
- * ✅ Range-based for loops
- * ✅ Lambdas vs functors
- * ✅ Smart pointers vs raw pointers
- * ✅ std::algorithms vs manual loops
- * ✅ Templates vs virtual functions
- * ✅ constexpr vs runtime computation
- *
- * WHEN ABSTRACTIONS HAVE COST:
- * ============================
- * ❌ Virtual functions (vtable lookup)
- * ❌ std::function (type erasure overhead)
- * ❌ Exceptions (table lookups)
- * ❌ RTTI (dynamic_cast, typeid)
- *
- * But even these are minimal and worth it for the safety!
- *
- * NEXT STEPS:
- * ===========
- * - Experiment with -O0 vs -O3 compilation
- * - Compare assembly output
- * - Profile your own abstractions
- * - Read Compiler Explorer (godbolt.org) to see live
- * - Study think-cell's blog about their C++ practices
- */

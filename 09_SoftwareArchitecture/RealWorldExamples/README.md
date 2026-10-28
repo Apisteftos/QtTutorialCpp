@@ -24,16 +24,16 @@ flowchart TD
         S4[Observer]
     end
 
-    subgraph PTT["03 PTT Simplified"]
+    subgraph ARB["03 Shared Printer Arbiter"]
         P1[State Machine]
         P2[Event-Driven]
-        P3[Circuit Breaker]
+        P3[Observer]
         P4[Layered]
     end
 
     style CHAT fill:#2196F3,color:#fff
     style SCHED fill:#4CAF50,color:#fff
-    style PTT fill:#FF5722,color:#fff
+    style ARB fill:#FF5722,color:#fff
 ```
 
 ---
@@ -44,4 +44,4 @@ flowchart TD
 |---|---|
 | Chat Application | Classic distributed system — taught in every system design interview |
 | Task Scheduler | Priority queues + threads — core of any real-time system |
-| PTT Simplified | Your MCX domain — state machine driving a PTT floor control session |
+| Shared Printer Arbiter | State machine + exclusive-access arbitration with a waiting queue — the core of any shared-resource controller |

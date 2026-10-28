@@ -14,12 +14,12 @@
 //   - Split-vote detection → retry with new term
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <cassert>
 #include <algorithm>
 #include <stdexcept>
+#include <print>
 
 // =============================================================================
 // Forward declarations
@@ -81,8 +81,7 @@ public:
             state_   = NodeState::Follower;
             votedFor_ = leaderId;
             heartbeat_received_ = true;
-            std::cout << "    " << id_ << " ← heartbeat from " << leaderId
-                      << " (term=" << leaderTerm << ")\n";
+            std::println("    {} ← heartbeat from {} (term={})", id_, leaderId, leaderTerm);
         }
     }
 
@@ -92,8 +91,8 @@ public:
 
         // Reject if we've already voted in this term
         if (req.term < term_) {
-            std::cout << "    " << id_ << " → REJECT vote for " << req.candidateId
-                      << " (stale term " << req.term << " < " << term_ << ")\n";
+            std::println("    {} → REJECT vote for {} (stale term {} < {})",
+                id_, req.candidateId, req.term, term_);
             return {term_, false};
         }
 
@@ -108,11 +107,9 @@ public:
         bool grant = votedFor_.empty() || votedFor_ == req.candidateId;
         if (grant) {
             votedFor_ = req.candidateId;
-            std::cout << "    " << id_ << " → GRANT vote to " << req.candidateId
-                      << " (term=" << req.term << ")\n";
+            std::println("    {} → GRANT vote to {} (term={})", id_, req.candidateId, req.term);
         } else {
-            std::cout << "    " << id_ << " → DENY vote (already voted for "
-                      << votedFor_ << ")\n";
+            std::println("    {} → DENY vote (already voted for {})", id_, votedFor_);
         }
         return {term_, grant};
     }
@@ -128,7 +125,7 @@ public:
     void fail() {
         alive_ = false;
         state_ = NodeState::Follower;
-        std::cout << "  💀 " << id_ << " CRASHED\n";
+        std::println("  💀 {} CRASHED", id_);
     }
 
     void recover() {
@@ -136,7 +133,7 @@ public:
         term_   = 0;
         votedFor_ = "";
         heartbeat_received_ = false;
-        std::cout << "  ✅ " << id_ << " RECOVERED\n";
+        std::println("  ✅ {} RECOVERED", id_);
     }
 
     bool heartbeatReceived() const { return heartbeat_received_; }
@@ -214,29 +211,28 @@ void RaftNode::startElection() {
     state_    = NodeState::Candidate;
     votedFor_ = id_;
 
-    std::cout << "\n  ⚡ " << id_ << " starts election (term=" << term_ << ")\n";
+    std::println("");
+    std::println("  ⚡ {} starts election (term={})", id_, term_);
 
     VoteRequest req{term_, id_};
     int votes    = cluster_->collectVotes(req, id_);
     int needed   = cluster_->quorum();
 
-    std::cout << "  📊 " << id_ << " received " << votes
-              << "/" << cluster_->aliveCount()
-              << " votes (need " << needed << ")\n";
+    std::println("  📊 {} received {}/{} votes (need {})", id_, votes, cluster_->aliveCount(), needed);
 
     if (votes >= needed) {
         state_ = NodeState::Leader;
-        std::cout << "  👑 " << id_ << " is now LEADER (term=" << term_ << ")\n";
+        std::println("  👑 {} is now LEADER (term={})", id_, term_);
         sendHeartbeats();
     } else {
         state_ = NodeState::Follower;
-        std::cout << "  ❌ " << id_ << " election failed (split vote)\n";
+        std::println("  ❌ {} election failed (split vote)", id_);
     }
 }
 
 void RaftNode::sendHeartbeats() {
     if (!alive_ || state_ != NodeState::Leader) return;
-    std::cout << "  💓 " << id_ << " sending heartbeats\n";
+    std::println("  💓 {} sending heartbeats", id_);
     cluster_->broadcastHeartbeat(term_, id_);
 }
 
@@ -246,7 +242,8 @@ void RaftNode::sendHeartbeats() {
 
 int main()
 {
-    std::cout << "=== Consensus — Raft Leader Election Demo ===\n\n";
+    std::println("=== Consensus — Raft Leader Election Demo ===");
+    std::println("");
 
     // ── Setup: 5-node cluster ─────────────────────────────────────────────────
     Cluster cluster;
@@ -257,29 +254,31 @@ int main()
     RaftNode n5("Node-5", &cluster);
     for (auto* n : {&n1, &n2, &n3, &n4, &n5}) cluster.addNode(n);
 
-    std::cout << "Cluster: 5 nodes, quorum = " << cluster.quorum() << "\n";
+    std::println("Cluster: 5 nodes, quorum = {}", cluster.quorum());
     assert(cluster.quorum() == 3);
 
     // ── Scenario 1: Normal election ───────────────────────────────────────────
-    std::cout << "\n=== Scenario 1: Normal election ===\n";
+    std::println("");
+    std::println("=== Scenario 1: Normal election ===");
     n1.startElection();  // Node-1's timer fires first
 
     assert(n1.isLeader());
     assert(n1.term() == 1);
     assert(cluster.currentLeader() == &n1);
-    std::cout << "✓ Node-1 elected leader, term=1\n";
+    std::println("✓ Node-1 elected leader, term=1");
 
     // Leader sends periodic heartbeats — suppresses new elections
     n1.sendHeartbeats();
     for (auto* n : cluster.nodes())
         if (n->id() != "Node-1") assert(!n->isLeader());
-    std::cout << "✓ Heartbeats sent — followers remain followers\n";
+    std::println("✓ Heartbeats sent — followers remain followers");
 
     // ── Scenario 2: Leader fails → re-election ────────────────────────────────
-    std::cout << "\n=== Scenario 2: Leader failure → re-election ===\n";
+    std::println("");
+    std::println("=== Scenario 2: Leader failure → re-election ===");
     n1.fail();
     assert(cluster.currentLeader() == nullptr);
-    std::cout << "✓ No leader after Node-1 crash\n";
+    std::println("✓ No leader after Node-1 crash");
 
     // Node-2's timer fires
     n2.startElection();
@@ -287,10 +286,11 @@ int main()
     assert(n2.isLeader());
     assert(n2.term() == 2);
     assert(cluster.currentLeader() == &n2);
-    std::cout << "✓ Node-2 elected new leader, term=2\n";
+    std::println("✓ Node-2 elected new leader, term=2");
 
     // ── Scenario 3: Quorum lost — no election possible ────────────────────────
-    std::cout << "\n=== Scenario 3: Quorum lost (3 of 5 down) ===\n";
+    std::println("");
+    std::println("=== Scenario 3: Quorum lost (3 of 5 down) ===");
     n3.fail();
     n4.fail();
     // Now only n2 (leader) and n5 are alive — 2 nodes, quorum=2
@@ -304,10 +304,11 @@ int main()
     // In real Raft the quorum is fixed at cluster startup
     // Here we show the principle
     n5.startElection();
-    std::cout << "✓ Scenario 3 complete (single-node quorum)\n";
+    std::println("✓ Scenario 3 complete (single-node quorum)");
 
     // ── Scenario 4: Node recovery ─────────────────────────────────────────────
-    std::cout << "\n=== Scenario 4: Crashed node recovers ===\n";
+    std::println("");
+    std::println("=== Scenario 4: Crashed node recovers ===");
     n1.recover();
     n2.recover();
     n3.recover();
@@ -315,10 +316,10 @@ int main()
     // Fresh election
     n3.startElection();
     assert(cluster.currentLeader() != nullptr);
-    std::cout << "✓ Cluster recovered — leader: "
-              << cluster.currentLeader()->id()
-              << " term=" << cluster.currentLeader()->term() << "\n";
+    std::println("✓ Cluster recovered — leader: {} term={}",
+        cluster.currentLeader()->id(), cluster.currentLeader()->term());
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

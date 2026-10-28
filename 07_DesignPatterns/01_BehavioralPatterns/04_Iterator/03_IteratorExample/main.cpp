@@ -1,8 +1,8 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <array>
 #include <memory>
+#include <print>
 
 // ============================================
 // Menu Item Class
@@ -27,9 +27,8 @@ public:
 
     // Display menu item
     void display() const {
-        std::cout << name << " - $" << price
-                  << (vegetarian ? " (V)" : "") << std::endl;
-        std::cout << "  " << description << std::endl;
+        std::println("{} - ${}{}", name, price, (vegetarian ? " (V)" : ""));
+        std::println("  {}", description);
     }
 };
 
@@ -150,7 +149,7 @@ public:
     void addItem(const std::string& name, const std::string& desc,
                  bool vegetarian, double price) {
         if (numberOfItems >= MAX_ITEMS) {
-            std::cout << "Sorry, menu is full!" << std::endl;
+            std::println("Sorry, menu is full!");
             return;
         }
         menuItems[numberOfItems] = new MenuItem(name, desc, vegetarian, price);
@@ -212,23 +211,28 @@ public:
         auto pancakeIterator = pancakeMenu->createIterator();
         auto dinerIterator = dinerMenu->createIterator();
 
-        std::cout << "\n======= BREAKFAST MENU =======" << std::endl;
+        std::println("");
+        std::println("======= BREAKFAST MENU =======");
         printMenu(pancakeIterator);
 
-        std::cout << "\n======== LUNCH MENU ==========" << std::endl;
+        std::println("");
+        std::println("======== LUNCH MENU ==========");
         printMenu(dinerIterator);
     }
 
     // Print vegetarian menu only
     void printVegetarianMenu() {
-        std::cout << "\n==== VEGETARIAN MENU ====" << std::endl;
+        std::println("");
+        std::println("==== VEGETARIAN MENU ====");
 
         auto pancakeIterator = pancakeMenu->createIterator();
-        std::cout << "\nBREAKFAST:" << std::endl;
+        std::println("");
+        std::println("BREAKFAST:");
         printVegetarianMenu(pancakeIterator);
 
         auto dinerIterator = dinerMenu->createIterator();
-        std::cout << "\nLUNCH:" << std::endl;
+        std::println("");
+        std::println("LUNCH:");
         printVegetarianMenu(dinerIterator);
     }
 
@@ -237,7 +241,7 @@ private:
     void printMenu(std::shared_ptr<MenuIterator> iterator) {
         while (iterator->hasNext()) {
             MenuItem item = iterator->next();
-            std::cout << std::endl;
+            std::println("");
             item.display();
         }
     }
@@ -247,7 +251,7 @@ private:
         while (iterator->hasNext()) {
             MenuItem item = iterator->next();
             if (item.isVegetarian()) {
-                std::cout << std::endl;
+                std::println("");
                 item.display();
             }
         }
@@ -266,7 +270,7 @@ int main() {
     // Create waitress who uses both menus
     Waitress waitress(&pancakeMenu, &dinerMenu);
 
-    std::cout << "===== RESTAURANT MENU SYSTEM =====" << std::endl;
+    std::println("===== RESTAURANT MENU SYSTEM =====");
 
     // Print all menus (waitress doesn't need to know storage details!)
     waitress.printMenu();

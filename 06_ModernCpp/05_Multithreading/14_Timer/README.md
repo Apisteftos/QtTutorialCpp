@@ -297,3 +297,13 @@ Need Unix timestamp?                    → system_clock::now().time_since_epoch
 | Timeout check | `steady_clock::now() > deadline` |
 | Convert 3s to ms | `duration_cast<milliseconds>(3s).count()` → `3000` |
 | Unix timestamp | `system_clock::now().time_since_epoch()` |
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

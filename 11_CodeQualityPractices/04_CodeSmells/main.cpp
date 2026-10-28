@@ -1,11 +1,10 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
 #include <map>
 #include <algorithm>
 #include <cmath>
-using namespace std;
+#include <print>
 
 // ============================================
 // CODE SMELLS PRINCIPLE
@@ -66,37 +65,37 @@ DETECTION SIGNS:
 namespace bad_example1 {
 // ❌ BAD: Long method doing too much
 
-void processUserRegistration(const string& username,
-                             const string& email,
-                             const string& password) {
+void processUserRegistration(const std::string& username,
+                             const std::string& email,
+                             const std::string& password) {
     // 🚨 This method does EVERYTHING!
 
     // Validate username
     if (username.length() < 3 || username.length() > 20) {
-        cout << "   ❌ Invalid username length" << endl;
+        std::println("   ❌ Invalid username length");
         return;
     }
     for (char c : username) {
         if (!isalnum(c) && c != '_') {
-            cout << "   ❌ Invalid username characters" << endl;
+            std::println("   ❌ Invalid username characters");
             return;
         }
     }
 
     // Validate email
-    if (email.find('@') == string::npos) {
-        cout << "   ❌ Invalid email format" << endl;
+    if (email.find('@') == std::string::npos) {
+        std::println("   ❌ Invalid email format");
         return;
     }
     size_t atPos = email.find('@');
     if (atPos == 0 || atPos == email.length() - 1) {
-        cout << "   ❌ Invalid email format" << endl;
+        std::println("   ❌ Invalid email format");
         return;
     }
 
     // Validate password
     if (password.length() < 8) {
-        cout << "   ❌ Password too short" << endl;
+        std::println("   ❌ Password too short");
         return;
     }
     bool hasUpper = false, hasLower = false, hasDigit = false;
@@ -106,34 +105,27 @@ void processUserRegistration(const string& username,
         if (isdigit(c)) hasDigit = true;
     }
     if (!hasUpper || !hasLower || !hasDigit) {
-        cout << "   ❌ Password must contain upper, lower, and digit" << endl;
+        std::println("   ❌ Password must contain upper, lower, and digit");
         return;
     }
 
     // Hash password (simplified)
-    string hashedPassword = "hashed_" + password;
+    std::string hashedPassword = "hashed_" + password;
 
     // Check if user exists
     // Simulate database check
     bool userExists = false;
     if (userExists) {
-        cout << "   ❌ User already exists" << endl;
+        std::println("   ❌ User already exists");
         return;
     }
 
     // Save to database
-    cout << "   💾 Saving user to database..." << endl;
+    std::println("   💾 Saving user to database...");
 
     // Send welcome email
-    cout << "   📧 Sending welcome email to " << email << endl;
+    std::println("   📧 Sending welcome email to {}", email);
 
-    // Log registration
-    cout << "   📝 Logging registration event" << endl;
-
-    // Update analytics
-    cout << "   📊 Updating user statistics" << endl;
-
-    cout << "   ✅ Registration successful!" << endl;
 }
 }
 
@@ -142,10 +134,10 @@ namespace good_example1 {
 
 struct ValidationResult {
     bool valid;
-    string error;
+    std::string error;
 };
 
-ValidationResult validateUsername(const string& username) {
+ValidationResult validateUsername(const std::string& username) {
     if (username.length() < 3 || username.length() > 20) {
         return {false, "Username must be 3-20 characters"};
     }
@@ -159,17 +151,17 @@ ValidationResult validateUsername(const string& username) {
     return {true, ""};
 }
 
-ValidationResult validateEmail(const string& email) {
+ValidationResult validateEmail(const std::string& email) {
     size_t atPos = email.find('@');
 
-    if (atPos == string::npos || atPos == 0 || atPos == email.length() - 1) {
+    if (atPos == std::string::npos || atPos == 0 || atPos == email.length() - 1) {
         return {false, "Invalid email format"};
     }
 
     return {true, ""};
 }
 
-ValidationResult validatePassword(const string& password) {
+ValidationResult validatePassword(const std::string& password) {
     if (password.length() < 8) {
         return {false, "Password must be at least 8 characters"};
     }
@@ -188,118 +180,79 @@ ValidationResult validatePassword(const string& password) {
     return {true, ""};
 }
 
-string hashPassword(const string& password) {
+std::string hashPassword(const std::string& password) {
     return "hashed_" + password;  // Simplified
 }
 
-bool userExists(const string& username) {
+bool userExists(const std::string& username) {
     return false;  // Simulate database check
 }
 
-void saveUser(const string& username, const string& email, const string& hashedPassword) {
-    cout << "   💾 Saving user to database..." << endl;
+void saveUser(const std::string& username, const std::string& email, const std::string& hashedPassword) {
+    std::println("   💾 Saving user to database...");
 }
 
-void sendWelcomeEmail(const string& email) {
-    cout << "   📧 Sending welcome email to " << email << endl;
+void sendWelcomeEmail(const std::string& email) {
+    std::println("   📧 Sending welcome email to {}", email);
 }
 
-void logRegistration(const string& username) {
-    cout << "   📝 Logging registration event for " << username << endl;
+void logRegistration(const std::string& username) {
+    std::println("   📝 Logging registration event for {}", username);
 }
 
 void updateAnalytics() {
-    cout << "   📊 Updating user statistics" << endl;
+    std::println("   📊 Updating user statistics");
 }
 
-void processUserRegistration(const string& username,
-                             const string& email,
-                             const string& password) {
+void processUserRegistration(const std::string& username,
+                             const std::string& email,
+                             const std::string& password) {
     // Validate inputs
     auto usernameResult = validateUsername(username);
     if (!usernameResult.valid) {
-        cout << "   ❌ " << usernameResult.error << endl;
+        std::println("   ❌ {}", usernameResult.error);
         return;
     }
 
     auto emailResult = validateEmail(email);
     if (!emailResult.valid) {
-        cout << "   ❌ " << emailResult.error << endl;
+        std::println("   ❌ {}", emailResult.error);
         return;
     }
 
     auto passwordResult = validatePassword(password);
     if (!passwordResult.valid) {
-        cout << "   ❌ " << passwordResult.error << endl;
+        std::println("   ❌ {}", passwordResult.error);
         return;
     }
 
     // Check user existence
     if (userExists(username)) {
-        cout << "   ❌ User already exists" << endl;
+        std::println("   ❌ User already exists");
         return;
     }
 
     // Process registration
-    string hashedPassword = hashPassword(password);
+    std::string hashedPassword = hashPassword(password);
     saveUser(username, email, hashedPassword);
     sendWelcomeEmail(email);
     logRegistration(username);
     updateAnalytics();
 
-    cout << "   ✅ Registration successful!" << endl;
+    std::println("   ✅ Registration successful!");
 }
 }
 
 void example1_long_method() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: LONG METHOD (GOD METHOD)           ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: LONG METHOD (GOD METHOD)           ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   void processUserRegistration(...) {\n";
-    cout << "       // Validate username (10 lines)\n";
-    cout << "       // Validate email (8 lines)\n";
-    cout << "       // Validate password (15 lines)\n";
-    cout << "       // Hash password\n";
-    cout << "       // Check database\n";
-    cout << "       // Save to database\n";
-    cout << "       // Send email\n";
-    cout << "       // Log event\n";
-    cout << "       // Update analytics\n";
-    cout << "       // 60+ lines in ONE method! 🚨\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Method is 50+ lines long\n";
-    cout << "   • Does multiple unrelated things\n";
-    cout << "   • Hard to understand at a glance\n";
-    cout << "   • Difficult to test\n";
-    cout << "   • Hard to reuse parts of logic\n";
-
-    cout << "\n✅ GOOD CODE (Refactored):\n";
-    cout << "   ValidationResult validateUsername(...);\n";
-    cout << "   ValidationResult validateEmail(...);\n";
-    cout << "   ValidationResult validatePassword(...);\n";
-    cout << "   string hashPassword(...);\n";
-    cout << "   void saveUser(...);\n";
-    cout << "   void sendWelcomeEmail(...);\n";
-    cout << "   \n";
-    cout << "   void processUserRegistration(...) {\n";
-    cout << "       // Now it's clear and readable!\n";
-    cout << "       if (!validateUsername(...).valid) return;\n";
-    cout << "       if (!validateEmail(...).valid) return;\n";
-    cout << "       // ... orchestrates other methods\n";
-    cout << "   }\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
     good_example1::processUserRegistration("john_doe", "john@example.com", "SecurePass123");
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Each method has single responsibility\n";
-    cout << "   • Easy to test individually\n";
-    cout << "   • Reusable validation logic\n";
-    cout << "   • Clear and maintainable\n";
 }
 
 // ============================================
@@ -314,7 +267,7 @@ void calculateMonthlyPayment(double principal, double rate, int months) {
     double payment = principal * monthlyRate *
                      pow(1 + monthlyRate, months) /
                      (pow(1 + monthlyRate, months) - 1);
-    cout << "   Monthly Payment: $" << payment << endl;
+    std::println("   Monthly Payment: ${}", payment);
 }
 
 void calculateTotalPayment(double principal, double rate, int months) {
@@ -324,7 +277,7 @@ void calculateTotalPayment(double principal, double rate, int months) {
                             pow(1 + monthlyRate, months) /
                             (pow(1 + monthlyRate, months) - 1);
     double total = monthlyPayment * months;
-    cout << "   Total Payment: $" << total << endl;
+    std::println("   Total Payment: ${}", total);
 }
 
 void calculateInterest(double principal, double rate, int months) {
@@ -335,7 +288,7 @@ void calculateInterest(double principal, double rate, int months) {
                             (pow(1 + monthlyRate, months) - 1);
     double total = monthlyPayment * months;
     double interest = total - principal;
-    cout << "   Total Interest: $" << interest << endl;
+    std::println("   Total Interest: ${}", interest);
 }
 }
 
@@ -355,68 +308,37 @@ double calculateMonthlyPayment(double principal, double rate, int months) {
 
 void displayMonthlyPayment(double principal, double rate, int months) {
     double payment = calculateMonthlyPayment(principal, rate, months);
-    cout << "   Monthly Payment: $" << payment << endl;
+    std::println("   Monthly Payment: ${}", payment);
 }
 
 void displayTotalPayment(double principal, double rate, int months) {
     double monthlyPayment = calculateMonthlyPayment(principal, rate, months);
     double total = monthlyPayment * months;
-    cout << "   Total Payment: $" << total << endl;
+    std::println("   Total Payment: ${}", total);
 }
 
 void displayInterest(double principal, double rate, int months) {
     double monthlyPayment = calculateMonthlyPayment(principal, rate, months);
     double total = monthlyPayment * months;
     double interest = total - principal;
-    cout << "   Total Interest: $" << interest << endl;
+    std::println("   Total Interest: ${}", interest);
 }
 }
 
 void example2_duplicate_code() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: DUPLICATE CODE                      ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: DUPLICATE CODE                      ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   // Same calculation in 3 different methods!\n";
-    cout << "   void calculateMonthlyPayment(...) {\n";
-    cout << "       double monthlyRate = rate / 12.0 / 100.0;\n";
-    cout << "       double payment = principal * monthlyRate * ...;\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   void calculateTotalPayment(...) {\n";
-    cout << "       double monthlyRate = rate / 12.0 / 100.0; 🚨\n";
-    cout << "       double payment = principal * monthlyRate * ...;\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Same code appears multiple times\n";
-    cout << "   • Copy-paste programming\n";
-    cout << "   • Changes require multiple edits\n";
-    cout << "   • High chance of inconsistencies\n";
-    cout << "   • Violates DRY principle\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   // Extract common calculation\n";
-    cout << "   double calculateMonthlyPayment(...) {\n";
-    cout << "       // Core calculation logic\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   void displayTotalPayment(...) {\n";
-    cout << "       double payment = calculateMonthlyPayment(...); ✅\n";
-    cout << "       double total = payment * months;\n";
-    cout << "   }\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
     good_example2::displayMonthlyPayment(200000, 5.0, 360);
     good_example2::displayTotalPayment(200000, 5.0, 360);
     good_example2::displayInterest(200000, 5.0, 360);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Single source of truth\n";
-    cout << "   • Change once, affect everywhere\n";
-    cout << "   • Easier to maintain\n";
-    cout << "   • Reduced chance of bugs\n";
 }
 
 // ============================================
@@ -426,18 +348,18 @@ void example2_duplicate_code() {
 namespace bad_example3 {
 // ❌ BAD: Too many parameters
 
-void createUser(const string& firstName,
-                const string& lastName,
-                const string& email,
-                const string& phone,
-                const string& address,
-                const string& city,
-                const string& country,
-                const string& postalCode,
+void createUser(const std::string& firstName,
+                const std::string& lastName,
+                const std::string& email,
+                const std::string& phone,
+                const std::string& address,
+                const std::string& city,
+                const std::string& country,
+                const std::string& postalCode,
                 int age,
                 bool isActive) {
     // 🚨 10 parameters! Hard to use correctly
-    cout << "   Creating user: " << firstName << " " << lastName << endl;
+    std::println("   Creating user: {} {}", firstName, lastName);
 }
 }
 
@@ -445,24 +367,24 @@ namespace good_example3 {
 // ✅ GOOD: Use data structures
 
 struct Address {
-    string street;
-    string city;
-    string country;
-    string postalCode;
+    std::string street;
+    std::string city;
+    std::string country;
+    std::string postalCode;
 };
 
 struct UserInfo {
-    string firstName;
-    string lastName;
-    string email;
-    string phone;
+    std::string firstName;
+    std::string lastName;
+    std::string email;
+    std::string phone;
     Address address;
     int age;
     bool isActive;
 };
 
 void createUser(const UserInfo& user) {
-    cout << "   Creating user: " << user.firstName << " " << user.lastName << endl;
+    std::println("   Creating user: {} {}", user.firstName, user.lastName);
 }
 
 // Builder pattern for complex construction
@@ -471,13 +393,13 @@ private:
     UserInfo user;
 
 public:
-    UserBuilder& setName(const string& first, const string& last) {
+    UserBuilder& setName(const std::string& first, const std::string& last) {
         user.firstName = first;
         user.lastName = last;
         return *this;
     }
 
-    UserBuilder& setEmail(const string& email) {
+    UserBuilder& setEmail(const std::string& email) {
         user.email = email;
         return *this;
     }
@@ -499,43 +421,12 @@ public:
 }
 
 void example3_long_parameter_list() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: LONG PARAMETER LIST                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: LONG PARAMETER LIST                 ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   void createUser(\n";
-    cout << "       const string& firstName,    // Parameter 1\n";
-    cout << "       const string& lastName,     // Parameter 2\n";
-    cout << "       const string& email,        // Parameter 3\n";
-    cout << "       const string& phone,        // Parameter 4\n";
-    cout << "       const string& address,      // Parameter 5\n";
-    cout << "       const string& city,         // Parameter 6\n";
-    cout << "       const string& country,      // Parameter 7\n";
-    cout << "       const string& postalCode,   // Parameter 8\n";
-    cout << "       int age,                    // Parameter 9\n";
-    cout << "       bool isActive               // Parameter 10 🚨\n";
-    cout << "   );\n";
-
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • More than 3-4 parameters\n";
-    cout << "   • Hard to remember parameter order\n";
-    cout << "   • Easy to pass wrong values\n";
-    cout << "   • Changes require updating all calls\n";
-    cout << "   • Poor readability at call site\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   struct UserInfo {\n";
-    cout << "       string firstName, lastName;\n";
-    cout << "       string email, phone;\n";
-    cout << "       Address address;\n";
-    cout << "       int age;\n";
-    cout << "       bool isActive;\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   void createUser(const UserInfo& user); ✅\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
 
     good_example3::UserInfo user;
     user.firstName = "John";
@@ -543,7 +434,8 @@ void example3_long_parameter_list() {
     user.email = "john@example.com";
     good_example3::createUser(user);
 
-    cout << "\n   Using Builder Pattern:\n";
+    std::println("");
+    std::println("   Using Builder Pattern:");
     auto user2 = good_example3::UserBuilder()
                      .setName("Jane", "Smith")
                      .setEmail("jane@example.com")
@@ -551,11 +443,6 @@ void example3_long_parameter_list() {
                      .build();
     good_example3::createUser(user2);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Clear and organized data\n";
-    cout << "   • Easy to add new fields\n";
-    cout << "   • Self-documenting\n";
-    cout << "   • Easier to test\n";
 }
 
 // ============================================
@@ -566,22 +453,22 @@ namespace bad_example4 {
 // ❌ BAD: Using primitives for domain concepts
 
 void processPayment(double amount,    // 🚨 Just a number
-                    string currency,   // 🚨 Just a string
-                    string cardNumber, // 🚨 Just a string
-                    string cvv) {      // 🚨 Just a string
+                    std::string currency,   // 🚨 Just a string
+                    std::string cardNumber, // 🚨 Just a string
+                    std::string cvv) {      // 🚨 Just a string
 
     // No validation, no type safety
     if (amount <= 0) {
-        cout << "   ❌ Invalid amount" << endl;
+        std::println("   ❌ Invalid amount");
         return;
     }
 
     if (cardNumber.length() != 16) {
-        cout << "   ❌ Invalid card number" << endl;
+        std::println("   ❌ Invalid card number");
         return;
     }
 
-    cout << "   💳 Processing " << amount << " " << currency << endl;
+    std::println("   💳 Processing {} {}", amount, currency);
 }
 }
 
@@ -591,101 +478,72 @@ namespace good_example4 {
 class Money {
 private:
     double amount;
-    string currency;
+    std::string currency;
 
 public:
-    Money(double amt, const string& curr) : amount(amt), currency(curr) {
-        if (amt < 0) throw invalid_argument("Amount cannot be negative");
-        if (curr.length() != 3) throw invalid_argument("Invalid currency code");
+    Money(double amt, const std::string& curr) : amount(amt), currency(curr) {
+        if (amt < 0) throw std::invalid_argument("Amount cannot be negative");
+        if (curr.length() != 3) throw std::invalid_argument("Invalid currency code");
     }
 
     double getAmount() const { return amount; }
-    string getCurrency() const { return currency; }
+    std::string getCurrency() const { return currency; }
 
     Money operator+(const Money& other) const {
         if (currency != other.currency) {
-            throw invalid_argument("Cannot add different currencies");
+            throw std::invalid_argument("Cannot add different currencies");
         }
         return Money(amount + other.amount, currency);
     }
 
     void display() const {
-        cout << "   " << amount << " " << currency;
+        std::print("   {} {}", amount, currency);
     }
 };
 
 class CreditCard {
 private:
-    string number;
-    string cvv;
+    std::string number;
+    std::string cvv;
 
 public:
-    CreditCard(const string& num, const string& cvvCode) {
+    CreditCard(const std::string& num, const std::string& cvvCode) {
         if (num.length() != 16) {
-            throw invalid_argument("Card number must be 16 digits");
+            throw std::invalid_argument("Card number must be 16 digits");
         }
         if (cvvCode.length() != 3) {
-            throw invalid_argument("CVV must be 3 digits");
+            throw std::invalid_argument("CVV must be 3 digits");
         }
         number = num;
         cvv = cvvCode;
     }
 
-    string getNumber() const { return number; }
+    std::string getNumber() const { return number; }
     bool isValid() const { return number.length() == 16; }
 };
 
 void processPayment(const Money& payment, const CreditCard& card) {
     if (!card.isValid()) {
-        cout << "   ❌ Invalid card" << endl;
+        std::println("   ❌ Invalid card");
         return;
     }
 
-    cout << "   💳 Processing payment: ";
+    std::print("   💳 Processing payment: ");
     payment.display();
-    cout << endl;
+    std::println("");
 }
 }
 
 void example4_primitive_obsession() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: PRIMITIVE OBSESSION                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: PRIMITIVE OBSESSION                 ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   void processPayment(\n";
-    cout << "       double amount,        // Just a number 🚨\n";
-    cout << "       string currency,      // Just a string 🚨\n";
-    cout << "       string cardNumber,    // Just a string 🚨\n";
-    cout << "       string cvv            // Just a string 🚨\n";
-    cout << "   );\n";
-    cout << "   \n";
-    cout << "   processPayment(100.50, \"USD\", \"1234\", \"123\");\n";
-    cout << "   // No type safety! Can pass anything!\n";
+    std::println("   ");
 
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Using primitives for domain concepts\n";
-    cout << "   • Validation scattered everywhere\n";
-    cout << "   • No type safety\n";
-    cout << "   • Easy to make mistakes\n";
-    cout << "   • Difficult to enforce business rules\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   class Money {\n";
-    cout << "       double amount;\n";
-    cout << "       string currency;\n";
-    cout << "       // Validation in constructor\n";
-    cout << "       // Business operations (add, subtract)\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   class CreditCard {\n";
-    cout << "       string number;\n";
-    cout << "       // Validation and business logic\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   void processPayment(const Money&, const CreditCard&); ✅\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("   ");
 
     try {
         good_example4::Money payment(100.50, "USD");
@@ -693,24 +551,19 @@ void example4_primitive_obsession() {
         good_example4::processPayment(payment, card);
 
         // Type safety prevents errors
-        cout << "   \n   Adding money:\n";
+        std::println("   ");
+        std::println("   Adding money:");
         good_example4::Money payment1(50.0, "USD");
         good_example4::Money payment2(25.0, "USD");
         good_example4::Money total = payment1 + payment2;
-        cout << "   Total: ";
+        std::print("   Total: ");
         total.display();
-        cout << endl;
+        std::println("");
 
-    } catch (const exception& e) {
-        cout << "   ❌ " << e.what() << endl;
+    } catch (const std::exception& e) {
+        std::println("   ❌ {}", e.what());
     }
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Type safety at compile time\n";
-    cout << "   • Validation in one place\n";
-    cout << "   • Business logic encapsulated\n";
-    cout << "   • Self-documenting code\n";
-    cout << "   • Prevents many bugs\n";
 }
 
 // ============================================
@@ -722,9 +575,9 @@ namespace bad_example5 {
 
 class Account {
 public:
-    string accountNumber;
+    std::string accountNumber;
     double balance;
-    string currency;
+    std::string currency;
 };
 
 class TransactionProcessor {
@@ -732,7 +585,7 @@ public:
     void processTransfer(Account& from, Account& to, double amount) {
         // 🚨 Accessing 'from' data multiple times
         if (from.balance < amount) {
-            cout << "   ❌ Insufficient funds in " << from.accountNumber << endl;
+            std::println("   ❌ Insufficient funds in {}", from.accountNumber);
             return;
         }
 
@@ -742,8 +595,7 @@ public:
         // 🚨 Manipulating 'to' directly
         to.balance += amount;
 
-        cout << "   ✅ Transferred " << amount << " from "
-             << from.accountNumber << " to " << to.accountNumber << endl;
+        std::println("   ✅ Transferred {} from {} to {}", amount, from.accountNumber, to.accountNumber);
     }
 };
 }
@@ -753,12 +605,12 @@ namespace good_example5 {
 
 class Account {
 private:
-    string accountNumber;
+    std::string accountNumber;
     double balance;
-    string currency;
+    std::string currency;
 
 public:
-    Account(const string& number, double initialBalance, const string& curr)
+    Account(const std::string& number, double initialBalance, const std::string& curr)
         : accountNumber(number), balance(initialBalance), currency(curr) {}
 
     bool hasEnoughBalance(double amount) const {
@@ -767,7 +619,7 @@ public:
 
     void withdraw(double amount) {
         if (!hasEnoughBalance(amount)) {
-            throw invalid_argument("Insufficient funds");
+            throw std::invalid_argument("Insufficient funds");
         }
         balance -= amount;
     }
@@ -776,7 +628,7 @@ public:
         balance += amount;
     }
 
-    string getAccountNumber() const { return accountNumber; }
+    std::string getAccountNumber() const { return accountNumber; }
     double getBalance() const { return balance; }
 };
 
@@ -785,57 +637,26 @@ public:
     void processTransfer(Account& from, Account& to, double amount) {
         // Now the accounts handle their own state
         if (!from.hasEnoughBalance(amount)) {
-            cout << "   ❌ Insufficient funds" << endl;
+            std::println("   ❌ Insufficient funds");
             return;
         }
 
         from.withdraw(amount);
         to.deposit(amount);
 
-        cout << "   ✅ Transferred " << amount << " from "
-             << from.getAccountNumber() << " to "
-             << to.getAccountNumber() << endl;
+        std::println("   ✅ Transferred {} from {} to {}",
+            amount, from.getAccountNumber(), to.getAccountNumber());
     }
 };
 }
 
 void example5_feature_envy() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: FEATURE ENVY                        ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: FEATURE ENVY                        ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   class TransactionProcessor {\n";
-    cout << "       void processTransfer(Account& from, ...) {\n";
-    cout << "           if (from.balance < amount) {...}  🚨\n";
-    cout << "           from.balance -= amount;           🚨\n";
-    cout << "           // Accessing 'from' data too much!\n";
-    cout << "       }\n";
-    cout << "   };\n";
-
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Method uses another object's data excessively\n";
-    cout << "   • Behavior is in wrong class\n";
-    cout << "   • Violates encapsulation\n";
-    cout << "   • Poor cohesion\n";
-    cout << "   • Changes to data class affect this class\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   class Account {\n";
-    cout << "       bool hasEnoughBalance(double amount);\n";
-    cout << "       void withdraw(double amount);\n";
-    cout << "       void deposit(double amount);\n";
-    cout << "       // Behavior is with the data! ✅\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   class TransactionProcessor {\n";
-    cout << "       void processTransfer(Account& from, ...) {\n";
-    cout << "           from.withdraw(amount);  // Delegate!\n";
-    cout << "           to.deposit(amount);\n";
-    cout << "       }\n";
-    cout << "   };\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
 
     good_example5::Account account1("ACC001", 1000.0, "USD");
     good_example5::Account account2("ACC002", 500.0, "USD");
@@ -843,14 +664,10 @@ void example5_feature_envy() {
 
     processor.processTransfer(account1, account2, 200.0);
 
-    cout << "\n   Account 1 balance: $" << account1.getBalance() << endl;
-    cout << "   Account 2 balance: $" << account2.getBalance() << endl;
+    std::println("");
+    std::println("   Account 1 balance: ${}", account1.getBalance());
+    std::println("   Account 2 balance: ${}", account2.getBalance());
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Better encapsulation\n";
-    cout << "   • Behavior with data\n";
-    cout << "   • Easier to maintain\n";
-    cout << "   • Clearer responsibilities\n";
 }
 
 // ============================================
@@ -861,15 +678,14 @@ namespace bad_example6 {
 // ❌ BAD: Same group of parameters everywhere
 
 void drawRectangle(int x, int y, int width, int height) {
-    cout << "   Drawing at (" << x << "," << y
-         << ") size " << width << "x" << height << endl;
+    std::println("   Drawing at ({},{}) size {}x{}", x, y, width, height);
 }
 
 void moveRectangle(int& x, int& y, int width, int height, int dx, int dy) {
     // 🚨 Same parameters repeated
     x += dx;
     y += dy;
-    cout << "   Moved to (" << x << "," << y << ")" << endl;
+    std::println("   Moved to ({},{})", x, y);
 }
 
 bool isInside(int x, int y, int width, int height, int px, int py) {
@@ -892,7 +708,7 @@ struct Point {
     }
 
     void display() const {
-        cout << "(" << x << "," << y << ")";
+        std::print("({},{})", x, y);
     }
 };
 
@@ -902,7 +718,7 @@ struct Size {
     Size(int w = 0, int h = 0) : width(w), height(h) {}
 
     void display() const {
-        cout << width << "x" << height;
+        std::print("{}x{}", width, height);
     }
 };
 
@@ -916,18 +732,18 @@ public:
         : position(pos), dimensions(size) {}
 
     void draw() const {
-        cout << "   Drawing at ";
+        std::print("   Drawing at ");
         position.display();
-        cout << " size ";
+        std::print(" size ");
         dimensions.display();
-        cout << endl;
+        std::println("");
     }
 
     void move(const Point& delta) {
         position = position + delta;
-        cout << "   Moved to ";
+        std::print("   Moved to ");
         position.display();
-        cout << endl;
+        std::println("");
     }
 
     bool contains(const Point& point) const {
@@ -940,52 +756,23 @@ public:
 }
 
 void example6_data_clumps() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: DATA CLUMPS                         ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: DATA CLUMPS                         ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   void drawRectangle(int x, int y, int width, int height);\n";
-    cout << "   void moveRectangle(int& x, int& y, int width, int height, ...);\n";
-    cout << "   bool isInside(int x, int y, int width, int height, ...);\n";
-    cout << "   \n";
-    cout << "   // 🚨 x, y, width, height always together!\n";
+    std::println("   ");
 
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Same parameters appear together repeatedly\n";
-    cout << "   • High coupling between unrelated functions\n";
-    cout << "   • Changes affect multiple function signatures\n";
-    cout << "   • Missing abstraction\n";
-    cout << "   • Poor cohesion\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   struct Point { int x, y; };\n";
-    cout << "   struct Size { int width, height; };\n";
-    cout << "   \n";
-    cout << "   class Rectangle {\n";
-    cout << "       Point position;\n";
-    cout << "       Size dimensions;\n";
-    cout << "       \n";
-    cout << "       void draw() const;\n";
-    cout << "       void move(const Point& delta);\n";
-    cout << "       bool contains(const Point& point) const;\n";
-    cout << "   };\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("       ");
 
     good_example6::Rectangle rect(good_example6::Point(10, 20),
                                   good_example6::Size(100, 50));
     rect.draw();
     rect.move(good_example6::Point(5, 5));
 
-    cout << "   Point (15, 25) inside? "
-         << (rect.contains(good_example6::Point(15, 25)) ? "Yes" : "No") << endl;
+    std::println("   Point (15, 25) inside? {}", (rect.contains(good_example6::Point(15, 25)) ? "Yes" : "No"));
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Clear abstraction\n";
-    cout << "   • Reduced parameter count\n";
-    cout << "   • Better encapsulation\n";
-    cout << "   • Easier to extend\n";
 }
 
 // ============================================
@@ -1005,7 +792,7 @@ void process() {
     // 🚨 Comments explaining what code does
     // This means the code is unclear!
 
-    cout << "   Processing..." << endl;
+    std::println("   Processing...");
 }
 
 // This function calculates the total price
@@ -1061,55 +848,21 @@ double calculateTotalPrice(double basePrice, bool isPremiumCustomer) {
 }
 
 void example7_comments_smell() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: COMMENTS AS SMELL                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: COMMENTS AS SMELL                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   // Calculate total including tax and shipping\n";
-    cout << "   // For premium customers apply discount 🚨\n";
-    cout << "   double calc(double p, bool prem) {\n";
-    cout << "       double t = p * 0.1;  // tax 🚨\n";
-    cout << "       double s = p > 50 ? 0 : 5.99;  // shipping 🚨\n";
-    cout << "       // 🚨 If code needs this many comments...\n";
-    cout << "       // ... it's probably too unclear!\n";
-    cout << "   }\n";
-
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Excessive comments explaining WHAT code does\n";
-    cout << "   • Comments make up > 30% of file\n";
-    cout << "   • Outdated comments\n";
-    cout << "   • Comments compensating for bad names\n";
-    cout << "   • Code can't stand on its own\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   const double TAX_RATE = 0.10;\n";
-    cout << "   \n";
-    cout << "   double calculateTax(double price) {\n";
-    cout << "       return price * TAX_RATE;  // Clear! ✅\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   double calculateTotalPrice(double basePrice,\n";
-    cout << "                             bool isPremiumCustomer) {\n";
-    cout << "       // Self-explanatory code ✅\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   // Only comment WHY:\n";
-    cout << "   // BUSINESS RULE: Premium discount encourages upgrades\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("   ");
+    std::println("   ");
 
     double total1 = good_example7::calculateTotalPrice(100.0, false);
     double total2 = good_example7::calculateTotalPrice(100.0, true);
 
-    cout << "   Regular customer: $" << total1 << endl;
-    cout << "   Premium customer: $" << total2 << endl;
+    std::println("   Regular customer: ${}", total1);
+    std::println("   Premium customer: ${}", total2);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Code speaks for itself\n";
-    cout << "   • Comments explain WHY, not WHAT\n";
-    cout << "   • Easier to maintain\n";
-    cout << "   • Less chance of outdated docs\n";
 }
 
 // ============================================
@@ -1163,7 +916,7 @@ public:
 
     virtual double calculateSalary() const = 0;
     virtual double calculateBonus() const = 0;
-    virtual string getType() const = 0;
+    virtual std::string getType() const = 0;
 };
 
 class Engineer : public Employee {
@@ -1178,7 +931,7 @@ public:
         return performanceScore * 500;
     }
 
-    string getType() const override { return "Engineer"; }
+    std::string getType() const override { return "Engineer"; }
 };
 
 class Manager : public Employee {
@@ -1193,7 +946,7 @@ public:
         return performanceScore * 800;
     }
 
-    string getType() const override { return "Manager"; }
+    std::string getType() const override { return "Manager"; }
 };
 
 class Salesperson : public Employee {
@@ -1208,57 +961,26 @@ public:
         return performanceScore * 1000;
     }
 
-    string getType() const override { return "Salesperson"; }
+    std::string getType() const override { return "Salesperson"; }
 };
 
 void processEmployee(const Employee& employee) {
-    cout << "   " << employee.getType() << ":" << endl;
-    cout << "   Salary: $" << employee.calculateSalary() << endl;
-    cout << "   Bonus: $" << employee.calculateBonus() << endl;
+    std::println("   {}:", employee.getType());
+    std::println("   Salary: ${}", employee.calculateSalary());
+    std::println("   Bonus: ${}", employee.calculateBonus());
 }
 }
 
 void example8_switch_statements() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: SWITCH STATEMENTS SMELL             ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: SWITCH STATEMENTS SMELL             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   double calculateSalary(EmployeeType type, ...) {\n";
-    cout << "       switch (type) {  🚨\n";
-    cout << "           case ENGINEER: return 80000 + ...;\n";
-    cout << "           case MANAGER: return 100000 + ...;\n";
-    cout << "       }\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   double calculateBonus(EmployeeType type, ...) {\n";
-    cout << "       switch (type) {  🚨 Same switch again!\n";
-    cout << "           case ENGINEER: return ...;\n";
-    cout << "           case MANAGER: return ...;\n";
-    cout << "       }\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n🚨 SMELL INDICATORS:\n";
-    cout << "   • Same switch repeated in multiple places\n";
-    cout << "   • Adding new type requires multiple changes\n";
-    cout << "   • Violates Open-Closed Principle\n";
-    cout << "   • Poor extensibility\n";
-    cout << "   • Type-based branching\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   class Employee {\n";
-    cout << "       virtual double calculateSalary() const = 0;\n";
-    cout << "       virtual double calculateBonus() const = 0;\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   class Engineer : public Employee {\n";
-    cout << "       double calculateSalary() const override {...}\n";
-    cout << "       double calculateBonus() const override {...}\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   // Add new type? Just create new class! ✅\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("   ");
 
     good_example8::Engineer eng(8);
     good_example8::Manager mgr(9);
@@ -1268,12 +990,6 @@ void example8_switch_statements() {
     good_example8::processEmployee(mgr);
     good_example8::processEmployee(sales);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • No switch statements\n";
-    cout << "   • Easy to add new types\n";
-    cout << "   • Better encapsulation\n";
-    cout << "   • Open-Closed Principle\n";
-    cout << "   • Polymorphism power\n";
 }
 
 // ============================================
@@ -1281,61 +997,11 @@ void example8_switch_statements() {
 // ============================================
 
 void example9_detection_summary() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 9: CODE SMELL DETECTION GUIDE          ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 9: CODE SMELL DETECTION GUIDE          ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📋 QUICK REFERENCE GUIDE:\n";
-
-    cout << "\n1. LONG METHOD:\n";
-    cout << "   🔍 Detection: Method > 20 lines\n";
-    cout << "   💊 Cure: Extract smaller methods\n";
-    cout << "   ✅ Result: Single responsibility per method\n";
-
-    cout << "\n2. LARGE CLASS:\n";
-    cout << "   🔍 Detection: Class > 200 lines, many methods\n";
-    cout << "   💊 Cure: Split into smaller classes\n";
-    cout << "   ✅ Result: High cohesion, low coupling\n";
-
-    cout << "\n3. DUPLICATE CODE:\n";
-    cout << "   🔍 Detection: Copy-paste code blocks\n";
-    cout << "   💊 Cure: Extract to reusable functions\n";
-    cout << "   ✅ Result: DRY principle\n";
-
-    cout << "\n4. LONG PARAMETER LIST:\n";
-    cout << "   🔍 Detection: > 3-4 parameters\n";
-    cout << "   💊 Cure: Parameter objects/builders\n";
-    cout << "   ✅ Result: Clear, manageable APIs\n";
-
-    cout << "\n5. FEATURE ENVY:\n";
-    cout << "   🔍 Detection: Method uses other class's data\n";
-    cout << "   💊 Cure: Move method to data's class\n";
-    cout << "   ✅ Result: Better encapsulation\n";
-
-    cout << "\n6. DATA CLUMPS:\n";
-    cout << "   🔍 Detection: Same parameters together\n";
-    cout << "   💊 Cure: Create data class\n";
-    cout << "   ✅ Result: Clear abstractions\n";
-
-    cout << "\n7. PRIMITIVE OBSESSION:\n";
-    cout << "   🔍 Detection: Primitives for domain concepts\n";
-    cout << "   💊 Cure: Value objects\n";
-    cout << "   ✅ Result: Type safety, validation\n";
-
-    cout << "\n8. SWITCH STATEMENTS:\n";
-    cout << "   🔍 Detection: Repeated type-based switches\n";
-    cout << "   💊 Cure: Polymorphism\n";
-    cout << "   ✅ Result: Open-Closed Principle\n";
-
-    cout << "\n9. EXCESSIVE COMMENTS:\n";
-    cout << "   🔍 Detection: Comments explaining WHAT\n";
-    cout << "   💊 Cure: Self-documenting code\n";
-    cout << "   ✅ Result: Clear, maintainable code\n";
-
-    cout << "\n10. DEAD CODE:\n";
-    cout << "   🔍 Detection: Unused methods/variables\n";
-    cout << "   💊 Cure: Delete it!\n";
-    cout << "   ✅ Result: Cleaner codebase\n";
 }
 
 // ============================================
@@ -1343,56 +1009,11 @@ void example9_detection_summary() {
 // ============================================
 
 void example10_refactoring_strategies() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 10: REFACTORING STRATEGIES             ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 10: REFACTORING STRATEGIES             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🔧 REFACTORING TECHNIQUES:\n";
-
-    cout << "\n1. EXTRACT METHOD:\n";
-    cout << "   • Break large method into smaller ones\n";
-    cout << "   • Each method does one thing\n";
-    cout << "   • Improves readability and reusability\n";
-
-    cout << "\n2. EXTRACT CLASS:\n";
-    cout << "   • Split large class into focused classes\n";
-    cout << "   • Each class has single responsibility\n";
-    cout << "   • Better organization and maintenance\n";
-
-    cout << "\n3. INTRODUCE PARAMETER OBJECT:\n";
-    cout << "   • Group related parameters\n";
-    cout << "   • Reduce parameter lists\n";
-    cout << "   • Create meaningful abstractions\n";
-
-    cout << "\n4. REPLACE TYPE CODE WITH CLASS:\n";
-    cout << "   • Convert primitives to value objects\n";
-    cout << "   • Add validation and behavior\n";
-    cout << "   • Improve type safety\n";
-
-    cout << "\n5. MOVE METHOD:\n";
-    cout << "   • Relocate method to proper class\n";
-    cout << "   • Place behavior with data\n";
-    cout << "   • Fix feature envy\n";
-
-    cout << "\n6. REPLACE CONDITIONAL WITH POLYMORPHISM:\n";
-    cout << "   • Convert switch to inheritance\n";
-    cout << "   • Use polymorphism\n";
-    cout << "   • Easier to extend\n";
-
-    cout << "\n💡 REFACTORING WORKFLOW:\n";
-    cout << "\n   1. Identify the smell 🔍\n";
-    cout << "   2. Write tests first ✅\n";
-    cout << "   3. Make small changes incrementally 🔧\n";
-    cout << "   4. Run tests after each change 🧪\n";
-    cout << "   5. Commit frequently 💾\n";
-    cout << "   6. Review and iterate 🔄\n";
-
-    cout << "\n⚠️  REFACTORING RULES:\n";
-    cout << "\n   • Never refactor without tests\n";
-    cout << "   • Make small, incremental changes\n";
-    cout << "   • Keep code working at each step\n";
-    cout << "   • Refactor OR add features, not both\n";
-    cout << "   • Don't change behavior\n";
 }
 
 // ============================================
@@ -1400,16 +1021,16 @@ void example10_refactoring_strategies() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║                CODE SMELLS PRINCIPLE                  ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Code smells are indicators of potential problems.   ║\n";
-    cout << "║   They are not bugs but signs that code may need      ║\n";
-    cout << "║   refactoring.\"                                      ║\n";
-    cout << "║                       — Martin Fowler                 ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║                CODE SMELLS PRINCIPLE                  ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Code smells are indicators of potential problems.   ║");
+    std::println("║   They are not bugs but signs that code may need      ║");
+    std::println("║   refactoring.\"                                      ║");
+    std::println("║                       — Martin Fowler                 ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_long_method();
     example2_duplicate_code();
@@ -1421,17 +1042,6 @@ int main() {
     example8_switch_statements();
     example9_detection_summary();
     example10_refactoring_strategies();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║          🎉 CODE SMELLS PRINCIPLE COMPLETE! 🎉        ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Code smells are your early warning     ║\n";
-    cout << "║  system. Learn to recognize them, and refactor       ║\n";
-    cout << "║  proactively before small problems become big ones!   ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

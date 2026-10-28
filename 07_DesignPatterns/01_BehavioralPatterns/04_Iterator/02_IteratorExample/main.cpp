@@ -1,8 +1,7 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: BOOK COLLECTION ITERATOR
@@ -15,17 +14,16 @@ using namespace std;
  */
 class Book {
 public:
-    string title;
-    string author;
+    std::string title;
+    std::string author;
     int year;
 
-    Book(const string& t, const string& a, int y)
+    Book(const std::string& t, const std::string& a, int y)
         : title(t), author(a), year(y) {}
 
     // Display book information
     void display() const {
-        cout << "📖 \"" << title << "\" by " << author
-             << " (" << year << ")\n";
+        std::println("📖 \"{}\" by {} ({})", title, author, year);
     }
 };
 
@@ -61,7 +59,7 @@ public:
     virtual ~Aggregate() {}
 
     // Factory method to create an iterator
-    virtual shared_ptr<Iterator<T>> createIterator() = 0;
+    virtual std::shared_ptr<Iterator<T>> createIterator() = 0;
 };
 
 // Forward declaration
@@ -73,7 +71,7 @@ class BookIterator;
  */
 class BookCollection : public Aggregate<Book> {
 private:
-    vector<Book> books;  // Internal storage
+    std::vector<Book> books;  // Internal storage
 
     // Allow BookIterator to access private members
     friend class BookIterator;
@@ -92,11 +90,11 @@ public:
     }
 
     // Create an iterator for this collection
-    shared_ptr<Iterator<Book>> createIterator() override;
+    std::shared_ptr<Iterator<Book>> createIterator() override;
 
     // Create different types of iterators
-    shared_ptr<Iterator<Book>> createReverseIterator();
-    shared_ptr<Iterator<Book>> createFilteredIterator(int minYear);
+    std::shared_ptr<Iterator<Book>> createReverseIterator();
+    std::shared_ptr<Iterator<Book>> createFilteredIterator(int minYear);
 };
 
 /**
@@ -121,7 +119,7 @@ public:
     // Get next element and advance position
     Book next() override {
         if (!hasNext()) {
-            throw out_of_range("No more elements");
+            throw std::out_of_range("No more elements");
         }
         return collection->books[currentIndex++];
     }
@@ -129,7 +127,7 @@ public:
     // Get current element without advancing
     Book current() const override {
         if (currentIndex >= collection->books.size()) {
-            throw out_of_range("Invalid position");
+            throw std::out_of_range("Invalid position");
         }
         return collection->books[currentIndex];
     }
@@ -162,7 +160,7 @@ public:
     // Get next element (previous in forward order) and move backward
     Book next() override {
         if (!hasNext()) {
-            throw out_of_range("No more elements");
+            throw std::out_of_range("No more elements");
         }
         return collection->books[currentIndex--];
     }
@@ -170,7 +168,7 @@ public:
     // Get current element
     Book current() const override {
         if (currentIndex < 0 || currentIndex >= (int)collection->books.size()) {
-            throw out_of_range("Invalid position");
+            throw std::out_of_range("Invalid position");
         }
         return collection->books[currentIndex];
     }
@@ -214,7 +212,7 @@ public:
     // Get next filtered element
     Book next() override {
         if (!hasNext()) {
-            throw out_of_range("No more elements");
+            throw std::out_of_range("No more elements");
         }
         Book book = collection->books[currentIndex++];
         findNext();  // Move to next valid element
@@ -224,7 +222,7 @@ public:
     // Get current filtered element
     Book current() const override {
         if (!hasNext()) {
-            throw out_of_range("Invalid position");
+            throw std::out_of_range("Invalid position");
         }
         return collection->books[currentIndex];
     }
@@ -237,16 +235,16 @@ public:
 };
 
 // Implementation of createIterator methods
-shared_ptr<Iterator<Book>> BookCollection::createIterator() {
-    return make_shared<BookIterator>(this);
+std::shared_ptr<Iterator<Book>> BookCollection::createIterator() {
+    return std::make_shared<BookIterator>(this);
 }
 
-shared_ptr<Iterator<Book>> BookCollection::createReverseIterator() {
-    return make_shared<ReverseBookIterator>(this);
+std::shared_ptr<Iterator<Book>> BookCollection::createReverseIterator() {
+    return std::make_shared<ReverseBookIterator>(this);
 }
 
-shared_ptr<Iterator<Book>> BookCollection::createFilteredIterator(int minYear) {
-    return make_shared<FilteredBookIterator>(this, minYear);
+std::shared_ptr<Iterator<Book>> BookCollection::createFilteredIterator(int minYear) {
+    return std::make_shared<FilteredBookIterator>(this, minYear);
 }
 
 // ============================================
@@ -259,16 +257,15 @@ shared_ptr<Iterator<Book>> BookCollection::createFilteredIterator(int minYear) {
  */
 class Song {
 public:
-    string title;
-    string artist;
+    std::string title;
+    std::string artist;
     int duration;  // in seconds
 
-    Song(const string& t, const string& a, int d)
+    Song(const std::string& t, const std::string& a, int d)
         : title(t), artist(a), duration(d) {}
 
     void play() const {
-        cout << "🎵 Playing: \"" << title << "\" by " << artist
-             << " [" << duration << "s]\n";
+        std::println("🎵 Playing: \"{}\" by {} [{}s]", title, artist, duration);
     }
 };
 
@@ -277,17 +274,17 @@ public:
  */
 class Playlist {
 private:
-    vector<Song> songs;
-    string name;
+    std::vector<Song> songs;
+    std::string name;
 
 public:
-    Playlist(const string& n) : name(n) {}
+    Playlist(const std::string& n) : name(n) {}
 
     void addSong(const Song& song) {
         songs.push_back(song);
     }
 
-    string getName() const { return name; }
+    std::string getName() const { return name; }
     size_t size() const { return songs.size(); }
     const Song& getSong(size_t index) const { return songs[index]; }
 };
@@ -329,7 +326,7 @@ public:
 class ShuffleIterator : public Iterator<Song> {
 private:
     const Playlist* playlist;
-    vector<size_t> shuffledIndices;
+    std::vector<size_t> shuffledIndices;
     size_t currentPosition;
 
     void shuffle() {
@@ -341,7 +338,7 @@ private:
         // Simple shuffle (not cryptographically secure)
         for (size_t i = shuffledIndices.size() - 1; i > 0; i--) {
             size_t j = rand() % (i + 1);
-            swap(shuffledIndices[i], shuffledIndices[j]);
+            std::swap(shuffledIndices[i], shuffledIndices[j]);
         }
     }
 
@@ -376,9 +373,11 @@ public:
 // ============================================
 
 void demonstrateBookIterator() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: BOOK COLLECTION        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: BOOK COLLECTION        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Create a book collection
     BookCollection library;
@@ -391,8 +390,8 @@ void demonstrateBookIterator() {
     library.addBook(Book("The Catcher in the Rye", "J.D. Salinger", 1951));
 
     // Forward iteration
-    cout << "📚 Forward Iteration:\n";
-    cout << "---------------------\n";
+    std::println("📚 Forward Iteration:");
+    std::println("---------------------");
     auto forwardIterator = library.createIterator();
     while (forwardIterator->hasNext()) {
         Book book = forwardIterator->next();
@@ -400,8 +399,9 @@ void demonstrateBookIterator() {
     }
 
     // Reverse iteration
-    cout << "\n📚 Reverse Iteration:\n";
-    cout << "---------------------\n";
+    std::println("");
+    std::println("📚 Reverse Iteration:");
+    std::println("---------------------");
     auto reverseIterator = library.createReverseIterator();
     while (reverseIterator->hasNext()) {
         Book book = reverseIterator->next();
@@ -409,8 +409,9 @@ void demonstrateBookIterator() {
     }
 
     // Filtered iteration (books after 1940)
-    cout << "\n📚 Filtered Iteration (Year >= 1940):\n";
-    cout << "--------------------------------------\n";
+    std::println("");
+    std::println("📚 Filtered Iteration (Year >= 1940):");
+    std::println("--------------------------------------");
     auto filteredIterator = library.createFilteredIterator(1940);
     while (filteredIterator->hasNext()) {
         Book book = filteredIterator->next();
@@ -419,9 +420,11 @@ void demonstrateBookIterator() {
 }
 
 void demonstratePlaylistIterator() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: MUSIC PLAYLIST         ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: MUSIC PLAYLIST         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Playlist myPlaylist("My Favorites");
     myPlaylist.addSong(Song("Bohemian Rhapsody", "Queen", 354));
@@ -430,8 +433,8 @@ void demonstratePlaylistIterator() {
     myPlaylist.addSong(Song("Imagine", "John Lennon", 183));
 
     // Sequential playback
-    cout << "🎼 Sequential Playback:\n";
-    cout << "-----------------------\n";
+    std::println("🎼 Sequential Playback:");
+    std::println("-----------------------");
     SequentialIterator sequential(&myPlaylist);
     while (sequential.hasNext()) {
         Song song = sequential.next();
@@ -439,8 +442,9 @@ void demonstratePlaylistIterator() {
     }
 
     // Shuffle playback
-    cout << "\n🔀 Shuffle Playback:\n";
-    cout << "--------------------\n";
+    std::println("");
+    std::println("🔀 Shuffle Playback:");
+    std::println("--------------------");
     ShuffleIterator shuffle(&myPlaylist);
     while (shuffle.hasNext()) {
         Song song = shuffle.next();
@@ -453,126 +457,12 @@ void demonstratePlaylistIterator() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "ITERATOR PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("ITERATOR PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateBookIterator();
     demonstratePlaylistIterator();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF ITERATOR PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Single Responsibility: Iteration logic separated from collection\n";
-    cout << "✅ Open/Closed: Add new iterators without changing collection\n";
-    cout << "✅ Uniform Access: Same interface for different collections\n";
-    cout << "✅ Multiple Iterators: Can iterate same collection multiple ways\n";
-    cout << "✅ Encapsulation: Collection internals remain hidden\n";
-    cout << "✅ Flexibility: Easy to add new traversal algorithms\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE ITERATOR\n";
-    cout << "========================================\n";
-    cout << "1. Access collection elements without exposing internal structure\n";
-    cout << "2. Support multiple simultaneous traversals of collection\n";
-    cout << "3. Provide uniform interface for different collection types\n";
-    cout << "4. Need different ways to traverse same collection\n";
-    cout << "5. Simplify collection interface by moving traversal to iterator\n";
-
-    cout << "\n========================================\n";
-    cout << "ITERATOR TYPES\n";
-    cout << "========================================\n";
-    cout << "Forward Iterator:\n";
-    cout << "  • Traverses from beginning to end\n";
-    cout << "  • Most common type\n";
-    cout << "  • Example: BookIterator\n";
-    cout << "\nReverse Iterator:\n";
-    cout << "  • Traverses from end to beginning\n";
-    cout << "  • Useful for backward navigation\n";
-    cout << "  • Example: ReverseBookIterator\n";
-    cout << "\nFiltered Iterator:\n";
-    cout << "  • Only returns elements matching criteria\n";
-    cout << "  • Combines iteration with filtering\n";
-    cout << "  • Example: FilteredBookIterator (year >= 1940)\n";
-    cout << "\nRandom/Shuffle Iterator:\n";
-    cout << "  • Traverses in random order\n";
-    cout << "  • Useful for playlists, games\n";
-    cout << "  • Example: ShuffleIterator\n";
-    cout << "\nBidirectional Iterator:\n";
-    cout << "  • Can move both forward and backward\n";
-    cout << "  • Supports next() and previous()\n";
-    cout << "  • Used in doubly-linked lists\n";
-
-    cout << "\n========================================\n";
-    cout << "INTERNAL vs EXTERNAL ITERATOR\n";
-    cout << "========================================\n";
-    cout << "External Iterator (Used in examples above):\n";
-    cout << "  • Client controls iteration\n";
-    cout << "  • More flexible and powerful\n";
-    cout << "  • Can have multiple active iterators\n";
-    cout << "  • Example: while(it.hasNext()) { it.next(); }\n";
-    cout << "\nInternal Iterator:\n";
-    cout << "  • Collection controls iteration\n";
-    cout << "  • Client passes operation to execute\n";
-    cout << "  • Simpler but less flexible\n";
-    cout << "  • Example: collection.forEach(lambda)\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• C++ STL iterators (vector, list, map)\n";
-    cout << "• Java Iterator and Iterable interfaces\n";
-    cout << "• Python __iter__ and __next__ methods\n";
-    cout << "• Database result sets (JDBC ResultSet)\n";
-    cout << "• File system directory traversal\n";
-    cout << "• Tree/Graph traversal algorithms (DFS, BFS)\n";
-    cout << "• Menu navigation systems\n";
-    cout << "• Playlist management (shuffle, repeat)\n";
-    cout << "• Pagination in web applications\n";
-    cout << "• Game inventory systems\n";
-
-    cout << "\n========================================\n";
-    cout << "ITERATOR vs FOR-EACH LOOP\n";
-    cout << "========================================\n";
-    cout << "Iterator Pattern:\n";
-    cout << "  • Explicit iteration control\n";
-    cout << "  • Can pause/resume iteration\n";
-    cout << "  • Multiple iterators on same collection\n";
-    cout << "  • Works with any traversal algorithm\n";
-    cout << "\nFor-Each Loop:\n";
-    cout << "  • Syntactic sugar over iterators\n";
-    cout << "  • Simpler syntax\n";
-    cout << "  • Limited control (can't pause)\n";
-    cout << "  • Built-in language feature\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY COMPONENTS\n";
-    cout << "========================================\n";
-    cout << "1. Iterator Interface: hasNext(), next(), current(), reset()\n";
-    cout << "2. Concrete Iterator: Implements traversal algorithm\n";
-    cout << "3. Aggregate Interface: createIterator()\n";
-    cout << "4. Concrete Aggregate: Returns concrete iterator\n";
-
-    cout << "\n========================================\n";
-    cout << "ADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Separates traversal from collection structure\n";
-    cout << "• Supports multiple simultaneous iterations\n";
-    cout << "• Uniform interface for different collections\n";
-    cout << "• Easy to add new traversal methods\n";
-    cout << "• Encapsulates internal collection structure\n";
-    cout << "• Simplifies collection interface\n";
-
-    cout << "\n========================================\n";
-    cout << "DISADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Can be overkill for simple collections\n";
-    cout << "• Slightly more complex than direct access\n";
-    cout << "• May have performance overhead\n";
-    cout << "• Need to maintain iterator state\n";
 
     return 0;
 }

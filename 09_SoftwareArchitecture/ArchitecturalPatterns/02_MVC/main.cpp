@@ -11,11 +11,11 @@
 // This is exactly how Qt's signals/slots work under the hood.
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#include <print>
 
 // =============================================================================
 // Observer interface — Model notifies through this
@@ -99,29 +99,23 @@ public:
     }
 
     void render() const {
-        std::cout << "\n┌─────────────────────────────┐\n";
-        std::cout << "│         TASK LIST           │\n";
-        std::cout << "├─────────────────────────────┤\n";
-
         const auto& tasks = model_.getTasks();
         if (tasks.empty()) {
-            std::cout << "│  (no tasks)                 │\n";
+            std::println("│  (no tasks)                 │");
         } else {
             for (const auto& t : tasks) {
                 std::string status = t.done ? "✓" : "○";
-                std::cout << "│ [" << status << "] #" << t.id
-                          << " " << t.title;
+                std::print("│ [{}] #{} {}", status, t.id, t.title);
                 // pad to fixed width
                 int pad = 22 - static_cast<int>(t.title.size())
                           - std::to_string(t.id).size();
-                for (int i = 0; i < pad; i++) std::cout << ' ';
-                std::cout << "│\n";
+                for (int i = 0; i < pad; i++) std::print(" ");
+                std::println("│");
             }
         }
-        std::cout << "├─────────────────────────────┤\n";
-        std::cout << "│  Pending: " << model_.pendingCount()
-                  << "                    │\n";
-        std::cout << "└─────────────────────────────┘\n";
+        std::println("├─────────────────────────────┤");
+        std::println("│  Pending: {}                    │", model_.pendingCount());
+        std::println("└─────────────────────────────┘");
     }
 
 private:
@@ -138,29 +132,32 @@ public:
         : model_(model), view_(view) {}
 
     void handleAdd(const std::string& title) {
-        std::cout << "\n[Controller] ADD: \"" << title << "\"\n";
+        std::println("");
+        std::println("[Controller] ADD: \"{}\"", title);
         try {
             model_.add(title);   // Model updates → notifies View automatically
         } catch (const std::exception& e) {
-            std::cout << "[Controller] Error: " << e.what() << '\n';
+            std::println("[Controller] Error: {}", e.what());
         }
     }
 
     void handleComplete(int id) {
-        std::cout << "\n[Controller] COMPLETE: #" << id << "\n";
+        std::println("");
+        std::println("[Controller] COMPLETE: #{}", id);
         try {
             model_.complete(id);
         } catch (const std::exception& e) {
-            std::cout << "[Controller] Error: " << e.what() << '\n';
+            std::println("[Controller] Error: {}", e.what());
         }
     }
 
     void handleRemove(int id) {
-        std::cout << "\n[Controller] REMOVE: #" << id << "\n";
+        std::println("");
+        std::println("[Controller] REMOVE: #{}", id);
         try {
             model_.remove(id);
         } catch (const std::exception& e) {
-            std::cout << "[Controller] Error: " << e.what() << '\n';
+            std::println("[Controller] Error: {}", e.what());
         }
     }
 
@@ -188,7 +185,7 @@ int main()
     // 4. Create Controller (wires Model + View)
     TaskController ctrl(model, view);
 
-    std::cout << "=== MVC Task Manager Demo ===";
+    std::print("=== MVC Task Manager Demo ===");
 
     // Simulate user interactions via Controller
     ctrl.handleAdd("Write layered architecture example");

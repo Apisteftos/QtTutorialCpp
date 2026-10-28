@@ -231,3 +231,33 @@ flowchart LR
     note["Both organize code into\nlogical groups.\nModules are the modern\nevolution of headers."]
     style note fill:#2a2a2a,color:#aaa
 ```
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### C++20 Modules — working on GCC 14
+
+--- GCC 14 Module limitation ---
+
+```cpp
+Module interfaces cannot #include stdlib headers on GCC 14.
+```
+
+Workaround: use only built-in types (int, double) in .ixx
+
+```cpp
+use #include in main.cpp — works fine
+```
+
+Full stdlib support: MSVC or wait for GCC 15
+
+=== Modules complete ===
+
+## What was tested
+
+- Not built or run here: this example needs Qt or C++ modules support, which the test environment did not have. The `std::println` conversion in this file is therefore unverified.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

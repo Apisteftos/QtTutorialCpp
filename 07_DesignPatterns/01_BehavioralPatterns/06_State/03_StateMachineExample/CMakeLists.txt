@@ -14,7 +14,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(03_StateMachineExample
   main.cpp
-  DocumentStateMachine.cpp DocumentStateMachine.h
 )
 target_link_libraries(03_StateMachineExample Qt${QT_VERSION_MAJOR}::Core)
 

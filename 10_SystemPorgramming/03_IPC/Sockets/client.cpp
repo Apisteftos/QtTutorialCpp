@@ -1,9 +1,9 @@
-#include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cstring>
+#include <print>
 
 // ============================================
 // SOCKET CLIENT
@@ -17,9 +17,10 @@ const int   PORT      = 9090;
 const char* SERVER_IP = "127.0.0.1";  // localhost
 
 int main() {
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║      IPC — Socket Client             ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n\n";
+    std::println("╔══════════════════════════════════════╗");
+    std::println("║      IPC — Socket Client             ║");
+    std::println("╚══════════════════════════════════════╝");
+    std::println("");
 
     // 1. Create socket
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,13 +37,14 @@ int main() {
     inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);  // convert IP string
 
     // 3. Connect to server
-    std::cout << "[Client] Connecting to " << SERVER_IP << ":" << PORT << "...\n";
+    std::println("[Client] Connecting to {}:{}...", SERVER_IP, PORT);
     if (connect(sock_fd, (sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
         perror("connect() failed — is the server running?");
         close(sock_fd);
         return 1;
     }
-    std::cout << "[Client] Connected!\n\n";
+    std::println("[Client] Connected!");
+    std::println("");
 
     // 4. Send messages and receive responses
     const char* messages[] = {
@@ -58,7 +60,7 @@ int main() {
     for (const char* msg : messages) {
         // Send message
         send(sock_fd, msg, strlen(msg), 0);
-        std::cout << "[Client] Sent:     \"" << msg << "\"\n";
+        std::println("[Client] Sent:     \"{}\"", msg);
 
         // Exit after sending quit
         if (strcmp(msg, "quit") == 0) break;
@@ -67,14 +69,16 @@ int main() {
         memset(buffer, 0, sizeof(buffer));
         ssize_t bytes = recv(sock_fd, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            std::cout << "[Client] Server closed connection.\n";
+            std::println("[Client] Server closed connection.");
             break;
         }
-        std::cout << "[Client] Received: \"" << buffer << "\"\n\n";
+        std::println("[Client] Received: \"{}\"", buffer);
+        std::println("");
     }
 
     // 5. Cleanup
     close(sock_fd);
-    std::cout << "\n[Client] Connection closed.\n";
+    std::println("");
+    std::println("[Client] Connection closed.");
     return 0;
 }

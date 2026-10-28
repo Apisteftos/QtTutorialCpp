@@ -70,3 +70,13 @@ flowchart LR
 ✅ When designing the data model — sharding later is painful  
 ❌ Premature optimisation — build simple first, scale when needed  
 ❌ Scaling what isn't measured — always profile before optimising
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

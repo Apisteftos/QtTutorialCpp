@@ -1,4 +1,3 @@
-#include <iostream>
 #include <coroutine>
 #include <string>
 #include <vector>
@@ -9,13 +8,11 @@
 // C++20 COROUTINES
 // ============================================================
 // Topics covered:
-//   1.  What are coroutines
-//   2.  co_return — simplest coroutine
-//   3.  co_yield  — generator pattern
-//   4.  co_await  — suspending and resuming
-//   5.  Generator<T> — lazy sequence generator
-//   6.  Task<T>   — async task
-//   7.  Real use case — infinite sequence generator
+//   1.  co_return — simplest coroutine
+//   2.  co_yield  — generator pattern
+//   3.  Generator<T> — lazy sequence generator
+//   4.  Task<T>   — async task
+//   5.  Real use case — infinite sequence generator
 // ============================================================
 
 
@@ -137,8 +134,11 @@ Generator<int> squares(int count) {
         co_yield i * i;
 }
 
-// Example 7 — MCX use case: session ID generator
-Generator<std::string> sessionIdGenerator(const std::string& prefix) {
+// Example 7 — ID generator
+// NOTE: `prefix` is taken BY VALUE on purpose. A coroutine keeps its parameters in its
+// heap-allocated frame; a reference parameter would still point at the caller's temporary
+// ("ORD") after the first suspension, which is a dangling reference.
+Generator<std::string> idGenerator(std::string prefix) {
     int counter = 1;
     while (true) {
         co_yield prefix + "-" + std::to_string(counter++);
@@ -158,27 +158,10 @@ Generator<int> filteredRange(int start, int end, int divisor) {
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: What are Coroutines?\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "A coroutine is a function that can:\n";
-    std::cout << "  SUSPEND — pause execution and return control to caller\n";
-    std::cout << "  RESUME  — continue from where it was suspended\n\n";
-
-    std::cout << "Three keywords:\n";
-    std::cout << "  co_return — return a value and finish the coroutine\n";
-    std::cout << "  co_yield  — suspend and produce a value (generator)\n";
-    std::cout << "  co_await  — suspend until an async operation completes\n\n";
-
-    std::cout << "A function is a coroutine if it contains ANY of these.\n";
-    std::cout << "The compiler transforms it into a state machine.\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: co_return — simplest coroutine\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 1: co_return — simplest coroutine");
+    std::println("=====================================================");
 
     auto t1 = simpleTask(10, 32);
     std::println("simpleTask(10, 32) = {}", t1.result());
@@ -191,144 +174,84 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: co_yield — generator pattern\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: co_yield — generator pattern");
+    std::println("=====================================================");
 
-    std::cout << "range(1, 6):  ";
+    std::print("range(1, 6):  ");
     for (int n : range(1, 6)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "evens(10):    ";
+    std::print("evens(10):    ");
     for (int n : evenNumbers(10)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "squares(5):   ";
+    std::print("squares(5):   ");
     for (int n : squares(5)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Fibonacci — infinite generator\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Fibonacci — infinite generator");
+    std::println("=====================================================");
 
-    std::cout << "fibonacci (first 10): ";
+    std::print("fibonacci (first 10): ");
     int count = 0;
     for (int n : fibonacci()) {
         std::print("{} ", n);
         if (++count >= 10) break;   // must stop infinite generator manually
     }
-    std::cout << '\n';
-
-    std::cout << "\nKey point: fibonacci() is INFINITE but LAZY\n";
-    std::cout << "  Values computed ON DEMAND — not stored\n";
-    std::cout << "  Memory O(1) regardless of how many values we take\n";
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Coroutine execution flow\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "Generator execution flow:\n\n";
-    std::cout << "  Generator<int> gen = range(1, 4);\n";
-    std::cout << "  // coroutine created but NOT started yet\n\n";
-    std::cout << "  for (int n : gen) {\n";
-    std::cout << "      // begin() called → coroutine resumes\n";
-    std::cout << "      // runs until co_yield 1 → suspends\n";
-    std::cout << "      // n = 1, loop body runs\n";
-    std::cout << "      // ++it → coroutine resumes\n";
-    std::cout << "      // runs until co_yield 2 → suspends\n";
-    std::cout << "      // ...\n";
-    std::cout << "  }\n";
-    std::cout << "  // coroutine reaches end → done\n\n";
-
-    std::cout << "Actual output:\n";
-    std::cout << "  ";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Coroutine execution flow");
+    std::println("=====================================================");
+    std::print("  ");
     for (int n : range(1, 6)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Filtered generator\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Filtered generator");
+    std::println("=====================================================");
 
-    std::cout << "multiples of 3 in [1,20): ";
+    std::print("multiples of 3 in [1,20): ");
     for (int n : filteredRange(1, 20, 3)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "multiples of 7 in [1,50): ";
+    std::print("multiples of 7 in [1,50): ");
     for (int n : filteredRange(1, 50, 7)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: MCX session ID generator\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: ID generator");
+    std::println("=====================================================");
 
-    std::cout << "Generating session IDs:\n";
-    auto sessions = sessionIdGenerator("SES");
+    std::println("Generating order IDs:");
+    auto orders = idGenerator("ORD");
     int generated = 0;
-    for (const auto& id : sessions) {
+    for (const auto& id : orders) {
         std::println("  {}", id);
         if (++generated >= 5) break;
     }
 
-    std::cout << "\nGenerating group IDs:\n";
-    auto groups = sessionIdGenerator("GRP-ALPHA");
+    std::println("");
+    std::println("Generating invoice IDs:");
+    auto invoices = idGenerator("INV");
     generated = 0;
-    for (const auto& id : groups) {
+    for (const auto& id : invoices) {
         std::println("  {}", id);
         if (++generated >= 3) break;
     }
-
-    std::cout << "\nCoroutine advantages for ID generation:\n";
-    std::cout << "  No vector pre-allocation needed\n";
-    std::cout << "  IDs generated on demand\n";
-    std::cout << "  Infinite sequence — stop whenever\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: co_await concept (explanation)\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "co_await suspends coroutine until an awaitable completes:\n\n";
-    std::cout << "  Task<string> fetchData() {\n";
-    std::cout << "      auto result = co_await httpGet('url');  // suspends\n";
-    std::cout << "      co_return result;                       // resumes here\n";
-    std::cout << "  }\n\n";
-    std::cout << "  Typical use cases:\n";
-    std::cout << "  - Network I/O — co_await socket.read()\n";
-    std::cout << "  - File I/O    — co_await file.read()\n";
-    std::cout << "  - Timers      — co_await sleep(1s)\n";
-    std::cout << "  - Tasks       — co_await otherCoroutine()\n\n";
-    std::cout << "  Full co_await needs an async framework:\n";
-    std::cout << "  - cppcoro (C++ coroutine library)\n";
-    std::cout << "  - Boost.Asio (network + coroutines)\n";
-    std::cout << "  - Qt (QCoro library for Qt coroutines)\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Summary: Coroutines vs Alternatives\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "Generator<T> vs std::vector:\n";
-    std::cout << "  vector   — stores ALL values in memory upfront\n";
-    std::cout << "  Generator— computes values ON DEMAND, O(1) memory\n\n";
-
-    std::cout << "Coroutine vs callback:\n";
-    std::cout << "  Callback — control flow fragmented, hard to follow\n";
-    std::cout << "  Coroutine— reads like synchronous code, suspends cleanly\n\n";
-
-    std::cout << "Coroutine vs thread:\n";
-    std::cout << "  Thread   — OS-managed, heavy (MB stack, scheduling)\n";
-    std::cout << "  Coroutine— user-space, lightweight (KB stack, no OS)\n";
-
-    std::cout << "\n=== Coroutines complete ===\n";
     return 0;
 }

@@ -1,52 +1,52 @@
 // =============================================================================
 // Event-Driven Architecture — C++23
 //
-// Example: PTT (Push-to-Talk) Event Bus — inspired by MCX/MCPTT systems.
+// Example: Smart-panel Event Bus — a wall panel with a button, a network link and a display.
 //
 // EventBus  — central dispatcher, routes events to registered handlers
-// Publishers — PTT button, network monitor (emit events, know nothing of subscribers)
-// Subscribers — AudioEngine, DisplayModule, Logger (react to events independently)
+// Publishers — panel button, network monitor (emit events, know nothing of subscribers)
+// Subscribers — SoundModule, DisplayModule, Logger (react to events independently)
 //
 // Key property: adding a new subscriber requires ZERO changes to publishers.
 // This is the Open/Closed Principle at architectural level.
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <functional>
 #include <chrono>
 #include <cassert>
+#include <print>
 
 // =============================================================================
 // Event types and Event struct
 // =============================================================================
 
 enum class EventType {
-    PTT_PRESSED,
-    PTT_RELEASED,
+    BUTTON_PRESSED,
+    BUTTON_RELEASED,
     LINK_DOWN,
     LINK_UP,
-    CALL_INCOMING,
-    CALL_ENDED
+    MESSAGE_RECEIVED,
+    MESSAGE_READ
 };
 
 std::string to_string(EventType t) {
     switch (t) {
-    case EventType::PTT_PRESSED:    return "PTT_PRESSED";
-    case EventType::PTT_RELEASED:   return "PTT_RELEASED";
+    case EventType::BUTTON_PRESSED:    return "BUTTON_PRESSED";
+    case EventType::BUTTON_RELEASED:   return "BUTTON_RELEASED";
     case EventType::LINK_DOWN:      return "LINK_DOWN";
     case EventType::LINK_UP:        return "LINK_UP";
-    case EventType::CALL_INCOMING:  return "CALL_INCOMING";
-    case EventType::CALL_ENDED:     return "CALL_ENDED";
+    case EventType::MESSAGE_RECEIVED:  return "MESSAGE_RECEIVED";
+    case EventType::MESSAGE_READ:     return "MESSAGE_READ";
     default:                        return "UNKNOWN";
     }
 }
 
 struct Event {
     EventType   type;
-    std::string payload;    // JSON-like string for demo; real MCX uses ASN.1
+    std::string payload;    // JSON-like string for demo; real systems often use a schema-based binary format
     int         timestamp;  // simplified: just a counter
 };
 
@@ -84,47 +84,46 @@ private:
 // Subscribers — completely independent, know nothing about each other
 // =============================================================================
 
-class AudioEngine {
+class SoundModule {
 public:
-    explicit AudioEngine(EventBus& bus) {
+    explicit SoundModule(EventBus& bus) {
         // Subscribe to relevant events
-        bus.subscribe(EventType::PTT_PRESSED,
-                      [this](const Event& e){ onPttPressed(e); });
-        bus.subscribe(EventType::PTT_RELEASED,
-                      [this](const Event& e){ onPttReleased(e); });
+        bus.subscribe(EventType::BUTTON_PRESSED,
+                      [this](const Event& e){ onButtonPressed(e); });
+        bus.subscribe(EventType::BUTTON_RELEASED,
+                      [this](const Event& e){ onButtonReleased(e); });
         bus.subscribe(EventType::LINK_DOWN,
                       [this](const Event& e){ onLinkDown(e); });
     }
 
-    int txCount() const { return tx_count_; }
+    int chimeCount() const { return chime_count_; }
 
 private:
-    void onPttPressed(const Event& e) {
-        tx_count_++;
-        std::cout << "  [AudioEngine]   🎙️  TX START — codec active — "
-                  << e.payload << '\n';
+    void onButtonPressed(const Event& e) {
+        chime_count_++;
+        std::println("  [SoundModule]   🔔  CHIME START — speaker active — {}", e.payload);
     }
-    void onPttReleased(const Event&) {
-        std::cout << "  [AudioEngine]   🔇  TX STOP  — codec idle\n";
+    void onButtonReleased(const Event&) {
+        std::println("  [SoundModule]   🔇  CHIME STOP  — speaker idle");
     }
     void onLinkDown(const Event&) {
-        std::cout << "  [AudioEngine]   ⚠️  Link down — muting output\n";
+        std::println("  [SoundModule]   ⚠️  Link down — muting output");
     }
 
-    int tx_count_{0};
+    int chime_count_{0};
 };
 
 class DisplayModule {
 public:
     explicit DisplayModule(EventBus& bus) {
-        bus.subscribe(EventType::PTT_PRESSED,
-                      [this](const Event& e){ onPttPressed(e); });
-        bus.subscribe(EventType::PTT_RELEASED,
-                      [this](const Event&){ onPttReleased(); });
-        bus.subscribe(EventType::CALL_INCOMING,
-                      [this](const Event& e){ onCallIncoming(e); });
-        bus.subscribe(EventType::CALL_ENDED,
-                      [this](const Event&){ onCallEnded(); });
+        bus.subscribe(EventType::BUTTON_PRESSED,
+                      [this](const Event& e){ onButtonPressed(e); });
+        bus.subscribe(EventType::BUTTON_RELEASED,
+                      [this](const Event&){ onButtonReleased(); });
+        bus.subscribe(EventType::MESSAGE_RECEIVED,
+                      [this](const Event& e){ onMessageReceived(e); });
+        bus.subscribe(EventType::MESSAGE_READ,
+                      [this](const Event&){ onMessageRead(); });
         bus.subscribe(EventType::LINK_DOWN,
                       [this](const Event&){ onLinkDown(); });
         bus.subscribe(EventType::LINK_UP,
@@ -132,23 +131,23 @@ public:
     }
 
 private:
-    void onPttPressed(const Event& e) {
-        std::cout << "  [Display]       🟢 PTT ACTIVE — " << e.payload << '\n';
+    void onButtonPressed(const Event& e) {
+        std::println("  [Display]       🟢 BUTTON DOWN — {}", e.payload);
     }
-    void onPttReleased() {
-        std::cout << "  [Display]       ⚪ PTT IDLE\n";
+    void onButtonReleased() {
+        std::println("  [Display]       ⚪ BUTTON UP");
     }
-    void onCallIncoming(const Event& e) {
-        std::cout << "  [Display]       📞 INCOMING CALL — " << e.payload << '\n';
+    void onMessageReceived(const Event& e) {
+        std::println("  [Display]       ✉️  NEW MESSAGE — {}", e.payload);
     }
-    void onCallEnded() {
-        std::cout << "  [Display]       📵 CALL ENDED\n";
+    void onMessageRead() {
+        std::println("  [Display]       📭 MESSAGE READ");
     }
     void onLinkDown() {
-        std::cout << "  [Display]       🔴 LINK DOWN\n";
+        std::println("  [Display]       🔴 LINK DOWN");
     }
     void onLinkUp() {
-        std::cout << "  [Display]       🟢 LINK UP\n";
+        std::println("  [Display]       🟢 LINK UP");
     }
 };
 
@@ -157,9 +156,9 @@ public:
     explicit Logger(EventBus& bus) {
         // Logger subscribes to ALL event types
         for (auto type : {
-                 EventType::PTT_PRESSED, EventType::PTT_RELEASED,
+                 EventType::BUTTON_PRESSED, EventType::BUTTON_RELEASED,
                  EventType::LINK_DOWN,   EventType::LINK_UP,
-                 EventType::CALL_INCOMING, EventType::CALL_ENDED
+                 EventType::MESSAGE_RECEIVED, EventType::MESSAGE_READ
              }) {
             bus.subscribe(type, [this](const Event& e){ log(e); });
         }
@@ -170,9 +169,7 @@ public:
 private:
     void log(const Event& e) {
         log_count_++;
-        std::cout << "  [Logger]        📋 t=" << e.timestamp
-                  << " " << to_string(e.type)
-                  << " | " << e.payload << '\n';
+        std::println("  [Logger]        📋 t={} {} | {}", e.timestamp, to_string(e.type), e.payload);
     }
     int log_count_{0};
 };
@@ -181,16 +178,16 @@ private:
 // Publishers — emit events, know nothing about subscribers
 // =============================================================================
 
-class PttButton {
+class PanelButton {
 public:
-    explicit PttButton(EventBus& bus) : bus_(bus) {}
+    explicit PanelButton(EventBus& bus) : bus_(bus) {}
 
-    void press(const std::string& group, int ts) {
-        bus_.emit({EventType::PTT_PRESSED,
-                   "group=" + group + " user=KA1", ts});
+    void press(const std::string& label, int ts) {
+        bus_.emit({EventType::BUTTON_PRESSED,
+                   "button=" + label + " user=KA1", ts});
     }
     void release(int ts) {
-        bus_.emit({EventType::PTT_RELEASED, "", ts});
+        bus_.emit({EventType::BUTTON_RELEASED, "", ts});
     }
 
 private:
@@ -218,49 +215,56 @@ private:
 
 int main()
 {
-    std::cout << "=== Event-Driven Architecture — MCX PTT Demo ===\n\n";
+    std::println("=== Event-Driven Architecture — Smart Panel Demo ===");
+    std::println("");
 
     // 1. Create the bus
     EventBus bus;
 
     // 2. Create subscribers (they self-register to the bus)
-    AudioEngine   audio(bus);
+    SoundModule   sound(bus);
     DisplayModule display(bus);
     Logger        logger(bus);
 
     // 3. Create publishers
-    PttButton      ptt(bus);
+    PanelButton      button(bus);
     NetworkMonitor net(bus);
 
-    // 4. Simulate a PTT session
+    // 4. Simulate button, message and link events
     int t = 0;
 
-    std::cout << "--- Event: PTT Press ---\n";
-    ptt.press("ALPHA-1", ++t);
+    std::println("--- Event: Button Press ---");
+    button.press("front-door", ++t);
 
-    std::cout << "\n--- Event: PTT Release ---\n";
-    ptt.release(++t);
+    std::println("");
+    std::println("--- Event: Button Release ---");
+    button.release(++t);
 
-    std::cout << "\n--- Event: Incoming Call ---\n";
-    bus.emit({EventType::CALL_INCOMING, "caller=BASE-COMMAND", ++t});
+    std::println("");
+    std::println("--- Event: Message Received ---");
+    bus.emit({EventType::MESSAGE_RECEIVED, "sender=neighbour", ++t});
 
-    std::cout << "\n--- Event: Link Down ---\n";
+    std::println("");
+    std::println("--- Event: Link Down ---");
     net.reportLinkDown("eth0", ++t);
 
-    std::cout << "\n--- Event: Link Up ---\n";
+    std::println("");
+    std::println("--- Event: Link Up ---");
     net.reportLinkUp("eth0", ++t);
 
-    std::cout << "\n--- Event: Call Ended ---\n";
-    bus.emit({EventType::CALL_ENDED, "", ++t});
+    std::println("");
+    std::println("--- Event: Message Read ---");
+    bus.emit({EventType::MESSAGE_READ, "", ++t});
 
     // Verify
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "TX activations : " << audio.txCount()  << "\n";
-    std::cout << "Log entries    : " << logger.logCount() << "\n";
+    std::println("");
+    std::println("=== Summary ===");
+    std::println("Chime activations: {}", sound.chimeCount());
+    std::println("Log entries     : {}", logger.logCount());
 
-    assert(audio.txCount()  == 1);
+    assert(sound.chimeCount()  == 1);
     assert(logger.logCount() == 6);
-    std::cout << "All assertions passed.\n";
+    std::println("All assertions passed.");
 
     return 0;
 }

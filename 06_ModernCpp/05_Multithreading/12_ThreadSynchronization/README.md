@@ -142,7 +142,7 @@ void write(const std::string& val) {
 ### When to use
 Perfect for data that is **read frequently but written rarely**:
 - Configuration settings, cached data, lookup tables
-- MCX channel state tables
+- Shared lookup tables
 
 ---
 
@@ -305,3 +305,13 @@ Thread 2: hello
 5. **Always lock in the same order** when acquiring multiple mutexes — or use `scoped_lock`
 6. **Prefer `atomic` for single variables** — faster than mutex for simple counters/flags
 7. **Use `condition_variable` with a predicate** — never `wait()` without one
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

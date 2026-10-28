@@ -240,7 +240,7 @@ pool.waitAll();   // wait for all submitted tasks to finish
 - Many short tasks (per-request processing, event handling)
 - When thread creation overhead matters
 - When you want to limit the number of concurrent threads
-- MCX message processing — one pool worker per incoming packet
+- Message processing — one pool worker per incoming message
 
 ---
 
@@ -332,3 +332,24 @@ std::jthread worker([](std::stop_token token) {
 | Auto-cleanup | `std::jthread` destructor | `ThreadGuard` RAII wrapper |
 | Exception transfer | `std::async` + `future.get()` | `std::exception_ptr` |
 | Multiple threads | `vector<std::jthread>` | `vector<std::thread>` + join loop |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 10: Thread lifetime and object ownership
+
+[main] object lifetime rule: object must outlive the thread  
+[main] use jthread + capture by value for safety with detached threads
+
+=== ThreadManagement complete ===
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

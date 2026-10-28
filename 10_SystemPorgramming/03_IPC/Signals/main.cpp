@@ -1,8 +1,10 @@
-#include <iostream>
 #include <csignal>      // signal(), kill(), sigaction()
 #include <unistd.h>     // getpid(), sleep()
+#include <cstdlib>
 #include <cstring>
+#include <string>
 #include <sys/wait.h>
+#include <print>
 
 // ============================================
 // WHAT ARE SIGNALS?
@@ -60,9 +62,11 @@ void handleSIGUSR2(int signum) {
 
 
 void example1_basic_handlers() {
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "EXAMPLE 1: Basic Signal Handlers\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("EXAMPLE 1: Basic Signal Handlers");
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     // Register handlers using signal() — simple but limited
     signal(SIGINT,  handleSIGINT);
@@ -70,26 +74,27 @@ void example1_basic_handlers() {
     signal(SIGUSR1, handleSIGUSR1);
     signal(SIGUSR2, handleSIGUSR2);
 
-    std::cout << "Process PID: " << getpid() << "\n";
-    std::cout << "Registered handlers for SIGINT, SIGTERM, SIGUSR1, SIGUSR2\n\n";
-    std::cout << "From another terminal, try:\n";
-    std::cout << "  kill -SIGUSR1 " << getpid() << "\n";
-    std::cout << "  kill -SIGUSR2 " << getpid() << "\n";
-    std::cout << "  kill -SIGTERM " << getpid() << "\n";
-    std::cout << "  (or press Ctrl+C)\n\n";
-    std::cout << "Waiting for signals (5 seconds)...\n";
+    std::println("Process PID: {}", getpid());
+    std::println("Registered handlers for SIGINT, SIGTERM, SIGUSR1, SIGUSR2");
+    std::println("");
+    std::println("From another terminal, try:");
+    std::println("  kill -SIGUSR1 {}", getpid());
+    std::println("  kill -SIGUSR2 {}", getpid());
+    std::println("  kill -SIGTERM {}", getpid());
+    std::println("  (or press Ctrl+C)");
+    std::println("");
+    std::println("Waiting for signals (5 seconds)...");
 
     // Wait loop — process signals as they arrive
     int seconds = 0;
     while (running && seconds < 5) {
         sleep(1);
         seconds++;
-        std::cout << "  [tick " << seconds << "] USR1=" << usr1_count
-                  << " USR2=" << usr2_count << "\n";
+        std::println("  [tick {}] USR1={} USR2={}", seconds, static_cast<int>(usr1_count), static_cast<int>(usr2_count));
     }
 
-    std::cout << "\nFinal count — SIGUSR1: " << usr1_count
-              << "  SIGUSR2: " << usr2_count << "\n";
+    std::println("");
+    std::println("Final count — SIGUSR1: {}  SIGUSR2: {}", static_cast<int>(usr1_count), static_cast<int>(usr2_count));
 }
 
 // ============================================
@@ -101,9 +106,11 @@ void handleAlarm(int signum) {
 }
 
 void example2_sigaction() {
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "EXAMPLE 2: sigaction() — Robust Signal Handling\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("EXAMPLE 2: sigaction() — Robust Signal Handling");
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     // sigaction gives more control than signal():
     // - Block other signals while handler runs
@@ -118,12 +125,12 @@ void example2_sigaction() {
 
     sigaction(SIGALRM, &sa, nullptr);
 
-    std::cout << "Setting alarm for 2 seconds...\n";
+    std::println("Setting alarm for 2 seconds...");
     alarm(2);  // sends SIGALRM after 2 seconds
 
-    std::cout << "Waiting...\n";
+    std::println("Waiting...");
     sleep(3);  // will be interrupted by SIGALRM at 2s
-    std::cout << "Done.\n";
+    std::println("Done.");
 }
 
 // ============================================
@@ -131,9 +138,11 @@ void example2_sigaction() {
 // ============================================
 
 void example3_send_signal() {
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "EXAMPLE 3: Parent Sending Signal to Child\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("EXAMPLE 3: Parent Sending Signal to Child");
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     // Reset running flag
     running = 1;
@@ -142,26 +151,25 @@ void example3_send_signal() {
     pid_t pid = fork();
 
     if (pid < 0) {
-        std::cerr << "Fork failed\n";
+        std::println(stderr, "Fork failed");
         return;
     }
 
     // ─── CHILD ───
     if (pid == 0) {
-        std::cout << "[Child]  PID=" << getpid() << " waiting for SIGUSR1...\n";
+        std::println("[Child]  PID={} waiting for SIGUSR1...", getpid());
         while (running) {
             pause();  // sleep until any signal arrives
         }
-        std::cout << "[Child]  Received SIGUSR1, exiting.\n";
+        std::println("[Child]  Received SIGUSR1, exiting.");
         exit(0);
     }
 
     // ─── PARENT ───
-    std::cout << "[Parent] PID=" << getpid()
-              << " will send SIGUSR1 to child PID=" << pid << "\n";
+    std::println("[Parent] PID={} will send SIGUSR1 to child PID={}", getpid(), pid);
     sleep(1);
 
-    std::cout << "[Parent] Sending SIGUSR1...\n";
+    std::println("[Parent] Sending SIGUSR1...");
     kill(pid, SIGUSR1);  // send signal to specific PID
 
     // Also set running=0 so child exits the loop
@@ -169,7 +177,7 @@ void example3_send_signal() {
     kill(pid, SIGUSR1);
 
     wait(nullptr);
-    std::cout << "[Parent] Child finished.\n";
+    std::println("[Parent] Child finished.");
 }
 
 // ============================================
@@ -177,17 +185,20 @@ void example3_send_signal() {
 // ============================================
 
 void example4_ignore_signal() {
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "EXAMPLE 4: Ignoring Signals\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("EXAMPLE 4: Ignoring Signals");
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
-    std::cout << "Ignoring SIGTERM for 3 seconds...\n";
-    std::cout << "Try: kill -SIGTERM " << getpid() << "\n\n";
+    std::println("Ignoring SIGTERM for 3 seconds...");
+    std::println("Try: kill -SIGTERM {}", getpid());
+    std::println("");
 
     signal(SIGTERM, SIG_IGN);  // ignore SIGTERM
     sleep(3);
 
-    std::cout << "Restoring default SIGTERM handler.\n";
+    std::println("Restoring default SIGTERM handler.");
     signal(SIGTERM, SIG_DFL);  // restore default behavior
 }
 
@@ -196,15 +207,16 @@ void example4_ignore_signal() {
 // ============================================
 
 int main() {
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║     IPC — Signals Example in C++     ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n";
+    std::println("╔══════════════════════════════════════╗");
+    std::println("║     IPC — Signals Example in C++     ║");
+    std::println("╚══════════════════════════════════════╝");
 
     example1_basic_handlers();
     example2_sigaction();
     example3_send_signal();
     example4_ignore_signal();
 
-    std::cout << "\n✅ All signal examples completed.\n";
+    std::println("");
+    std::println("✅ All signal examples completed.");
     return 0;
 }

@@ -1,7 +1,6 @@
-#include <iostream>
 #include <vector>
 #include <functional>
-using namespace std;
+#include <print>
 
 // Example 1: Using a function pointer as callback
 void processArray(int arr[], int size, void (*callback)(int)) {
@@ -11,15 +10,15 @@ void processArray(int arr[], int size, void (*callback)(int)) {
 }
 
 void printDouble(int x) {
-    cout << x * 2 << " ";
+    std::print("{} ", x * 2);
 }
 
 void printSquare(int x) {
-    cout << x * x << " ";
+    std::print("{} ", x * x);
 }
 
 // Example 2: Using std::function (more flexible)
-void processVector(const vector<int>& vec, function<void(int)> callback) {
+void processVector(const std::vector<int>& vec, std::function<void(int)> callback) {
     for (int num : vec) {
         callback(num);
     }
@@ -29,22 +28,22 @@ int main() {
     // Example 1: Function pointer callbacks
     int numbers[] = {1, 2, 3, 4, 5};
 
-    cout << "Doubled: ";
+    std::print("Doubled: ");
     processArray(numbers, 5, printDouble);  // Pass printDouble as callback
-    cout << "\n";
+    std::println("");
 
-    cout << "Squared: ";
+    std::print("Squared: ");
     processArray(numbers, 5, printSquare);  // Pass printSquare as callback
-    cout << "\n";
+    std::println("");
 
     // Example 2: Using lambda as callback (modern C++)
-    vector<int> vec = {1, 2, 3, 4, 5};
+    std::vector<int> vec = {1, 2, 3, 4, 5};
 
-    cout << "Custom operation: ";
+    std::print("Custom operation: ");
     processVector(vec, [](int x) {
-        cout << (x * x + x) << " ";  // Inline callback logic
+        std::print("{} ", (x * x + x));  // Inline callback logic
     });
-    cout << "\n";
+    std::println("");
 
     return 0;
 }

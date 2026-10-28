@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
@@ -6,8 +5,8 @@
 #include <string>
 #include <unordered_map>
 #include <benchmark/benchmark.h>
+#include <print>
 
-using namespace std;
 
 // ============================================
 // BENCHMARKING AND PROFILING
@@ -60,7 +59,7 @@ BASIC BENCHMARK STRUCTURE:
 static void BM_VectorPushBack_NoReserve(benchmark::State& state) {
     // This loop runs many times to get accurate measurements
     for (auto _ : state) {
-        vector<int> vec;
+        std::vector<int> vec;
         for (int i = 0; i < state.range(0); i++) {
             vec.push_back(i);
         }
@@ -76,7 +75,7 @@ BENCHMARK(BM_VectorPushBack_NoReserve)->Range(1<<10, 1<<18)->Complexity();
 // Function to benchmark: Vector push_back with reserve
 static void BM_VectorPushBack_WithReserve(benchmark::State& state) {
     for (auto _ : state) {
-        vector<int> vec;
+        std::vector<int> vec;
         vec.reserve(state.range(0));  // Reserve capacity upfront
         for (int i = 0; i < state.range(0); i++) {
             vec.push_back(i);
@@ -100,20 +99,20 @@ COMPARING DIFFERENT ALGORITHMS:
 
 // Bubble Sort - O(n²)
 static void BM_BubbleSort(benchmark::State& state) {
-    vector<int> data(state.range(0));
+    std::vector<int> data(state.range(0));
 
     for (auto _ : state) {
         // Setup (not timed)
         state.PauseTiming();
-        iota(data.begin(), data.end(), 0);
-        shuffle(data.begin(), data.end(), mt19937{random_device{}()});
+        std::iota(data.begin(), data.end(), 0);
+        std::shuffle(data.begin(), data.end(), std::mt19937{std::random_device{}()});
         state.ResumeTiming();
 
         // Actual benchmark (timed)
         for (size_t i = 0; i < data.size(); i++) {
             for (size_t j = 0; j < data.size() - i - 1; j++) {
                 if (data[j] > data[j + 1]) {
-                    swap(data[j], data[j + 1]);
+                    std::swap(data[j], data[j + 1]);
                 }
             }
         }
@@ -126,15 +125,15 @@ BENCHMARK(BM_BubbleSort)->RangeMultiplier(2)->Range(64, 2048)->Complexity(benchm
 
 // STL Sort - O(n log n)
 static void BM_STLSort(benchmark::State& state) {
-    vector<int> data(state.range(0));
+    std::vector<int> data(state.range(0));
 
     for (auto _ : state) {
         state.PauseTiming();
-        iota(data.begin(), data.end(), 0);
-        shuffle(data.begin(), data.end(), mt19937{random_device{}()});
+        std::iota(data.begin(), data.end(), 0);
+        std::shuffle(data.begin(), data.end(), std::mt19937{std::random_device{}()});
         state.ResumeTiming();
 
-        sort(data.begin(), data.end());
+        std::sort(data.begin(), data.end());
 
         benchmark::DoNotOptimize(data.data());
     }
@@ -155,10 +154,10 @@ STRING BENCHMARKING:
 
 // String concatenation without reserve
 static void BM_StringConcat_NoReserve(benchmark::State& state) {
-    const string fragment = "text";
+    const std::string fragment = "text";
 
     for (auto _ : state) {
-        string result;
+        std::string result;
         for (int i = 0; i < state.range(0); i++) {
             result += fragment;
         }
@@ -169,10 +168,10 @@ BENCHMARK(BM_StringConcat_NoReserve)->Range(8, 8<<10);
 
 // String concatenation with reserve
 static void BM_StringConcat_WithReserve(benchmark::State& state) {
-    const string fragment = "text";
+    const std::string fragment = "text";
 
     for (auto _ : state) {
-        string result;
+        std::string result;
         result.reserve(state.range(0) * fragment.size());
         for (int i = 0; i < state.range(0); i++) {
             result += fragment;
@@ -196,7 +195,7 @@ DATA STRUCTURE BENCHMARKING:
 // Vector insert at back
 static void BM_VectorInsertBack(benchmark::State& state) {
     for (auto _ : state) {
-        vector<int> vec;
+        std::vector<int> vec;
         vec.reserve(state.range(0));
         for (int i = 0; i < state.range(0); i++) {
             vec.push_back(i);
@@ -209,7 +208,7 @@ BENCHMARK(BM_VectorInsertBack)->Range(1<<10, 1<<15);
 // Unordered_map insert
 static void BM_UnorderedMapInsert(benchmark::State& state) {
     for (auto _ : state) {
-        unordered_map<int, int> map;
+        std::unordered_map<int, int> map;
         map.reserve(state.range(0));
         for (int i = 0; i < state.range(0); i++) {
             map[i] = i;
@@ -221,11 +220,11 @@ BENCHMARK(BM_UnorderedMapInsert)->Range(1<<10, 1<<15);
 
 // Vector search (linear)
 static void BM_VectorSearch(benchmark::State& state) {
-    vector<int> vec(state.range(0));
-    iota(vec.begin(), vec.end(), 0);
+    std::vector<int> vec(state.range(0));
+    std::iota(vec.begin(), vec.end(), 0);
 
     for (auto _ : state) {
-        auto it = find(vec.begin(), vec.end(), state.range(0) / 2);
+        auto it = std::find(vec.begin(), vec.end(), state.range(0) / 2);
         benchmark::DoNotOptimize(it);
     }
 }
@@ -233,7 +232,7 @@ BENCHMARK(BM_VectorSearch)->Range(1<<10, 1<<15);
 
 // Unordered_map search (hash lookup)
 static void BM_UnorderedMapSearch(benchmark::State& state) {
-    unordered_map<int, int> map;
+    std::unordered_map<int, int> map;
     for (int i = 0; i < state.range(0); i++) {
         map[i] = i;
     }
@@ -256,8 +255,8 @@ CACHE-FRIENDLY VS CACHE-UNFRIENDLY:
 
 // Sequential memory access (cache-friendly)
 static void BM_SequentialAccess(benchmark::State& state) {
-    vector<int> data(state.range(0));
-    iota(data.begin(), data.end(), 0);
+    std::vector<int> data(state.range(0));
+    std::iota(data.begin(), data.end(), 0);
 
     for (auto _ : state) {
         long long sum = 0;
@@ -272,13 +271,13 @@ BENCHMARK(BM_SequentialAccess)->Range(1<<10, 1<<20);
 
 // Random memory access (cache-unfriendly)
 static void BM_RandomAccess(benchmark::State& state) {
-    vector<int> data(state.range(0));
-    iota(data.begin(), data.end(), 0);
+    std::vector<int> data(state.range(0));
+    std::iota(data.begin(), data.end(), 0);
 
     // Create random indices
-    vector<size_t> indices(state.range(0));
-    iota(indices.begin(), indices.end(), 0);
-    shuffle(indices.begin(), indices.end(), mt19937{42});
+    std::vector<size_t> indices(state.range(0));
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), std::mt19937{42});
 
     for (auto _ : state) {
         long long sum = 0;
@@ -391,9 +390,9 @@ static void BM_MatrixMultiply(benchmark::State& state) {
     int rows = state.range(0);
     int cols = state.range(1);
 
-    vector<vector<int>> A(rows, vector<int>(cols, 1));
-    vector<vector<int>> B(cols, vector<int>(rows, 1));
-    vector<vector<int>> C(rows, vector<int>(rows, 0));
+    std::vector<std::vector<int>> A(rows, std::vector<int>(cols, 1));
+    std::vector<std::vector<int>> B(cols, std::vector<int>(rows, 1));
+    std::vector<std::vector<int>> C(rows, std::vector<int>(rows, 0));
 
     for (auto _ : state) {
         for (int i = 0; i < rows; i++) {
@@ -422,13 +421,13 @@ BENCHMARK FIXTURES:
 
 class DataStructureFixture : public benchmark::Fixture {
 public:
-    vector<int> data;
+    std::vector<int> data;
 
     void SetUp(const ::benchmark::State& state) override {
         // Setup runs before each benchmark iteration
         data.resize(state.range(0));
-        iota(data.begin(), data.end(), 0);
-        shuffle(data.begin(), data.end(), mt19937{42});
+        std::iota(data.begin(), data.end(), 0);
+        std::shuffle(data.begin(), data.end(), std::mt19937{42});
     }
 
     void TearDown(const ::benchmark::State& state) override {
@@ -443,7 +442,7 @@ BENCHMARK_DEFINE_F(DataStructureFixture, SortTest)(benchmark::State& state) {
         auto copy = data;  // Don't time the copy
         state.ResumeTiming();
 
-        sort(copy.begin(), copy.end());
+        std::sort(copy.begin(), copy.end());
         benchmark::DoNotOptimize(copy.data());
     }
 }
@@ -460,21 +459,21 @@ REAL-WORLD EXAMPLE:
 
 // Simulate parsing a JSON-like structure
 struct JsonValue {
-    string key;
-    string value;
+    std::string key;
+    std::string value;
 };
 
 static void BM_JsonParsing_String(benchmark::State& state) {
-    string json_data = R"({"name":"John","age":"30","city":"New York"})";
+    std::string json_data = R"({"name":"John","age":"30","city":"New York"})";
 
     for (auto _ : state) {
-        vector<JsonValue> parsed;
+        std::vector<JsonValue> parsed;
         size_t pos = 0;
-        while ((pos = json_data.find(':', pos)) != string::npos) {
+        while ((pos = json_data.find(':', pos)) != std::string::npos) {
             // Simplified parsing
             size_t start = json_data.rfind('"', pos) + 1;
             size_t end = json_data.find('"', pos + 1);
-            string value = json_data.substr(pos + 2, end - pos - 2);
+            std::string value = json_data.substr(pos + 2, end - pos - 2);
             parsed.push_back({"key", value});
             pos = end;
         }
@@ -518,43 +517,17 @@ BENCHMARK(BM_DoNotOptimize_Demo);
 // ============================================
 
 int main(int argc, char** argv) {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║       BENCHMARKING & PROFILING WITH GOOGLE            ║\n";
-    cout << "║                  BENCHMARK                            ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"You cannot optimize what you do not measure.\"       ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
-
-    cout << "📊 BENCHMARKING EXAMPLES:\n";
-    cout << "   1. Basic vector operations\n";
-    cout << "   2. Algorithm comparisons (sort)\n";
-    cout << "   3. String operations\n";
-    cout << "   4. Data structure operations\n";
-    cout << "   5. Cache effects\n";
-    cout << "   6. Function call overhead\n";
-    cout << "   7. Memory allocation\n";
-    cout << "   8. Custom arguments\n";
-    cout << "   9. Fixtures for setup/teardown\n";
-    cout << "   10. Real-world scenarios\n\n";
-
-    cout << "⚙️  PROFILING TOOLS (use separately):\n";
-    cout << "   • gprof  - Function-level profiling\n";
-    cout << "   • perf   - CPU performance analysis\n";
-    cout << "   • valgrind/cachegrind - Cache analysis\n";
-    cout << "   • heaptrack - Memory profiling\n\n";
-
-    cout << "💡 BEST PRACTICES:\n";
-    cout << "   ✓ Use benchmark::DoNotOptimize()\n";
-    cout << "   ✓ Pause timing for setup code\n";
-    cout << "   ✓ Run multiple iterations\n";
-    cout << "   ✓ Control CPU frequency\n";
-    cout << "   ✓ Close background apps\n";
-    cout << "   ✓ Compare statistical results\n\n";
-
-    cout << "🚀 Running benchmarks...\n";
-    cout << "══════════════════════════════════════════════════════\n\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║       BENCHMARKING & PROFILING WITH GOOGLE            ║");
+    std::println("║                  BENCHMARK                            ║");
+    std::println("║                                                       ║");
+    std::println("║  \"You cannot optimize what you do not measure.\"     ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
+    std::println("");
+    std::println("══════════════════════════════════════════════════════");
+    std::println("");
 
     ::benchmark::Initialize(&argc, argv);
     if (::benchmark::ReportUnrecognizedArguments(argc, argv)) {

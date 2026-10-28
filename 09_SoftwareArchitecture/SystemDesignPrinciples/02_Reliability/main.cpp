@@ -8,7 +8,6 @@
 //   3. Fallback        — serve degraded response instead of error
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <functional>
 #include <stdexcept>
@@ -17,6 +16,7 @@
 #include <cassert>
 #include <optional>
 #include <atomic>
+#include <print>
 
 using Ms = std::chrono::milliseconds;
 
@@ -72,12 +72,11 @@ auto retry(Fn&& fn, const RetryConfig& cfg = {})
         try {
             return fn();
         } catch (const std::exception& e) {
-            std::cout << "  [Retry] attempt " << attempt
-                      << " failed: " << e.what() << '\n';
+            std::println("  [Retry] attempt {} failed: {}", attempt, e.what());
             if (attempt >= cfg.max_attempts)
                 throw;  // re-throw after all attempts exhausted
 
-            std::cout << "  [Retry] waiting " << delay.count() << "ms...\n";
+            std::println("  [Retry] waiting {}ms...", delay.count());
             std::this_thread::sleep_for(delay);
 
             // Exponential backoff
@@ -120,7 +119,7 @@ public:
         case CircuitState::Open:
             if (std::chrono::steady_clock::now() - open_since_ > cfg_.open_timeout) {
                 state_ = CircuitState::HalfOpen;
-                std::cout << "  [CB:" << name_ << "] → HALF-OPEN (probing)\n";
+                std::println("  [CB:{}] → HALF-OPEN (probing)", name_);
             } else {
                 rejected_++;
                 throw std::runtime_error("[CB:" + name_ + "] Circuit OPEN — fast fail");
@@ -149,7 +148,7 @@ private:
         consecutive_failures_ = 0;
         if (state_ == CircuitState::HalfOpen) {
             state_ = CircuitState::Closed;
-            std::cout << "  [CB:" << name_ << "] → CLOSED (recovered)\n";
+            std::println("  [CB:{}] → CLOSED (recovered)", name_);
         }
     }
 
@@ -158,8 +157,7 @@ private:
         if (state_ == CircuitState::HalfOpen || consecutive_failures_ >= cfg_.failure_threshold) {
             state_      = CircuitState::Open;
             open_since_ = std::chrono::steady_clock::now();
-            std::cout << "  [CB:" << name_ << "] → OPEN (failures="
-                      << consecutive_failures_ << ")\n";
+            std::println("  [CB:{}] → OPEN (failures={})", name_, consecutive_failures_);
         }
     }
 
@@ -189,8 +187,7 @@ public:
             fallback_used_ = false;
             return result;
         } catch (const std::exception& e) {
-            std::cout << "  [Fallback] primary failed: " << e.what()
-                      << " — using fallback\n";
+            std::println("  [Fallback] primary failed: {} — using fallback", e.what());
             fallback_used_  = true;
             fallback_count_++;
             return fallback_();
@@ -213,10 +210,11 @@ private:
 
 int main()
 {
-    std::cout << "=== Reliability Patterns Demo ===\n\n";
+    std::println("=== Reliability Patterns Demo ===");
+    std::println("");
 
     // ── 1. Retry — service fails first 2 calls, succeeds on 3rd ──────────────
-    std::cout << "--- 1. Retry with Exponential Backoff ---\n";
+    std::println("--- 1. Retry with Exponential Backoff ---");
     {
         FlakyService svc(2);  // fail first 2 calls
         svc.reset();
@@ -228,10 +226,11 @@ int main()
 
         std::string result = retry([&]{ return svc.call("get-user-42"); }, cfg);
 
-        std::cout << "  Result: " << result << '\n';
+        std::println("  Result: {}", result);
         assert(result == "OK:get-user-42");
         assert(svc.totalCalls() == 3);  // 2 failures + 1 success
-        std::cout << "  ✓ Succeeded after " << svc.totalCalls() << " attempts\n\n";
+        std::println("  ✓ Succeeded after {} attempts", svc.totalCalls());
+        std::println("");
     }
 
     // Retry exhausted — all attempts fail
@@ -248,15 +247,16 @@ int main()
             retry([&]{ return svc.call("get-config"); }, cfg);
         } catch (const std::exception& e) {
             threw = true;
-            std::cout << "  Expected: all retries exhausted: " << e.what() << '\n';
+            std::println("  Expected: all retries exhausted: {}", e.what());
         }
         assert(threw);
         assert(svc.totalCalls() == 3);
-        std::cout << "  ✓ Threw after max attempts\n";
+        std::println("  ✓ Threw after max attempts");
     }
 
     // ── 2. Circuit Breaker ────────────────────────────────────────────────────
-    std::cout << "\n--- 2. Circuit Breaker ---\n";
+    std::println("");
+    std::println("--- 2. Circuit Breaker ---");
     {
         FlakyService svc(10);
         svc.reset();
@@ -270,12 +270,12 @@ int main()
             catch (...) {}
         }
         assert(cb.state() == CircuitState::Open);
-        std::cout << "  Circuit is OPEN after 3 failures\n";
+        std::println("  Circuit is OPEN after 3 failures");
 
         // Next call is rejected immediately (fast fail)
         try { cb.call([&]{ return svc.call("pay"); }); }
         catch (const std::exception& e) {
-            std::cout << "  Fast fail: " << e.what() << '\n';
+            std::println("  Fast fail: {}", e.what());
         }
         assert(cb.rejected() == 1);
 
@@ -286,11 +286,12 @@ int main()
         std::string result = cb.call([&]{ return svc.call("pay"); });
         assert(cb.state() == CircuitState::Closed);
         assert(result == "OK:pay");
-        std::cout << "  ✓ Circuit recovered and CLOSED\n";
+        std::println("  ✓ Circuit recovered and CLOSED");
     }
 
     // ── 3. Fallback ───────────────────────────────────────────────────────────
-    std::cout << "\n--- 3. Fallback ---\n";
+    std::println("");
+    std::println("--- 3. Fallback ---");
     {
         FlakyService svc(0);
 
@@ -304,7 +305,7 @@ int main()
         auto r1 = wb.execute();
         assert(r1 == "OK:get-recommendations");
         assert(!wb.fallbackUsed());
-        std::cout << "  Primary OK: " << r1 << '\n';
+        std::println("  Primary OK: {}", r1);
 
         // Scenario B: primary fails → fallback kicks in
         svc.setAlwaysDown();
@@ -312,10 +313,11 @@ int main()
         assert(r2 == "cached:top-10-defaults");
         assert(wb.fallbackUsed());
         assert(wb.fallbackCount() == 1);
-        std::cout << "  Fallback:   " << r2 << '\n';
-        std::cout << "  ✓ Fallback served degraded response\n";
+        std::println("  Fallback:   {}", r2);
+        std::println("  ✓ Fallback served degraded response");
     }
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

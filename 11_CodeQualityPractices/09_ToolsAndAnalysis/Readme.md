@@ -1622,3 +1622,622 @@ Follow the CMake integration + CI/CD pipeline setup from sections 9.1 and 9.2.
 ---
 
 **Remember: The best time to set up tools was at project start. The second best time is now!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 TOOLS AND ANALYSIS COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Integrate these tools into your  
+development workflow. They catch bugs early, enforce  
+standards, and make your code more maintainable!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_clang_tidy()`
+
+🔍 WHAT IS CLANG-TIDY?
+
+  - Clang-based C++ linter
+  - Checks for style violations
+  - Suggests modernizations
+  - Can auto-fix issues
+  - Highly configurable
+
+**📋 COMMON CHECKS:**
+
+  - modernize-* (C++11/14/17/20 features)
+  - readability-* (naming, complexity)
+  - performance-* (efficiency issues)
+  - bugprone-* (potential bugs)
+  - cppcoreguidelines-* (C++ Core Guidelines)
+
+**💻 USAGE:**
+
+# Run clang-tidy on a file  
+$ clang-tidy file.cpp -- -std=c++17  
+# With auto-fix  
+$ clang-tidy -fix file.cpp -- -std=c++17  
+# With specific checks  
+$ clang-tidy -checks='modernize-*,readability-*' file.cpp
+
+**⚙️  .clang-tidy CONFIGURATION:**
+
+Checks: 'modernize-*,readability-*,performance-*'  
+CheckOptions:
+
+    - key: readability-identifier-naming.ClassCase
+
+value: CamelCase
+
+**✨ EXAMPLE FIXES:**
+
+### From `example1_clang_tidy()`
+
+- 💡 BENEFITS:
+  - Catch issues early
+  - Enforce standards
+  - Modernize codebase
+  - Educational tool
+
+### From `example2_clang_format()`
+
+🔍 WHAT IS CLANG-FORMAT?
+
+  - Automatic code formatter
+  - Enforces consistent style
+  - Multiple style presets
+  - Highly customizable
+  - IDE integration
+
+- ❌ BEFORE FORMATTING:
+
+```cpp
+void foo(int a,int b,int c){
+if(a>b){cout<<"yes"<<endl;}
+else{cout<<"no"<<endl;}
+}
+```
+
+- ✅ AFTER FORMATTING:
+
+```cpp
+void foo(int a, int b, int c) {
+    if (a > b) {
+        cout << "yes" << endl;
+    } else {
+        cout << "no" << endl;
+    }
+}
+```
+
+**💻 USAGE:**
+
+# Format a file  
+$ clang-format -i file.cpp  
+# Use specific style  
+$ clang-format -style=google file.cpp  
+# Check formatting without modifying  
+$ clang-format --dry-run file.cpp
+
+**⚙️  .clang-format CONFIGURATION:**
+
+BasedOnStyle: LLVM  
+IndentWidth: 4  
+ColumnLimit: 100  
+PointerAlignment: Left  
+BreakBeforeBraces: Allman
+
+**📋 POPULAR STYLES:**
+
+  - LLVM - LLVM project style
+  - Google - Google C++ style guide
+  - Chromium - Chromium project style
+  - Mozilla - Mozilla project style
+  - WebKit - WebKit project style
+
+- 💡 BENEFITS:
+  - Consistent codebase
+  - No style debates
+  - Automatic enforcement
+  - Focus on logic, not style
+
+### From `example3_static_analyzers()`
+
+**🔍 POPULAR STATIC ANALYZERS:**
+
+1. CPPCHECK:
+  - Open source
+  - Detects bugs and undefined behavior
+  - Memory leaks, null pointer dereferences
+  - Out of bounds access
+
+Usage: $ cppcheck --enable=all file.cpp
+
+2. CLANG STATIC ANALYZER:
+  - Part of Clang/LLVM
+  - Deep path-sensitive analysis
+  - Memory management issues
+  - API usage errors
+
+Usage: $ clang --analyze file.cpp
+
+3. PVS-STUDIO:
+  - Commercial (free for open source)
+  - Very comprehensive
+  - Detects copy-paste errors
+  - Security vulnerabilities
+
+4. COVERITY:
+  - Commercial (free for open source)
+  - Enterprise-grade
+  - Security vulnerabilities
+  - Quality defects
+
+5. SONARQUBE:
+  - Platform for continuous inspection
+  - Multiple language support
+  - Technical debt tracking
+  - Integration with CI/CD
+
+**📋 WHAT THEY DETECT:**
+
+  - Null pointer dereferences
+  - Memory leaks
+  - Buffer overflows
+  - Use after free
+  - Division by zero
+  - Uninitialized variables
+  - Dead code
+  - Logic errors
+
+**✨ DEMONSTRATION:**
+
+### From `example3_static_analyzers()`
+
+- 💡 BENEFITS:
+  - Find bugs without running code
+  - No performance overhead
+  - Comprehensive analysis
+  - Early bug detection
+
+### From `example4_address_sanitizer()`
+
+🔍 WHAT IS ADDRESS SANITIZER?
+
+  - Runtime memory error detector
+  - Built into Clang and GCC
+  - Detects memory bugs at runtime
+  - Minimal performance overhead (~2x)
+  - Production-ready
+
+**📋 DETECTS:**
+
+  - Heap buffer overflow
+  - Stack buffer overflow
+  - Use after free
+  - Use after return
+  - Use after scope
+  - Double free
+  - Memory leaks
+  - Invalid pointer arithmetic
+
+**💻 COMPILATION:**
+
+# Compile with ASan  
+$ clang++ -fsanitize=address -g file.cpp -o program  
+$ g++ -fsanitize=address -g file.cpp -o program  
+# Run the program  
+$ ./program
+
+**⚙️  ENVIRONMENT VARIABLES:**
+
+# Customize output  
+$ export ASAN_OPTIONS=verbosity=1:log_path=/tmp/asan.log  
+# Halt on error  
+$ export ASAN_OPTIONS=halt_on_error=1
+
+**✨ EXAMPLE ISSUES (demonstrations):**
+
+### From `example4_address_sanitizer()`
+
+**📊 TYPICAL ASAN OUTPUT:**
+
+==12345==ERROR: AddressSanitizer: heap-buffer-overflow  
+WRITE of size 4 at 0x60300000eff4 thread T0  
+#0 0x4a1234 in main file.cpp:10  
+0x60300000eff4 is located 4 bytes to the right of  
+20-byte region [0x60300000efe0,0x60300000eff4)
+
+- 💡 BENEFITS:
+  - Catches memory bugs immediately
+  - Detailed error reports
+  - Minimal overhead
+  - Easy to integrate
+  - Works with existing code
+
+### From `example5_undefined_behavior_sanitizer()`
+
+🔍 WHAT IS UBSAN?
+
+  - Detects undefined behavior at runtime
+  - Built into Clang and GCC
+  - Complements other sanitizers
+  - Low overhead (~20%)
+  - Multiple check categories
+
+**📋 DETECTS:**
+
+  - Signed integer overflow
+  - Division by zero
+  - Null pointer dereference
+  - Misaligned pointer access
+  - Out of bounds array access
+  - Invalid shift operations
+  - Invalid enum values
+  - Invalid bool values
+
+**💻 COMPILATION:**
+
+# Compile with UBSan  
+$ clang++ -fsanitize=undefined -g file.cpp -o program  
+# Specific checks  
+$ clang++ -fsanitize=integer,null -g file.cpp  
+# Combined with other sanitizers  
+$ clang++ -fsanitize=address,undefined -g file.cpp
+
+**⚙️  UBSAN CHECKS:**
+
+  - -fsanitize=alignment
+  - -fsanitize=bool
+  - -fsanitize=bounds
+  - -fsanitize=enum
+  - -fsanitize=float-divide-by-zero
+  - -fsanitize=integer-divide-by-zero
+  - -fsanitize=null
+  - -fsanitize=shift
+  - -fsanitize=signed-integer-overflow
+
+**✨ EXAMPLE ISSUES:**
+
+### From `example5_undefined_behavior_sanitizer()`
+
+- 💡 BENEFITS:
+  - Catch subtle bugs
+  - Prevent security vulnerabilities
+  - Enforce language rules
+  - Low overhead
+  - Production-ready
+
+### From `example6_thread_sanitizer()`
+
+🔍 WHAT IS THREAD SANITIZER?
+
+  - Detects data races
+  - Finds threading issues
+  - Built into Clang and GCC
+  - Moderate overhead (5-15x)
+  - Essential for multithreaded code
+
+**📋 DETECTS:**
+
+  - Data races
+  - Deadlocks
+  - Thread leaks
+  - Improper synchronization
+  - Lock order violations
+
+**💻 COMPILATION:**
+
+# Compile with TSan  
+$ clang++ -fsanitize=thread -g file.cpp -o program  
+$ g++ -fsanitize=thread -g file.cpp -o program  
+# Note: Cannot combine with ASan!
+
+- ❌ DATA RACE EXAMPLE:
+
+```cpp
+int counter = 0;
+void thread1() { counter++; }  // 🚨 Race!
+void thread2() { counter++; }  // 🚨 Race!
+```
+
+- ✅ FIXED WITH MUTEX:
+
+```cpp
+int counter = 0;
+std::mutex mtx;
+void thread1() {
+    std::lock_guard<std::mutex> lock(mtx);
+    counter++;  // ✅ Safe!
+}
+```
+
+**📊 TYPICAL TSAN OUTPUT:**
+
+WARNING: ThreadSanitizer: data race (pid=12345)  
+Write of size 4 at 0x7fff12345678 by thread T1:
+
+```cpp
+#0 thread1() file.cpp:10
+```
+
+Previous write of size 4 at 0x7fff12345678 by thread T2:
+
+```cpp
+#0 thread2() file.cpp:15
+```
+
+- 💡 BENEFITS:
+  - Find hard-to-reproduce bugs
+  - Ensure thread safety
+  - Prevent data corruption
+  - Essential for concurrent code
+
+### From `example7_memory_sanitizer()`
+
+🔍 WHAT IS MEMORY SANITIZER?
+
+  - Detects uninitialized memory reads
+  - Tracks memory initialization
+  - Clang only (not in GCC)
+  - Moderate overhead (3x)
+  - Requires instrumented libraries
+
+**📋 DETECTS:**
+
+  - Use of uninitialized values
+  - Use of uninitialized memory
+  - Reading uninitialized stack
+  - Reading uninitialized heap
+
+**💻 COMPILATION:**
+
+# Compile with MSan (Clang only)  
+$ clang++ -fsanitize=memory -g file.cpp -o program  
+# Track origins for better debugging  
+$ clang++ -fsanitize=memory -fsanitize-memory-track-origins -g file.cpp
+
+- ❌ UNINITIALIZED MEMORY EXAMPLE:
+
+```cpp
+int getRandomValue() {
+    int x;  // 🚨 Uninitialized!
+    return x;
+}
+```
+
+- ✅ FIXED:
+
+```cpp
+int getRandomValue() {
+    int x = 0;  // ✅ Initialized!
+    return x;
+}
+```
+
+- 💡 BENEFITS:
+  - Catch initialization bugs
+  - Prevent undefined behavior
+  - Find subtle bugs
+  - Deterministic detection
+
+### From `example8_valgrind()`
+
+🔍 WHAT IS VALGRIND?
+
+  - Dynamic analysis framework
+  - Multiple tools included
+  - No recompilation needed
+  - Significant overhead (10-50x)
+  - Linux/macOS (limited Windows)
+
+**📋 VALGRIND TOOLS:**
+
+1. MEMCHECK (Default):
+  - Memory leak detection
+  - Invalid memory access
+  - Use of uninitialized memory
+
+Usage: $ valgrind --leak-check=full ./program
+
+2. CACHEGRIND:
+  - Cache profiler
+  - Cache miss analysis
+  - Branch prediction analysis
+
+Usage: $ valgrind --tool=cachegrind ./program
+
+3. CALLGRIND:
+  - Call graph profiler
+  - Function call analysis
+  - Performance profiling
+
+Usage: $ valgrind --tool=callgrind ./program
+
+4. HELGRIND:
+  - Thread error detector
+  - Data race detection
+  - Lock ordering problems
+
+Usage: $ valgrind --tool=helgrind ./program
+
+5. MASSIF:
+  - Heap profiler
+  - Memory usage over time
+  - Stack and heap analysis
+
+Usage: $ valgrind --tool=massif ./program
+
+**💻 COMMON USAGE:**
+
+# Basic memory check  
+$ valgrind ./program  
+# Detailed leak check  
+$ valgrind --leak-check=full --show-leak-kinds=all ./program  
+# Track origins  
+$ valgrind --track-origins=yes ./program
+
+- 💡 BENEFITS:
+  - Comprehensive analysis
+  - No recompilation
+  - Multiple tools
+  - Detailed reports
+
+### From `example9_code_coverage()`
+
+🔍 WHAT IS CODE COVERAGE?
+
+  - Measures test coverage
+  - Shows which code is tested
+  - Identifies untested paths
+  - Essential for quality assurance
+
+**📋 COVERAGE TYPES:**
+
+  - Line Coverage - Lines executed
+  - Branch Coverage - Branches taken
+  - Function Coverage - Functions called
+  - Condition Coverage - Boolean conditions
+
+**💻 USING GCOV:**
+
+# Compile with coverage flags  
+$ g++ -fprofile-arcs -ftest-coverage file.cpp -o program  
+# Run the program  
+$ ./program  
+# Generate coverage report  
+$ gcov file.cpp
+
+**💻 USING LCOV (HTML Reports):**
+
+# Capture coverage data  
+$ lcov --capture --directory . --output-file coverage.info  
+# Generate HTML report  
+$ genhtml coverage.info --output-directory out
+
+**📊 COVERAGE GOALS:**
+
+  - 80-100%: Excellent ✅
+  - 60-79%:  Good ⚠️
+  - 40-59%:  Fair 🔶
+  - <40%:    Poor 🚨
+
+- 💡 BENEFITS:
+  - Ensure code is tested
+  - Find untested code
+  - Improve test quality
+  - Track progress
+
+### From `example10_integration()`
+
+**🔧 CMAKE INTEGRATION:**
+
+# CMakeLists.txt  
+# Enable sanitizers  
+if(ENABLE_ASAN)  
+add_compile_options(-fsanitize=address)  
+add_link_options(-fsanitize=address)
+
+```cpp
+endif()
+```
+
+# Enable clang-tidy  
+set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=*)  
+# Enable coverage  
+if(ENABLE_COVERAGE)  
+add_compile_options(--coverage)  
+add_link_options(--coverage)
+
+```cpp
+endif()
+```
+
+**🔄 CI/CD PIPELINE:**
+
+# .github/workflows/ci.yml
+
+  - name: Run clang-format
+
+run: clang-format --dry-run --Werror src/**/*.cpp
+
+  - name: Run clang-tidy
+
+run: clang-tidy src/**/*.cpp
+
+  - name: Build with sanitizers
+
+run: |  
+cmake -DENABLE_ASAN=ON -DENABLE_UBSAN=ON  
+make
+
+  - name: Run tests
+
+run: ./run_tests
+
+  - name: Generate coverage
+
+run: lcov --capture --directory . --output coverage.info
+
+**🪝 PRE-COMMIT HOOKS:**
+
+# .git/hooks/pre-commit  
+#!/bin/bash  
+# Format check  
+clang-format -i $(git diff --cached --name-only | grep -E '\.(cpp|h)$')  
+# Lint check  
+clang-tidy $(git diff --cached --name-only | grep '\.cpp$')  
+# Exit if checks fail
+
+```cpp
+if [ $? -ne 0 ]; then
+```
+
+echo "Pre-commit checks failed!"  
+exit 1  
+fi
+
+**🎯 RECOMMENDED WORKFLOW:**
+
+1. DEVELOPMENT:
+  - Use clang-format in IDE
+  - Enable clang-tidy warnings
+  - Run with sanitizers locally
+
+2. PRE-COMMIT:
+  - Auto-format code
+  - Run static analysis
+  - Quick tests
+
+3. CI/CD:
+  - Full static analysis
+  - Multiple sanitizer builds
+  - Coverage reports
+  - Performance tests
+
+4. REGULAR:
+  - Weekly deep analysis
+  - Review coverage trends
+  - Update tools
+  - Technical debt review
+
+- 💡 TOOL COMBINATION:
+
+Development:  clang-format + clang-tidy + ASan  
+Testing:      ASan + UBSan + Coverage  
+CI/CD:        All static analyzers + All sanitizers  
+Performance:  Valgrind Callgrind + Profilers
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer. LeakSanitizer reports a 4-byte leak: the demo creates a leak on purpose to illustrate the tool.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

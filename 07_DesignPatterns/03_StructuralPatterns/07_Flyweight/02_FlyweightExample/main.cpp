@@ -1,11 +1,11 @@
 // flyweight_example.cpp
 // Flyweight Pattern Example - Text Editor with Shared Character Formatting
 
-#include <iostream>
 #include <unordered_map>
 #include <memory>
 #include <vector>
 #include <string>
+#include <print>
 
 // ===== FLYWEIGHT CLASSES =====
 
@@ -23,12 +23,11 @@ public:
                    bool bold, bool italic)
         : fontFamily(font), fontSize(size), color(col),
         isBold(bold), isItalic(italic) {
-        std::cout << "Creating new style: " << getDescription() << std::endl;
+        std::println("Creating new style: {}", getDescription());
     }
 
     void render(char symbol, int x, int y) const {
-        std::cout << "Rendering '" << symbol << "' at position (" << x << ", " << y << ") "
-                  << "with style: " << getDescription() << std::endl;
+        std::println("Rendering '{}' at position ({}, {}) with style: {}", symbol, x, y, getDescription());
     }
 
     std::string getDescription() const {
@@ -61,12 +60,12 @@ public:
         // Check if style already exists
         auto it = styles.find(key);
         if (it != styles.end()) {
-            std::cout << "  -> Reusing existing style: " << key << std::endl;
+            std::println("  -> Reusing existing style: {}", key);
             return it->second;
         }
 
         // Create new style if it doesn't exist
-        std::cout << "  -> Creating new style: " << key << std::endl;
+        std::println("  -> Creating new style: {}", key);
         auto newStyle = std::make_shared<CharacterStyle>(font, size, color, bold, italic);
         styles[key] = newStyle;
         return newStyle;
@@ -77,11 +76,12 @@ public:
     }
 
     void printStatistics() const {
-        std::cout << "\n=== Style Factory Statistics ===" << std::endl;
-        std::cout << "Total unique styles created: " << styles.size() << std::endl;
-        std::cout << "Styles in memory:" << std::endl;
+        std::println("");
+        std::println("=== Style Factory Statistics ===");
+        std::println("Total unique styles created: {}", styles.size());
+        std::println("Styles in memory:");
         for (const auto& pair : styles) {
-            std::cout << "  - " << pair.first << std::endl;
+            std::println("  - {}", pair.first);
         }
     }
 };
@@ -124,16 +124,18 @@ public:
     }
 
     void render() const {
-        std::cout << "\n=== Rendering Document ===" << std::endl;
+        std::println("");
+        std::println("=== Rendering Document ===");
         for (const auto& ch : characters) {
             ch.render();
         }
     }
 
     void printMemoryStats() const {
-        std::cout << "\n=== Memory Statistics ===" << std::endl;
-        std::cout << "Total characters in document: " << characters.size() << std::endl;
-        std::cout << "Unique styles used: " << styleFactory.getStyleCount() << std::endl;
+        std::println("");
+        std::println("=== Memory Statistics ===");
+        std::println("Total characters in document: {}", characters.size());
+        std::println("Unique styles used: {}", styleFactory.getStyleCount());
 
         // Calculate memory savings
         size_t memoryPerStyleWithoutFlyweight = sizeof(CharacterStyle);
@@ -141,12 +143,10 @@ public:
         size_t totalMemoryWithFlyweight = styleFactory.getStyleCount() * memoryPerStyleWithoutFlyweight
                                           + characters.size() * sizeof(Character);
 
-        std::cout << "Memory without Flyweight: ~" << totalMemoryWithoutFlyweight << " bytes" << std::endl;
-        std::cout << "Memory with Flyweight: ~" << totalMemoryWithFlyweight << " bytes" << std::endl;
-        std::cout << "Memory saved: ~" << (totalMemoryWithoutFlyweight - totalMemoryWithFlyweight)
-                  << " bytes ("
-                  << ((totalMemoryWithoutFlyweight - totalMemoryWithFlyweight) * 100 / totalMemoryWithoutFlyweight)
-                  << "%)" << std::endl;
+        std::println("Memory without Flyweight: ~{} bytes", totalMemoryWithoutFlyweight);
+        std::println("Memory with Flyweight: ~{} bytes", totalMemoryWithFlyweight);
+        std::println("Memory saved: ~{} bytes ({}%)",
+            (totalMemoryWithoutFlyweight - totalMemoryWithFlyweight), ((totalMemoryWithoutFlyweight - totalMemoryWithFlyweight) * 100 / totalMemoryWithoutFlyweight));
 
         styleFactory.printStatistics();
     }
@@ -155,13 +155,14 @@ public:
 // ===== MAIN DEMO =====
 
 int main() {
-    std::cout << "=== Flyweight Pattern Demo - Text Editor ===" << std::endl;
-    std::cout << "Creating a document with formatted text...\n" << std::endl;
+    std::println("=== Flyweight Pattern Demo - Text Editor ===");
+    std::println("Creating a document with formatted text...");
+    std::println("");
 
     Document doc;
 
     // Add title - all characters share the same style
-    std::cout << "Adding title 'HELLO':" << std::endl;
+    std::println("Adding title 'HELLO':");
     std::string title = "HELLO";
     int x = 10;
     for (char c : title) {
@@ -169,7 +170,8 @@ int main() {
         x += 15;
     }
 
-    std::cout << "\nAdding subtitle 'World':" << std::endl;
+    std::println("");
+    std::println("Adding subtitle 'World':");
     std::string subtitle = "World";
     x = 10;
     for (char c : subtitle) {
@@ -177,7 +179,8 @@ int main() {
         x += 12;
     }
 
-    std::cout << "\nAdding body text 'Hello World Example':" << std::endl;
+    std::println("");
+    std::println("Adding body text 'Hello World Example':");
     std::string body = "Hello World Example";
     x = 10;
     int y = 70;
@@ -207,12 +210,6 @@ int main() {
 
     // Show memory statistics
     doc.printMemoryStats();
-
-    std::cout << "\n=== Key Observations ===" << std::endl;
-    std::cout << "- Characters 'H', 'E', 'L', 'L', 'O' all share the same style object" << std::endl;
-    std::cout << "- Each character only stores its unique position (x, y)" << std::endl;
-    std::cout << "- Style objects are created once and reused" << std::endl;
-    std::cout << "- Significant memory savings with many characters" << std::endl;
 
     return 0;
 }

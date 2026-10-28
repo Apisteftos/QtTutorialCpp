@@ -620,3 +620,284 @@ After mastering LSP, explore:
 > you probably have the wrong abstraction."
 
 The Liskov Substitution Principle ensures that your inheritance hierarchies make sense behaviorally, not just conceptually. When in doubt, ask: **"Can I truly substitute this without any surprises?"**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 LISKOV SUBSTITUTION PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Design inheritance based on behavior,  
+not concepts. Subclasses must be truly  
+substitutable!
+
+## Corrections
+
+- The original deleted `reader1` and `reader2` twice (undefined behaviour, which can abort before the rest of the output). The second pair of `delete` calls is removed.
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_rectangle_square()`
+
+- ❌ BAD CODE (Violates LSP):
+
+```cpp
+
+```cpp
+class Square : public Rectangle {
+    void setWidth(int w) override {
+        width = w;
+        height = w;  // Changes both!
+    }
+};
+```
+
+```
+
+**🚨 DEMONSTRATION OF VIOLATION:**
+
+### From `example1_rectangle_square()`
+
+**🚨 PROBLEMS:**
+
+  - Square changes both dimensions when setting one
+  - Client code breaks when using Square
+  - Violates client expectations
+  - Not truly substitutable
+
+- ✅ GOOD CODE (Follows LSP):
+
+```cpp
+
+```cpp
+class Shape {
+    virtual int getArea() const = 0;
+};
+
+class Rectangle : public Shape { };
+class Square : public Shape { };
+// Square is NOT a Rectangle!
+```
+
+```
+
+**✨ SOLUTION:**
+
+  - Square and Rectangle are siblings, not parent-child
+  - Both inherit from Shape
+  - No violated expectations
+
+### From `example2_bird_penguin()`
+
+- ❌ BAD CODE (Violates LSP):
+
+```cpp
+
+```cpp
+class Penguin : public Bird {
+    void fly() override {
+        throw runtime_error("Can't fly!");
+    }
+};
+```
+
+```
+
+**🚨 DEMONSTRATION OF VIOLATION:**
+
+### From `example2_bird_penguin()`
+
+**🚨 PROBLEMS:**
+
+  - Penguin throws exception when calling fly()
+  - Client code must know about Penguin specifically
+  - Can't treat all Birds the same way
+  - Violates substitutability
+
+- ✅ GOOD CODE (Follows LSP):
+
+```cpp
+
+```cpp
+class Bird { };
+class FlyingBird : public Bird {
+    virtual void fly();
+};
+class FlightlessBird : public Bird { };
+
+class Sparrow : public FlyingBird { };
+class Penguin : public FlightlessBird { };
+```
+
+```
+
+**🔧 DEMONSTRATION:**
+
+### From `example2_bird_penguin()`
+
+**✨ SOLUTION:**
+
+  - Separate FlyingBird and FlightlessBird
+  - Each subclass can do what it promises
+  - No unexpected exceptions
+
+### From `example3_contract_violation()`
+
+- ❌ BAD CODE (Strengthens Precondition):
+
+```cpp
+
+```cpp
+class FileReader {
+    // Requires: filename not empty
+    virtual string read(const string& filename);
+};
+
+class RestrictedFileReader : public FileReader {
+    // 🚨 Now requires: filename not empty AND .txt extension
+    string read(const string& filename) override;
+};
+```
+
+```
+
+**🚨 DEMONSTRATION:**
+
+FileReader with 'data.csv':
+
+### From `example3_contract_violation()`
+
+**🚨 PROBLEM:**
+
+  - Subclass strengthens precondition
+  - Client code that works with FileReader breaks with subclass
+  - Not truly substitutable
+
+- ✅ GOOD CODE:
+  - Subclass accepts all inputs parent accepts
+  - Can provide additional behavior
+  - But doesn't reject valid inputs
+
+### From `example4_empty_methods()`
+
+- ❌ BAD CODE (Empty Override):
+
+```cpp
+
+```cpp
+class FixedDepositAccount : public Account {
+    void withdraw(double amount) override {
+        // Empty! Does nothing!
+    }
+};
+```
+
+```
+
+**🚨 DEMONSTRATION:**
+
+### From `example4_empty_methods()`
+
+**🚨 PROBLEM:**
+
+  - Client expects withdraw() to work
+  - Subclass silently does nothing
+  - Violates expectation
+
+- ✅ GOOD CODE:
+  - Create WithdrawableAccount for accounts that can withdraw
+  - FixedDeposit only inherits deposit capability
+  - Type system prevents invalid operations
+
+### From `example5_how_to_follow()`
+
+- ✅ GUIDELINES TO FOLLOW LSP:
+
+1. HONOR THE CONTRACT:
+  - Don't strengthen preconditions
+  - Don't weaken postconditions
+  - Preserve invariants
+  - Don't throw new exceptions
+
+2. USE "IS-A" TEST PROPERLY:
+- ❌ Square IS-A Rectangle (mathematically yes, OOP no!)
+- ✅ Sparrow IS-A FlyingBird (behavioral yes)
+- ✅ Penguin IS-A FlightlessBird (behavioral yes)
+
+3. AVOID THESE PATTERNS:
+- ❌ Empty overridden methods
+- ❌ Throwing NotImplementedException
+- ❌ Checking type with instanceof/dynamic_cast
+- ❌ Refusing bequest (not using inherited methods)
+
+4. DESIGN HIERARCHY BASED ON BEHAVIOR:
+  - Not just conceptual relationships
+  - Think about substitutability
+  - Client expectations matter most
+
+5. USE COMPOSITION WHEN NEEDED:
+  - "HAS-A" relationship might be better
+  - Example: Square HAS-A side, not IS-A Rectangle
+
+**🔍 CHECKLIST:**
+
+□ Can subclass be used anywhere parent is used?  
+□ Does subclass accept all inputs parent accepts?  
+□ Does subclass provide all outputs parent promises?  
+□ Does subclass maintain all invariants?  
+□ No need for type checks in client code?
+
+### From `example6_benefits()`
+
+- ✅ BENEFITS OF LSP:
+
+1. RELIABLE POLYMORPHISM:
+  - Subclasses work correctly when substituted
+  - No surprises or unexpected behavior
+  - Type system helps catch errors
+
+2. CODE REUSABILITY:
+  - Client code works with entire hierarchy
+  - Don't need special cases for subclasses
+  - Generic algorithms work correctly
+
+3. MAINTAINABILITY:
+  - Add new subclasses without breaking clients
+  - Clear contracts and expectations
+  - Easier to understand inheritance
+
+4. TESTABILITY:
+  - Tests for base class apply to subclasses
+  - Consistent behavior across hierarchy
+  - Fewer special cases to test
+
+- ⚠️  COMMON VIOLATIONS:
+  - Square-Rectangle problem
+  - Bird-Penguin problem
+  - Strengthening preconditions
+  - Weakening postconditions
+  - Empty/throwing overridden methods
+
+- 💡 KEY INSIGHT:
+
+"Design inheritance based on behavior, not concepts!  
+Ask: Can I substitute? Not: Is it conceptually related?"
+
+**🎯 REMEMBER:**
+
+  - Substitutability is about behavior
+  - Honor the contract
+  - Client expectations matter
+  - When in doubt, use composition
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

@@ -1,9 +1,8 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
 #include <cmath>
-using namespace std;
+#include <print>
 
 // ============================================
 // OPEN/CLOSED PRINCIPLE (OCP)
@@ -147,7 +146,7 @@ public:
 // Calculator doesn't need to know about specific shapes!
 class AreaCalculator {
 public:
-    double calculateTotalArea(const vector<unique_ptr<Shape>>& shapes) {
+    double calculateTotalArea(const std::vector<std::unique_ptr<Shape>>& shapes) {
         double total = 0.0;
         for (const auto& shape : shapes) {
             total += shape->calculateArea();
@@ -158,66 +157,22 @@ public:
 }
 
 void example1_shape_calculation() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: SHAPE AREA CALCULATION (Classic)   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: SHAPE AREA CALCULATION (Classic)    ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Violates OCP):\n";
-    cout << "```cpp\n";
-    cout << "class AreaCalculator {\n";
-    cout << "    double calculateArea(const Shape& shape) {\n";
-    cout << "        switch (shape.type) {\n";
-    cout << "            case CIRCLE: return 3.14 * r * r;\n";
-    cout << "            case RECTANGLE: return w * h;\n";
-    cout << "            case TRIANGLE: return 0.5 * b * h;\n";
-    cout << "            // Add Pentagon? → Modify this code!\n";
-    cout << "        }\n";
-    cout << "    }\n";
-    cout << "};\n";
-    cout << "```\n";
-
-    cout << "\n🚨 PROBLEMS:\n";
-    cout << "   • Must modify AreaCalculator for every new shape\n";
-    cout << "   • Violates OCP (not closed for modification)\n";
-    cout << "   • Risk of breaking existing calculations\n";
-    cout << "   • Must retest entire class\n";
-
-    cout << "\n✅ GOOD CODE (Follows OCP):\n";
-    cout << "```cpp\n";
-    cout << "class Shape {\n";
-    cout << "public:\n";
-    cout << "    virtual double calculateArea() const = 0;\n";
-    cout << "};\n\n";
-    cout << "class Circle : public Shape {\n";
-    cout << "    double calculateArea() const override { return 3.14*r*r; }\n";
-    cout << "};\n\n";
-    cout << "class Rectangle : public Shape {\n";
-    cout << "    double calculateArea() const override { return w*h; }\n";
-    cout << "};\n\n";
-    cout << "// Add new shape? Just inherit, don't modify!\n";
-    cout << "class Pentagon : public Shape {\n";
-    cout << "    double calculateArea() const override { return 1.72*s*s; }\n";
-    cout << "};\n";
-    cout << "```\n";
-
-    cout << "\n🔧 DEMONSTRATION:\n";
-
-    vector<unique_ptr<good_example1::Shape>> shapes;
-    shapes.push_back(make_unique<good_example1::Circle>(5.0));
-    shapes.push_back(make_unique<good_example1::Rectangle>(4.0, 6.0));
-    shapes.push_back(make_unique<good_example1::Triangle>(3.0, 4.0));
-    shapes.push_back(make_unique<good_example1::Pentagon>(5.0));
+    std::vector<std::unique_ptr<good_example1::Shape>> shapes;
+    shapes.push_back(std::make_unique<good_example1::Circle>(5.0));
+    shapes.push_back(std::make_unique<good_example1::Rectangle>(4.0, 6.0));
+    shapes.push_back(std::make_unique<good_example1::Triangle>(3.0, 4.0));
+    shapes.push_back(std::make_unique<good_example1::Pentagon>(5.0));
 
     good_example1::AreaCalculator calculator;
     double total = calculator.calculateTotalArea(shapes);
 
-    cout << "   Total area of all shapes: " << total << "\n";
+    std::println("   Total area of all shapes: {}", total);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   ✅ Add Pentagon without modifying AreaCalculator\n";
-    cout << "   ✅ No risk of breaking existing shapes\n";
-    cout << "   ✅ No need to retest old code\n";
-    cout << "   ✅ Each shape encapsulates its logic\n";
 }
 
 // ============================================
@@ -239,17 +194,17 @@ public:
         // 🚨 VIOLATION: Must modify for each new payment method!
         switch (type) {
         case PaymentType::CREDIT_CARD:
-            cout << "Processing $" << amount << " via Credit Card\n";
+            std::println("Processing ${} via Credit Card", amount);
             // Credit card logic
             break;
 
         case PaymentType::PAYPAL:
-            cout << "Processing $" << amount << " via PayPal\n";
+            std::println("Processing ${} via PayPal", amount);
             // PayPal logic
             break;
 
         case PaymentType::BITCOIN:
-            cout << "Processing $" << amount << " via Bitcoin\n";
+            std::println("Processing ${} via Bitcoin", amount);
             // Bitcoin logic
             break;
 
@@ -271,7 +226,7 @@ public:
 class CreditCardPayment : public PaymentMethod {
 public:
     void processPayment(double amount) override {
-        cout << "   💳 Processing $" << amount << " via Credit Card\n";
+        std::println("   💳 Processing ${} via Credit Card", amount);
         // Credit card specific logic
     }
 };
@@ -279,7 +234,7 @@ public:
 class PayPalPayment : public PaymentMethod {
 public:
     void processPayment(double amount) override {
-        cout << "   🅿️  Processing $" << amount << " via PayPal\n";
+        std::println("   🅿️  Processing ${} via PayPal", amount);
         // PayPal specific logic
     }
 };
@@ -287,7 +242,7 @@ public:
 class BitcoinPayment : public PaymentMethod {
 public:
     void processPayment(double amount) override {
-        cout << "   ₿  Processing $" << amount << " via Bitcoin\n";
+        std::println("   ₿  Processing ${} via Bitcoin", amount);
         // Bitcoin specific logic
     }
 };
@@ -296,7 +251,7 @@ public:
 class ApplePayPayment : public PaymentMethod {
 public:
     void processPayment(double amount) override {
-        cout << "   🍎 Processing $" << amount << " via Apple Pay\n";
+        std::println("   🍎 Processing ${} via Apple Pay", amount);
         // Apple Pay specific logic
     }
 };
@@ -304,7 +259,7 @@ public:
 class GooglePayPayment : public PaymentMethod {
 public:
     void processPayment(double amount) override {
-        cout << "   🔵 Processing $" << amount << " via Google Pay\n";
+        std::println("   🔵 Processing ${} via Google Pay", amount);
         // Google Pay specific logic
     }
 };
@@ -318,21 +273,10 @@ public:
 }
 
 void example2_payment_processing() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: PAYMENT PROCESSING (Real-World)    ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD: Switch statement on payment type\n";
-    cout << "   • Add Apple Pay → Modify switch statement\n";
-    cout << "   • Risk breaking existing payments\n";
-    cout << "   • Must retest all payment methods\n";
-
-    cout << "\n✅ GOOD: Strategy pattern\n";
-    cout << "   • Add Apple Pay → Create new class\n";
-    cout << "   • No changes to existing code\n";
-    cout << "   • Only test new payment method\n";
-
-    cout << "\n🔧 DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: PAYMENT PROCESSING (Real-World)     ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example2::PaymentProcessor processor;
 
@@ -344,8 +288,9 @@ void example2_payment_processing() {
     processor.process(paypal, 50.0);
     processor.process(applePay, 75.0);
 
-    cout << "\n💡 KEY INSIGHT:\n";
-    cout << "   \"New payment method = New class, not modified switch!\"\n";
+    std::println("");
+    std::println("💡 KEY INSIGHT:");
+    std::println("   \"New payment method = New class, not modified switch!\"");
 }
 
 // ============================================
@@ -357,16 +302,16 @@ namespace bad_example3 {
 
 class NotificationService {
 public:
-    void send(const string& type, const string& message) {
+    void send(const std::string& type, const std::string& message) {
         // 🚨 VIOLATION: if-else chain
         if (type == "email") {
-            cout << "📧 Sending email: " << message << "\n";
+            std::println("📧 Sending email: {}", message);
         }
         else if (type == "sms") {
-            cout << "📱 Sending SMS: " << message << "\n";
+            std::println("📱 Sending SMS: {}", message);
         }
         else if (type == "push") {
-            cout << "🔔 Sending push notification: " << message << "\n";
+            std::println("🔔 Sending push notification: {}", message);
         }
         // Add Slack? → Modify this code!
     }
@@ -379,48 +324,48 @@ namespace good_example3 {
 class Notification {
 public:
     virtual ~Notification() = default;
-    virtual void send(const string& message) = 0;
+    virtual void send(const std::string& message) = 0;
 };
 
 class EmailNotification : public Notification {
 public:
-    void send(const string& message) override {
-        cout << "   📧 Email: " << message << "\n";
+    void send(const std::string& message) override {
+        std::println("   📧 Email: {}", message);
     }
 };
 
 class SMSNotification : public Notification {
 public:
-    void send(const string& message) override {
-        cout << "   📱 SMS: " << message << "\n";
+    void send(const std::string& message) override {
+        std::println("   📱 SMS: {}", message);
     }
 };
 
 class PushNotification : public Notification {
 public:
-    void send(const string& message) override {
-        cout << "   🔔 Push: " << message << "\n";
+    void send(const std::string& message) override {
+        std::println("   🔔 Push: {}", message);
     }
 };
 
 // Easy to add!
 class SlackNotification : public Notification {
 public:
-    void send(const string& message) override {
-        cout << "   💬 Slack: " << message << "\n";
+    void send(const std::string& message) override {
+        std::println("   💬 Slack: {}", message);
     }
 };
 
 class NotificationService {
 private:
-    vector<unique_ptr<Notification>> channels;
+    std::vector<std::unique_ptr<Notification>> channels;
 
 public:
-    void addChannel(unique_ptr<Notification> channel) {
+    void addChannel(std::unique_ptr<Notification> channel) {
         channels.push_back(move(channel));
     }
 
-    void sendAll(const string& message) {
+    void sendAll(const std::string& message) {
         for (auto& channel : channels) {
             channel->send(message);
         }
@@ -429,29 +374,20 @@ public:
 }
 
 void example3_notification_system() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: NOTIFICATION SYSTEM                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD: if-else chain on notification type\n";
-    cout << "✅ GOOD: Polymorphic notification channels\n";
-
-    cout << "\n🔧 DEMONSTRATION:\n";
-    cout << "Sending notifications through multiple channels:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: NOTIFICATION SYSTEM                 ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example3::NotificationService service;
 
-    service.addChannel(make_unique<good_example3::EmailNotification>());
-    service.addChannel(make_unique<good_example3::SMSNotification>());
-    service.addChannel(make_unique<good_example3::PushNotification>());
-    service.addChannel(make_unique<good_example3::SlackNotification>());
+    service.addChannel(std::make_unique<good_example3::EmailNotification>());
+    service.addChannel(std::make_unique<good_example3::SMSNotification>());
+    service.addChannel(std::make_unique<good_example3::PushNotification>());
+    service.addChannel(std::make_unique<good_example3::SlackNotification>());
 
     service.sendAll("Your order has been shipped!");
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   ✅ Add Slack notification → Just create SlackNotification\n";
-    cout << "   ✅ No modification to NotificationService\n";
-    cout << "   ✅ Can add channels at runtime\n";
 }
 
 // ============================================
@@ -463,19 +399,19 @@ namespace bad_example4 {
 
 class ReportGenerator {
 public:
-    void generate(const string& format, const string& data) {
+    void generate(const std::string& format, const std::string& data) {
         // 🚨 VIOLATION: Must modify for new formats
         if (format == "PDF") {
-            cout << "Generating PDF report...\n";
-            cout << "PDF: " << data << "\n";
+            std::println("Generating PDF report...");
+            std::println("PDF: {}", data);
         }
         else if (format == "HTML") {
-            cout << "Generating HTML report...\n";
-            cout << "<html>" << data << "</html>\n";
+            std::println("Generating HTML report...");
+            std::println("<html>{}</html>", data);
         }
         else if (format == "CSV") {
-            cout << "Generating CSV report...\n";
-            cout << "csv," << data << "\n";
+            std::println("Generating CSV report...");
+            std::println("csv,{}", data);
         }
         // Add XML? → Modify this code!
     }
@@ -488,58 +424,54 @@ namespace good_example4 {
 class ReportFormatter {
 public:
     virtual ~ReportFormatter() = default;
-    virtual void generate(const string& data) = 0;
+    virtual void generate(const std::string& data) = 0;
 };
 
 class PDFFormatter : public ReportFormatter {
 public:
-    void generate(const string& data) override {
-        cout << "   📄 PDF Report: " << data << "\n";
+    void generate(const std::string& data) override {
+        std::println("   📄 PDF Report: {}", data);
     }
 };
 
 class HTMLFormatter : public ReportFormatter {
 public:
-    void generate(const string& data) override {
-        cout << "   🌐 HTML Report: <html>" << data << "</html>\n";
+    void generate(const std::string& data) override {
+        std::println("   🌐 HTML Report: <html>{}</html>", data);
     }
 };
 
 class CSVFormatter : public ReportFormatter {
 public:
-    void generate(const string& data) override {
-        cout << "   📊 CSV Report: csv," << data << "\n";
+    void generate(const std::string& data) override {
+        std::println("   📊 CSV Report: csv,{}", data);
     }
 };
 
 // Easy to add!
 class XMLFormatter : public ReportFormatter {
 public:
-    void generate(const string& data) override {
-        cout << "   📑 XML Report: <xml>" << data << "</xml>\n";
+    void generate(const std::string& data) override {
+        std::println("   📑 XML Report: <xml>{}</xml>", data);
     }
 };
 
 class ReportGenerator {
 public:
-    void generate(ReportFormatter& formatter, const string& data) {
+    void generate(ReportFormatter& formatter, const std::string& data) {
         formatter.generate(data);
     }
 };
 }
 
 void example4_report_generation() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: REPORT GENERATION                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD: if-else chain checking format\n";
-    cout << "✅ GOOD: Strategy pattern with formatters\n";
-
-    cout << "\n🔧 DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: REPORT GENERATION                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example4::ReportGenerator generator;
-    string reportData = "Sales Report Q4 2024";
+    std::string reportData = "Sales Report Q4 2024";
 
     good_example4::PDFFormatter pdf;
     good_example4::HTMLFormatter html;
@@ -549,8 +481,9 @@ void example4_report_generation() {
     generator.generate(html, reportData);
     generator.generate(xml, reportData);
 
-    cout << "\n💡 KEY INSIGHT:\n";
-    cout << "   \"New format = New formatter class, no modifications!\"\n";
+    std::println("");
+    std::println("💡 KEY INSIGHT:");
+    std::println("   \"New format = New formatter class, no modifications!\"");
 }
 
 // ============================================
@@ -558,55 +491,11 @@ void example4_report_generation() {
 // ============================================
 
 void example5_how_to_achieve() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: HOW TO ACHIEVE OCP                  ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: HOW TO ACHIEVE OCP                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 TECHNIQUES TO ACHIEVE OCP:\n";
-
-    cout << "\n1. ABSTRACTION (Interfaces/Abstract Classes):\n";
-    cout << "   class PaymentMethod {\n";
-    cout << "   public:\n";
-    cout << "       virtual void process(double amount) = 0;\n";
-    cout << "   };\n";
-
-    cout << "\n2. INHERITANCE (Extend behavior):\n";
-    cout << "   class CreditCard : public PaymentMethod {\n";
-    cout << "       void process(double amount) override { }\n";
-    cout << "   };\n";
-
-    cout << "\n3. POLYMORPHISM (Dynamic dispatch):\n";
-    cout << "   PaymentMethod* method = new CreditCard();\n";
-    cout << "   method->process(100);  // Calls CreditCard::process\n";
-
-    cout << "\n4. STRATEGY PATTERN:\n";
-    cout << "   class Context {\n";
-    cout << "       Strategy* strategy;\n";
-    cout << "   public:\n";
-    cout << "       void setStrategy(Strategy* s) { strategy = s; }\n";
-    cout << "       void execute() { strategy->algorithm(); }\n";
-    cout << "   };\n";
-
-    cout << "\n5. TEMPLATE METHOD PATTERN:\n";
-    cout << "   class Algorithm {\n";
-    cout << "   public:\n";
-    cout << "       void execute() {\n";
-    cout << "           step1(); step2(); step3();\n";
-    cout << "       }\n";
-    cout << "   protected:\n";
-    cout << "       virtual void step2() = 0;  // Customize this\n";
-    cout << "   };\n";
-
-    cout << "\n📊 COMPARISON:\n";
-    cout << "\n   ❌ CLOSED for Extension (Hard to extend):\n";
-    cout << "      • Final classes\n";
-    cout << "      • Private/hidden interfaces\n";
-    cout << "      • Tight coupling\n";
-
-    cout << "\n   ✅ OPEN for Extension (Easy to extend):\n";
-    cout << "      • Abstract base classes\n";
-    cout << "      • Virtual functions\n";
-    cout << "      • Plugin architecture\n";
 }
 
 // ============================================
@@ -614,62 +503,11 @@ void example5_how_to_achieve() {
 // ============================================
 
 void example6_benefits_tradeoffs() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: BENEFITS & TRADEOFFS               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: BENEFITS & TRADEOFFS                ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n✅ BENEFITS OF OCP:\n";
-
-    cout << "\n1. STABILITY:\n";
-    cout << "   • Existing code doesn't change\n";
-    cout << "   • Less risk of breaking features\n";
-    cout << "   • \"If it works, don't touch it!\"\n";
-
-    cout << "\n2. MAINTAINABILITY:\n";
-    cout << "   • Add features without fear\n";
-    cout << "   • No need to understand all old code\n";
-    cout << "   • Changes are isolated\n";
-
-    cout << "\n3. TESTABILITY:\n";
-    cout << "   • No need to retest old code\n";
-    cout << "   • Test only new extensions\n";
-    cout << "   • Faster test cycles\n";
-
-    cout << "\n4. FLEXIBILITY:\n";
-    cout << "   • Easy to add new behaviors\n";
-    cout << "   • Plugin architecture\n";
-    cout << "   • Runtime configuration\n";
-
-    cout << "\n⚠️  TRADEOFFS:\n";
-
-    cout << "\n1. COMPLEXITY:\n";
-    cout << "   • More classes and interfaces\n";
-    cout << "   • Deeper inheritance hierarchies\n";
-    cout << "   • Need to design abstractions upfront\n";
-
-    cout << "\n2. OVERHEAD:\n";
-    cout << "   • Virtual function calls\n";
-    cout << "   • Slight performance cost\n";
-    cout << "   • More memory for vtables\n";
-
-    cout << "\n3. OVER-ENGINEERING:\n";
-    cout << "   • Can lead to too many abstractions\n";
-    cout << "   • YAGNI violation (You Aren't Gonna Need It)\n";
-    cout << "   • Balance needed\n";
-
-    cout << "\n💡 WHEN TO APPLY OCP:\n";
-    cout << "   ✅ You expect variations in behavior\n";
-    cout << "   ✅ You have if-else/switch on types\n";
-    cout << "   ✅ Adding features requires code changes\n";
-    cout << "   ✅ Code is stable and used by many\n";
-
-    cout << "\n   ❌ Simple, unlikely to change\n";
-    cout << "   ❌ Performance critical (virtual calls overhead)\n";
-    cout << "   ❌ Over-engineering simple code\n";
-
-    cout << "\n🎯 GOLDEN RULE:\n";
-    cout << "   \"Make abstractions when you need them,\n";
-    cout << "    not when you might need them!\"\n";
 }
 
 // ============================================
@@ -677,13 +515,13 @@ void example6_benefits_tradeoffs() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║          OPEN/CLOSED PRINCIPLE (OCP)                  ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Open for extension, closed for modification\"        ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║          OPEN/CLOSED PRINCIPLE (OCP)                  ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Open for extension, closed for modification\"      ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_shape_calculation();
     example2_payment_processing();
@@ -691,16 +529,6 @@ int main() {
     example4_report_generation();
     example5_how_to_achieve();
     example6_benefits_tradeoffs();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║           🎉 OPEN/CLOSED PRINCIPLE COMPLETE! 🎉       ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Extend behavior through inheritance,  ║\n";
-    cout << "║  not by modifying existing code!                     ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

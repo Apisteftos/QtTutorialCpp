@@ -1,12 +1,12 @@
-#include <iostream>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <print>
 #include "shared_data.h"
 
 int main() {
-    std::cout << "=== Client B (Reader) ===\n";
+    std::println("=== Client B (Reader) ===");
 
     // 1. Open existing shared memory (created by A)
     int fd = shm_open(SHM_NAME, O_RDONLY, 0666);
@@ -27,8 +27,7 @@ int main() {
         sem_wait(sem);  // lock
 
         if (data->data_ready && data->counter != last_counter) {
-            std::cout << "B read:  " << data->message
-                      << " (counter=" << data->counter << ")\n";
+            std::println("B read:  {} (counter={})", data->message, data->counter);
             last_counter = data->counter;
         }
 
@@ -41,6 +40,6 @@ int main() {
     close(fd);
     sem_close(sem);
 
-    std::cout << "B finished.\n";
+    std::println("B finished.");
     return 0;
 }

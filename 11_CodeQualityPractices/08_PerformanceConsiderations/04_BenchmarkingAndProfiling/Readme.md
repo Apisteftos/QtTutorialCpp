@@ -324,3 +324,51 @@ g++ -g main.cpp -lbenchmark -lpthread -o app
 # CORRECT — Release build
 g++ -O3 -march=native main.cpp -lbenchmark -lpthread -o app
 ```
+
+## Notes moved from main.cpp
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `main()`
+
+**📊 BENCHMARKING EXAMPLES:**
+
+1. Basic vector operations
+2. Algorithm comparisons (sort)
+3. String operations
+4. Data structure operations
+5. Cache effects
+6. Function call overhead
+7. Memory allocation
+8. Custom arguments
+9. Fixtures for setup/teardown
+10. Real-world scenarios
+
+**⚙️  PROFILING TOOLS (use separately):**
+
+  - gprof  - Function-level profiling
+  - perf   - CPU performance analysis
+  - valgrind/cachegrind - Cache analysis
+  - heaptrack - Memory profiling
+
+- 💡 BEST PRACTICES:
+- ✓ Use benchmark::DoNotOptimize()
+- ✓ Pause timing for setup code
+- ✓ Run multiple iterations
+- ✓ Control CPU frequency
+- ✓ Close background apps
+- ✓ Compare statistical results
+
+🚀 Running benchmarks...
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

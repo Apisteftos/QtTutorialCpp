@@ -995,3 +995,297 @@ Together, they create:
 ```
 
 **Congratulations on completing all SOLID principles!** 🎉
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 DEPENDENCY INVERSION PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Invert dependencies by depending on  
+abstractions, not concrete implementations.  
+High-level and low-level both depend on interfaces!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_database()`
+
+- ❌ BAD CODE (Concrete Dependency):
+
+```cpp
+
+```cpp
+class UserRepository {
+    MySQLDatabase database;  // 🚨 Tight coupling!
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Tightly coupled to MySQL
+  - Can't switch databases without changing code
+  - Can't test without real database
+  - High-level depends on low-level
+
+- ✅ GOOD CODE (Depends on Abstraction):
+
+```cpp
+
+```cpp
+class IDatabase { virtual void query() = 0; };
+
+class UserRepository {
+    IDatabase* database;  // ✅ Depends on interface!
+```
+
+**public:**
+
+```cpp
+    UserRepository(IDatabase* db) : database(db) {}
+};
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_database()`
+
+**✨ BENEFITS:**
+
+  - Easy to switch database implementations
+  - UserRepository unchanged when adding new databases
+  - Can test with mock database
+  - High-level and low-level both depend on abstraction
+
+### From `example2_notifications()`
+
+- ❌ BAD CODE:
+
+NotificationService depends on EmailService and SMSService  
+To add push notifications, need to modify NotificationService
+
+- ✅ GOOD CODE:
+
+NotificationService depends on INotifier interface  
+Can add new notifiers without changing NotificationService
+
+**✨ DEMONSTRATION:**
+
+### From `example2_notifications()`
+
+**✨ BENEFITS:**
+
+  - Easy to add new notification methods
+  - NotificationService never changes
+  - Can test with mock notifiers
+  - Open/Closed Principle achieved
+
+### From `example3_payment()`
+
+- ❌ BAD CODE:
+
+PaymentProcessor has if/else for each gateway  
+Must modify code to add new payment gateway
+
+- ✅ GOOD CODE:
+
+PaymentProcessor depends on IPaymentGateway  
+Can inject any gateway implementation
+
+**✨ DEMONSTRATION:**
+
+### From `example3_payment()`
+
+**✨ BENEFITS:**
+
+  - PaymentProcessor unchanged when adding gateways
+  - Runtime gateway switching
+  - Easy to test with mock gateway
+  - Follows Open/Closed Principle
+
+### From `example4_logging()`
+
+- ❌ BAD CODE:
+
+OrderService hardcoded to use FileLogger  
+Can't change logging destination without modifying code
+
+- ✅ GOOD CODE:
+
+OrderService depends on ILogger interface  
+Logger injected via constructor
+
+**✨ DEMONSTRATION:**
+
+### From `example4_logging()`
+
+**✨ BENEFITS:**
+
+  - OrderService doesn't know about logging details
+  - Can switch loggers without changing business logic
+  - Easy to test with mock logger
+  - Separation of concerns
+
+### From `example5_dependency_injection()`
+
+1. CONSTRUCTOR INJECTION (Recommended):
+  - Dependencies required at construction
+  - Immutable after creation
+  - Clear requirements
+
+### From `example5_dependency_injection()`
+
+2. SETTER INJECTION:
+  - Optional dependencies
+  - Can change dependencies after creation
+  - More flexible but less clear
+
+### From `example5_dependency_injection()`
+
+3. METHOD INJECTION:
+  - Dependency needed only for specific method
+  - Different dependency per method call
+  - Good for occasional dependencies
+
+### From `example5_dependency_injection()`
+
+- 💡 RECOMMENDATION:
+  - Use Constructor Injection as default
+  - Use Setter Injection for optional dependencies
+  - Use Method Injection for per-call dependencies
+
+### From `example6_how_to_follow()`
+
+- ✅ GUIDELINES TO FOLLOW DIP:
+
+1. IDENTIFY ABSTRACTIONS:
+  - What are the high-level policies?
+  - What are the low-level details?
+  - Create interfaces for volatile dependencies
+
+2. DEPEND ON INTERFACES:
+- ❌ MyClass myField;           // Concrete
+- ✅ IMyInterface* myField;     // Interface
+- ✅ unique_ptr<IMyInterface>   // Smart pointer
+
+3. USE DEPENDENCY INJECTION:
+  - Constructor injection (preferred)
+  - Setter injection (optional deps)
+  - Method injection (per-call deps)
+
+4. AVOID THESE PATTERNS:
+- ❌ new ConcreteClass() in high-level code
+- ❌ Concrete types in method parameters
+- ❌ High-level importing low-level modules
+- ❌ if/else chains for different implementations
+
+5. FOLLOW THE DEPENDENCY RULE:
+
+Source code dependencies must point inward  
+┌─────────────────────┐  
+│   High-Level        │  
+│   (Business Logic)  │  
+└──────────┬──────────┘  
+│ depends on  
+↓  
+┌──────────────────────┐  
+│    Abstraction       │  
+│    (Interface)       │  
+└──────────┬───────────┘  
+↑ implements  
+│  
+┌──────────┴──────────┐  
+│   Low-Level         │  
+│   (Implementation)  │  
+└─────────────────────┘
+
+6. STABLE VS VOLATILE:
+  - Stable: Doesn't change often (interfaces)
+  - Volatile: Changes frequently (implementations)
+  - Depend on stable abstractions, not volatile details
+
+**🔍 CHECKLIST:**
+
+□ High-level modules depend on abstractions?  
+□ Low-level modules implement abstractions?  
+□ Dependencies injected from outside?  
+□ No 'new' keyword in high-level code?  
+□ Easy to swap implementations?  
+□ Can test with mock objects?
+
+### From `example7_benefits()`
+
+- ✅ BENEFITS OF DIP:
+
+1. FLEXIBILITY:
+  - Easy to swap implementations
+  - Can change low-level details without affecting high-level
+  - Runtime selection of implementations
+
+2. TESTABILITY:
+  - Can inject mock objects for testing
+  - Test high-level logic without dependencies
+  - Isolated unit tests
+
+3. MAINTAINABILITY:
+  - Changes localized to implementations
+  - High-level code stable
+  - Clear separation of concerns
+
+4. REUSABILITY:
+  - High-level modules can be reused
+  - Different implementations for different contexts
+  - Plug-and-play architecture
+
+5. PARALLEL DEVELOPMENT:
+  - Teams can work on interfaces first
+  - Implement high-level and low-level independently
+  - Mock implementations for early testing
+
+- ⚠️  WITHOUT DIP:
+  - Tight coupling between layers
+  - Hard to test
+  - Changes ripple through system
+  - Difficult to swap implementations
+  - High-level depends on low-level details
+
+- 💡 KEY INSIGHT:
+
+"Depend upon abstractions, not concretions.  
+Invert the traditional dependency direction!"
+
+**🎯 REMEMBER:**
+
+  - High-level should not depend on low-level
+  - Both depend on abstractions
+  - Abstractions should not depend on details
+  - Details depend on abstractions
+
+**📊 DIP ACHIEVES:**
+
+- ✅ Loose coupling
+- ✅ High cohesion
+- ✅ Easy testing
+- ✅ Flexible architecture
+- ✅ Open/Closed Principle
+
+**🔄 THE INVERSION:**
+
+Before DIP: High → Low  
+After DIP:  High → Interface ← Low  
+Dependencies now flow through abstraction layer!
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

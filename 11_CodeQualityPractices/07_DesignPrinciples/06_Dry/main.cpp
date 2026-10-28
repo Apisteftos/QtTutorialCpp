@@ -1,10 +1,9 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
 #include <cmath>
 #include <map>
-using namespace std;
+#include <print>
 
 // ============================================
 // DRY PRINCIPLE (Don't Repeat Yourself)
@@ -70,29 +69,29 @@ void processOrder(double amount) {
 
     double total = amount + tax + shipping - discount;
 
-    cout << "   Total: $" << total << endl;
+    std::println("   Total: ${}", total);
 }
 
 void calculateTax(double amount) {
     // 🚨 DUPLICATION: Same 0.1 tax rate!
     double tax = amount * 0.1;
-    cout << "   Tax: $" << tax << endl;
+    std::println("   Tax: ${}", tax);
 }
 
-void validateEmail(const string& email) {
+void validateEmail(const std::string& email) {
     // 🚨 Magic string repeated
-    if (email.find("@") == string::npos) {
-        cout << "   ❌ Invalid email: missing @" << endl;
+    if (email.find("@") == std::string::npos) {
+        std::println("   ❌ Invalid email: missing @");
     }
 }
 
-void sendEmail(const string& email) {
+void sendEmail(const std::string& email) {
     // 🚨 DUPLICATION: Same validation logic!
-    if (email.find("@") == string::npos) {
-        cout << "   ❌ Invalid email: missing @" << endl;
+    if (email.find("@") == std::string::npos) {
+        std::println("   ❌ Invalid email: missing @");
         return;
     }
-    cout << "   📧 Email sent to: " << email << endl;
+    std::println("   📧 Email sent to: {}", email);
 }
 
 // PROBLEMS:
@@ -112,8 +111,8 @@ const double FREE_SHIPPING_THRESHOLD = 100.0;
 const double DISCOUNT_RATE = 0.05;      // 5% discount
 
 // Extracted validation function (single source of truth)
-bool isValidEmail(const string& email) {
-    return email.find("@") != string::npos;
+bool isValidEmail(const std::string& email) {
+    return email.find("@") != std::string::npos;
 }
 
 double calculateTax(double amount) {
@@ -134,63 +133,36 @@ void processOrder(double amount) {
     double discount = calculateDiscount(amount);
     double total = amount + tax + shipping - discount;
 
-    cout << "   Total: $" << total << endl;
+    std::println("   Total: ${}", total);
 }
 
-void validateEmail(const string& email) {
+void validateEmail(const std::string& email) {
     if (!isValidEmail(email)) {  // ✅ Reusing validation
-        cout << "   ❌ Invalid email" << endl;
+        std::println("   ❌ Invalid email");
     }
 }
 
-void sendEmail(const string& email) {
+void sendEmail(const std::string& email) {
     if (!isValidEmail(email)) {  // ✅ Same validation logic
-        cout << "   ❌ Invalid email" << endl;
+        std::println("   ❌ Invalid email");
         return;
     }
-    cout << "   📧 Email sent to: " << email << endl;
+    std::println("   📧 Email sent to: {}", email);
 }
 }
 
 void example1_magic_numbers() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: MAGIC NUMBERS AND STRINGS          ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: MAGIC NUMBERS AND STRINGS          ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Magic Numbers & Duplication):\n";
-    cout << "```cpp\n";
-    cout << "double tax = amount * 0.1;  // What is 0.1?\n";
-    cout << "// Later in another function:\n";
-    cout << "double tax = amount * 0.1;  // 🚨 Duplicated!\n";
-    cout << "```\n";
-
-    cout << "\n🚨 PROBLEMS:\n";
-    cout << "   • Tax rate (0.1) appears multiple times\n";
-    cout << "   • If tax changes, must find/update all occurrences\n";
-    cout << "   • Magic numbers unclear meaning\n";
-    cout << "   • Email validation logic duplicated\n";
-
-    cout << "\n✅ GOOD CODE (Named Constants & Functions):\n";
-    cout << "```cpp\n";
-    cout << "const double TAX_RATE = 0.10;  // Clear meaning\n";
-    cout << "double calculateTax(double amount) {\n";
-    cout << "    return amount * TAX_RATE;  // ✅ Single source\n";
-    cout << "}\n";
-    cout << "```\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    cout << "\n   Processing order with good design:\n";
     good_example1::processOrder(150.0);
 
-    cout << "\n   Validating and sending email:\n";
+    std::println("");
+    std::println("   Validating and sending email:");
     good_example1::sendEmail("user@example.com");
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Change tax rate in ONE place\n";
-    cout << "   • Clear, self-documenting code\n";
-    cout << "   • Email validation reused everywhere\n";
-    cout << "   • Consistent behavior guaranteed\n";
 }
 
 // ============================================
@@ -207,11 +179,11 @@ public:
     Rectangle(double w, double h) : width(w), height(h) {
         // 🚨 Validation logic
         if (width <= 0) {
-            cout << "   ⚠️  Width must be positive, using 1" << endl;
+            std::println("   ⚠️  Width must be positive, using 1");
             width = 1;
         }
         if (height <= 0) {
-            cout << "   ⚠️  Height must be positive, using 1" << endl;
+            std::println("   ⚠️  Height must be positive, using 1");
             height = 1;
         }
     }
@@ -219,7 +191,7 @@ public:
     void setWidth(double w) {
         // 🚨 DUPLICATION: Same validation as constructor!
         if (w <= 0) {
-            cout << "   ⚠️  Width must be positive, using 1" << endl;
+            std::println("   ⚠️  Width must be positive, using 1");
             width = 1;
         } else {
             width = w;
@@ -229,7 +201,7 @@ public:
     void setHeight(double h) {
         // 🚨 DUPLICATION: Same validation as constructor!
         if (h <= 0) {
-            cout << "   ⚠️  Height must be positive, using 1" << endl;
+            std::println("   ⚠️  Height must be positive, using 1");
             height = 1;
         } else {
             height = h;
@@ -244,7 +216,7 @@ public:
     Circle(double r) : radius(r) {
         // 🚨 Similar validation logic (duplicated pattern)
         if (radius <= 0) {
-            cout << "   ⚠️  Radius must be positive, using 1" << endl;
+            std::println("   ⚠️  Radius must be positive, using 1");
             radius = 1;
         }
     }
@@ -252,7 +224,7 @@ public:
     void setRadius(double r) {
         // 🚨 DUPLICATION: Same validation!
         if (r <= 0) {
-            cout << "   ⚠️  Radius must be positive, using 1" << endl;
+            std::println("   ⚠️  Radius must be positive, using 1");
             radius = 1;
         } else {
             radius = r;
@@ -265,9 +237,9 @@ namespace good_example2 {
 // ✅ GOOD: Extracted validation function
 
 // Single source of truth for validation
-double validatePositive(double value, const string& name) {
+double validatePositive(double value, const std::string& name) {
     if (value <= 0) {
-        cout << "   ⚠️  " << name << " must be positive, using 1" << endl;
+        std::println("   ⚠️  {} must be positive, using 1", name);
         return 1.0;
     }
     return value;
@@ -311,35 +283,19 @@ public:
 }
 
 void example2_duplicate_logic() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: DUPLICATE LOGIC                     ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: DUPLICATE LOGIC                     ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   Validation logic repeated in:\n";
-    cout << "   • Rectangle constructor\n";
-    cout << "   • Rectangle::setWidth()\n";
-    cout << "   • Rectangle::setHeight()\n";
-    cout << "   • Circle constructor\n";
-    cout << "   • Circle::setRadius()\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   Single validatePositive() function used everywhere\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    cout << "\n   Creating shapes with validation:\n";
     good_example2::Rectangle rect(-5, 10);
     good_example2::Circle circle(-3);
 
-    cout << "\n   Setting invalid values:\n";
+    std::println("");
+    std::println("   Setting invalid values:");
     rect.setWidth(-2);
     circle.setRadius(-1);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Change validation logic in ONE place\n";
-    cout << "   • Consistent validation everywhere\n";
-    cout << "   • Less code to maintain\n";
 }
 
 // ============================================
@@ -349,45 +305,35 @@ void example2_duplicate_logic() {
 namespace bad_example3 {
 // ❌ BAD: Copy-pasted report generation
 
-void generateUserReport(const vector<string>& users) {
-    cout << "\n   ╔═══════════════════╗" << endl;
-    cout << "   ║   USER REPORT     ║" << endl;
-    cout << "   ╚═══════════════════╝" << endl;
-
+void generateUserReport(const std::vector<std::string>& users) {
     for (const auto& user : users) {
-        cout << "   • " << user << endl;
+        std::println("   • {}", user);
     }
 
-    cout << "   Total: " << users.size() << " users" << endl;
-    cout << "   ───────────────────" << endl;
+    std::println("   Total: {} users", users.size());
+    std::println("   ───────────────────");
 }
 
-void generateProductReport(const vector<string>& products) {
+void generateProductReport(const std::vector<std::string>& products) {
     // 🚨 DUPLICATION: Almost identical to generateUserReport!
-    cout << "\n   ╔═══════════════════╗" << endl;
-    cout << "   ║  PRODUCT REPORT   ║" << endl;
-    cout << "   ╚═══════════════════╝" << endl;
-
+    std::println("");
     for (const auto& product : products) {
-        cout << "   • " << product << endl;
+        std::println("   • {}", product);
     }
 
-    cout << "   Total: " << products.size() << " products" << endl;
-    cout << "   ───────────────────" << endl;
+    std::println("   Total: {} products", products.size());
+    std::println("   ───────────────────");
 }
 
-void generateOrderReport(const vector<string>& orders) {
+void generateOrderReport(const std::vector<std::string>& orders) {
     // 🚨 DUPLICATION: Same structure again!
-    cout << "\n   ╔═══════════════════╗" << endl;
-    cout << "   ║   ORDER REPORT    ║" << endl;
-    cout << "   ╚═══════════════════╝" << endl;
-
+    std::println("");
     for (const auto& order : orders) {
-        cout << "   • " << order << endl;
+        std::println("   • {}", order);
     }
 
-    cout << "   Total: " << orders.size() << " orders" << endl;
-    cout << "   ───────────────────" << endl;
+    std::println("   Total: {} orders", orders.size());
+    std::println("   ───────────────────");
 }
 
 // If we want to change report format, must update 3 functions!
@@ -396,61 +342,49 @@ void generateOrderReport(const vector<string>& orders) {
 namespace good_example3 {
 // ✅ GOOD: Generic report generator (DRY)
 
-void generateReport(const string& title,
-                    const vector<string>& items,
-                    const string& itemType) {
-    cout << "\n   ╔═══════════════════╗" << endl;
-    cout << "   ║   " << title << "   ║" << endl;
-    cout << "   ╚═══════════════════╝" << endl;
+void generateReport(const std::string& title,
+                    const std::vector<std::string>& items,
+                    const std::string& itemType) {
+    std::println("");
+    std::println("   ╔═══════════════════╗");
+    std::println("   ║   {}   ║", title);
+    std::println("   ╚═══════════════════╝");
 
     for (const auto& item : items) {
-        cout << "   • " << item << endl;
+        std::println("   • {}", item);
     }
 
-    cout << "   Total: " << items.size() << " " << itemType << endl;
-    cout << "   ───────────────────" << endl;
+    std::println("   Total: {} {}", items.size(), itemType);
+    std::println("   ───────────────────");
 }
 
-void generateUserReport(const vector<string>& users) {
+void generateUserReport(const std::vector<std::string>& users) {
     generateReport("USER REPORT", users, "users");
 }
 
-void generateProductReport(const vector<string>& products) {
+void generateProductReport(const std::vector<std::string>& products) {
     generateReport("PRODUCT REPORT", products, "products");
 }
 
-void generateOrderReport(const vector<string>& orders) {
+void generateOrderReport(const std::vector<std::string>& orders) {
     generateReport("ORDER REPORT", orders, "orders");
 }
 }
 
 void example3_copy_paste() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: COPY-PASTE PROGRAMMING              ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: COPY-PASTE PROGRAMMING              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   Three nearly identical report functions\n";
-    cout << "   To change format: update 3 functions!\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   One generic generateReport() function\n";
-    cout << "   To change format: update 1 function!\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    vector<string> users = {"Alice", "Bob", "Charlie"};
-    vector<string> products = {"Laptop", "Mouse", "Keyboard"};
-    vector<string> orders = {"Order #1", "Order #2"};
+    std::vector<std::string> users = {"Alice", "Bob", "Charlie"};
+    std::vector<std::string> products = {"Laptop", "Mouse", "Keyboard"};
+    std::vector<std::string> orders = {"Order #1", "Order #2"};
 
     good_example3::generateUserReport(users);
     good_example3::generateProductReport(products);
     good_example3::generateOrderReport(orders);
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Change report format in ONE place\n";
-    cout << "   • 70% less code\n";
-    cout << "   • Easier to maintain and extend\n";
 }
 
 // ============================================
@@ -502,32 +436,22 @@ double calculateSphereSurface(double radius) {
 }
 
 void example4_structural() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: STRUCTURAL DUPLICATION              ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   PI value (3.14159) hardcoded in every function\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   const double PI = 3.14159265359;\n";
-    cout << "   Used everywhere, defined once\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: STRUCTURAL DUPLICATION              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     double radius = 5.0;
-    cout << "\n   Circle (radius " << radius << "):\n";
-    cout << "   Area: " << good_example4::calculateCircleArea(radius) << endl;
-    cout << "   Perimeter: " << good_example4::calculateCirclePerimeter(radius) << endl;
+    std::println("");
+    std::println("   Circle (radius {}):", radius);
+    std::println("   Area: {}", good_example4::calculateCircleArea(radius));
+    std::println("   Perimeter: {}", good_example4::calculateCirclePerimeter(radius));
 
-    cout << "\n   Sphere (radius " << radius << "):\n";
-    cout << "   Volume: " << good_example4::calculateSphereVolume(radius) << endl;
-    cout << "   Surface: " << good_example4::calculateSphereSurface(radius) << endl;
+    std::println("");
+    std::println("   Sphere (radius {}):", radius);
+    std::println("   Volume: {}", good_example4::calculateSphereVolume(radius));
+    std::println("   Surface: {}", good_example4::calculateSphereSurface(radius));
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Need more precision? Change ONE constant\n";
-    cout << "   • Consistent value everywhere\n";
-    cout << "   • Self-documenting code\n";
 }
 
 // ============================================
@@ -537,7 +461,7 @@ void example4_structural() {
 namespace bad_example5 {
 // ❌ BAD: Same algorithm, different data types
 
-int findMaxInt(const vector<int>& numbers) {
+int findMaxInt(const std::vector<int>& numbers) {
     int max = numbers[0];
     for (int num : numbers) {
         if (num > max) {
@@ -547,7 +471,7 @@ int findMaxInt(const vector<int>& numbers) {
     return max;
 }
 
-double findMaxDouble(const vector<double>& numbers) {
+double findMaxDouble(const std::vector<double>& numbers) {
     // 🚨 DUPLICATION: Same algorithm!
     double max = numbers[0];
     for (double num : numbers) {
@@ -558,10 +482,10 @@ double findMaxDouble(const vector<double>& numbers) {
     return max;
 }
 
-string findMaxString(const vector<string>& strings) {
+std::string findMaxString(const std::vector<std::string>& strings) {
     // 🚨 DUPLICATION: Same algorithm!
-    string max = strings[0];
-    for (const string& str : strings) {
+    std::string max = strings[0];
+    for (const std::string& str : strings) {
         if (str > max) {
             max = str;
         }
@@ -574,9 +498,9 @@ namespace good_example5 {
 // ✅ GOOD: Generic template function
 
 template<typename T>
-T findMax(const vector<T>& items) {
+T findMax(const std::vector<T>& items) {
     if (items.empty()) {
-        throw runtime_error("Empty vector");
+        throw std::runtime_error("Empty vector");
     }
 
     T max = items[0];
@@ -590,32 +514,20 @@ T findMax(const vector<T>& items) {
 }
 
 void example5_algorithm() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: ALGORITHM DUPLICATION               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: ALGORITHM DUPLICATION               ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   Three functions: findMaxInt, findMaxDouble, findMaxString\n";
-    cout << "   Same algorithm, different types\n";
+    std::vector<int> numbers = {5, 2, 9, 1, 7};
+    std::vector<double> decimals = {3.14, 2.71, 9.81, 1.41};
+    std::vector<std::string> words = {"apple", "zebra", "banana"};
 
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   One template function: findMax<T>\n";
-    cout << "   Works with any comparable type\n";
+    std::println("");
+    std::println("   Max int: {}", good_example5::findMax(numbers));
+    std::println("   Max double: {}", good_example5::findMax(decimals));
+    std::println("   Max string: {}", good_example5::findMax(words));
 
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    vector<int> numbers = {5, 2, 9, 1, 7};
-    vector<double> decimals = {3.14, 2.71, 9.81, 1.41};
-    vector<string> words = {"apple", "zebra", "banana"};
-
-    cout << "\n   Max int: " << good_example5::findMax(numbers) << endl;
-    cout << "   Max double: " << good_example5::findMax(decimals) << endl;
-    cout << "   Max string: " << good_example5::findMax(words) << endl;
-
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • One function for all types\n";
-    cout << "   • Fix bug once, fixed for all types\n";
-    cout << "   • Less code to maintain\n";
 }
 
 // ============================================
@@ -627,23 +539,23 @@ namespace bad_example6 {
 
 // Two functions that LOOK similar but have different purposes
 void processUserData(int data) {
-    cout << "   👤 Processing user data: " << data << endl;
+    std::println("   👤 Processing user data: {}", data);
     // User-specific logic here
 }
 
 void processProductData(int data) {
-    cout << "   📦 Processing product data: " << data << endl;
+    std::println("   📦 Processing product data: {}", data);
     // Product-specific logic here
 }
 
 // Someone sees "duplication" and creates this:
-void processData(int data, const string& type) {
+void processData(int data, const std::string& type) {
     // 🚨 PROBLEM: Forcing unrelated concepts together!
     if (type == "user") {
-        cout << "   👤 Processing user data: " << data << endl;
+        std::println("   👤 Processing user data: {}", data);
         // User logic
     } else if (type == "product") {
-        cout << "   📦 Processing product data: " << data << endl;
+        std::println("   📦 Processing product data: {}", data);
         // Product logic
     }
     // Now when user processing changes, this function changes too!
@@ -655,13 +567,13 @@ namespace good_example6 {
 // ✅ GOOD: Keep separate if they represent different concepts
 
 void processUserData(int userId) {
-    cout << "   👤 Processing user #" << userId << endl;
+    std::println("   👤 Processing user #{}", userId);
     // User-specific business logic
     // This will evolve independently from products
 }
 
 void processProductData(int productId) {
-    cout << "   📦 Processing product #" << productId << endl;
+    std::println("   📦 Processing product #{}", productId);
     // Product-specific business logic
     // This will evolve independently from users
 }
@@ -670,33 +582,10 @@ void processProductData(int productId) {
 }
 
 void example6_false_abstraction() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: WHEN NOT TO DRY                     ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n⚠️  WARNING: Don't Force DRY!\n";
-
-    cout << "\n❌ BAD (Over-abstraction):\n";
-    cout << "   Combining user and product processing\n";
-    cout << "   Just because they LOOK similar\n";
-    cout << "   Different concepts forced together\n";
-
-    cout << "\n✅ GOOD (Separate Concerns):\n";
-    cout << "   Keep them separate\n";
-    cout << "   They represent different business concepts\n";
-    cout << "   They will evolve differently\n";
-
-    cout << "\n💡 RULE OF THUMB:\n";
-    cout << "   • Same KNOWLEDGE → DRY (extract)\n";
-    cout << "   • Same CODE, different PURPOSE → Keep separate\n";
-    cout << "   • Coincidental similarity → Don't abstract yet\n";
-
-    cout << "\n📝 THREE STRIKES RULE:\n";
-    cout << "   1st time: Write it\n";
-    cout << "   2nd time: Copy it (wince)\n";
-    cout << "   3rd time: Abstract it (DRY)\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: WHEN NOT TO DRY                     ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example6::processUserData(123);
     good_example6::processProductData(456);
@@ -710,18 +599,18 @@ namespace bad_example7 {
 // ❌ BAD: Database connection strings everywhere
 
 void connectToDatabase() {
-    string connection = "localhost:5432/mydb";  // 🚨
-    cout << "   🔌 Connecting to: " << connection << endl;
+    std::string connection = "localhost:5432/mydb";  // 🚨
+    std::println("   🔌 Connecting to: {}", connection);
 }
 
 void backupDatabase() {
-    string connection = "localhost:5432/mydb";  // 🚨 Duplicated!
-    cout << "   💾 Backing up: " << connection << endl;
+    std::string connection = "localhost:5432/mydb";  // 🚨 Duplicated!
+    std::println("   💾 Backing up: {}", connection);
 }
 
 void restoreDatabase() {
-    string connection = "localhost:5432/mydb";  // 🚨 Duplicated!
-    cout << "   ♻️  Restoring: " << connection << endl;
+    std::string connection = "localhost:5432/mydb";  // 🚨 Duplicated!
+    std::println("   ♻️  Restoring: {}", connection);
 }
 }
 
@@ -730,55 +619,42 @@ namespace good_example7 {
 
 class Config {
 public:
-    static const string DB_HOST;
+    static const std::string DB_HOST;
     static const int DB_PORT;
-    static const string DB_NAME;
+    static const std::string DB_NAME;
 
-    static string getConnectionString() {
-        return DB_HOST + ":" + to_string(DB_PORT) + "/" + DB_NAME;
+    static std::string getConnectionString() {
+        return DB_HOST + ":" + std::to_string(DB_PORT) + "/" + DB_NAME;
     }
 };
 
-const string Config::DB_HOST = "localhost";
+const std::string Config::DB_HOST = "localhost";
 const int Config::DB_PORT = 5432;
-const string Config::DB_NAME = "mydb";
+const std::string Config::DB_NAME = "mydb";
 
 void connectToDatabase() {
-    cout << "   🔌 Connecting to: " << Config::getConnectionString() << endl;
+    std::println("   🔌 Connecting to: {}", Config::getConnectionString());
 }
 
 void backupDatabase() {
-    cout << "   💾 Backing up: " << Config::getConnectionString() << endl;
+    std::println("   💾 Backing up: {}", Config::getConnectionString());
 }
 
 void restoreDatabase() {
-    cout << "   ♻️  Restoring: " << Config::getConnectionString() << endl;
+    std::println("   ♻️  Restoring: {}", Config::getConnectionString());
 }
 }
 
 void example7_configuration() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: DRY WITH CONFIGURATION              ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   Connection string hardcoded in 3 functions\n";
-    cout << "   Change database? Update 3 places!\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   Configuration class with constants\n";
-    cout << "   Change database? Update 1 place!\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: DRY WITH CONFIGURATION              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example7::connectToDatabase();
     good_example7::backupDatabase();
     good_example7::restoreDatabase();
 
-    cout << "\n✨ BENEFITS:\n";
-    cout << "   • Single source of truth for config\n";
-    cout << "   • Easy to switch environments\n";
-    cout << "   • Can load from config file\n";
 }
 
 // ============================================
@@ -786,58 +662,11 @@ void example7_configuration() {
 // ============================================
 
 void example8_how_to_apply() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: HOW TO APPLY DRY                    ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: HOW TO APPLY DRY                    ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n✅ STRATEGIES TO APPLY DRY:\n";
-
-    cout << "\n1. EXTRACT FUNCTIONS:\n";
-    cout << "   ❌ Copy-pasted code blocks\n";
-    cout << "   ✅ Extract to reusable function\n";
-
-    cout << "\n2. USE CONSTANTS:\n";
-    cout << "   ❌ Magic numbers: 3.14159, 0.1, 100\n";
-    cout << "   ✅ Named constants: PI, TAX_RATE, MAX_SIZE\n";
-
-    cout << "\n3. EXTRACT CONFIGURATION:\n";
-    cout << "   ❌ Hardcoded URLs, connection strings\n";
-    cout << "   ✅ Config class or config file\n";
-
-    cout << "\n4. USE TEMPLATES:\n";
-    cout << "   ❌ findMaxInt(), findMaxDouble(), findMaxString()\n";
-    cout << "   ✅ template<T> findMax()\n";
-
-    cout << "\n5. CREATE BASE CLASSES:\n";
-    cout << "   ❌ Duplicate methods in multiple classes\n";
-    cout << "   ✅ Common functionality in base class\n";
-
-    cout << "\n6. EXTRACT VALIDATION:\n";
-    cout << "   ❌ Same validation in multiple places\n";
-    cout << "   ✅ Validator class or validation functions\n";
-
-    cout << "\n🔍 DETECTION CHECKLIST:\n";
-    cout << "   □ Same code in multiple places?\n";
-    cout << "   □ Magic numbers/strings repeated?\n";
-    cout << "   □ Similar functions with slight variations?\n";
-    cout << "   □ Copy-paste history in version control?\n";
-    cout << "   □ Multiple places to update for one change?\n";
-
-    cout << "\n⚖️  BALANCE DRY WITH:\n";
-    cout << "   • Readability - Don't over-abstract\n";
-    cout << "   • Simplicity - Don't create complex abstractions\n";
-    cout << "   • Performance - Sometimes duplication is faster\n";
-    cout << "   • Different concepts - Don't force unrelated code together\n";
-
-    cout << "\n📏 RULE: Apply DRY when you have:\n";
-    cout << "   • Same KNOWLEDGE (business rule, algorithm)\n";
-    cout << "   • Same LOGIC (validation, calculation)\n";
-    cout << "   • Same CONFIGURATION (constants, settings)\n";
-
-    cout << "\n📏 DON'T Apply DRY when you have:\n";
-    cout << "   • Coincidental similarity (looks same, different purpose)\n";
-    cout << "   • Different concepts (will evolve separately)\n";
-    cout << "   • Only seen twice (wait for third occurrence)\n";
 }
 
 // ============================================
@@ -845,66 +674,12 @@ void example8_how_to_apply() {
 // ============================================
 
 void example9_benefits() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 9: BENEFITS & SUMMARY                  ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 9: BENEFITS & SUMMARY                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n✅ BENEFITS OF DRY:\n";
-
-    cout << "\n1. EASIER MAINTENANCE:\n";
-    cout << "   • Change in one place\n";
-    cout << "   • No hunting for duplicates\n";
-    cout << "   • Less chance of missing updates\n";
-
-    cout << "\n2. FEWER BUGS:\n";
-    cout << "   • Fix once, fixed everywhere\n";
-    cout << "   • Consistent behavior\n";
-    cout << "   • Single source of truth\n";
-
-    cout << "\n3. BETTER READABILITY:\n";
-    cout << "   • Named constants explain meaning\n";
-    cout << "   • Functions document intent\n";
-    cout << "   • Less code to read\n";
-
-    cout << "\n4. REDUCED CODE SIZE:\n";
-    cout << "   • 30-70% less code\n";
-    cout << "   • Smaller codebase\n";
-    cout << "   • Faster compilation\n";
-
-    cout << "\n5. CONSISTENT BEHAVIOR:\n";
-    cout << "   • Same logic everywhere\n";
-    cout << "   • No subtle differences\n";
-    cout << "   • Predictable system\n";
-
-    cout << "\n⚠️  WITHOUT DRY (WET Code):\n";
-    cout << "   • Changes require multiple updates\n";
-    cout << "   • Easy to miss locations\n";
-    cout << "   • Inconsistent behavior\n";
-    cout << "   • More bugs\n";
-    cout << "   • Harder to maintain\n";
-
-    cout << "\n💡 KEY INSIGHT:\n";
-    cout << "   \"Every piece of knowledge should have a single,\n";
-    cout << "    unambiguous, authoritative representation.\"\n";
-
-    cout << "\n🎯 REMEMBER:\n";
-    cout << "   • Don't repeat yourself\n";
-    cout << "   • Extract common patterns\n";
-    cout << "   • Single source of truth\n";
-    cout << "   • But don't over-abstract!\n";
-
-    cout << "\n📊 DRY METRICS:\n";
-    cout << "   • Code duplication < 5%\n";
-    cout << "   • Magic numbers = 0\n";
-    cout << "   • Copy-paste commits = 0\n";
-    cout << "   • Configuration centralized\n";
-
-    cout << "\n🔄 DRY vs WET:\n";
-    cout << "   DRY: Don't Repeat Yourself\n";
-    cout << "   WET: Write Everything Twice\n";
-    cout << "   AHA: Avoid Hasty Abstractions\n";
-    cout << "   \n";
-    cout << "   Balance: DRY when useful, AHA when uncertain!\n";
+    std::println("   ");
 }
 
 // ============================================
@@ -912,15 +687,15 @@ void example9_benefits() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║             DRY PRINCIPLE (Don't Repeat Yourself)     ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Every piece of knowledge must have a single,        ║\n";
-    cout << "║   unambiguous, authoritative representation           ║\n";
-    cout << "║   within a system.\"                                  ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║             DRY PRINCIPLE (Don't Repeat Yourself)     ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Every piece of knowledge must have a single,       ║");
+    std::println("║   unambiguous, authoritative representation           ║");
+    std::println("║   within a system.\"                                  ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_magic_numbers();
     example2_duplicate_logic();
@@ -931,17 +706,6 @@ int main() {
     example7_configuration();
     example8_how_to_apply();
     example9_benefits();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║           🎉 DRY PRINCIPLE COMPLETE! 🎉               ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Don't repeat yourself! Extract common  ║\n";
-    cout << "║  patterns, use constants, and maintain a single       ║\n";
-    cout << "║  source of truth. But don't over-abstract!           ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

@@ -327,27 +327,22 @@ g++ -std=c++20 -Wall -Wextra filename.cpp -o output
 
 2. **Online Resources**:
    - CppReference: Ranges library
-   - think-cell blog posts on functional C++
    - Eric Niebler's Range-v3 library
 
 3. **Conference Talks**:
    - "Functional Programming in C++" - Various CppCon talks
    - "C++20 Ranges in Practice"
 
-## 🎯 think-cell Connection
+## 🎯 Style Summary
 
-think-cell heavily uses functional programming:
+Prefer generic algorithms and ranges over hand-written loops:
 
-> "We prefer functional-style generic algorithms and ranges over imperative programming."
-
-They:
 - Use ranges extensively
 - Prefer pure functions
 - Value composition over complexity
-- Built their own range library (beyond Boost.Range)
 - Focus on zero-cost abstractions
 
-**Their Philosophy**: Write code that reads like what it does, not how it does it.
+**Rule of thumb**: write code that reads like what it does, not how it does it.
 
 ## 🚀 Practice Exercises
 

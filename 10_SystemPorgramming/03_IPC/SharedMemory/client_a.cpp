@@ -1,13 +1,13 @@
-#include <iostream>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <cstring>
+#include <print>
 #include "shared_data.h"
 
 int main() {
-    std::cout << "=== Client A (Writer) ===\n";
+    std::println("=== Client A (Writer) ===");
 
     // 1. Create shared memory
     int fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
@@ -33,7 +33,7 @@ int main() {
         snprintf(data->message, sizeof(data->message),
                  "Message #%d from Client A", counter);
 
-        std::cout << "A wrote: " << data->message << "\n";
+        std::println("A wrote: {}", data->message);
 
         sem_post(sem);  // unlock
 
@@ -50,6 +50,6 @@ int main() {
     sem_close(sem);
     sem_unlink(SEM_NAME);
 
-    std::cout << "A finished and cleaned up.\n";
+    std::println("A finished and cleaned up.");
     return 0;
 }

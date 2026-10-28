@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <syncstream>
+#include <print>
 
 using namespace std::chrono_literals;
 
@@ -32,7 +33,7 @@ std::mutex g_coutMutex;
 void safePrint(const std::string& msg)
 {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 
@@ -142,9 +143,9 @@ void starvingThread()
 // ============================================================
 void garbledPrint(int id)
 {
-    std::cout << "[thread " << id << "] ";
+    std::print("[thread {}] ", id);
     std::this_thread::sleep_for(1ms);
-    std::cout << "line " << id << '\n';
+    std::println("line {}", id);
 }
 
 void syncedPrint(int id)
@@ -212,49 +213,46 @@ void correctInit()
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Issue 1: Race Condition\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Issue 1: Race Condition");
+    std::println("=====================================================");
 
     g_racyCounter = 0; g_safeCounter = 0; g_atomicCounter = 0;
 
     std::thread r1(racyIncrement, 100000);
     std::thread r2(racyIncrement, 100000);
     r1.join(); r2.join();
-    std::cout << "Racy:   expected=200000 actual=" << g_racyCounter << " (may differ)\n";
+    std::println("Racy:   expected=200000 actual={} (may differ)", g_racyCounter);
 
     std::thread s1(safeIncrement, 100000);
     std::thread s2(safeIncrement, 100000);
     s1.join(); s2.join();
-    std::cout << "Mutex:  expected=200000 actual=" << g_safeCounter << " (always correct)\n";
+    std::println("Mutex:  expected=200000 actual={} (always correct)", g_safeCounter);
 
     std::thread a1(atomicIncrement, 100000);
     std::thread a2(atomicIncrement, 100000);
     a1.join(); a2.join();
-    std::cout << "Atomic: expected=200000 actual=" << g_atomicCounter << " (always correct)\n";
+    std::println("Atomic: expected=200000 actual={} (always correct)", g_atomicCounter.load());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 2: Deadlock\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "Deadlock scenario (NOT executed — would hang):\n";
-    std::cout << "  T1: lock(A) -> sleep -> lock(B)  <- waits forever\n";
-    std::cout << "  T2: lock(B) -> sleep -> lock(A)  <- waits forever\n";
-    std::cout << "Fix: scoped_lock acquires both atomically:\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 2: Deadlock");
+    std::println("=====================================================");
     std::thread d1(deadlock_fixed);
     std::thread d2(deadlock_fixed);
     d1.join(); d2.join();
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 3: Livelock\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 3: Livelock");
+    std::println("=====================================================");
 
-    std::cout << "Livelock: threads keep yielding — no progress\n";
-    std::cout << "Fix: randomized backoff before retrying\n";
+    std::println("Livelock: threads keep yielding — no progress");
+    std::println("Fix: randomized backoff before retrying");
     g_resourceAvailable = true;
     std::thread ll1(livelockThread, 1, 10);
     std::thread ll2(livelockThread, 2, 10);
@@ -262,9 +260,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 4: Starvation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 4: Starvation");
+    std::println("=====================================================");
 
     std::thread greedy1(greedyThread, 1);
     std::thread greedy2(greedyThread, 2);
@@ -273,15 +272,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 5: Dangling reference in lambda capture\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "DANGEROUS (shown, not executed):\n";
-    std::cout << "  int local = 42;\n";
-    std::cout << "  std::thread t([&local]() { use(local); });\n";
-    std::cout << "  t.detach();  // local destroyed when function returns!\n";
-    std::cout << "Fix: capture by VALUE — thread owns its own copy\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 5: Dangling reference in lambda capture");
+    std::println("=====================================================");
 
     {
         int local = 42;
@@ -293,14 +287,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 6: Forgetting join/detach\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "CRASH (shown, not executed):\n";
-    std::cout << "  { std::thread t(func); }\n";
-    std::cout << "  // t is joinable at destruction -> std::terminate()\n";
-    std::cout << "Fix: use std::jthread (auto-joins)\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 6: Forgetting join/detach");
+    std::println("=====================================================");
     {
         std::jthread jt([]() {
             safePrint("[jthread] auto-joined on scope exit");
@@ -309,11 +299,12 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 7: Garbled cout output\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 7: Garbled cout output");
+    std::println("=====================================================");
 
-    std::cout << "--- Without sync (may be garbled) ---\n";
+    std::println("--- Without sync (may be garbled) ---");
     {
         std::vector<std::thread> garbled;
         for (int i = 1; i <= 4; ++i)
@@ -321,7 +312,7 @@ int main()
         for (auto& t : garbled) t.join();
     }
 
-    std::cout << "--- With osyncstream (always clean) ---\n";
+    std::println("--- With osyncstream (always clean) ---");
     {
         std::vector<std::thread> synced;
         for (int i = 1; i <= 4; ++i)
@@ -331,9 +322,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 8: pass by value vs reference in thread\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 8: pass by value vs reference in thread");
+    std::println("=====================================================");
 
     // std::thread copies all arguments by default.
     // To demonstrate "no ref" vs "with ref" we use lambdas:
@@ -346,7 +338,7 @@ int main()
         safePrint("[by value] inside thread val = " + std::to_string(val));
     });
     t1.join();
-    std::cout << "After by-value thread: val = " << val << " (unchanged — 0)\n";
+    std::println("After by-value thread: val = {} (unchanged — 0)", val);
 
     // Lambda captures by REFERENCE — original changed
     std::thread t2([&val]() {
@@ -354,34 +346,34 @@ int main()
         safePrint("[by ref] inside thread val = " + std::to_string(val));
     });
     t2.join();
-    std::cout << "After by-ref thread:   val = " << val << " (changed — 999)\n";
+    std::println("After by-ref thread:   val = {} (changed — 999)", val);
 
     // For free functions taking references, use std::ref:
     // void modify(int& n) { n = 42; }
     // std::thread t(modify, std::ref(val));  // std::ref required!
-    std::cout << "For free functions: std::thread t(modify, std::ref(val))\n";
+    std::println("For free functions: std::thread t(modify, std::ref(val))");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 9: Use-after-move on thread\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 9: Use-after-move on thread");
+    std::println("=====================================================");
 
     std::thread moved([]() { safePrint("[moved thread] running"); });
     std::thread owner = std::move(moved);
 
-    std::cout << "moved.joinable()  = " << moved.joinable()
-              << " (false — empty after move)\n";
-    std::cout << "owner.joinable()  = " << owner.joinable()
-              << " (true — owns the thread)\n";
+    std::println("moved.joinable()  = {} (false — empty after move)", moved.joinable());
+    std::println("owner.joinable()  = {} (true — owns the thread)", owner.joinable());
     // moved.join();   // CRASH — moved is empty
     owner.join();      // correct
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 10: Accessing destroyed object from detached thread\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 10: Accessing destroyed object from detached thread");
+    std::println("=====================================================");
 
     {
         ResourceOwner ro;
@@ -390,13 +382,14 @@ int main()
     }   // ro destroyed — safe thread holds shared_ptr copy
 
     std::this_thread::sleep_for(150ms);
-    std::cout << "[main] safe thread used shared_ptr — no crash\n";
+    std::println("[main] safe thread used shared_ptr — no crash");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 11: False sharing\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 11: False sharing");
+    std::println("=====================================================");
 
     // Bad: a and b may share a cache line
     BadCounters bad;
@@ -407,7 +400,7 @@ int main()
         ba.join(); bb.join();
         double ms = std::chrono::duration<double,std::milli>(
                         std::chrono::high_resolution_clock::now()-t1s).count();
-        std::cout << "False sharing:  " << ms << " ms\n";
+        std::println("False sharing:  {} ms", ms);
     }
 
     // Good: each counter on its own cache line
@@ -419,24 +412,26 @@ int main()
         ga.join(); gb.join();
         double ms = std::chrono::duration<double,std::milli>(
                         std::chrono::high_resolution_clock::now()-t2s).count();
-        std::cout << "Cache aligned:  " << ms << " ms\n";
+        std::println("Cache aligned:  {} ms", ms);
     }
-    std::cout << "(aligned is typically faster — no cache line invalidation)\n";
+    std::println("(aligned is typically faster — no cache line invalidation)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Issue 12: Double-checked locking — use call_once\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Issue 12: Double-checked locking — use call_once");
+    std::println("=====================================================");
 
     std::vector<std::thread> initThreads;
     for (int i = 0; i < 5; ++i)
         initThreads.emplace_back(correctInit);
     for (auto& t : initThreads) t.join();
-    std::cout << "call_once guarantees exactly one initialization\n";
+    std::println("call_once guarantees exactly one initialization");
     delete g_singleton;
 
 
-    std::cout << "\n=== CommonThreadIssues complete ===\n";
+    std::println("");
+    std::println("=== CommonThreadIssues complete ===");
     return 0;
 }

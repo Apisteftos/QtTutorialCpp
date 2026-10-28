@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -10,8 +9,7 @@
 #include <random>
 #include <iomanip>
 #include <unordered_set>
-using namespace std;
-using namespace chrono;
+#include <print>
 
 // ============================================
 // CODE COMPLEXITY AND BIG O NOTATION
@@ -59,22 +57,21 @@ GROWTH RATES (n=1000):
 // Timing utility
 class Timer {
 private:
-    high_resolution_clock::time_point start_time;
+    std::chrono::high_resolution_clock::time_point start_time;
 
 public:
     void start() {
-        start_time = high_resolution_clock::now();
+        start_time = std::chrono::high_resolution_clock::now();
     }
 
     double elapsed_ms() {
-        auto end_time = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(end_time - start_time);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         return duration.count() / 1000.0;
     }
 
-    void print_elapsed(const string& label) {
-        cout << "   ⏱️  " << label << ": " << fixed << setprecision(3)
-             << elapsed_ms() << " ms" << endl;
+    void print_elapsed(const std::string& label) {
+        std::println("   ⏱️  {}: {:.3f} ms", label, elapsed_ms());
     }
 };
 
@@ -85,17 +82,17 @@ public:
 namespace constant_time {
 // ✅ GOOD: O(1) - Always same time regardless of input size
 
-int getFirstElement(const vector<int>& arr) {
+int getFirstElement(const std::vector<int>& arr) {
     // Array access is O(1)
     return arr[0];
 }
 
-void insertAtEnd(vector<int>& arr, int value) {
+void insertAtEnd(std::vector<int>& arr, int value) {
     // Vector push_back is amortized O(1)
     arr.push_back(value);
 }
 
-int getHashMapValue(const unordered_map<int, int>& map, int key) {
+int getHashMapValue(const std::unordered_map<int, int>& map, int key) {
     // Hash map lookup is average O(1)
     auto it = map.find(key);
     return (it != map.end()) ? it->second : -1;
@@ -108,27 +105,18 @@ int calculateSum(int a, int b) {
 }
 
 void example1_constant_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: O(1) - CONSTANT TIME               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: O(1) - CONSTANT TIME                ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(1)\n";
-    cout << "   Time stays constant regardless of input size\n";
-
-    cout << "\n✅ EXAMPLES:\n";
-    cout << "   • Array access: arr[i]\n";
-    cout << "   • Hash table lookup\n";
-    cout << "   • Push/pop from stack\n";
-    cout << "   • Arithmetic operations\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
     // Test with different sizes - time should be similar
-    vector<int> sizes = {1000, 10000, 100000, 1000000};
+    std::vector<int> sizes = {1000, 10000, 100000, 1000000};
 
     for (int size : sizes) {
-        vector<int> arr(size);
+        std::vector<int> arr(size);
         for (int i = 0; i < size; i++) arr[i] = i;
 
         timer.start();
@@ -136,13 +124,9 @@ void example1_constant_time() {
         int first = constant_time::getFirstElement(arr);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(7) << size << " → " << fixed << setprecision(6)
-             << time << " ms (constant!)" << endl;
+        std::println("   n={:>7} → {:.6f} ms (constant!)", size, time);
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   Time remains ~constant regardless of size!\n";
-    cout << "   This is O(1) - the best complexity possible.\n";
 }
 
 // ============================================
@@ -152,7 +136,7 @@ void example1_constant_time() {
 namespace logarithmic_time {
 // ✅ GOOD: O(log n) - Binary search
 
-int binarySearch(const vector<int>& arr, int target) {
+int binarySearch(const std::vector<int>& arr, int target) {
     int left = 0;
     int right = arr.size() - 1;
 
@@ -178,27 +162,18 @@ int treeHeight(int nodes) {
 }
 
 void example2_logarithmic_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: O(log n) - LOGARITHMIC TIME        ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: O(log n) - LOGARITHMIC TIME         ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(log n)\n";
-    cout << "   Time grows logarithmically with input size\n";
-    cout << "   Each step cuts problem size in half\n";
-
-    cout << "\n✅ EXAMPLES:\n";
-    cout << "   • Binary search\n";
-    cout << "   • Balanced tree operations\n";
-    cout << "   • Finding power (x^n with binary exponentiation)\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
-    vector<int> sizes = {1000, 10000, 100000, 1000000, 10000000};
+    std::vector<int> sizes = {1000, 10000, 100000, 1000000, 10000000};
 
     for (int size : sizes) {
         // Create sorted array
-        vector<int> arr(size);
+        std::vector<int> arr(size);
         for (int i = 0; i < size; i++) arr[i] = i;
 
         timer.start();
@@ -206,13 +181,9 @@ void example2_logarithmic_time() {
         int result = logarithmic_time::binarySearch(arr, size - 1);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(8) << size << " → " << fixed << setprecision(6)
-             << time << " ms (log n ≈ " << (int)log2(size) << " steps)" << endl;
+        std::println("   n={:>8} → {:.6f} ms (log n ≈ {} steps)", size, time, (int)log2(size));
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   10x increase in size → only ~3.3x increase in time\n";
-    cout << "   Even 1,000,000 elements → only ~20 comparisons!\n";
 }
 
 // ============================================
@@ -222,7 +193,7 @@ void example2_logarithmic_time() {
 namespace linear_time {
 // ✅ GOOD: O(n) - Single pass through array
 
-int findMax(const vector<int>& arr) {
+int findMax(const std::vector<int>& arr) {
     if (arr.empty()) return 0;
 
     int max_val = arr[0];
@@ -234,7 +205,7 @@ int findMax(const vector<int>& arr) {
     return max_val;
 }
 
-int sumArray(const vector<int>& arr) {
+int sumArray(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         sum += val;
@@ -242,7 +213,7 @@ int sumArray(const vector<int>& arr) {
     return sum;
 }
 
-bool linearSearch(const vector<int>& arr, int target) {
+bool linearSearch(const std::vector<int>& arr, int target) {
     for (int val : arr) {
         if (val == target) return true;
     }
@@ -251,27 +222,17 @@ bool linearSearch(const vector<int>& arr, int target) {
 }
 
 void example3_linear_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: O(n) - LINEAR TIME                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: O(n) - LINEAR TIME                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(n)\n";
-    cout << "   Time grows linearly with input size\n";
-    cout << "   Must visit each element once\n";
-
-    cout << "\n✅ EXAMPLES:\n";
-    cout << "   • Finding max/min in unsorted array\n";
-    cout << "   • Linear search\n";
-    cout << "   • Summing array elements\n";
-    cout << "   • Single loop through data\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
-    vector<int> sizes = {10000, 50000, 100000, 500000, 1000000};
+    std::vector<int> sizes = {10000, 50000, 100000, 500000, 1000000};
 
     for (int size : sizes) {
-        vector<int> arr(size);
+        std::vector<int> arr(size);
         for (int i = 0; i < size; i++) arr[i] = i;
 
         timer.start();
@@ -279,13 +240,9 @@ void example3_linear_time() {
         int max_val = linear_time::findMax(arr);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(7) << size << " → " << fixed << setprecision(3)
-             << time << " ms (linear growth)" << endl;
+        std::println("   n={:>7} → {:.3f} ms (linear growth)", size, time);
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   Time doubles when size doubles (linear relationship)\n";
-    cout << "   This is acceptable for most operations.\n";
 }
 
 // ============================================
@@ -295,7 +252,7 @@ void example3_linear_time() {
 namespace linearithmic_time {
 // ✅ GOOD: O(n log n) - Efficient sorting
 
-void mergeSort(vector<int>& arr, int left, int right) {
+void mergeSort(std::vector<int>& arr, int left, int right) {
     if (left >= right) return;
 
     int mid = left + (right - left) / 2;
@@ -303,7 +260,7 @@ void mergeSort(vector<int>& arr, int left, int right) {
     mergeSort(arr, mid + 1, right);
 
     // Merge
-    vector<int> temp(right - left + 1);
+    std::vector<int> temp(right - left + 1);
     int i = left, j = mid + 1, k = 0;
 
     while (i <= mid && j <= right) {
@@ -322,37 +279,27 @@ void mergeSort(vector<int>& arr, int left, int right) {
     }
 }
 
-void efficientSort(vector<int>& arr) {
+void efficientSort(std::vector<int>& arr) {
     // Using STL sort (typically O(n log n))
     sort(arr.begin(), arr.end());
 }
 }
 
 void example4_linearithmic_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: O(n log n) - LINEARITHMIC TIME     ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: O(n log n) - LINEARITHMIC TIME      ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(n log n)\n";
-    cout << "   Combination of linear and logarithmic\n";
-    cout << "   Best achievable for comparison-based sorting\n";
-
-    cout << "\n✅ EXAMPLES:\n";
-    cout << "   • Merge sort\n";
-    cout << "   • Quick sort (average case)\n";
-    cout << "   • Heap sort\n";
-    cout << "   • Efficient sorting algorithms\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
-    vector<int> sizes = {1000, 5000, 10000, 50000, 100000};
+    std::vector<int> sizes = {1000, 5000, 10000, 50000, 100000};
 
     for (int size : sizes) {
-        vector<int> arr(size);
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<> dis(1, 1000000);
+        std::vector<int> arr(size);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(1, 1000000);
 
         for (int i = 0; i < size; i++) arr[i] = dis(gen);
 
@@ -361,13 +308,9 @@ void example4_linearithmic_time() {
         linearithmic_time::efficientSort(arr);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(6) << size << " → " << fixed << setprecision(3)
-             << time << " ms (n*log(n) ≈ " << (int)(size * log2(size)) << ")" << endl;
+        std::println("   n={:>6} → {:.3f} ms (n*log(n) ≈ {})", size, time, (int)(size * log2(size)));
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   Slower than O(n) but much faster than O(n²)\n";
-    cout << "   This is optimal for comparison-based sorting!\n";
 }
 
 // ============================================
@@ -377,18 +320,18 @@ void example4_linearithmic_time() {
 namespace quadratic_time {
 // ❌ BAD: O(n²) - Nested loops
 
-void bubbleSort(vector<int>& arr) {
+void bubbleSort(std::vector<int>& arr) {
     int n = arr.size();
     for (int i = 0; i < n - 1; i++) {
         for (int j = 0; j < n - i - 1; j++) {
             if (arr[j] > arr[j + 1]) {
-                swap(arr[j], arr[j + 1]);
+                std::swap(arr[j], arr[j + 1]);
             }
         }
     }
 }
 
-bool hasDuplicates(const vector<int>& arr) {
+bool hasDuplicates(const std::vector<int>& arr) {
     // Naive approach - check every pair
     for (int i = 0; i < arr.size(); i++) {
         for (int j = i + 1; j < arr.size(); j++) {
@@ -398,7 +341,7 @@ bool hasDuplicates(const vector<int>& arr) {
     return false;
 }
 
-void printPairs(const vector<int>& arr) {
+void printPairs(const std::vector<int>& arr) {
     // Print all pairs
     for (int i = 0; i < arr.size(); i++) {
         for (int j = 0; j < arr.size(); j++) {
@@ -411,13 +354,13 @@ void printPairs(const vector<int>& arr) {
 namespace quadratic_improved {
 // ✅ GOOD: O(n log n) - Better sorting
 
-void improvedSort(vector<int>& arr) {
+void improvedSort(std::vector<int>& arr) {
     sort(arr.begin(), arr.end());
 }
 
 // ✅ GOOD: O(n) - Using hash set
-bool hasDuplicates(const vector<int>& arr) {
-    unordered_set<int> seen;
+bool hasDuplicates(const std::vector<int>& arr) {
+    std::unordered_set<int> seen;
     for (int val : arr) {
         if (seen.count(val)) return true;
         seen.insert(val);
@@ -427,31 +370,22 @@ bool hasDuplicates(const vector<int>& arr) {
 }
 
 void example5_quadratic_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: O(n²) - QUADRATIC TIME             ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: O(n²) - QUADRATIC TIME              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(n²)\n";
-    cout << "   Time grows quadratically with input size\n";
-    cout << "   Usually involves nested loops\n";
-
-    cout << "\n❌ COMMON CAUSES:\n";
-    cout << "   • Nested loops over same data\n";
-    cout << "   • Bubble sort, insertion sort\n";
-    cout << "   • Naive duplicate detection\n";
-    cout << "   • Comparing all pairs\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
-    vector<int> sizes = {100, 500, 1000, 2000, 4000};
+    std::vector<int> sizes = {100, 500, 1000, 2000, 4000};
 
-    cout << "\n❌ BAD - Bubble Sort O(n²):\n";
+    std::println("");
+    std::println("❌ BAD - Bubble Sort O(n²):");
     for (int size : sizes) {
-        vector<int> arr(size);
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<> dis(1, 10000);
+        std::vector<int> arr(size);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(1, 10000);
 
         for (int i = 0; i < size; i++) arr[i] = dis(gen);
 
@@ -459,16 +393,16 @@ void example5_quadratic_time() {
         quadratic_time::bubbleSort(arr);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(4) << size << " → " << fixed << setprecision(3)
-             << time << " ms (n² = " << size*size << ")" << endl;
+        std::println("   n={:>4} → {:.3f} ms (n² = {})", size, time, size*size);
     }
 
-    cout << "\n✅ GOOD - Efficient Sort O(n log n):\n";
+    std::println("");
+    std::println("✅ GOOD - Efficient Sort O(n log n):");
     for (int size : sizes) {
-        vector<int> arr(size);
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<> dis(1, 10000);
+        std::vector<int> arr(size);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(1, 10000);
 
         for (int i = 0; i < size; i++) arr[i] = dis(gen);
 
@@ -476,14 +410,9 @@ void example5_quadratic_time() {
         quadratic_improved::improvedSort(arr);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(4) << size << " → " << fixed << setprecision(3)
-             << time << " ms (MUCH faster!)" << endl;
+        std::println("   n={:>4} → {:.3f} ms (MUCH faster!)", size, time);
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   O(n²) becomes VERY slow as n grows!\n";
-    cout << "   4x increase in size → 16x increase in time\n";
-    cout << "   Avoid nested loops when possible!\n";
 }
 
 // ============================================
@@ -499,7 +428,7 @@ long long fibonacciRecursive(int n) {
 }
 
 // Subset generation (2^n subsets)
-void generateSubsets(const vector<int>& arr, int index, vector<int>& current) {
+void generateSubsets(const std::vector<int>& arr, int index, std::vector<int>& current) {
     if (index == arr.size()) {
         return;  // Process subset
     }
@@ -535,55 +464,42 @@ long long fibonacciDP(int n) {
 }
 
 void example6_exponential_time() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: O(2^n) - EXPONENTIAL TIME          ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: O(2^n) - EXPONENTIAL TIME           ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 COMPLEXITY: O(2^n)\n";
-    cout << "   Time DOUBLES with each additional input!\n";
-    cout << "   Grows extremely fast - often impractical\n";
-
-    cout << "\n❌ COMMON CAUSES:\n";
-    cout << "   • Naive recursive solutions\n";
-    cout << "   • Generating all subsets\n";
-    cout << "   • Brute force combinatorial problems\n";
-
-    cout << "\n⏱️  TIMING DEMONSTRATION:\n";
     Timer timer;
 
     // Small sizes only - exponential grows VERY fast!
-    vector<int> sizes = {10, 15, 20, 25, 30};
+    std::vector<int> sizes = {10, 15, 20, 25, 30};
 
-    cout << "\n❌ BAD - Recursive Fibonacci O(2^n):\n";
+    std::println("");
+    std::println("❌ BAD - Recursive Fibonacci O(2^n):");
     for (int size : sizes) {
         timer.start();
         long long result = exponential_time::fibonacciRecursive(size);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(2) << size << " → " << fixed << setprecision(3)
-             << time << " ms (result=" << result << ")" << endl;
+        std::println("   n={:>2} → {:.3f} ms (result={})", size, time, result);
 
         if (time > 1000) {  // Stop if taking too long
-            cout << "   ... (stopping - too slow!)" << endl;
+            std::println("   ... (stopping - too slow!)");
             break;
         }
     }
 
-    cout << "\n✅ GOOD - DP Fibonacci O(n):\n";
-    vector<int> large_sizes = {10, 100, 1000, 10000, 50000};
+    std::println("");
+    std::println("✅ GOOD - DP Fibonacci O(n):");
+    std::vector<int> large_sizes = {10, 100, 1000, 10000, 50000};
     for (int size : large_sizes) {
         timer.start();
         long long result = exponential_improved::fibonacciDP(size);
         double time = timer.elapsed_ms();
 
-        cout << "   n=" << setw(5) << size << " → " << fixed << setprecision(6)
-             << time << " ms (INSTANT!)" << endl;
+        std::println("   n={:>5} → {:.6f} ms (INSTANT!)", size, time);
     }
 
-    cout << "\n💡 OBSERVATION:\n";
-    cout << "   O(2^n) is CATASTROPHICALLY slow!\n";
-    cout << "   n=30 might take seconds, n=40 takes hours!\n";
-    cout << "   Always look for DP or memoization solutions!\n";
 }
 
 // ============================================
@@ -608,8 +524,8 @@ int sumRecursive(int n) {
 }
 
 // O(n) space - Creating new array
-vector<int> doubleArray(const vector<int>& arr) {
-    vector<int> result(arr.size());  // O(n) space
+std::vector<int> doubleArray(const std::vector<int>& arr) {
+    std::vector<int> result(arr.size());  // O(n) space
     for (int i = 0; i < arr.size(); i++) {
         result[i] = arr[i] * 2;
     }
@@ -617,7 +533,7 @@ vector<int> doubleArray(const vector<int>& arr) {
 }
 
 // O(1) space - In-place modification
-void doubleArrayInPlace(vector<int>& arr) {
+void doubleArrayInPlace(std::vector<int>& arr) {
     for (int& val : arr) {
         val *= 2;  // No extra space needed
     }
@@ -625,46 +541,16 @@ void doubleArrayInPlace(vector<int>& arr) {
 }
 
 void example7_space_complexity() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: SPACE COMPLEXITY                    ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: SPACE COMPLEXITY                    ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 SPACE COMPLEXITY:\n";
-    cout << "   How much memory an algorithm uses\n";
+    std::println("   ");
 
-    cout << "\n📋 COMMON SPACE COMPLEXITIES:\n";
+    std::println("   ");
 
-    cout << "\n✅ O(1) - CONSTANT SPACE:\n";
-    cout << "   • Only uses fixed amount of memory\n";
-    cout << "   • No growth with input size\n";
-    cout << "   • Examples: simple variables, in-place operations\n";
-    cout << "   \n";
-    cout << "   int sum = 0;\n";
-    cout << "   for (int i = 0; i < n; i++) sum += i;  // O(1) space\n";
-
-    cout << "\n⚠️  O(log n) - LOGARITHMIC SPACE:\n";
-    cout << "   • Recursive algorithms with halving\n";
-    cout << "   • Binary search recursion\n";
-    cout << "   • Balanced tree recursion\n";
-
-    cout << "\n⚠️  O(n) - LINEAR SPACE:\n";
-    cout << "   • Creating array/vector of size n\n";
-    cout << "   • Recursive calls n deep\n";
-    cout << "   • Hash map with n elements\n";
-    cout << "   \n";
-    cout << "   vector<int> copy = original;  // O(n) space\n";
-
-    cout << "\n🚨 O(n²) - QUADRATIC SPACE:\n";
-    cout << "   • 2D arrays/matrices\n";
-    cout << "   • Dynamic programming tables\n";
-    cout << "   \n";
-    cout << "   vector<vector<int>> matrix(n, vector<int>(n));  // O(n²)\n";
-
-    cout << "\n💡 KEY POINTS:\n";
-    cout << "   • Time-Space Trade-offs are common\n";
-    cout << "   • Faster algorithms often use more space\n";
-    cout << "   • In-place algorithms save memory (O(1) space)\n";
-    cout << "   • Recursion uses stack space\n";
+    std::println("   ");
 }
 
 // ============================================
@@ -672,51 +558,29 @@ void example7_space_complexity() {
 // ============================================
 
 void example8_complexity_comparison() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: COMPLEXITY COMPARISON               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: COMPLEXITY COMPARISON               ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 GROWTH COMPARISON:\n";
-    cout << "   How different complexities scale\n\n";
-
-    cout << "   n     | O(1) | O(log n) | O(n)  | O(n log n) |   O(n²)   |    O(2^n)\n";
-    cout << "   ------+------+----------+-------+------------+-----------+------------\n";
-
-    vector<int> sizes = {1, 10, 100, 1000, 10000};
+    std::vector<int> sizes = {1, 10, 100, 1000, 10000};
 
     for (int n : sizes) {
-        cout << "   " << setw(5) << n << " | ";
-        cout << setw(4) << 1 << " | ";
-        cout << setw(8) << (int)log2(max(1, n)) << " | ";
-        cout << setw(5) << n << " | ";
-        cout << setw(10) << (int)(n * log2(max(1, n))) << " | ";
-        cout << setw(9) << n * n << " | ";
+        std::print("   {:>5} | ", n);
+        std::print("{:>4} | ", 1);
+        std::print("{:>8} | ", (int)log2(std::max(1, n)));
+        std::print("{:>5} | ", n);
+        std::print("{:>10} | ", (int)(n * log2(std::max(1, n))));
+        std::print("{:>9} | ", n * n);
 
         if (n <= 20) {
-            cout << setw(10) << (long long)pow(2, n);
+            std::print("{:>10}", (long long)pow(2, n));
         } else {
-            cout << "  ENORMOUS!";
+            std::print("  ENORMOUS!");
         }
-        cout << endl;
+        std::println("");
     }
 
-    cout << "\n📈 VISUAL GROWTH (relative):\n";
-    cout << "   n=1000:\n";
-    cout << "   O(1):        ▌                              (1)\n";
-    cout << "   O(log n):    ▌                              (~10)\n";
-    cout << "   O(n):        ██████████                     (1,000)\n";
-    cout << "   O(n log n):  ███████████████████████        (~10,000)\n";
-    cout << "   O(n²):       ████████████████████... (way off screen!) (1,000,000)\n";
-    cout << "   O(2^n):      [Would fill the universe]\n";
-
-    cout << "\n🎯 PRACTICAL LIMITS:\n";
-    cout << "   n=1,000,000 (1 million):\n";
-    cout << "   • O(1):        Instant ✅\n";
-    cout << "   • O(log n):    ~20 operations ✅\n";
-    cout << "   • O(n):        ~1ms ✅\n";
-    cout << "   • O(n log n):  ~20ms ✅\n";
-    cout << "   • O(n²):       ~1000s (16 minutes!) 🚨\n";
-    cout << "   • O(2^n):      Heat death of universe 💀\n";
 }
 
 // ============================================
@@ -724,14 +588,14 @@ void example8_complexity_comparison() {
 // ============================================
 
 namespace case_analysis {
-int linearSearch(const vector<int>& arr, int target) {
+int linearSearch(const std::vector<int>& arr, int target) {
     for (int i = 0; i < arr.size(); i++) {
         if (arr[i] == target) return i;
     }
     return -1;
 }
 
-void quickSort(vector<int>& arr, int low, int high) {
+void quickSort(std::vector<int>& arr, int low, int high) {
     if (low < high) {
         // Partition and recursively sort
         int pivot = arr[high];
@@ -740,10 +604,10 @@ void quickSort(vector<int>& arr, int low, int high) {
         for (int j = low; j < high; j++) {
             if (arr[j] < pivot) {
                 i++;
-                swap(arr[i], arr[j]);
+                std::swap(arr[i], arr[j]);
             }
         }
-        swap(arr[i + 1], arr[high]);
+        std::swap(arr[i + 1], arr[high]);
         int pi = i + 1;
 
         quickSort(arr, low, pi - 1);
@@ -753,53 +617,31 @@ void quickSort(vector<int>& arr, int low, int high) {
 }
 
 void example9_case_analysis() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 9: BEST/AVERAGE/WORST CASE            ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 9: BEST/AVERAGE/WORST CASE             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📊 LINEAR SEARCH:\n";
-    cout << "   Best case:    O(1)   - Element is first\n";
-    cout << "   Average case: O(n/2) - Element in middle\n";
-    cout << "   Worst case:   O(n)   - Element is last or not present\n";
-
-    cout << "\n📊 QUICK SORT:\n";
-    cout << "   Best case:    O(n log n) - Perfect pivot selection\n";
-    cout << "   Average case: O(n log n) - Random pivot\n";
-    cout << "   Worst case:   O(n²)      - Already sorted, poor pivot\n";
-
-    cout << "\n📊 HASH TABLE LOOKUP:\n";
-    cout << "   Best case:    O(1)   - No collisions\n";
-    cout << "   Average case: O(1)   - Few collisions\n";
-    cout << "   Worst case:   O(n)   - All keys collide\n";
-
-    cout << "\n⏱️  DEMONSTRATION - Linear Search:\n";
     Timer timer;
     int size = 100000;
-    vector<int> arr(size);
+    std::vector<int> arr(size);
     for (int i = 0; i < size; i++) arr[i] = i;
 
     // Best case - first element
     timer.start();
     int result1 = case_analysis::linearSearch(arr, 0);
-    cout << "   Best case (first):  " << fixed << setprecision(6)
-         << timer.elapsed_ms() << " ms\n";
+    std::println("   Best case (first):  {:.6f} ms", timer.elapsed_ms());
 
     // Average case - middle element
     timer.start();
     int result2 = case_analysis::linearSearch(arr, size / 2);
-    cout << "   Average (middle):   " << fixed << setprecision(6)
-         << timer.elapsed_ms() << " ms\n";
+    std::println("   Average (middle):   {:.6f} ms", timer.elapsed_ms());
 
     // Worst case - last element
     timer.start();
     int result3 = case_analysis::linearSearch(arr, size - 1);
-    cout << "   Worst case (last):  " << fixed << setprecision(6)
-         << timer.elapsed_ms() << " ms\n";
+    std::println("   Worst case (last):  {:.6f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPORTANT:\n";
-    cout << "   • Big O usually refers to WORST CASE\n";
-    cout << "   • Average case is often most practical\n";
-    cout << "   • Best case is rarely useful for analysis\n";
 }
 
 // ============================================
@@ -807,57 +649,11 @@ void example9_case_analysis() {
 // ============================================
 
 void example10_practical_guidelines() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 10: PRACTICAL GUIDELINES               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 10: PRACTICAL GUIDELINES               ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 HOW TO ANALYZE COMPLEXITY:\n";
-
-    cout << "\n1. COUNT THE LOOPS:\n";
-    cout << "   • One loop: O(n)\n";
-    cout << "   • Two nested loops: O(n²)\n";
-    cout << "   • Three nested loops: O(n³)\n";
-
-    cout << "\n2. LOOK FOR DIVISIONS:\n";
-    cout << "   • Halving problem size: O(log n)\n";
-    cout << "   • Binary search pattern: O(log n)\n";
-
-    cout << "\n3. RECURSIVE PATTERNS:\n";
-    cout << "   • Single recursive call: Often O(n)\n";
-    cout << "   • Two recursive calls: Often O(2^n)\n";
-    cout << "   • Divide and conquer: Often O(n log n)\n";
-
-    cout << "\n4. MULTIPLE OPERATIONS:\n";
-    cout << "   • Sequential: Add them → O(n + m)\n";
-    cout << "   • Nested: Multiply them → O(n * m)\n";
-    cout << "   • Take the dominant term → O(n² + n) = O(n²)\n";
-
-    cout << "\n💡 OPTIMIZATION RULES:\n";
-
-    cout << "\n✅ DO:\n";
-    cout << "   • Use appropriate data structures\n";
-    cout << "   • Avoid unnecessary nested loops\n";
-    cout << "   • Use hash tables for O(1) lookup\n";
-    cout << "   • Sort data if you need to search often\n";
-    cout << "   • Consider space-time tradeoffs\n";
-
-    cout << "\n❌ DON'T:\n";
-    cout << "   • Prematurely optimize\n";
-    cout << "   • Ignore readability for micro-optimizations\n";
-    cout << "   • Use O(n²) algorithms for large data\n";
-    cout << "   • Forget about space complexity\n";
-
-    cout << "\n📊 DATA STRUCTURE COMPLEXITIES:\n";
-    cout << "   Array:         Access O(1), Search O(n), Insert O(n)\n";
-    cout << "   Hash Table:    Access O(1), Search O(1), Insert O(1)\n";
-    cout << "   Binary Tree:   Access O(log n), Search O(log n), Insert O(log n)\n";
-    cout << "   Linked List:   Access O(n), Search O(n), Insert O(1)\n";
-
-    cout << "\n🎓 WHEN TO USE WHAT:\n";
-    cout << "   n < 100:       Any algorithm works\n";
-    cout << "   n < 10,000:    O(n²) acceptable\n";
-    cout << "   n < 1,000,000: Need O(n log n) or better\n";
-    cout << "   n > 1,000,000: Need O(n) or O(log n)\n";
 }
 
 // ============================================
@@ -865,14 +661,14 @@ void example10_practical_guidelines() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║         CODE COMPLEXITY AND BIG O NOTATION            ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Understanding algorithm complexity is essential      ║\n";
-    cout << "║   for writing efficient code.\"                       ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║         CODE COMPLEXITY AND BIG O NOTATION            ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Understanding algorithm complexity is essential    ║");
+    std::println("║   for writing efficient code.\"                       ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_constant_time();
     example2_logarithmic_time();
@@ -884,17 +680,6 @@ int main() {
     example8_complexity_comparison();
     example9_case_analysis();
     example10_practical_guidelines();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║         🎉 CODE COMPLEXITY COMPLETE! 🎉               ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Choose algorithms wisely! The right    ║\n";
-    cout << "║  complexity can mean the difference between instant   ║\n";
-    cout << "║  and impossibly slow.                                 ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

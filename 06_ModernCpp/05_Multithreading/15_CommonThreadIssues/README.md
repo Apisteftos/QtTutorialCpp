@@ -293,3 +293,50 @@ std::call_once(flag, [&]() {
 | Destroyed object | Crash/garbage | Join in destructor or `shared_ptr` |
 | False sharing | Slower than expected | `alignas(64)` |
 | Double-checked lock | Init race | `std::call_once` |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Issue 2: Deadlock
+
+**Deadlock scenario (NOT executed — would hang):**
+
+```cpp
+T1: lock(A) -> sleep -> lock(B)  <- waits forever
+T2: lock(B) -> sleep -> lock(A)  <- waits forever
+```
+
+**Fix: scoped_lock acquires both atomically:**
+
+### Issue 5: Dangling reference in lambda capture
+
+**DANGEROUS (shown, not executed):**
+
+```cpp
+int local = 42;
+std::thread t([&local]() { use(local); });
+t.detach();  // local destroyed when function returns!
+```
+
+Fix: capture by VALUE — thread owns its own copy
+
+### Issue 6: Forgetting join/detach
+
+**CRASH (shown, not executed):**
+
+```cpp
+  { std::thread t(func); }
+  // t is joinable at destruction -> std::terminate()
+Fix: use std::jthread (auto-joins)
+```
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

@@ -917,3 +917,343 @@ Every time you write code, ask yourself:
 - "Is this as simple as it can be?"
 
 If the answer is no, refactor until it's yes!
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 READABILITY PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Code is read 10x more than written.  
+Write for humans, not just computers!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_meaningful_names()`
+
+- ❌ BAD CODE (Cryptic Names):
+
+```cpp
+
+```cpp
+double calc(double a, double b, int t, bool f) {
+    double r = a * b;
+    if (t == 1) r *= 1.2;
+    if (f) r -= 50;
+    // What are a, b, t, f, r?
+}
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Single-letter variables
+  - Unclear parameter purpose
+  - Magic numbers (1.2, 50)
+  - Function name doesn't describe action
+
+- ✅ GOOD CODE (Clear Names):
+
+```cpp  
+double calculateSalary(  
+double hourlyRate,  
+double hoursWorked,  
+EmployeeType type,  
+bool hasHealthBenefits
+
+```cpp
+) {
+    // Intent is crystal clear!
+}
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_meaningful_names()`
+
+- 💡 NAMING GUIDELINES:
+- ✅ Use descriptive names
+- ✅ Names should reveal intent
+- ✅ Avoid single letters (except i, j in loops)
+- ✅ Use domain terminology
+- ✅ Be consistent with conventions
+
+### From `example2_magic_numbers()`
+
+- ❌ BAD CODE:
+
+```cpp
+if (customerType == 2) {
+    return price * 0.15;  // 🚨 What is 2? Why 0.15?
+}
+return age >= 18 && age <= 120;  // 🚨 Why these numbers?
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+const double PREMIUM_DISCOUNT_RATE = 0.15;
+const int MINIMUM_AGE = 18;
+if (type == PREMIUM) {
+    return price * PREMIUM_DISCOUNT_RATE;
+}
+return age >= MINIMUM_AGE && age <= MAXIMUM_AGE;
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example2_magic_numbers()`
+
+- 💡 BENEFITS:
+  - Numbers have clear meaning
+  - Easy to change values
+  - Self-documenting code
+  - No confusion about meaning
+
+### From `example3_reduce_nesting()`
+
+- ❌ BAD CODE (Deep Nesting):
+
+```cpp
+if (orderId > 0) {
+    if (userLoggedIn) {
+        if (hasInventory) {
+            if (paymentValid) {
+                // 4 levels deep!
+            }
+        }
+    }
+}
+```
+
+- ✅ GOOD CODE (Early Returns):
+
+```cpp
+if (orderId <= 0) return;
+if (!userLoggedIn) return;
+if (!hasInventory) return;
+if (!paymentValid) return;
+// Process order - no nesting!
+```
+
+**✨ DEMONSTRATION:**
+
+Test 1 - All valid:
+
+### From `example3_reduce_nesting()`
+
+- 💡 TECHNIQUES:
+- ✅ Use early returns (guard clauses)
+- ✅ Extract nested logic to functions
+- ✅ Invert conditions
+- ✅ Keep nesting depth ≤ 2 levels
+
+### From `example4_simplify_expressions()`
+
+- ❌ BAD CODE:
+
+return ((age >= 18 && age <= 65) || (age > 65 && emp)) &&  
+(inc > 30000 || (inc > 20000 && cit)) &&
+
+```cpp
+       (emp || inc > 50000);
+// 🚨 What is this checking?
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+bool ageValid = isWorkingAge(age) ||
+                isRetiredAndEmployed(age, employed);
+bool incomeValid = hasAdequateIncome(income, citizen);
+bool employmentValid = hasEmploymentOrIncome(employed, income);
+return ageValid && incomeValid && employmentValid;
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example4_simplify_expressions()`
+
+- 💡 BENEFITS:
+  - Easy to understand each part
+  - Easy to test individually
+  - Self-documenting with names
+  - Can reuse helper functions
+
+### From `example5_control_flow()`
+
+- ❌ BAD CODE:
+
+```cpp
+bool flag = false;
+for (int i = 0; i < data.size(); i++) {
+    if (data[i] > 0) {
+        if (!flag) {
+            result += data[i];
+            if (data[i] > 10) {
+                flag = true;
+// 🚨 Hard to follow!
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+bool thresholdExceeded = false;
+for (int value : data) {
+    if (value <= 0) continue;
+    if (!thresholdExceeded) {
+        sum += value;
+        // Clear intent with comments
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example5_control_flow()`
+
+(Sum before threshold, subtract after)
+
+- 💡 GUIDELINES:
+- ✅ Use descriptive variable names for flags
+- ✅ Add comments explaining control flow
+- ✅ Use early continue/return
+- ✅ Keep logic linear when possible
+
+### From `example6_formatting()`
+
+- ❌ BAD CODE:
+
+```cpp
+class user{private:string n;int a;public:void setn
+(string x){n=x;}int geta(){return a;}};
+// 🚨 Everything crammed together!
+```
+
+- ✅ GOOD CODE:
+
+```cpp
+class User {
+```
+
+private:
+
+```cpp
+string name;
+int age;
+```
+
+public:
+
+```cpp
+    void setName(const string& newName) {
+        name = newName;
+    }
+};
+```
+
+**📐 FORMATTING RULES:**
+
+- ✅ Consistent indentation (4 spaces)
+- ✅ One statement per line
+- ✅ Blank lines between sections
+- ✅ Space after keywords (if, for, while)
+- ✅ Space around operators (=, +, -, etc.)
+- ✅ Aligned braces
+
+- 💡 BENEFITS:
+  - Code is scannable
+  - Easy to spot errors
+  - Professional appearance
+  - Consistent team style
+
+### From `example7_function_length()`
+
+- ❌ BAD: One giant function
+  - 100+ lines
+  - Multiple responsibilities
+  - Hard to test
+  - Hard to understand
+
+- ✅ GOOD: Multiple small functions
+  - isValidName() - 3 lines
+  - isValidEmail() - 3 lines
+  - isValidPassword() - 3 lines
+  - processUserRegistration() - orchestrates
+
+**✨ DEMONSTRATION:**
+
+### From `example7_function_length()`
+
+- 💡 FUNCTION SIZE GUIDELINES:
+- ✅ Ideal: 5-20 lines
+- ✅ Acceptable: 20-50 lines
+- ✅ Warning: 50-100 lines
+
+🚨 Refactor: 100+ lines
+
+Rule of thumb: If you can't see the whole  
+function on one screen, it's too long!
+
+### From `example8_checklist()`
+
+- ✅ READABILITY CHECKLIST:
+
+**📝 NAMING:**
+
+□ Variable names are descriptive  
+□ Function names describe action  
+□ Class names are nouns  
+□ Constants are UPPER_CASE  
+□ No single-letter names (except i, j)
+
+**🔢 NUMBERS:**
+
+□ No magic numbers  
+□ Constants are named  
+□ Numbers have context
+
+**📐 STRUCTURE:**
+
+□ Functions < 20 lines  
+□ Nesting depth ≤ 2  
+□ One purpose per function  
+□ Early returns used
+
+**🎨 FORMATTING:**
+
+□ Consistent indentation  
+□ Proper spacing  
+□ Aligned braces  
+□ Blank lines between sections
+
+**💭 EXPRESSIONS:**
+
+□ Simple, clear expressions  
+□ Complex logic broken down  
+□ No deeply nested conditions
+
+**📖 COMMENTS:**
+
+□ Explain WHY, not WHAT  
+□ Document business rules  
+□ No obvious comments  
+□ No outdated comments
+
+**🎯 THE ULTIMATE TEST:**
+
+"Can you understand this code in 30 seconds?"  
+If not, it needs to be more readable!
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

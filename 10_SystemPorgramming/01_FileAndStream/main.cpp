@@ -37,16 +37,16 @@ void printFile(const std::string& path) {
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Writing to a file — ofstream\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Writing to a file — ofstream");
+    std::println("=====================================================");
 
     {
         // ofstream — output file stream (creates or truncates)
         std::ofstream outFile("testout.txt");
 
         if (!outFile) {
-            std::cerr << "ERROR: could not open testout.txt for writing\n";
+            std::println(stderr, "ERROR: could not open testout.txt for writing");
             return 1;
         }
 
@@ -57,36 +57,38 @@ int main()
 
         // Write formatted data
         outFile << "Name: Kostas\n";
-        outFile << "Port: " << 5060 << "\n";
+        outFile << "Port: " << 8080 << "\n";
         outFile << "Pi:   " << 3.14159 << "\n";
 
-        std::cout << "Written to testout.txt\n";
+        std::println("Written to testout.txt");
     }   // ofstream destructor closes the file automatically
 
     printFile("testout.txt");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Reading from a file — ifstream\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Reading from a file — ifstream");
+    std::println("=====================================================");
 
     {
         std::ifstream inFile("testout.txt");
 
         if (!inFile) {
-            std::cerr << "ERROR: could not open testout.txt for reading\n";
+            std::println(stderr, "ERROR: could not open testout.txt for reading");
             return 1;
         }
 
-        std::cout << "Reading line by line:\n";
+        std::println("Reading line by line:");
         std::string line;
         int lineNum = 1;
         while (std::getline(inFile, line)) {
             std::println("  [{}] {}", lineNum++, line);
         }
 
-        std::cout << "\nReading word by word:\n";
+        std::println("");
+        std::println("Reading word by word:");
         // Reset to beginning
         inFile.clear();
         inFile.seekg(0);
@@ -97,14 +99,15 @@ int main()
             std::print("  '{}' ", word);
             ++count;
         }
-        std::cout << "...\n";
+        std::println("...");
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Read and Write — fstream\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Read and Write — fstream");
+    std::println("=====================================================");
 
     {
         // fstream — both read and write
@@ -113,7 +116,7 @@ int main()
                                 std::ios::trunc);   // create fresh
 
         if (!rwFile) {
-            std::cerr << "ERROR: could not open rw_test.txt\n";
+            std::println(stderr, "ERROR: could not open rw_test.txt");
             return 1;
         }
 
@@ -122,7 +125,7 @@ int main()
 
         // Seek back to beginning and read
         rwFile.seekg(0);
-        std::cout << "Read back:\n";
+        std::println("Read back:");
         std::string line;
         while (std::getline(rwFile, line))
             std::println("  {}", line);
@@ -135,16 +138,17 @@ int main()
         // Read from beginning again
         rwFile.seekg(0);
         rwFile.clear();
-        std::cout << "After appending Epsilon:\n";
+        std::println("After appending Epsilon:");
         while (std::getline(rwFile, line))
             std::println("  {}", line);
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: getline — read full line (string)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: getline — read full line (string)");
+    std::println("=====================================================");
 
     {
         // Write a file with comma-separated values
@@ -158,7 +162,7 @@ int main()
         std::ifstream f("csv_test.txt");
         std::string line;
 
-        std::cout << "Reading CSV with getline:\n";
+        std::println("Reading CSV with getline:");
         while (std::getline(f, line)) {
             // Parse comma-separated manually
             std::istringstream ss(line);
@@ -169,47 +173,45 @@ int main()
             std::println("  name={} age={} city={}", name, age, city);
         }
 
-        std::cout << "\ngetline with custom delimiter:\n";
+        std::println("");
+        std::println("getline with custom delimiter:");
         f.clear(); f.seekg(0);
         std::string token;
         while (std::getline(f, token, ','))
             std::print("  [{}]", token);
-        std::cout << '\n';
+        std::println("");
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: getline — char array (C-style)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: getline — char array (C-style)");
+    std::println("=====================================================");
 
     {
         std::ifstream f("testout.txt");
         char buffer[64];
 
-        std::cout << "Reading with char buffer (max 63 chars per line):\n";
+        std::println("Reading with char buffer (max 63 chars per line):");
         while (f.getline(buffer, sizeof(buffer))) {
             std::println("  '{}'", buffer);
         }
-
-        std::cout << "\nDifference:\n";
-        std::cout << "  std::getline(stream, string)    — string, no size limit\n";
-        std::cout << "  stream.getline(buffer, size)    — char array, fixed size\n";
-        std::cout << "  Prefer std::getline with string — safer, no overflow risk\n";
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: String streams — ostringstream / istringstream\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: String streams — ostringstream / istringstream");
+    std::println("=====================================================");
 
     {
         // ostringstream — build a string like writing to a stream
         std::ostringstream oss;
-        oss << "Session: " << "SES-001";
-        oss << " | Port: " << 5060;
-        oss << " | Group: " << "GRP-ALPHA";
+        oss << "Job: " << "JOB-001";
+        oss << " | Port: " << 8080;
+        oss << " | Queue: " << "QUEUE-A";
         std::string result = oss.str();
         std::println("ostringstream result: {}", result);
 
@@ -231,17 +233,18 @@ int main()
         std::string csv = "Alice,30,Engineer";
         std::istringstream csvStream(csv);
         std::string token;
-        std::cout << "CSV tokens: ";
+        std::print("CSV tokens: ");
         while (std::getline(csvStream, token, ','))
             std::print("[{}] ", token);
-        std::cout << '\n';
+        std::println("");
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Binary file I/O\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Binary file I/O");
+    std::println("=====================================================");
 
     {
         struct Record {
@@ -266,7 +269,7 @@ int main()
         {
             std::ifstream f("binary.bin", std::ios::binary);
             Record r;
-            std::cout << "Binary records read:\n";
+            std::println("Binary records read:");
             while (f.read(reinterpret_cast<char*>(&r), sizeof(r)))
                 std::println("  id={} value={:.3f} label={}", r.id, r.value, r.label);
         }
@@ -274,9 +277,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::filesystem — file info\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: std::filesystem — file info");
+    std::println("=====================================================");
 
     {
         std::string path = "testout.txt";
@@ -287,7 +291,8 @@ int main()
         std::println("absolute path: {}", fs::absolute(path).string());
 
         // List current directory
-        std::cout << "\nFiles in current directory:\n";
+        std::println("");
+        std::println("Files in current directory:");
         for (const auto& entry : fs::directory_iterator(".")) {
             if (entry.is_regular_file())
                 std::println("  {} ({} bytes)",
@@ -298,9 +303,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Appending to a file — ios::app\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Appending to a file — ios::app");
+    std::println("=====================================================");
 
     {
         std::string logFile = "log.txt";
@@ -317,29 +323,23 @@ int main()
             f << "[" << level << "] " << msg << '\n';
         };
 
-        logEntry("INFO",  "Session SES-001 connected");
+        logEntry("INFO",  "Job JOB-001 started");
         logEntry("WARN",  "Buffer usage 85%");
         logEntry("ERROR", "Connection timeout");
         logEntry("INFO",  "Reconnecting...");
 
-        std::cout << "Log file contents:\n";
+        std::println("Log file contents:");
         printFile(logFile);
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Error handling — stream state flags\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Error handling — stream state flags");
+    std::println("=====================================================");
 
     {
-        // Stream state bits
-        std::cout << "Stream state flags:\n";
-        std::cout << "  goodbit — no error\n";
-        std::cout << "  eofbit  — end of file reached\n";
-        std::cout << "  failbit — logical error (bad format)\n";
-        std::cout << "  badbit  — critical I/O error\n\n";
-
         // Non-existent file
         std::ifstream badFile("nonexistent.txt");
         std::println("bad file good():  {}", badFile.good());
@@ -350,7 +350,8 @@ int main()
         std::ifstream f("testout.txt");
         std::string line;
         while (std::getline(f, line)) {}  // read all
-        std::println("\nafter all lines read:");
+        std::println("");
+        std::println("after all lines read:");
         std::println("  eof():  {}", f.eof());
         std::println("  fail(): {}", f.fail());
         std::println("  good(): {}", f.good());
@@ -379,6 +380,7 @@ int main()
                           "binary.bin","log.txt"})
         fs::remove(f);
 
-    std::cout << "\n=== File and Stream complete ===\n";
+    std::println("");
+    std::println("=== File and Stream complete ===");
     return 0;
 }

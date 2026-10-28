@@ -1,11 +1,10 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
 #include <map>
 #include <algorithm>
 #include <cmath>
-using namespace std;
+#include <print>
 
 // ============================================
 // READABILITY PRINCIPLE
@@ -80,7 +79,7 @@ double calc(double a, double b, int t, bool f) {
     return r;
 }
 
-void proc(vector<int>& v) {
+void proc(std::vector<int>& v) {
     // 🚨 What does this process?
     int n = v.size();
     for (int i = 0; i < n; i++) {
@@ -94,7 +93,7 @@ void proc(vector<int>& v) {
 class C {
     // 🚨 What is C? What does it represent?
     int d;
-    string s;
+    std::string s;
 public:
     void p() { }  // 🚨 What does p do?
 };
@@ -132,7 +131,7 @@ double calculateSalary(
     return baseSalary;
 }
 
-void limitScoresToMaximum(vector<int>& scores) {
+void limitScoresToMaximum(std::vector<int>& scores) {
     const int MAX_SCORE = 100;
 
     for (int& score : scores) {
@@ -145,7 +144,7 @@ void limitScoresToMaximum(vector<int>& scores) {
 class Customer {
 private:
     int customerId;
-    string customerName;
+    std::string customerName;
 
 public:
     void processOrder() {
@@ -155,39 +154,10 @@ public:
 }
 
 void example1_meaningful_names() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: MEANINGFUL NAMES                    ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD CODE (Cryptic Names):\n";
-    cout << "```cpp\n";
-    cout << "double calc(double a, double b, int t, bool f) {\n";
-    cout << "    double r = a * b;\n";
-    cout << "    if (t == 1) r *= 1.2;\n";
-    cout << "    if (f) r -= 50;\n";
-    cout << "    // What are a, b, t, f, r?\n";
-    cout << "}\n";
-    cout << "```\n";
-
-    cout << "\n🚨 PROBLEMS:\n";
-    cout << "   • Single-letter variables\n";
-    cout << "   • Unclear parameter purpose\n";
-    cout << "   • Magic numbers (1.2, 50)\n";
-    cout << "   • Function name doesn't describe action\n";
-
-    cout << "\n✅ GOOD CODE (Clear Names):\n";
-    cout << "```cpp\n";
-    cout << "double calculateSalary(\n";
-    cout << "    double hourlyRate,\n";
-    cout << "    double hoursWorked,\n";
-    cout << "    EmployeeType type,\n";
-    cout << "    bool hasHealthBenefits\n";
-    cout << ") {\n";
-    cout << "    // Intent is crystal clear!\n";
-    cout << "}\n";
-    cout << "```\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: MEANINGFUL NAMES                    ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     double salary = good_example1::calculateSalary(
         25.0,           // hourlyRate
@@ -195,23 +165,20 @@ void example1_meaningful_names() {
         good_example1::FULL_TIME,
         true            // hasHealthBenefits
         );
-    cout << "\n   Calculated salary: $" << salary << endl;
+    std::println("");
+    std::println("   Calculated salary: ${}", salary);
 
-    vector<int> testScores = {85, 95, 105, 110, 90};
-    cout << "\n   Before limiting: ";
-    for (int score : testScores) cout << score << " ";
+    std::vector<int> testScores = {85, 95, 105, 110, 90};
+    std::println("");
+    std::print("   Before limiting: ");
+    for (int score : testScores) std::print("{} ", score);
 
     good_example1::limitScoresToMaximum(testScores);
-    cout << "\n   After limiting:  ";
-    for (int score : testScores) cout << score << " ";
-    cout << endl;
+    std::println("");
+    std::print("   After limiting:  ");
+    for (int score : testScores) std::print("{} ", score);
+    std::println("");
 
-    cout << "\n💡 NAMING GUIDELINES:\n";
-    cout << "   ✅ Use descriptive names\n";
-    cout << "   ✅ Names should reveal intent\n";
-    cout << "   ✅ Avoid single letters (except i, j in loops)\n";
-    cout << "   ✅ Use domain terminology\n";
-    cout << "   ✅ Be consistent with conventions\n";
 }
 
 // ============================================
@@ -285,47 +252,27 @@ double calculateCircleArea(double radius) {
 }
 
 void example2_magic_numbers() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: AVOID MAGIC NUMBERS                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: AVOID MAGIC NUMBERS                 ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   if (customerType == 2) {\n";
-    cout << "       return price * 0.15;  // 🚨 What is 2? Why 0.15?\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   return age >= 18 && age <= 120;  // 🚨 Why these numbers?\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   const double PREMIUM_DISCOUNT_RATE = 0.15;\n";
-    cout << "   const int MINIMUM_AGE = 18;\n";
-    cout << "   \n";
-    cout << "   if (type == PREMIUM) {\n";
-    cout << "       return price * PREMIUM_DISCOUNT_RATE;\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   return age >= MINIMUM_AGE && age <= MAXIMUM_AGE;\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("   ");
 
     double price = 100.0;
-    cout << "\n   Regular discount: $"
-         << good_example2::calculateDiscount(price, good_example2::REGULAR) << endl;
-    cout << "   Premium discount: $"
-         << good_example2::calculateDiscount(price, good_example2::PREMIUM) << endl;
-    cout << "   VIP discount:     $"
-         << good_example2::calculateDiscount(price, good_example2::VIP) << endl;
+    std::println("");
+    std::println("   Regular discount: ${}",
+        good_example2::calculateDiscount(price, good_example2::REGULAR));
+    std::println("   Premium discount: ${}", good_example2::calculateDiscount(price, good_example2::PREMIUM));
+    std::println("   VIP discount:     ${}", good_example2::calculateDiscount(price, good_example2::VIP));
 
-    cout << "\n   Age 17 valid? "
-         << (good_example2::isValidAge(17) ? "Yes" : "No") << endl;
-    cout << "   Age 25 valid? "
-         << (good_example2::isValidAge(25) ? "Yes" : "No") << endl;
+    std::println("");
+    std::println("   Age 17 valid? {}", (good_example2::isValidAge(17) ? "Yes" : "No"));
+    std::println("   Age 25 valid? {}", (good_example2::isValidAge(25) ? "Yes" : "No"));
 
-    cout << "\n💡 BENEFITS:\n";
-    cout << "   • Numbers have clear meaning\n";
-    cout << "   • Easy to change values\n";
-    cout << "   • Self-documenting code\n";
-    cout << "   • No confusion about meaning\n";
 }
 
 // ============================================
@@ -341,18 +288,18 @@ void processOrder(int orderId, bool userLoggedIn, bool hasInventory, bool paymen
         if (userLoggedIn) {
             if (hasInventory) {
                 if (paymentValid) {
-                    cout << "   ✅ Order processed" << endl;
+                    std::println("   ✅ Order processed");
                 } else {
-                    cout << "   ❌ Invalid payment" << endl;
+                    std::println("   ❌ Invalid payment");
                 }
             } else {
-                cout << "   ❌ Out of stock" << endl;
+                std::println("   ❌ Out of stock");
             }
         } else {
-            cout << "   ❌ User not logged in" << endl;
+            std::println("   ❌ User not logged in");
         }
     } else {
-        cout << "   ❌ Invalid order ID" << endl;
+        std::println("   ❌ Invalid order ID");
     }
 }
 }
@@ -363,70 +310,48 @@ namespace good_example3 {
 void processOrder(int orderId, bool userLoggedIn, bool hasInventory, bool paymentValid) {
     // Guard clauses - fail fast
     if (orderId <= 0) {
-        cout << "   ❌ Invalid order ID" << endl;
+        std::println("   ❌ Invalid order ID");
         return;
     }
 
     if (!userLoggedIn) {
-        cout << "   ❌ User not logged in" << endl;
+        std::println("   ❌ User not logged in");
         return;
     }
 
     if (!hasInventory) {
-        cout << "   ❌ Out of stock" << endl;
+        std::println("   ❌ Out of stock");
         return;
     }
 
     if (!paymentValid) {
-        cout << "   ❌ Invalid payment" << endl;
+        std::println("   ❌ Invalid payment");
         return;
     }
 
     // Happy path at the end - clear and readable
-    cout << "   ✅ Order processed" << endl;
+    std::println("   ✅ Order processed");
 }
 }
 
 void example3_reduce_nesting() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: REDUCE NESTING                      ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: REDUCE NESTING                      ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Deep Nesting):\n";
-    cout << "   if (orderId > 0) {\n";
-    cout << "       if (userLoggedIn) {\n";
-    cout << "           if (hasInventory) {\n";
-    cout << "               if (paymentValid) {\n";
-    cout << "                   // 4 levels deep!\n";
-    cout << "               }\n";
-    cout << "           }\n";
-    cout << "       }\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Early Returns):\n";
-    cout << "   if (orderId <= 0) return;\n";
-    cout << "   if (!userLoggedIn) return;\n";
-    cout << "   if (!hasInventory) return;\n";
-    cout << "   if (!paymentValid) return;\n";
-    cout << "   \n";
-    cout << "   // Process order - no nesting!\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    cout << "\n   Test 1 - All valid:\n";
     good_example3::processOrder(123, true, true, true);
 
-    cout << "\n   Test 2 - User not logged in:\n";
+    std::println("");
+    std::println("   Test 2 - User not logged in:");
     good_example3::processOrder(123, false, true, true);
 
-    cout << "\n   Test 3 - Out of stock:\n";
+    std::println("");
+    std::println("   Test 3 - Out of stock:");
     good_example3::processOrder(123, true, false, true);
 
-    cout << "\n💡 TECHNIQUES:\n";
-    cout << "   ✅ Use early returns (guard clauses)\n";
-    cout << "   ✅ Extract nested logic to functions\n";
-    cout << "   ✅ Invert conditions\n";
-    cout << "   ✅ Keep nesting depth ≤ 2 levels\n";
 }
 
 // ============================================
@@ -505,39 +430,20 @@ double calculate(double a, double b, double c) {
 }
 
 void example4_simplify_expressions() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: SIMPLIFY EXPRESSIONS                ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: SIMPLIFY EXPRESSIONS                ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   return ((age >= 18 && age <= 65) || (age > 65 && emp)) &&\n";
-    cout << "          (inc > 30000 || (inc > 20000 && cit)) &&\n";
-    cout << "          (emp || inc > 50000);\n";
-    cout << "   // 🚨 What is this checking?\n";
-
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   bool ageValid = isWorkingAge(age) ||\n";
-    cout << "                   isRetiredAndEmployed(age, employed);\n";
-    cout << "   bool incomeValid = hasAdequateIncome(income, citizen);\n";
-    cout << "   bool employmentValid = hasEmploymentOrIncome(employed, income);\n";
-    cout << "   \n";
-    cout << "   return ageValid && incomeValid && employmentValid;\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
 
     bool result1 = good_example4::validate(30, true, 35000.0, true);
-    cout << "\n   Age 30, employed, $35K, citizen: "
-         << (result1 ? "Valid" : "Invalid") << endl;
+    std::println("");
+    std::println("   Age 30, employed, $35K, citizen: {}", (result1 ? "Valid" : "Invalid"));
 
     bool result2 = good_example4::validate(70, true, 25000.0, false);
-    cout << "   Age 70, employed, $25K, not citizen: "
-         << (result2 ? "Valid" : "Invalid") << endl;
+    std::println("   Age 70, employed, $25K, not citizen: {}", (result2 ? "Valid" : "Invalid"));
 
-    cout << "\n💡 BENEFITS:\n";
-    cout << "   • Easy to understand each part\n";
-    cout << "   • Easy to test individually\n";
-    cout << "   • Self-documenting with names\n";
-    cout << "   • Can reuse helper functions\n";
 }
 
 // ============================================
@@ -547,7 +453,7 @@ void example4_simplify_expressions() {
 namespace bad_example5 {
 // ❌ BAD: Unclear control flow
 
-int processData(const vector<int>& data) {
+int processData(const std::vector<int>& data) {
     int result = 0;
     bool flag = false;
 
@@ -574,7 +480,7 @@ namespace good_example5 {
 
 const int THRESHOLD_VALUE = 10;
 
-int processData(const vector<int>& data) {
+int processData(const std::vector<int>& data) {
     int sum = 0;
     bool thresholdExceeded = false;
 
@@ -603,45 +509,22 @@ int processData(const vector<int>& data) {
 }
 
 void example5_control_flow() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: CLEAR CONTROL FLOW                  ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: CLEAR CONTROL FLOW                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   bool flag = false;\n";
-    cout << "   for (int i = 0; i < data.size(); i++) {\n";
-    cout << "       if (data[i] > 0) {\n";
-    cout << "           if (!flag) {\n";
-    cout << "               result += data[i];\n";
-    cout << "               if (data[i] > 10) {\n";
-    cout << "                   flag = true;\n";
-    cout << "   // 🚨 Hard to follow!\n";
+    std::println("   ");
+    std::println("       ");
 
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   bool thresholdExceeded = false;\n";
-    cout << "   \n";
-    cout << "   for (int value : data) {\n";
-    cout << "       if (value <= 0) continue;\n";
-    cout << "       \n";
-    cout << "       if (!thresholdExceeded) {\n";
-    cout << "           sum += value;\n";
-    cout << "           // Clear intent with comments\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    vector<int> testData = {5, 8, 12, 3, 7, -2, 6};
-    cout << "\n   Data: ";
-    for (int v : testData) cout << v << " ";
+    std::vector<int> testData = {5, 8, 12, 3, 7, -2, 6};
+    std::println("");
+    std::print("   Data: ");
+    for (int v : testData) std::print("{} ", v);
 
     int result = good_example5::processData(testData);
-    cout << "\n   Result: " << result << endl;
-    cout << "   (Sum before threshold, subtract after)\n";
-
-    cout << "\n💡 GUIDELINES:\n";
-    cout << "   ✅ Use descriptive variable names for flags\n";
-    cout << "   ✅ Add comments explaining control flow\n";
-    cout << "   ✅ Use early continue/return\n";
-    cout << "   ✅ Keep logic linear when possible\n";
+    std::println("");
+    std::println("   Result: {}", result);
 }
 
 // ============================================
@@ -651,10 +534,10 @@ void example5_control_flow() {
 namespace bad_example6 {
 // ❌ BAD: Poor formatting
 
-class user{private:string n;int a;public:void setn(string x){n=x;}
+class user{private:std::string n;int a;public:void setn(std::string x){n=x;}
     int geta(){return a;}void setage(int x){if(x>0&&x<150)a=x;}};
 
-void process(vector<int>&v){for(int i=0;i<v.size();i++){if(v[i]>100)
+void process(std::vector<int>&v){for(int i=0;i<v.size();i++){if(v[i]>100)
             v[i]=100;else if(v[i]<0)v[i]=0;}}
 }
 
@@ -663,11 +546,11 @@ namespace good_example6 {
 
 class User {
 private:
-    string name;
+    std::string name;
     int age;
 
 public:
-    void setName(const string& newName) {
+    void setName(const std::string& newName) {
         name = newName;
     }
 
@@ -685,7 +568,7 @@ public:
     }
 };
 
-void normalizeValues(vector<int>& values) {
+void normalizeValues(std::vector<int>& values) {
     const int MIN_VALUE = 0;
     const int MAX_VALUE = 100;
 
@@ -700,40 +583,13 @@ void normalizeValues(vector<int>& values) {
 }
 
 void example6_formatting() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: PROPER FORMATTING                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: PROPER FORMATTING                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE:\n";
-    cout << "   class user{private:string n;int a;public:void setn\n";
-    cout << "   (string x){n=x;}int geta(){return a;}};\n";
-    cout << "   // 🚨 Everything crammed together!\n";
+    std::println("       ");
 
-    cout << "\n✅ GOOD CODE:\n";
-    cout << "   class User {\n";
-    cout << "   private:\n";
-    cout << "       string name;\n";
-    cout << "       int age;\n";
-    cout << "       \n";
-    cout << "   public:\n";
-    cout << "       void setName(const string& newName) {\n";
-    cout << "           name = newName;\n";
-    cout << "       }\n";
-    cout << "   };\n";
-
-    cout << "\n📐 FORMATTING RULES:\n";
-    cout << "   ✅ Consistent indentation (4 spaces)\n";
-    cout << "   ✅ One statement per line\n";
-    cout << "   ✅ Blank lines between sections\n";
-    cout << "   ✅ Space after keywords (if, for, while)\n";
-    cout << "   ✅ Space around operators (=, +, -, etc.)\n";
-    cout << "   ✅ Aligned braces\n";
-
-    cout << "\n💡 BENEFITS:\n";
-    cout << "   • Code is scannable\n";
-    cout << "   • Easy to spot errors\n";
-    cout << "   • Professional appearance\n";
-    cout << "   • Consistent team style\n";
 }
 
 // ============================================
@@ -743,7 +599,7 @@ void example6_formatting() {
 namespace bad_example7 {
 // ❌ BAD: Giant function (100+ lines)
 
-void processUserRegistration(string name, string email, string password) {
+void processUserRegistration(std::string name, std::string email, std::string password) {
     // Validate name
     // ... 10 lines
 
@@ -775,103 +631,82 @@ void processUserRegistration(string name, string email, string password) {
 namespace good_example7 {
 // ✅ GOOD: Small, focused functions
 
-bool isValidName(const string& name) {
+bool isValidName(const std::string& name) {
     return !name.empty() && name.length() <= 50;
 }
 
-bool isValidEmail(const string& email) {
-    return email.find('@') != string::npos;
+bool isValidEmail(const std::string& email) {
+    return email.find('@') != std::string::npos;
 }
 
-bool isValidPassword(const string& password) {
+bool isValidPassword(const std::string& password) {
     const int MIN_PASSWORD_LENGTH = 8;
     return password.length() >= MIN_PASSWORD_LENGTH;
 }
 
-bool userExists(const string& email) {
+bool userExists(const std::string& email) {
     // Database check simulation
     return false;
 }
 
-string hashPassword(const string& password) {
+std::string hashPassword(const std::string& password) {
     // Simple hash simulation
     return "hashed_" + password;
 }
 
-void saveUser(const string& name, const string& email, const string& hashedPassword) {
-    cout << "   💾 User saved: " << name << " (" << email << ")" << endl;
+void saveUser(const std::string& name, const std::string& email, const std::string& hashedPassword) {
+    std::println("   💾 User saved: {} ({})", name, email);
 }
 
-void sendWelcomeEmail(const string& email) {
-    cout << "   📧 Welcome email sent to: " << email << endl;
+void sendWelcomeEmail(const std::string& email) {
+    std::println("   📧 Welcome email sent to: {}", email);
 }
 
-void logRegistration(const string& email) {
-    cout << "   📝 Registration logged for: " << email << endl;
+void logRegistration(const std::string& email) {
+    std::println("   📝 Registration logged for: {}", email);
 }
 
-bool processUserRegistration(const string& name, const string& email, const string& password) {
+bool processUserRegistration(const std::string& name, const std::string& email, const std::string& password) {
     // Each validation is clear and separate
     if (!isValidName(name)) {
-        cout << "   ❌ Invalid name" << endl;
+        std::println("   ❌ Invalid name");
         return false;
     }
 
     if (!isValidEmail(email)) {
-        cout << "   ❌ Invalid email" << endl;
+        std::println("   ❌ Invalid email");
         return false;
     }
 
     if (!isValidPassword(password)) {
-        cout << "   ❌ Invalid password (min 8 characters)" << endl;
+        std::println("   ❌ Invalid password (min 8 characters)");
         return false;
     }
 
     if (userExists(email)) {
-        cout << "   ❌ User already exists" << endl;
+        std::println("   ❌ User already exists");
         return false;
     }
 
     // Process registration
-    string hashedPassword = hashPassword(password);
+    std::string hashedPassword = hashPassword(password);
     saveUser(name, email, hashedPassword);
     sendWelcomeEmail(email);
     logRegistration(email);
 
-    cout << "   ✅ Registration successful!" << endl;
+    std::println("   ✅ Registration successful!");
     return true;
 }
 }
 
 void example7_function_length() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: FUNCTION LENGTH                     ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
-
-    cout << "\n❌ BAD: One giant function\n";
-    cout << "   • 100+ lines\n";
-    cout << "   • Multiple responsibilities\n";
-    cout << "   • Hard to test\n";
-    cout << "   • Hard to understand\n";
-
-    cout << "\n✅ GOOD: Multiple small functions\n";
-    cout << "   • isValidName() - 3 lines\n";
-    cout << "   • isValidEmail() - 3 lines\n";
-    cout << "   • isValidPassword() - 3 lines\n";
-    cout << "   • processUserRegistration() - orchestrates\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: FUNCTION LENGTH                     ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
     good_example7::processUserRegistration("John Doe", "john@example.com", "SecurePass123");
 
-    cout << "\n💡 FUNCTION SIZE GUIDELINES:\n";
-    cout << "   ✅ Ideal: 5-20 lines\n";
-    cout << "   ✅ Acceptable: 20-50 lines\n";
-    cout << "   ✅ Warning: 50-100 lines\n";
-    cout << "   🚨 Refactor: 100+ lines\n";
-
-    cout << "\n   Rule of thumb: If you can't see the whole\n";
-    cout << "   function on one screen, it's too long!\n";
 }
 
 // ============================================
@@ -879,50 +714,11 @@ void example7_function_length() {
 // ============================================
 
 void example8_checklist() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: READABILITY CHECKLIST               ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: READABILITY CHECKLIST               ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n✅ READABILITY CHECKLIST:\n";
-
-    cout << "\n📝 NAMING:\n";
-    cout << "   □ Variable names are descriptive\n";
-    cout << "   □ Function names describe action\n";
-    cout << "   □ Class names are nouns\n";
-    cout << "   □ Constants are UPPER_CASE\n";
-    cout << "   □ No single-letter names (except i, j)\n";
-
-    cout << "\n🔢 NUMBERS:\n";
-    cout << "   □ No magic numbers\n";
-    cout << "   □ Constants are named\n";
-    cout << "   □ Numbers have context\n";
-
-    cout << "\n📐 STRUCTURE:\n";
-    cout << "   □ Functions < 20 lines\n";
-    cout << "   □ Nesting depth ≤ 2\n";
-    cout << "   □ One purpose per function\n";
-    cout << "   □ Early returns used\n";
-
-    cout << "\n🎨 FORMATTING:\n";
-    cout << "   □ Consistent indentation\n";
-    cout << "   □ Proper spacing\n";
-    cout << "   □ Aligned braces\n";
-    cout << "   □ Blank lines between sections\n";
-
-    cout << "\n💭 EXPRESSIONS:\n";
-    cout << "   □ Simple, clear expressions\n";
-    cout << "   □ Complex logic broken down\n";
-    cout << "   □ No deeply nested conditions\n";
-
-    cout << "\n📖 COMMENTS:\n";
-    cout << "   □ Explain WHY, not WHAT\n";
-    cout << "   □ Document business rules\n";
-    cout << "   □ No obvious comments\n";
-    cout << "   □ No outdated comments\n";
-
-    cout << "\n🎯 THE ULTIMATE TEST:\n";
-    cout << "   \"Can you understand this code in 30 seconds?\"\n";
-    cout << "   If not, it needs to be more readable!\n";
 }
 
 // ============================================
@@ -930,15 +726,15 @@ void example8_checklist() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║              READABILITY PRINCIPLE                    ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Code should be written to be easily read and        ║\n";
-    cout << "║   understood by humans, not just executed by          ║\n";
-    cout << "║   machines.\"                                         ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║              READABILITY PRINCIPLE                    ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Code should be written to be easily read and       ║");
+    std::println("║   understood by humans, not just executed by          ║");
+    std::println("║   machines.\"                                         ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_meaningful_names();
     example2_magic_numbers();
@@ -948,16 +744,6 @@ int main() {
     example6_formatting();
     example7_function_length();
     example8_checklist();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║         🎉 READABILITY PRINCIPLE COMPLETE! 🎉         ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Code is read 10x more than written.    ║\n";
-    cout << "║  Write for humans, not just computers!                ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

@@ -27,7 +27,7 @@ Real-world use cases:
 - A **server** process and a **client** process exchanging data
 - A **logger** process collecting output from multiple apps
 - A **GUI** process displaying data produced by a **backend** process
-- Two **MCPTT clients** sharing session state (relevant for MCX systems)
+- Two **clients** sharing state (for example a producer and a consumer on the same machine)
 
 ---
 

@@ -1,126 +1,111 @@
-/**
- * The Visitor Interface declares a set of visiting methods that correspond to
- * component classes. The signature of a visiting method allows the visitor to
- * identify the exact class of the component that it's dealing with.
- */
-#include <iostream>
-#include <string>
-#include <array>
-
-class ConcreteComponentA;
-class ConcreteComponentB;
-
-class Visitor {
-public:
-    virtual void VisitConcreteComponentA(const ConcreteComponentA *element) const = 0;
-    virtual void VisitConcreteComponentB(const ConcreteComponentB *element) const = 0;
-};
-
-/**
- * The Component interface declares an `accept` method that should take the base
- * visitor interface as an argument.
- */
-
-class Component {
-public:
-    virtual ~Component() {}
-    virtual void Accept(Visitor *visitor) const = 0;
-};
-
-/**
- * Each Concrete Component must implement the `Accept` method in such a way that
- * it calls the visitor's method corresponding to the component's class.
- */
-class ConcreteComponentA : public Component {
-    /**
-   * Note that we're calling `visitConcreteComponentA`, which matches the
-   * current class name. This way we let the visitor know the class of the
-   * component it works with.
-   */
-public:
-    void Accept(Visitor *visitor) const override {
-        visitor->VisitConcreteComponentA(this);
-    }
-    /**
-   * Concrete Components may have special methods that don't exist in their base
-   * class or interface. The Visitor is still able to use these methods since
-   * it's aware of the component's concrete class.
-   */
-    std::string ExclusiveMethodOfConcreteComponentA() const {
-        return "A";
-    }
-};
-
-class ConcreteComponentB : public Component {
-    /**
-   * Same here: visitConcreteComponentB => ConcreteComponentB
-   */
-public:
-    void Accept(Visitor *visitor) const override {
-        visitor->VisitConcreteComponentB(this);
-    }
-    std::string SpecialMethodOfConcreteComponentB() const {
-        return "B";
-    }
-};
-
-/**
- * Concrete Visitors implement several versions of the same algorithm, which can
- * work with all concrete component classes.
+/*
+ * Visitor: operations on a file-system tree
  *
- * You can experience the biggest benefit of the Visitor pattern when using it
- * with a complex object structure, such as a Composite tree. In this case, it
- * might be helpful to store some intermediate state of the algorithm while
- * executing visitor's methods over various objects of the structure.
+ * Intent: add new operations to a class hierarchy without changing the classes.
+ * Each element only has an accept() method; every new operation is a new
+ * visitor class (double dispatch).
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
-class ConcreteVisitor1 : public Visitor {
-public:
-    void VisitConcreteComponentA(const ConcreteComponentA *element) const override {
-        std::cout << element->ExclusiveMethodOfConcreteComponentA() << " + ConcreteVisitor1\n";
-    }
 
-    void VisitConcreteComponentB(const ConcreteComponentB *element) const override {
-        std::cout << element->SpecialMethodOfConcreteComponentB() << " + ConcreteVisitor1\n";
-    }
+#include <cstddef>
+#include <memory>
+#include <print>
+#include <string>
+#include <utility>
+#include <vector>
+
+class FileEntry;
+class FolderEntry;
+
+class EntryVisitor {
+public:
+    virtual ~EntryVisitor() = default;
+    virtual void visit(const FileEntry& file) = 0;
+    virtual void visit(const FolderEntry& folder) = 0;
 };
 
-class ConcreteVisitor2 : public Visitor {
+class Entry {
 public:
-    void VisitConcreteComponentA(const ConcreteComponentA *element) const override {
-        std::cout << element->ExclusiveMethodOfConcreteComponentA() << " + ConcreteVisitor2\n";
-    }
-    void VisitConcreteComponentB(const ConcreteComponentB *element) const override {
-        std::cout << element->SpecialMethodOfConcreteComponentB() << " + ConcreteVisitor2\n";
-    }
+    explicit Entry(std::string name) : name_(std::move(name)) {}
+    virtual ~Entry() = default;
+    virtual void accept(EntryVisitor& visitor) const = 0;
+    const std::string& name() const { return name_; }
+
+private:
+    std::string name_;
 };
-/**
- * The client code can run visitor operations over any set of elements without
- * figuring out their concrete classes. The accept operation directs a call to
- * the appropriate operation in the visitor object.
- */
-void ClientCode(std::array<const Component *, 2> components, Visitor *visitor) {
-    // ...
-    for (const Component *comp : components) {
-        comp->Accept(visitor);
+
+class FileEntry : public Entry {
+public:
+    FileEntry(std::string name, std::size_t bytes) : Entry(std::move(name)), bytes_(bytes) {}
+    void accept(EntryVisitor& visitor) const override { visitor.visit(*this); }
+    std::size_t bytes() const { return bytes_; }
+
+private:
+    std::size_t bytes_;
+};
+
+class FolderEntry : public Entry {
+public:
+    using Entry::Entry;
+    void add(std::unique_ptr<Entry> child) { children_.push_back(std::move(child)); }
+    void accept(EntryVisitor& visitor) const override { visitor.visit(*this); }
+    const std::vector<std::unique_ptr<Entry>>& children() const { return children_; }
+
+private:
+    std::vector<std::unique_ptr<Entry>> children_;
+};
+
+// Operation 1: add up all file sizes.
+class SizeVisitor : public EntryVisitor {
+public:
+    void visit(const FileEntry& file) override { total_ += file.bytes(); }
+    void visit(const FolderEntry& folder) override {
+        for (const auto& child : folder.children()) {
+            child->accept(*this);
+        }
     }
-    // ...
-}
+    std::size_t total() const { return total_; }
+
+private:
+    std::size_t total_ = 0;
+};
+
+// Operation 2: print the tree with indentation.
+class PrintVisitor : public EntryVisitor {
+public:
+    void visit(const FileEntry& file) override {
+        std::println("{}{} ({} bytes)", indent(), file.name(), file.bytes());
+    }
+    void visit(const FolderEntry& folder) override {
+        std::println("{}{}/", indent(), folder.name());
+        ++depth_;
+        for (const auto& child : folder.children()) {
+            child->accept(*this);
+        }
+        --depth_;
+    }
+
+private:
+    std::string indent() const { return std::string(depth_ * 2, ' '); }
+    std::size_t depth_ = 0;
+};
 
 int main() {
-    std::array<const Component *, 2> components = {new ConcreteComponentA, new ConcreteComponentB};
-    std::cout << "The client code works with all visitors via the base Visitor interface:\n";
-    ConcreteVisitor1 *visitor1 = new ConcreteVisitor1;
-    ClientCode(components, visitor1);
-    std::cout << "\n";
-    std::cout << "It allows the same client code to work with different types of visitors:\n";
-    ConcreteVisitor2 *visitor2 = new ConcreteVisitor2;
-    ClientCode(components, visitor2);
+    auto root = std::make_unique<FolderEntry>("project");
+    root->add(std::make_unique<FileEntry>("main.cpp", 1200));
 
-    for (const Component *comp : components) {
-        delete comp;
-    }
-    delete visitor1;
-    delete visitor2;
+    auto docs = std::make_unique<FolderEntry>("docs");
+    docs->add(std::make_unique<FileEntry>("readme.md", 800));
+    docs->add(std::make_unique<FileEntry>("notes.txt", 150));
+    root->add(std::move(docs));
 
+    PrintVisitor printer;
+    root->accept(printer);
+
+    SizeVisitor sizer;
+    root->accept(sizer);
+    std::println("total size: {} bytes", sizer.total());
     return 0;
 }

@@ -35,7 +35,7 @@ flowchart TD
 |---|---|---|---|
 | 01 | Layered | Each layer only talks to the layer below | OS kernel, web backend |
 | 02 | MVC | Data, display, and logic are separate objects | GUI apps, web frameworks |
-| 03 | Event-Driven | Components communicate via events, not direct calls | MCX PTT dispatch, Qt signals |
+| 03 | Event-Driven | Components communicate via events, not direct calls | device/UI events, Qt signals |
 | 04 | Microservices | Each function is an independent process | Cloud backends, APIs |
 | 05 | Pipe & Filter | Data flows through a chain of transformations | FFmpeg, Unix pipes, compilers |
 

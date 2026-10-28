@@ -124,7 +124,7 @@ std::ofstream outFile("testout.txt");   // creates or truncates
 if (!outFile) { /* handle error */ }
 
 outFile << "Line 1: Hello from C++23\n";
-outFile << "Port: " << 5060 << "\n";
+outFile << "Port: " << 8080 << "\n";
 // file closed automatically when outFile goes out of scope (RAII)
 ```
 
@@ -196,9 +196,9 @@ inFile.getline(buffer, sizeof(buffer)); // max 63 chars
 ```mermaid
 flowchart LR
     subgraph OSS ["ostringstream — build"]
-        O1["oss << 'Port: ' << 5060"]
-        O2["oss << ' Group: ' << 'ALPHA'"]
-        O3["oss.str() → 'Port: 5060 Group: ALPHA'"]
+        O1["oss << 'Port: ' << 8080"]
+        O2["oss << ' Queue: ' << 'A'"]
+        O3["oss.str() → 'Port: 8080 Queue: A'"]
         O1 --> O2 --> O3
     end
 
@@ -213,7 +213,7 @@ flowchart LR
 ```cpp
 // Build a string
 std::ostringstream oss;
-oss << "Session: " << "SES-001" << " Port: " << 5060;
+oss << "Job: " << "JOB-001" << " Port: " << 8080;
 std::string result = oss.str();
 
 // Parse a string
@@ -367,3 +367,40 @@ sequenceDiagram
 | Parse string | `istringstream` | `>>`, `getline()` |
 | File info | `std::filesystem` | `exists()`, `file_size()` |
 | Check errors | any stream | `good()`, `fail()`, `eof()` |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 5: getline — char array (C-style)
+
+**Difference:**
+
+```cpp
+std::getline(stream, string)    — string, no size limit
+```
+
+stream.getline(buffer, size)    — char array, fixed size
+
+```cpp
+Prefer std::getline with string — safer, no overflow risk
+```
+
+### Example 10: Error handling — stream state flags
+
+**Stream state flags:**
+
+goodbit — no error  
+eofbit  — end of file reached  
+failbit — logical error (bad format)  
+badbit  — critical I/O error
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

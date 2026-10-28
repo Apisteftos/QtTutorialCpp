@@ -29,9 +29,7 @@
 //   7.  QtConcurrent::run
 //   8.  QFuture + QFutureWatcher
 //   9.  QThread::sleep / msleep / usleep
-//  10.  std::thread vs QThread comparison
 // ============================================================
-
 
 // ============================================================
 // Example 1 — QThread subclass (old style)
@@ -64,7 +62,6 @@ signals:
 private:
     int m_id;
 };
-
 
 // ============================================================
 // Example 2 — Worker object + moveToThread (PREFERRED)
@@ -101,7 +98,6 @@ signals:
     void resultReady(int taskId, int result);
     void allDone();
 };
-
 
 // ============================================================
 // Example 3 — Controller that uses worker via signals/slots
@@ -155,7 +151,6 @@ private:
     WorkerObject* m_worker;
 };
 
-
 // ============================================================
 // Example 4 — QMutex + QMutexLocker
 // ============================================================
@@ -177,7 +172,6 @@ private:
     mutable QMutex m_mutex;
     int            m_value{0};
 };
-
 
 // ============================================================
 // Example 5 — QWaitCondition (Qt condition variable)
@@ -209,7 +203,6 @@ private:
     QQueue<int>    m_queue;
 };
 
-
 // ============================================================
 // Example 6 — QRunnable + QThreadPool
 // ============================================================
@@ -231,7 +224,6 @@ private:
     int m_id;
 };
 
-
 // ============================================================
 // MAIN
 // ============================================================
@@ -242,9 +234,9 @@ int main(int argc, char* argv[])
     qDebug() << "Main thread:" << QThread::currentThread();
     qDebug() << "Ideal thread count:" << QThreadPool::globalInstance()->maxThreadCount();
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 1: QThread subclass";
     qDebug() << "=====================================================";
 
@@ -263,9 +255,9 @@ int main(int argc, char* argv[])
         qDebug() << "Both QThread subclasses finished";
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 2 & 3: Worker object + moveToThread";
     qDebug() << "=====================================================";
 
@@ -282,9 +274,9 @@ int main(int argc, char* argv[])
         app.exec();
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 4: QMutex + QMutexLocker";
     qDebug() << "=====================================================";
 
@@ -305,9 +297,9 @@ int main(int argc, char* argv[])
         qDebug() << "Expected: 40000 | Actual:" << counter.value();
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 5: QWaitCondition";
     qDebug() << "=====================================================";
 
@@ -334,9 +326,9 @@ int main(int argc, char* argv[])
         delete consumer;
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 6: QRunnable + QThreadPool";
     qDebug() << "=====================================================";
 
@@ -351,9 +343,9 @@ int main(int argc, char* argv[])
         qDebug() << "All QRunnable tasks done";
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 7: QtConcurrent::run";
     qDebug() << "=====================================================";
 
@@ -370,9 +362,9 @@ int main(int argc, char* argv[])
         qDebug() << "[main] QtConcurrent result:" << fut.result();
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 8: QFuture + QFutureWatcher";
     qDebug() << "=====================================================";
 
@@ -400,9 +392,9 @@ int main(int argc, char* argv[])
         app.exec();
     }
 
-
     // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
+    qDebug() << "";
+    qDebug() << "=====================================================";
     qDebug() << "Example 9: QThread sleep functions";
     qDebug() << "=====================================================";
 
@@ -422,32 +414,8 @@ int main(int argc, char* argv[])
         qDebug() << "sleep(0) yield:" << timer.elapsed() << "ms";
     }
 
-
-    // -------------------------------------------------------
-    qDebug() << "\n=====================================================";
-    qDebug() << "Example 10: std::thread vs QThread";
-    qDebug() << "=====================================================";
-
-    qDebug() << "std::thread:";
-    qDebug() << "  + Portable, standard C++23";
-    qDebug() << "  + Works with std::mutex, std::future, std::atomic";
-    qDebug() << "  - No signals/slots";
-    qDebug() << "  - No Qt event loop";
-    qDebug() << "  - Cannot use QObject in thread without event loop";
-
-    qDebug() << "QThread:";
-    qDebug() << "  + Signals/slots (queued connections across threads)";
-    qDebug() << "  + Qt event loop (QTimer, network, etc. in thread)";
-    qDebug() << "  + moveToThread pattern (clean ownership)";
-    qDebug() << "  + QThreadPool / QtConcurrent integration";
-    qDebug() << "  - Qt dependency";
-    qDebug() << "  - Slightly more boilerplate";
-
-    qDebug() << "\nRule: use QThread when you need Qt features in the thread.";
-    qDebug() << "      use std::thread for pure C++ computation tasks.";
-
-
-    qDebug() << "\n=== QThread complete ===";
+    qDebug() << "";
+    qDebug() << "=== QThread complete ===";
     return 0;
 }
 

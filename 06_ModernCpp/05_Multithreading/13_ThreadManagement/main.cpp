@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <stop_token>     // C++20 std::jthread, std::stop_token
 #include <vector>
@@ -12,6 +11,7 @@
 #include <chrono>
 #include <string>
 #include <future>
+#include <print>
 
 
 using namespace std::chrono_literals;
@@ -40,12 +40,12 @@ std::atomic<bool> g_stopFlag{false};
 
 void workerWithFlag(int id)
 {
-    std::cout << "[flag worker " << id << "] started\n";
+    std::println("[flag worker {}] started", id);
     while (!g_stopFlag.load()) {
         std::this_thread::sleep_for(30ms);
-        std::cout << "[flag worker " << id << "] working...\n";
+        std::println("[flag worker {}] working...", id);
     }
-    std::cout << "[flag worker " << id << "] stopped gracefully\n";
+    std::println("[flag worker {}] stopped gracefully", id);
 }
 
 
@@ -82,7 +82,7 @@ public:
     {
         for (int i = 0; i < numThreads; ++i) {
             m_workers.emplace_back([this, i]() {
-                std::cout << "[pool worker " << i << "] ready\n";
+                std::println("[pool worker {}] ready", i);
                 while (true) {
                     std::function<void()> task;
                     {
@@ -92,7 +92,7 @@ public:
                         });
 
                         if (m_stop && m_tasks.empty()) {
-                            std::cout << "[pool worker " << i << "] exiting\n";
+                            std::println("[pool worker {}] exiting", i);
                             return;
                         }
 
@@ -152,7 +152,7 @@ public:
         : m_threads(threads) {}
 
     ~ThreadGuard() {
-        std::cout << "[ThreadGuard] joining " << m_threads.size() << " threads\n";
+        std::println("[ThreadGuard] joining {} threads", m_threads.size());
         for (auto& t : m_threads)
             if (t.joinable()) t.join();
     }
@@ -169,20 +169,20 @@ public:
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: std::jthread — auto-joining thread (C++20)\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: std::jthread — auto-joining thread (C++20)");
+    std::println("=====================================================");
 
     // std::jthread automatically joins in its destructor
     // No need to call join() or detach() — no std::terminate() risk
     {
         std::jthread jt([]() {
             std::this_thread::sleep_for(30ms);
-            std::cout << "[jthread] work done\n";
+            std::println("[jthread] work done");
         });
-        std::cout << "[main] jthread created — leaving scope\n";
+        std::println("[main] jthread created — leaving scope");
     }   // jt destructor calls join() automatically here
-    std::cout << "[main] scope exited — jthread was joined automatically\n";
+    std::println("[main] scope exited — jthread was joined automatically");
 
     // Compare with std::thread risk:
     // {
@@ -195,87 +195,91 @@ int main()
         for (int i = 0; i < 3; ++i) {
             workers.emplace_back([i]() {
                 std::this_thread::sleep_for(20ms);
-                std::cout << "[jthread " << i << "] done\n";
+                std::println("[jthread {}] done", i);
             });
         }
-        std::cout << "[main] all jthreads will auto-join when vector is destroyed\n";
+        std::println("[main] all jthreads will auto-join when vector is destroyed");
     }
-    std::cout << "[main] vector destroyed — all jthreads joined\n";
+    std::println("[main] vector destroyed — all jthreads joined");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Stopping threads with std::stop_token\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Stopping threads with std::stop_token");
+    std::println("=====================================================");
 
     // std::jthread passes a stop_token automatically as first parameter
     {
         std::jthread worker([](std::stop_token stopToken) {
             int iteration = 0;
             while (!stopToken.stop_requested()) {
-                std::cout << "[stop_token worker] iteration " << iteration++ << '\n';
+                std::println("[stop_token worker] iteration {}", iteration++);
                 std::this_thread::sleep_for(25ms);
             }
-            std::cout << "[stop_token worker] stop requested — exiting cleanly\n";
+            std::println("[stop_token worker] stop requested — exiting cleanly");
         });
 
         std::this_thread::sleep_for(100ms);
-        std::cout << "[main] requesting stop...\n";
+        std::println("[main] requesting stop...");
         worker.request_stop();   // sets the stop token
         // jthread destructor will join automatically
     }
-    std::cout << "[main] worker stopped and joined\n";
+    std::println("[main] worker stopped and joined");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: std::stop_source and std::stop_callback\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: std::stop_source and std::stop_callback");
+    std::println("=====================================================");
 
     std::stop_source stopSource;
     std::stop_token  stopToken = stopSource.get_token();
 
     // Register a callback that fires when stop is requested
     std::stop_callback callback(stopToken, []() {
-        std::cout << "[stop_callback] stop was requested — running cleanup!\n";
+        std::println("[stop_callback] stop was requested — running cleanup!");
     });
 
     std::jthread worker2([stopToken]() {
         while (!stopToken.stop_requested()) {
             std::this_thread::sleep_for(20ms);
-            std::cout << "[worker2] running\n";
+            std::println("[worker2] running");
         }
-        std::cout << "[worker2] exiting\n";
+        std::println("[worker2] exiting");
     });
 
     std::this_thread::sleep_for(80ms);
-    std::cout << "[main] calling stopSource.request_stop()\n";
+    std::println("[main] calling stopSource.request_stop()");
     stopSource.request_stop();   // triggers callback + notifies stop_token
     // worker2 auto-joins via jthread destructor
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Stopping with atomic flag (pre-C++20 way)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Stopping with atomic flag (pre-C++20 way)");
+    std::println("=====================================================");
 
     g_stopFlag = false;
     std::thread fw1(workerWithFlag, 1);
     std::thread fw2(workerWithFlag, 2);
 
     std::this_thread::sleep_for(100ms);
-    std::cout << "[main] setting stop flag\n";
+    std::println("[main] setting stop flag");
     g_stopFlag = true;
 
     fw1.join();
     fw2.join();
-    std::cout << "[main] both flag workers stopped\n";
+    std::println("[main] both flag workers stopped");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Exception handling across threads\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Exception handling across threads");
+    std::println("=====================================================");
 
     // Exceptions do NOT propagate automatically across thread boundaries
     // Use std::exception_ptr to transfer them
@@ -289,12 +293,13 @@ int main()
         try {
             std::rethrow_exception(g_exceptionPtr);
         } catch (const std::exception& e) {
-            std::cout << "[main] caught exception from thread: " << e.what() << '\n';
+            std::println("[main] caught exception from thread: {}", e.what());
         }
     }
 
     // With std::async — exceptions are captured automatically in the future
-    std::cout << "\nWith std::async — exception captured in future:\n";
+    std::println("");
+    std::println("With std::async — exception captured in future:");
     auto fut = std::async(std::launch::async, []() -> int {
         throw std::runtime_error("async worker error!");
         return 42;
@@ -302,39 +307,41 @@ int main()
 
     try {
         int result = fut.get();   // rethrows the exception here
-        std::cout << "Result: " << result << '\n';
+        std::println("Result: {}", result);
     } catch (const std::exception& e) {
-        std::cout << "[main] caught from future: " << e.what() << '\n';
+        std::println("[main] caught from future: {}", e.what());
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Joining multiple threads (vector)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Joining multiple threads (vector)");
+    std::println("=====================================================");
 
     std::vector<std::thread> threads;
 
     for (int i = 0; i < 5; ++i) {
         threads.emplace_back([i]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(10 * (i + 1)));
-            std::cout << "[thread " << i << "] done\n";
+            std::println("[thread {}] done", i);
         });
     }
 
-    std::cout << "[main] waiting for " << threads.size() << " threads...\n";
+    std::println("[main] waiting for {} threads...", threads.size());
 
     // Join all
     for (auto& t : threads)
         if (t.joinable()) t.join();
 
-    std::cout << "[main] all threads joined\n";
+    std::println("[main] all threads joined");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Detach and check completion with atomic\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Detach and check completion with atomic");
+    std::println("=====================================================");
 
     std::atomic<int> completedCount{0};
     int totalTasks = 4;
@@ -342,7 +349,7 @@ int main()
     for (int i = 0; i < totalTasks; ++i) {
         std::thread([i, &completedCount]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(20 * (i + 1)));
-            std::cout << "[detached " << i << "] finished\n";
+            std::println("[detached {}] finished", i);
             ++completedCount;
         }).detach();
     }
@@ -351,16 +358,17 @@ int main()
     while (completedCount < totalTasks) {
         std::this_thread::sleep_for(10ms);
     }
-    std::cout << "[main] all " << completedCount << " detached tasks completed\n";
+    std::println("[main] all {} detached tasks completed", completedCount.load());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Simple Thread Pool\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Simple Thread Pool");
+    std::println("=====================================================");
 
     unsigned int cores = std::thread::hardware_concurrency();
-    std::cout << "Creating thread pool with " << cores << " workers\n";
+    std::println("Creating thread pool with {} workers", cores);
 
     {
         ThreadPool pool(cores);
@@ -371,20 +379,20 @@ int main()
             pool.submit([i, &printMutex]() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(20 + i * 5));
                 std::lock_guard<std::mutex> lock(printMutex);
-                std::cout << "[task " << i << "] completed on thread "
-                          << std::this_thread::get_id() << '\n';
+                std::println("[task {}] completed on thread {}", i, std::this_thread::get_id());
             });
         }
 
         pool.waitAll();
-        std::cout << "[main] all pool tasks done\n";
+        std::println("[main] all pool tasks done");
     }   // pool destructor joins all workers
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: RAII ThreadGuard — safe cleanup\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: RAII ThreadGuard — safe cleanup");
+    std::println("=====================================================");
 
     {
         std::vector<std::thread> guardedThreads;
@@ -393,19 +401,20 @@ int main()
         for (int i = 0; i < 3; ++i) {
             guardedThreads.emplace_back([i]() {
                 std::this_thread::sleep_for(20ms);
-                std::cout << "[guarded thread " << i << "] done\n";
+                std::println("[guarded thread {}] done", i);
             });
         }
 
-        std::cout << "[main] leaving scope — ThreadGuard will join all\n";
+        std::println("[main] leaving scope — ThreadGuard will join all");
     }   // ThreadGuard destructor joins everything — even if exception thrown
-    std::cout << "[main] scope exited safely\n";
+    std::println("[main] scope exited safely");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Thread lifetime and object ownership\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Thread lifetime and object ownership");
+    std::println("=====================================================");
 
     // RULE: object must outlive any thread that references it
     std::string data = "shared data";
@@ -414,7 +423,7 @@ int main()
         // SAFE — thread joined before data goes out of scope
         std::jthread safe([&data]() {
             std::this_thread::sleep_for(20ms);
-            std::cout << "[safe thread] data = " << data << '\n';
+            std::println("[safe thread] data = {}", data);
         });
     }   // jthread joined here — data still alive
 
@@ -422,11 +431,5 @@ int main()
     // std::thread dangerous([&data]() { use(data); });
     // dangerous.detach();  // data may be destroyed while thread runs!
     // } // data destroyed — thread reads garbage
-
-    std::cout << "[main] object lifetime rule: object must outlive the thread\n";
-    std::cout << "[main] use jthread + capture by value for safety with detached threads\n";
-
-
-    std::cout << "\n=== ThreadManagement complete ===\n";
     return 0;
 }

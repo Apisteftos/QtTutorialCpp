@@ -1,10 +1,10 @@
-#include <iostream>
 #include <thread>
 #include <mutex>
 #include <shared_mutex>
 #include <vector>
 #include <chrono>
 #include <string>
+#include <print>
 
 using namespace std::chrono_literals;
 
@@ -26,7 +26,7 @@ std::mutex g_coutMutex;
 void safePrint(const std::string& msg)
 {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 // ---- Example 1 ----
@@ -127,74 +127,82 @@ void tryLockWorker(int id) {
 
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Race Condition — NO mutex\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Race Condition — NO mutex");
+    std::println("=====================================================");
     g_unsafeCounter = 0;
     std::thread u1(unsafeIncrement, 100000);
     std::thread u2(unsafeIncrement, 100000);
     u1.join(); u2.join();
-    std::cout << "Expected: 200000 | Actual: " << g_unsafeCounter << " (non-deterministic!)\n";
+    std::println("Expected: 200000 | Actual: {} (non-deterministic!)", g_unsafeCounter);
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: std::mutex + std::lock_guard\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: std::mutex + std::lock_guard");
+    std::println("=====================================================");
     g_safeCounter = 0;
     std::thread s1(safeIncrement, 100000);
     std::thread s2(safeIncrement, 100000);
     s1.join(); s2.join();
-    std::cout << "Expected: 200000 | Actual: " << g_safeCounter << " (always correct)\n";
+    std::println("Expected: 200000 | Actual: {} (always correct)", g_safeCounter);
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: std::unique_lock (bank withdrawal)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: std::unique_lock (bank withdrawal)");
+    std::println("=====================================================");
     g_bankBalance = 1000;
     std::thread w1(withdraw, 300, "Alice");
     std::thread w2(withdraw, 400, "Bob");
     std::thread w3(withdraw, 500, "Carol");
     w1.join(); w2.join(); w3.join();
-    std::cout << "Final balance: " << g_bankBalance << '\n';
+    std::println("Final balance: {}", g_bankBalance);
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: std::recursive_mutex\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: std::recursive_mutex");
+    std::println("=====================================================");
     std::thread rm(recursiveUpdate, 3);
     rm.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: std::timed_mutex\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: std::timed_mutex");
+    std::println("=====================================================");
     std::thread tm1(timedWorker, 1, 80);
     std::this_thread::sleep_for(5ms);
     std::thread tm2(timedWorker, 2, 20);
     std::thread tm3(timedWorker, 3, 20);
     tm1.join(); tm2.join(); tm3.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: std::shared_mutex (readers-writer)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: std::shared_mutex (readers-writer)");
+    std::println("=====================================================");
     std::vector<std::thread> rwThreads;
     for (int i=1;i<=3;++i) rwThreads.emplace_back(configReader, i);
     rwThreads.emplace_back(configWriter, "production_v2");
     for (int i=4;i<=5;++i) rwThreads.emplace_back(configReader, i);
     for (auto& t : rwThreads) t.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: std::scoped_lock (multi-mutex)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: std::scoped_lock (multi-mutex)");
+    std::println("=====================================================");
     std::thread ta(taskAlpha);
     std::thread tb(taskBeta);
     ta.join(); tb.join();
-    std::cout << "No deadlock — scoped_lock is safe\n";
+    std::println("No deadlock — scoped_lock is safe");
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: try_lock (non-blocking)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: try_lock (non-blocking)");
+    std::println("=====================================================");
     std::thread tl1(tryLockWorker, 1);
     std::thread tl2(tryLockWorker, 2);
     std::thread tl3(tryLockWorker, 3);
     tl1.join(); tl2.join(); tl3.join();
 
-    std::cout << "\n=== Mutex complete ===\n";
+    std::println("");
+    std::println("=== Mutex complete ===");
     return 0;
 }

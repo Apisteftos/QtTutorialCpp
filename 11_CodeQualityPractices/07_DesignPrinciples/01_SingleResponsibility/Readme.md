@@ -491,3 +491,285 @@ After mastering SRP, explore:
 - **"Agile Software Development" by Robert C. Martin** - SOLID principles
 - **C++ Core Guidelines** - Class design principles
 - **Martin Fowler's Refactoring** - Extracting classes
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 SINGLE RESPONSIBILITY COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: One class, one job, one reason to  
+change. Keep it focused and simple!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_employee_class()`
+
+- ❌ BAD CODE (Multiple Responsibilities):
+
+```cpp
+
+```cpp
+class Employee {
+```
+
+**private:**
+
+```cpp
+string name;
+double salary;
+string department;
+```
+
+**public:**
+
+```cpp
+    // Responsibility 1: Employee data management
+    void setName(string n) { name = n; }
+    string getName() const { return name; }
+    // Responsibility 2: Salary calculation (Business logic)
+    double calculatePay() {
+        // Complex pay calculation
+        return salary * 1.1;
+    }
+    // Responsibility 3: Database operations
+    void save() {
+        // Save to database
+        cout << "Saving employee to DB..." << endl;
+    }
+    // Responsibility 4: Report generation
+    string generateReport() {
+        return "Employee Report: " + name;
+    }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - 4 different responsibilities in one class!
+  - Change in DB schema → modify Employee
+  - Change in pay calculation → modify Employee
+  - Change in report format → modify Employee
+  - Hard to test each responsibility separately
+  - High coupling
+
+- ✅ GOOD CODE (Separated Responsibilities):
+
+```cpp
+
+```cpp
+// Responsibility 1: Employee data (Entity)
+class Employee {
+```
+
+**private:**
+
+```cpp
+string name;
+double salary;
+string department;
+```
+
+**public:**
+
+```cpp
+    void setName(string n) { name = n; }
+    string getName() const { return name; }
+    double getSalary() const { return salary; }
+};
+
+// Responsibility 2: Salary calculation (Business logic)
+class PayrollCalculator {
+```
+
+**public:**
+
+```cpp
+    double calculatePay(const Employee& emp) {
+        // Complex pay calculation logic
+        return emp.getSalary() * 1.1;
+    }
+};
+
+// Responsibility 3: Database operations
+class EmployeeRepository {
+```
+
+**public:**
+
+```cpp
+    void save(const Employee& emp) {
+        // Database operations
+        cout << "Saving " << emp.getName() << " to DB" << endl;
+    }
+};
+
+// Responsibility 4: Report generation
+class EmployeeReportGenerator {
+```
+
+**public:**
+
+```cpp
+    string generate(const Employee& emp) {
+        return "Employee Report: " + emp.getName();
+    }
+};
+```
+
+```
+
+**✨ IMPROVEMENTS:**
+
+- ✅ Each class has ONE clear responsibility
+- ✅ Change in DB → only modify EmployeeRepository
+- ✅ Change in pay → only modify PayrollCalculator
+- ✅ Easy to test each class independently
+- ✅ Can reuse PayrollCalculator for other entities
+- ✅ Low coupling, high cohesion
+
+- 💡 KEY INSIGHT:
+
+"Separate what changes for different reasons!"
+
+### From `example2_user_registration()`
+
+- ❌ BAD: One class does everything
+  - Validation + Hashing + Database + Email
+  - Hard to test
+  - Hard to change one part
+
+- ✅ GOOD: Each class has one job
+  - UserValidator → validates input
+  - PasswordHasher → handles security
+  - UserRepository → manages database
+  - EmailService → sends emails
+  - UserRegistrationService → coordinates
+
+**🔧 DEMONSTRATION:**
+
+### From `example2_user_registration()`
+
+- 💡 BENEFITS:
+  - Can test validation independently
+  - Can change email service without touching validation
+  - Can reuse EmailService in other contexts
+  - Each class is small and focused
+
+### From `example3_logger_class()`
+
+- ❌ BAD: Logger does storage + formatting + file I/O + network
+  - Change file format → modify Logger
+  - Change network protocol → modify Logger
+  - Can't test formatting without file I/O
+
+- ✅ GOOD: Separated concerns
+  - LogStorage → stores logs in memory
+  - LogFormatter → formats messages
+  - LogFileWriter → writes to file
+  - LogNetworkSender → sends over network
+
+**🔧 DEMONSTRATION:**
+
+### From `example3_logger_class()`
+
+- 💡 NOW YOU CAN:
+  - Change file format without touching network code
+  - Test formatting independently
+  - Reuse LogFileWriter for other purposes
+  - Switch storage implementation easily
+
+### From `example4_comparison()`
+
+**📊 VIOLATION vs COMPLIANCE:**
+
+- ❌ VIOLATIONS (God Classes):
+  - UserManager: Creates, updates, validates, emails, logs
+  - DataHandler: Reads files, parses, validates, saves
+  - OrderProcessor: Validates, calculates, sends emails, logs
+
+- ✅ COMPLIANCE (Focused Classes):
+  - UserCreator: Creates users
+  - UserValidator: Validates user data
+  - EmailService: Sends emails
+  - FileReader: Reads files
+  - DataParser: Parses data
+
+**🎯 HOW TO IDENTIFY SRP VIOLATIONS:**
+
+```cpp
+1. Count responsibilities (> 1 = violation)
+2. Count reasons to change (> 1 = violation)
+```
+
+3. Try to describe class in one sentence
+4. Check if methods relate to each other
+5. Look for 'And' in class names
+
+**🔧 HOW TO FIX:**
+
+1. List all responsibilities
+2. Create new class for each
+3. Move related methods
+4. Keep original as coordinator (optional)
+5. Update dependencies
+
+### From `example5_benefits()`
+
+- ✅ BENEFITS OF SRP:
+
+1. EASIER TO UNDERSTAND:
+  - Small, focused classes
+  - Clear purpose
+  - Less cognitive load
+
+2. EASIER TO TEST:
+  - Test one responsibility at a time
+  - Mock dependencies easily
+  - Faster test execution
+
+3. EASIER TO MAINTAIN:
+  - Changes isolated to one class
+  - Less risk of breaking other features
+  - Easier to find bugs
+
+4. EASIER TO REUSE:
+  - Small classes = more reusable
+  - Can use EmailService anywhere
+  - No baggage from unrelated code
+
+5. BETTER COLLABORATION:
+  - Team members can work on different classes
+  - Less merge conflicts
+  - Clear ownership
+
+- ⚠️  COMMON MISTAKES:
+  - Over-engineering (too many tiny classes)
+  - Splitting at wrong boundaries
+  - Creating artificial separations
+
+- 💡 GOLDEN RULE:
+
+"Gather together things that change for the same reason.  
+Separate things that change for different reasons."  
+— Robert C. Martin
+
+**🎯 REMEMBER:**
+
+  - One class = One responsibility
+  - One class = One reason to change
+  - If you use 'AND' to describe it, split it!
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

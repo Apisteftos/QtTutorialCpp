@@ -1157,3 +1157,518 @@ class User {
 
 ```
 ╔══════════════
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 YAGNI PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Build only what you need RIGHT NOW.  
+Don't add functionality for hypothetical future  
+needs. When requirements appear, THEN add the  
+feature. Trust the process!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_configuration()`
+
+- ❌ BAD CODE (Over-configured):
+
+```cpp
+
+```cpp
+class EmailConfig {
+    string host, username, password;
+    int port, timeout, retries, retryDelay;
+    bool useTLS, useSSL, enableLogging, enableMetrics;
+    string logLevel, logFormat, logDestination;
+    // ... 20 more options for "might need"
+};
+// 🚨 90% of options never used!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - 20+ configuration options added speculatively
+  - Most options never used in practice
+  - Complex initialization for simple task
+  - Maintaining dead code
+
+- ✅ GOOD CODE (Current needs only):
+
+```cpp
+
+```cpp
+class EmailService {
+```
+
+**private:**
+
+```cpp
+string host;
+```
+
+**public:**
+
+```cpp
+    EmailService(string host) : host(host) {}
+    void sendEmail(string to, string subject, string body);
+};
+// ✅ Only what's needed NOW!
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_configuration()`
+
+- 💡 LESSON:
+
+Don't add configuration options for hypothetical needs.  
+Add them when requirements actually appear!
+
+### From `example2_premature_abstraction()`
+
+- ❌ BAD CODE (Speculative support):
+  - DatabaseInterface abstract class
+  - MySQLDatabase implementation
+  - PostgreSQLDatabase implementation
+  - MongoDatabase implementation
+  - DatabaseFactory pattern
+  - 5 classes, 100+ lines of code
+
+🚨 Reality: Only MySQL is used!
+
+- ✅ GOOD CODE (Current need):
+  - One Database class
+  - 10 lines of code
+  - Works perfectly for MySQL
+  - Will refactor WHEN other databases needed
+
+- 💡 LESSON:
+
+"We might switch databases" is speculation.  
+Build abstractions when requirements are REAL,  
+not when they're hypothetical!
+
+**📊 REALITY CHECK:**
+
+  - 90% of "might switch" never happens
+  - When it does, refactoring is straightforward
+  - Cost of maintaining dead code > cost of refactoring
+
+### From `example3_feature_bloat()`
+
+- ❌ BAD CODE (Speculative features):
+
+Current requirement: username, password, email  
+Added "just in case":
+
+  - phoneNumber ("users might want this")
+  - address ("for shipping someday")
+  - profilePicture ("social features planned")
+  - friends vector ("friend system ideas")
+  - blockedUsers ("might need blocking")
+  - reputationScore ("gamification")
+  - badges ("achievement system")
+  - 15 more speculative features...
+
+🚨 Result: 25 fields, 3 used!
+
+- ✅ GOOD CODE (Actual requirements):
+  - username
+  - password
+  - email
+
+That's it!
+
+**✨ DEMONSTRATION:**
+
+### From `example3_feature_bloat()`
+
+- 💡 LESSON:
+
+Don't add fields for hypothetical features.  
+Requirements: "We need username/password/email"  
+YAGNI: Build exactly that!  
+When friend system is ACTUALLY requested:
+
+- → Add it THEN, not before!
+
+### From `example4_extensibility()`
+
+- ❌ BAD CODE (Over-engineered):
+
+Built for simple calculator:
+
+  - Plugin system
+  - Plugin manager
+  - Plugin interface
+  - Plugin registration
+  - Plugin discovery
+  - Configuration system
+
+🚨 All for: add, subtract, multiply, divide!
+
+- ✅ GOOD CODE (Current needs):
+  - Four simple methods
+  - 15 lines of code
+  - Works perfectly
+
+**✨ DEMONSTRATION:**
+
+### From `example4_extensibility()`
+
+- 💡 LESSON:
+
+"Users might want plugins" is speculation.  
+Build plugin system when:
+
+  - User requests it
+  - You have 3+ concrete examples
+  - Not before!
+
+### From `example5_premature_optimization()`
+
+- ❌ BAD CODE (Premature optimization):
+  - Two-level cache system
+  - LRU eviction algorithm
+  - Access count tracking
+  - Compression layer
+  - Encryption layer
+  - 150+ lines of code
+
+🚨 No performance measurements!  
+🚨 "Might need to be fast" speculation
+
+- ✅ GOOD CODE (Simple first):
+  - map<string, string>
+  - 10 lines of code
+  - Works perfectly
+  - Optimize AFTER measuring!
+
+- 💡 FAMOUS QUOTE:
+
+"Premature optimization is the root of all evil."  
+— Donald Knuth
+
+**📊 PROCESS:**
+
+1. Build simple version
+2. MEASURE performance
+3. Find ACTUAL bottlenecks
+4. THEN optimize
+
+Don't optimize hypothetical problems!
+
+### From `example6_when_justified()`
+
+- ✅ YAGNI EXCEPTIONS (Plan ahead when):
+
+1. PUBLIC APIs:
+  - External users depend on interface
+  - Breaking changes are expensive
+  - Versioning makes sense
+  - Some forward thinking justified
+
+2. DATABASE SCHEMAS:
+  - Migrations are costly
+  - Common fields often needed
+  - created_at, updated_at usually good
+  - But don't add every possible field!
+
+3. FILE FORMATS:
+  - Hard to change once deployed
+  - Version number useful
+  - Some extensibility makes sense
+
+- ❌ YAGNI APPLIES TO (Don't plan ahead):
+
+1. INTERNAL CODE:
+  - Easy to refactor
+  - No external dependencies
+  - Build exactly what's needed
+
+2. FEATURES:
+  - Don't build unused features
+  - Wait for real requirements
+  - User needs drive development
+
+3. ABSTRACTIONS:
+  - Wait for pattern to emerge
+  - Needs 3+ concrete examples
+  - Refactor when pattern is clear
+
+**⚖️ THE BALANCE:**
+
+```cpp
+Public API -----> Plan ahead (hard to change)
+Internal code --> YAGNI (easy to change)
+```
+
+### From `example7_cost_of_speculation()`
+
+**💰 COSTS OF BUILDING "JUST IN CASE":**
+
+1. DEVELOPMENT TIME:
+  - Time spent on unused features
+  - Could build actual requirements instead
+  - Opportunity cost is real
+
+2. MAINTENANCE BURDEN:
+  - Dead code needs maintenance
+  - Tests for unused features
+  - Documentation for unused features
+  - Confuses new developers
+
+3. INCREASED COMPLEXITY:
+  - Harder to understand
+  - More places for bugs
+  - Slower to make changes
+
+4. WRONG PREDICTIONS:
+  - 90% of "might need" never happens
+  - When it does, requirements differ
+  - Built wrong solution to wrong problem
+
+5. DELAYED VALUE:
+  - Actual features delayed
+  - Users waiting for real needs
+  - Wasted effort on speculation
+
+**📊 STATISTICS:**
+
+  - 64% of features rarely/never used (Standish Group)
+  - 45% of features never used at all
+  - Cost to maintain > cost to build
+
+- ✅ BENEFITS OF YAGNI:
+
+1. FASTER DELIVERY:
+  - Build only what's needed
+  - Ship features faster
+  - Real user value sooner
+
+2. LOWER COSTS:
+  - Less code to write
+  - Less code to maintain
+  - Less code to test
+
+3. BETTER DECISIONS:
+  - Real requirements guide design
+  - Actual usage informs features
+  - Data-driven development
+
+4. EASIER MAINTENANCE:
+  - Smaller codebase
+  - Less complexity
+  - Faster changes
+
+### From `example8_how_to_practice()`
+
+- ✅ STRATEGIES FOR YAGNI:
+
+1. THE FUNDAMENTAL QUESTION:
+
+Before writing ANY code, ask:  
+"Do I need this RIGHT NOW?"  
+If NO → Don't build it!
+
+2. CHALLENGE ASSUMPTIONS:
+- ❌ "We might need this someday"
+- ✅ "Is this needed for current requirements?"
+- ❌ "What if requirements change?"
+- ✅ "What are the requirements NOW?"
+- ❌ "Let's make it flexible"
+- ✅ "Let's make it work"
+
+3. BUILD MINIMUM VIABLE SOLUTION:
+  - Simplest thing that could work
+  - Meets current requirements exactly
+  - No more, no less
+
+4. WAIT FOR PATTERNS:
+
+First time:  Write it  
+Second time: Duplicate it (yes, really!)  
+Third time:  Abstract it  
+Rule of Three: Need 3 examples before abstracting
+
+5. REFACTOR WHEN NEEDED:
+  - Start simple
+  - When requirements appear, refactor
+  - Refactoring is cheaper than maintaining dead code
+
+6. TRUST THE PROCESS:
+  - Requirements will emerge
+  - Users will tell you what they need
+  - Don't guess, listen
+
+**📋 YAGNI CHECKLIST:**
+
+□ Is this required for current functionality?  
+□ Has someone actually requested this?  
+□ Will this be used in the next release?  
+□ Do I have concrete examples of the need?  
+□ Is the cost of adding later high?  
+If all NO → Don't build it!
+
+**🚫 RED FLAGS:**
+
+  - "Just in case"
+  - "Might need someday"
+  - "What if..."
+  - "Let's make it configurable"
+  - "For future flexibility"
+  - "We might want to..."
+
+- ✅ GREEN FLAGS:
+  - "The requirement says..."
+  - "Users asked for..."
+  - "This release needs..."
+  - "We're using this now for..."
+
+### From `example9_with_other_principles()`
+
+**🔗 YAGNI + KISS:**
+
+YAGNI:  Don't build it until needed  
+KISS:   When you build it, keep it simple  
+Result: Simple solutions to actual problems
+
+**🔗 YAGNI + DRY:**
+
+YAGNI:  Wait for pattern to emerge  
+DRY:    Then eliminate duplication  
+Result: Abstract when pattern is clear (Rule of 3)
+
+**🔗 YAGNI + SOLID:**
+
+YAGNI:  Build for current needs  
+SOLID:  Design it well  
+Result: Well-designed code for actual requirements
+
+**🔗 YAGNI + TDD:**
+
+YAGNI:  Only what's needed  
+TDD:    Test-driven development  
+Result: Tests define "needed" - if no test, not needed!
+
+- ⚠️ COMMON MISCONCEPTIONS:
+
+- ❌ "YAGNI means no planning"
+- ✅ YAGNI means plan for KNOWN requirements
+- ✅ Don't plan for UNKNOWN hypotheticals
+
+- ❌ "YAGNI means poor design"
+- ✅ YAGNI means design for current needs
+- ✅ Good design for actual requirements
+
+- ❌ "YAGNI means no refactoring"
+- ✅ YAGNI encourages refactoring when needed
+- ✅ Refactor when patterns emerge
+
+- ❌ "YAGNI means technical debt"
+- ✅ Speculation creates technical debt
+- ✅ YAGNI reduces debt by avoiding dead code
+
+### From `example10_summary()`
+
+- ✅ BENEFITS OF YAGNI:
+
+1. SAVE TIME:
+  - Focus on actual requirements
+  - Ship features faster
+  - Less wasted effort
+
+2. REDUCE COMPLEXITY:
+  - Smaller codebase
+  - Fewer abstractions
+  - Easier to understand
+
+3. LOWER MAINTENANCE:
+  - Less code to maintain
+  - Less code to test
+  - Less code to document
+
+4. BETTER DESIGNS:
+  - Real requirements guide design
+  - Actual usage informs decisions
+  - Avoid over-engineering
+
+5. FLEXIBILITY:
+  - Easier to change small codebase
+  - Less coupling
+  - Refactor when needed
+
+- 💡 KEY INSIGHTS:
+
+"You Aren't Gonna Need It"  
+— Ron Jeffries
+
+"Do the simplest thing that could possibly work."  
+— Ward Cunningham
+
+"Premature optimization is the root of all evil."  
+— Donald Knuth
+
+"The best code is no code at all."  
+— Jeff Atwood
+
+**🎯 REMEMBER:**
+
+  - Build for TODAY's requirements
+  - Not TOMORROW's speculation
+  - Real needs > Imagined needs
+  - Refactor when requirements appear
+  - Trust the process
+
+**📊 THE YAGNI PRINCIPLE IN ACTION:**
+
+Without YAGNI:  
+Requirements:     5 features  
+Built:           20 features ("just in case")  
+Actually used:    3 features  
+Wasted effort:   17 features (85%!)  
+Maintenance:     20 features forever
+
+With YAGNI:  
+Requirements:     5 features  
+Built:            5 features  
+Actually used:    5 features  
+Wasted effort:    0 features  
+Maintenance:      5 features
+
+**⚖️ THE YAGNI DECISION TREE:**
+
+Do I need this RIGHT NOW?  
+├─ YES → Build it  
+└─ NO  → Don't build it  
+│  
+└─ But what if I need it later?  
+├─ If needed: Add it THEN  
+└─ If not needed: Saved time!
+
+**🎓 FINAL WISDOM:**
+
+The best code is the code you don't have to write.  
+The best feature is the feature you don't have to maintain.  
+The best abstraction is the abstraction you don't need.  
+Build what you need, when you need it.  
+YAGNI!
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

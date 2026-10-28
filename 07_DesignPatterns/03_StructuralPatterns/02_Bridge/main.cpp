@@ -1,8 +1,7 @@
-#include <iostream>
 #include <string>
 #include <memory>
 #include <vector>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: DEVICE & REMOTE CONTROL
@@ -23,7 +22,7 @@ public:
     virtual void setVolume(int percent) = 0;
     virtual int getChannel() = 0;
     virtual void setChannel(int channel) = 0;
-    virtual string getDeviceName() = 0;
+    virtual std::string getDeviceName() = 0;
 };
 
 /**
@@ -42,29 +41,29 @@ public:
 
     void enable() override {
         on = true;
-        cout << "📺 TV: Turning ON\n";
+        std::println("📺 TV: Turning ON");
     }
 
     void disable() override {
         on = false;
-        cout << "📺 TV: Turning OFF\n";
+        std::println("📺 TV: Turning OFF");
     }
 
     int getVolume() override { return volume; }
 
     void setVolume(int percent) override {
         volume = percent;
-        cout << "📺 TV: Volume set to " << volume << "%\n";
+        std::println("📺 TV: Volume set to {}%", volume);
     }
 
     int getChannel() override { return channel; }
 
     void setChannel(int ch) override {
         channel = ch;
-        cout << "📺 TV: Channel changed to " << channel << "\n";
+        std::println("📺 TV: Channel changed to {}", channel);
     }
 
-    string getDeviceName() override { return "TV"; }
+    std::string getDeviceName() override { return "TV"; }
 };
 
 /**
@@ -83,29 +82,29 @@ public:
 
     void enable() override {
         on = true;
-        cout << "📻 Radio: Turning ON\n";
+        std::println("📻 Radio: Turning ON");
     }
 
     void disable() override {
         on = false;
-        cout << "📻 Radio: Turning OFF\n";
+        std::println("📻 Radio: Turning OFF");
     }
 
     int getVolume() override { return volume; }
 
     void setVolume(int percent) override {
         volume = percent;
-        cout << "📻 Radio: Volume set to " << volume << "%\n";
+        std::println("📻 Radio: Volume set to {}%", volume);
     }
 
     int getChannel() override { return channel; }
 
     void setChannel(int ch) override {
         channel = ch;
-        cout << "📻 Radio: Frequency changed to " << channel << " FM\n";
+        std::println("📻 Radio: Frequency changed to {} FM", channel);
     }
 
-    string getDeviceName() override { return "Radio"; }
+    std::string getDeviceName() override { return "Radio"; }
 };
 
 /**
@@ -124,29 +123,29 @@ public:
 
     void enable() override {
         on = true;
-        cout << "📽️  Projector: Turning ON\n";
+        std::println("📽️  Projector: Turning ON");
     }
 
     void disable() override {
         on = false;
-        cout << "📽️  Projector: Turning OFF\n";
+        std::println("📽️  Projector: Turning OFF");
     }
 
     int getVolume() override { return brightness; }
 
     void setVolume(int percent) override {
         brightness = percent;
-        cout << "📽️  Projector: Brightness set to " << brightness << "%\n";
+        std::println("📽️  Projector: Brightness set to {}%", brightness);
     }
 
     int getChannel() override { return input; }
 
     void setChannel(int inputNum) override {
         input = inputNum;
-        cout << "📽️  Projector: Input changed to HDMI " << input << "\n";
+        std::println("📽️  Projector: Input changed to HDMI {}", input);
     }
 
-    string getDeviceName() override { return "Projector"; }
+    std::string getDeviceName() override { return "Projector"; }
 };
 
 /**
@@ -155,14 +154,15 @@ public:
  */
 class RemoteControl {
 protected:
-    shared_ptr<Device> device;
+    std::shared_ptr<Device> device;
 
 public:
-    RemoteControl(shared_ptr<Device> dev) : device(dev) {}
+    RemoteControl(std::shared_ptr<Device> dev) : device(dev) {}
     virtual ~RemoteControl() {}
 
     virtual void togglePower() {
-        cout << "\n🎮 Remote: Toggle power button pressed\n";
+        std::println("");
+        std::println("🎮 Remote: Toggle power button pressed");
         if (device->isEnabled()) {
             device->disable();
         } else {
@@ -171,25 +171,25 @@ public:
     }
 
     virtual void volumeDown() {
-        cout << "🎮 Remote: Volume down button pressed\n";
+        std::println("🎮 Remote: Volume down button pressed");
         int vol = device->getVolume();
         device->setVolume(vol - 10);
     }
 
     virtual void volumeUp() {
-        cout << "🎮 Remote: Volume up button pressed\n";
+        std::println("🎮 Remote: Volume up button pressed");
         int vol = device->getVolume();
         device->setVolume(vol + 10);
     }
 
     virtual void channelDown() {
-        cout << "🎮 Remote: Channel down button pressed\n";
+        std::println("🎮 Remote: Channel down button pressed");
         int ch = device->getChannel();
         device->setChannel(ch - 1);
     }
 
     virtual void channelUp() {
-        cout << "🎮 Remote: Channel up button pressed\n";
+        std::println("🎮 Remote: Channel up button pressed");
         int ch = device->getChannel();
         device->setChannel(ch + 1);
     }
@@ -201,15 +201,15 @@ public:
  */
 class AdvancedRemote : public RemoteControl {
 public:
-    AdvancedRemote(shared_ptr<Device> dev) : RemoteControl(dev) {}
+    AdvancedRemote(std::shared_ptr<Device> dev) : RemoteControl(dev) {}
 
     void mute() {
-        cout << "🎮 Advanced Remote: Mute button pressed\n";
+        std::println("🎮 Advanced Remote: Mute button pressed");
         device->setVolume(0);
     }
 
     void setChannel(int channel) {
-        cout << "🎮 Advanced Remote: Direct channel selection\n";
+        std::println("🎮 Advanced Remote: Direct channel selection");
         device->setChannel(channel);
     }
 };
@@ -219,10 +219,10 @@ public:
  */
 class VoiceRemote : public RemoteControl {
 public:
-    VoiceRemote(shared_ptr<Device> dev) : RemoteControl(dev) {}
+    VoiceRemote(std::shared_ptr<Device> dev) : RemoteControl(dev) {}
 
-    void voiceCommand(const string& command) {
-        cout << "🎤 Voice Remote: \"" << command << "\"\n";
+    void voiceCommand(const std::string& command) {
+        std::println("🎤 Voice Remote: \"{}\"", command);
 
         if (command == "turn on") {
             if (!device->isEnabled()) device->enable();
@@ -233,7 +233,7 @@ public:
         } else if (command == "quieter") {
             volumeDown();
         } else {
-            cout << "❌ Command not recognized\n";
+            std::println("❌ Command not recognized");
         }
     }
 };
@@ -251,7 +251,7 @@ public:
     virtual ~Renderer() {}
     virtual void renderCircle(float x, float y, float radius) = 0;
     virtual void renderSquare(float x, float y, float side) = 0;
-    virtual string getRendererName() = 0;
+    virtual std::string getRendererName() = 0;
 };
 
 /**
@@ -260,16 +260,14 @@ public:
 class VectorRenderer : public Renderer {
 public:
     void renderCircle(float x, float y, float radius) override {
-        cout << "🎨 Vector: Drawing circle at (" << x << "," << y
-             << ") radius=" << radius << "\n";
+        std::println("🎨 Vector: Drawing circle at ({},{}) radius={}", x, y, radius);
     }
 
     void renderSquare(float x, float y, float side) override {
-        cout << "🎨 Vector: Drawing square at (" << x << "," << y
-             << ") side=" << side << "\n";
+        std::println("🎨 Vector: Drawing square at ({},{}) side={}", x, y, side);
     }
 
-    string getRendererName() override { return "Vector Renderer"; }
+    std::string getRendererName() override { return "Vector Renderer"; }
 };
 
 /**
@@ -278,16 +276,14 @@ public:
 class RasterRenderer : public Renderer {
 public:
     void renderCircle(float x, float y, float radius) override {
-        cout << "🖼️  Raster: Rendering circle at (" << x << "," << y
-             << ") radius=" << radius << " pixels\n";
+        std::println("🖼️  Raster: Rendering circle at ({},{}) radius={} pixels", x, y, radius);
     }
 
     void renderSquare(float x, float y, float side) override {
-        cout << "🖼️  Raster: Rendering square at (" << x << "," << y
-             << ") side=" << side << " pixels\n";
+        std::println("🖼️  Raster: Rendering square at ({},{}) side={} pixels", x, y, side);
     }
 
-    string getRendererName() override { return "Raster Renderer"; }
+    std::string getRendererName() override { return "Raster Renderer"; }
 };
 
 /**
@@ -296,16 +292,14 @@ public:
 class OpenGLRenderer : public Renderer {
 public:
     void renderCircle(float x, float y, float radius) override {
-        cout << "🎮 OpenGL: glBegin(GL_TRIANGLE_FAN) circle at ("
-             << x << "," << y << ")\n";
+        std::println("🎮 OpenGL: glBegin(GL_TRIANGLE_FAN) circle at ({},{})", x, y);
     }
 
     void renderSquare(float x, float y, float side) override {
-        cout << "🎮 OpenGL: glBegin(GL_QUADS) square at ("
-             << x << "," << y << ")\n";
+        std::println("🎮 OpenGL: glBegin(GL_QUADS) square at ({},{})", x, y);
     }
 
-    string getRendererName() override { return "OpenGL Renderer"; }
+    std::string getRendererName() override { return "OpenGL Renderer"; }
 };
 
 /**
@@ -313,11 +307,11 @@ public:
  */
 class Shape {
 protected:
-    shared_ptr<Renderer> renderer;
+    std::shared_ptr<Renderer> renderer;
     float x, y;
 
 public:
-    Shape(shared_ptr<Renderer> r, float x, float y)
+    Shape(std::shared_ptr<Renderer> r, float x, float y)
         : renderer(r), x(x), y(y) {}
     virtual ~Shape() {}
 
@@ -325,7 +319,7 @@ public:
     virtual void move(float newX, float newY) {
         x = newX;
         y = newY;
-        cout << "📍 Shape moved to (" << x << "," << y << ")\n";
+        std::println("📍 Shape moved to ({},{})", x, y);
     }
 };
 
@@ -337,17 +331,17 @@ private:
     float radius;
 
 public:
-    Circle(shared_ptr<Renderer> r, float x, float y, float rad)
+    Circle(std::shared_ptr<Renderer> r, float x, float y, float rad)
         : Shape(r, x, y), radius(rad) {}
 
     void draw() override {
-        cout << "⭕ Circle: draw() called\n";
+        std::println("⭕ Circle: draw() called");
         renderer->renderCircle(x, y, radius);
     }
 
     void resize(float newRadius) {
         radius = newRadius;
-        cout << "⭕ Circle resized to radius=" << radius << "\n";
+        std::println("⭕ Circle resized to radius={}", radius);
     }
 };
 
@@ -359,17 +353,17 @@ private:
     float side;
 
 public:
-    Square(shared_ptr<Renderer> r, float x, float y, float s)
+    Square(std::shared_ptr<Renderer> r, float x, float y, float s)
         : Shape(r, x, y), side(s) {}
 
     void draw() override {
-        cout << "◻️  Square: draw() called\n";
+        std::println("◻️  Square: draw() called");
         renderer->renderSquare(x, y, side);
     }
 
     void resize(float newSide) {
         side = newSide;
-        cout << "◻️  Square resized to side=" << side << "\n";
+        std::println("◻️  Square resized to side={}", side);
     }
 };
 
@@ -384,8 +378,8 @@ public:
 class MessageSender {
 public:
     virtual ~MessageSender() {}
-    virtual void sendMessage(const string& recipient, const string& message) = 0;
-    virtual string getPlatformName() = 0;
+    virtual void sendMessage(const std::string& recipient, const std::string& message) = 0;
+    virtual std::string getPlatformName() = 0;
 };
 
 /**
@@ -393,13 +387,13 @@ public:
  */
 class EmailSender : public MessageSender {
 public:
-    void sendMessage(const string& recipient, const string& message) override {
-        cout << "📧 Email: Sending to " << recipient << "\n";
-        cout << "   Subject: Message\n";
-        cout << "   Body: " << message << "\n";
+    void sendMessage(const std::string& recipient, const std::string& message) override {
+        std::println("📧 Email: Sending to {}", recipient);
+        std::println("   Subject: Message");
+        std::println("   Body: {}", message);
     }
 
-    string getPlatformName() override { return "Email"; }
+    std::string getPlatformName() override { return "Email"; }
 };
 
 /**
@@ -407,15 +401,15 @@ public:
  */
 class SMSSender : public MessageSender {
 public:
-    void sendMessage(const string& recipient, const string& message) override {
-        cout << "📱 SMS: Sending to " << recipient << "\n";
-        cout << "   Text: " << message.substr(0, 160) << "\n";
+    void sendMessage(const std::string& recipient, const std::string& message) override {
+        std::println("📱 SMS: Sending to {}", recipient);
+        std::println("   Text: {}", message.substr(0, 160));
         if (message.length() > 160) {
-            cout << "   ⚠️  Message truncated to 160 characters\n";
+            std::println("   ⚠️  Message truncated to 160 characters");
         }
     }
 
-    string getPlatformName() override { return "SMS"; }
+    std::string getPlatformName() override { return "SMS"; }
 };
 
 /**
@@ -423,13 +417,13 @@ public:
  */
 class SlackSender : public MessageSender {
 public:
-    void sendMessage(const string& recipient, const string& message) override {
-        cout << "💬 Slack: Posting to #" << recipient << "\n";
-        cout << "   Message: " << message << "\n";
-        cout << "   [Sent via Slack API]\n";
+    void sendMessage(const std::string& recipient, const std::string& message) override {
+        std::println("💬 Slack: Posting to #{}", recipient);
+        std::println("   Message: {}", message);
+        std::println("   [Sent via Slack API]");
     }
 
-    string getPlatformName() override { return "Slack"; }
+    std::string getPlatformName() override { return "Slack"; }
 };
 
 /**
@@ -437,12 +431,12 @@ public:
  */
 class Message {
 protected:
-    shared_ptr<MessageSender> sender;
-    string recipient;
-    string content;
+    std::shared_ptr<MessageSender> sender;
+    std::string recipient;
+    std::string content;
 
 public:
-    Message(shared_ptr<MessageSender> s, const string& r, const string& c)
+    Message(std::shared_ptr<MessageSender> s, const std::string& r, const std::string& c)
         : sender(s), recipient(r), content(c) {}
     virtual ~Message() {}
 
@@ -454,11 +448,12 @@ public:
  */
 class TextMessage : public Message {
 public:
-    TextMessage(shared_ptr<MessageSender> s, const string& r, const string& c)
+    TextMessage(std::shared_ptr<MessageSender> s, const std::string& r, const std::string& c)
         : Message(s, r, c) {}
 
     void send() override {
-        cout << "\n📤 Sending text message via " << sender->getPlatformName() << "\n";
+        std::println("");
+        std::println("📤 Sending text message via {}", sender->getPlatformName());
         sender->sendMessage(recipient, content);
     }
 };
@@ -468,12 +463,13 @@ public:
  */
 class EncryptedMessage : public Message {
 public:
-    EncryptedMessage(shared_ptr<MessageSender> s, const string& r, const string& c)
+    EncryptedMessage(std::shared_ptr<MessageSender> s, const std::string& r, const std::string& c)
         : Message(s, r, c) {}
 
     void send() override {
-        cout << "\n🔒 Encrypting and sending via " << sender->getPlatformName() << "\n";
-        string encrypted = "[ENCRYPTED] " + content;
+        std::println("");
+        std::println("🔒 Encrypting and sending via {}", sender->getPlatformName());
+        std::string encrypted = "[ENCRYPTED] " + content;
         sender->sendMessage(recipient, encrypted);
     }
 };
@@ -483,12 +479,13 @@ public:
  */
 class UrgentMessage : public Message {
 public:
-    UrgentMessage(shared_ptr<MessageSender> s, const string& r, const string& c)
+    UrgentMessage(std::shared_ptr<MessageSender> s, const std::string& r, const std::string& c)
         : Message(s, r, c) {}
 
     void send() override {
-        cout << "\n🚨 URGENT message via " << sender->getPlatformName() << "\n";
-        string urgent = "⚠️ URGENT: " + content;
+        std::println("");
+        std::println("🚨 URGENT message via {}", sender->getPlatformName());
+        std::string urgent = "⚠️ URGENT: " + content;
         sender->sendMessage(recipient, urgent);
     }
 };
@@ -498,17 +495,19 @@ public:
 // ============================================
 
 void demonstrateRemoteControl() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: REMOTE & DEVICE        ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: REMOTE & DEVICE        ║");
+    std::println("╚════════════════════════════════════╝");
 
     // Create devices
-    auto tv = make_shared<TV>();
-    auto radio = make_shared<Radio>();
-    auto projector = make_shared<Projector>();
+    auto tv = std::make_shared<TV>();
+    auto radio = std::make_shared<Radio>();
+    auto projector = std::make_shared<Projector>();
 
     // Basic remote with TV
-    cout << "\n--- Basic Remote with TV ---\n";
+    std::println("");
+    std::println("--- Basic Remote with TV ---");
     RemoteControl basicRemote(tv);
     basicRemote.togglePower();
     basicRemote.volumeUp();
@@ -516,7 +515,8 @@ void demonstrateRemoteControl() {
     basicRemote.togglePower();
 
     // Advanced remote with Radio
-    cout << "\n--- Advanced Remote with Radio ---\n";
+    std::println("");
+    std::println("--- Advanced Remote with Radio ---");
     AdvancedRemote advancedRemote(radio);
     advancedRemote.togglePower();
     advancedRemote.setChannel(105);
@@ -524,89 +524,105 @@ void demonstrateRemoteControl() {
     advancedRemote.mute();
 
     // Voice remote with Projector
-    cout << "\n--- Voice Remote with Projector ---\n";
+    std::println("");
+    std::println("--- Voice Remote with Projector ---");
     VoiceRemote voiceRemote(projector);
     voiceRemote.voiceCommand("turn on");
     voiceRemote.voiceCommand("louder");
     voiceRemote.channelUp();
 
-    cout << "\n💡 Notice: Same remote works with different devices!\n";
-    cout << "   Abstraction (Remote) is independent of Implementation (Device)\n";
+    std::println("");
+    std::println("💡 Notice: Same remote works with different devices!");
+    std::println("   Abstraction (Remote) is independent of Implementation (Device)");
 }
 
 void demonstrateShapeRendering() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: SHAPE & RENDERING      ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: SHAPE & RENDERING      ║");
+    std::println("╚════════════════════════════════════╝");
 
     // Create renderers
-    auto vectorRenderer = make_shared<VectorRenderer>();
-    auto rasterRenderer = make_shared<RasterRenderer>();
-    auto openglRenderer = make_shared<OpenGLRenderer>();
+    auto vectorRenderer = std::make_shared<VectorRenderer>();
+    auto rasterRenderer = std::make_shared<RasterRenderer>();
+    auto openglRenderer = std::make_shared<OpenGLRenderer>();
 
     // Circle with different renderers
-    cout << "\n--- Circle with Vector Renderer ---\n";
+    std::println("");
+    std::println("--- Circle with Vector Renderer ---");
     Circle circle1(vectorRenderer, 10, 10, 5);
     circle1.draw();
     circle1.resize(7);
     circle1.draw();
 
-    cout << "\n--- Circle with Raster Renderer ---\n";
+    std::println("");
+    std::println("--- Circle with Raster Renderer ---");
     Circle circle2(rasterRenderer, 20, 20, 8);
     circle2.draw();
 
-    cout << "\n--- Circle with OpenGL Renderer ---\n";
+    std::println("");
+    std::println("--- Circle with OpenGL Renderer ---");
     Circle circle3(openglRenderer, 30, 30, 10);
     circle3.draw();
 
     // Square with different renderers
-    cout << "\n--- Square with Vector Renderer ---\n";
+    std::println("");
+    std::println("--- Square with Vector Renderer ---");
     Square square1(vectorRenderer, 0, 0, 10);
     square1.draw();
     square1.move(5, 5);
     square1.draw();
 
-    cout << "\n--- Square with OpenGL Renderer ---\n";
+    std::println("");
+    std::println("--- Square with OpenGL Renderer ---");
     Square square2(openglRenderer, 15, 15, 12);
     square2.draw();
 
-    cout << "\n💡 Notice: Shapes work with any renderer!\n";
-    cout << "   Shape hierarchy is independent of Renderer hierarchy\n";
+    std::println("");
+    std::println("💡 Notice: Shapes work with any renderer!");
+    std::println("   Shape hierarchy is independent of Renderer hierarchy");
 }
 
 void demonstrateMessaging() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: MESSAGE SENDER         ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: MESSAGE SENDER         ║");
+    std::println("╚════════════════════════════════════╝");
 
     // Create senders
-    auto email = make_shared<EmailSender>();
-    auto sms = make_shared<SMSSender>();
-    auto slack = make_shared<SlackSender>();
+    auto email = std::make_shared<EmailSender>();
+    auto sms = std::make_shared<SMSSender>();
+    auto slack = std::make_shared<SlackSender>();
 
     // Text message via different platforms
-    cout << "\n--- Text Message via Email ---\n";
+    std::println("");
+    std::println("--- Text Message via Email ---");
     TextMessage msg1(email, "user@example.com", "Hello from email!");
     msg1.send();
 
-    cout << "\n--- Text Message via SMS ---\n";
+    std::println("");
+    std::println("--- Text Message via SMS ---");
     TextMessage msg2(sms, "+1234567890", "Hello from SMS!");
     msg2.send();
 
-    cout << "\n--- Encrypted Message via Slack ---\n";
+    std::println("");
+    std::println("--- Encrypted Message via Slack ---");
     EncryptedMessage msg3(slack, "general", "Secret information");
     msg3.send();
 
-    cout << "\n--- Urgent Message via Email ---\n";
+    std::println("");
+    std::println("--- Urgent Message via Email ---");
     UrgentMessage msg4(email, "boss@company.com", "Server is down!");
     msg4.send();
 
-    cout << "\n--- Urgent Message via SMS ---\n";
+    std::println("");
+    std::println("--- Urgent Message via SMS ---");
     UrgentMessage msg5(sms, "+9876543210", "Emergency meeting now!");
     msg5.send();
 
-    cout << "\n💡 Notice: Message types work with any sender!\n";
-    cout << "   Message abstraction is independent of Sender implementation\n";
+    std::println("");
+    std::println("💡 Notice: Message types work with any sender!");
+    std::println("   Message abstraction is independent of Sender implementation");
 }
 
 // ============================================
@@ -614,75 +630,13 @@ void demonstrateMessaging() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "BRIDGE PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("BRIDGE PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateRemoteControl();
     demonstrateShapeRendering();
     demonstrateMessaging();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF BRIDGE PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Decouples abstraction from implementation\n";
-    cout << "✅ Both can vary independently\n";
-    cout << "✅ Improves extensibility (add abstractions/implementations)\n";
-    cout << "✅ Hides implementation details from client\n";
-    cout << "✅ Open/Closed Principle (open for extension)\n";
-    cout << "✅ Single Responsibility (separate concerns)\n";
-    cout << "✅ Can switch implementations at runtime\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE BRIDGE\n";
-    cout << "========================================\n";
-    cout << "1. Avoid permanent binding between abstraction/implementation\n";
-    cout << "2. Both should be extensible by subclassing\n";
-    cout << "3. Changes in implementation shouldn't affect clients\n";
-    cout << "4. Share implementation among multiple objects\n";
-    cout << "5. Prevent class explosion from combinations\n";
-    cout << "6. Switch implementations at runtime\n";
-
-    cout << "\n========================================\n";
-    cout << "BRIDGE vs ADAPTER\n";
-    cout << "========================================\n";
-    cout << "Bridge:\n";
-    cout << "  • Designed upfront\n";
-    cout << "  • Lets abstraction and implementation vary independently\n";
-    cout << "  • Works with new code\n";
-    cout << "  • Intent: Separation of concerns\n";
-    cout << "\nAdapter:\n";
-    cout << "  • Used after design (retrofit)\n";
-    cout << "  • Makes incompatible interfaces work together\n";
-    cout << "  • Works with existing code\n";
-    cout << "  • Intent: Interface compatibility\n";
-
-    cout << "\n========================================\n";
-    cout << "STRUCTURE\n";
-    cout << "========================================\n";
-    cout << "Abstraction Hierarchy:\n";
-    cout << "  Abstraction (has-a Implementation)\n";
-    cout << "  └── RefinedAbstraction1\n";
-    cout << "  └── RefinedAbstraction2\n";
-    cout << "\nImplementation Hierarchy:\n";
-    cout << "  Implementation (interface)\n";
-    cout << "  └── ConcreteImplementation1\n";
-    cout << "  └── ConcreteImplementation2\n";
-    cout << "\nBridge = Connection between hierarchies\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• GUI frameworks (Window ←→ OS)\n";
-    cout << "• Graphics (Shape ←→ Renderer)\n";
-    cout << "• Database (API ←→ Driver)\n";
-    cout << "• Remote controls (Remote ←→ Device)\n";
-    cout << "• Messaging (Message ←→ Platform)\n";
-    cout << "• Vehicles (Car ←→ Engine)\n";
-    cout << "• Persistence (Object ←→ Storage)\n";
 
     return 0;
 }

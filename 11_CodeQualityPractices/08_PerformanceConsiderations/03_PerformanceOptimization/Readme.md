@@ -411,3 +411,81 @@ Inspired by:
 **Happy Optimizing! 🚀**
 
 Remember: *"Make it work, make it right, make it fast — in that order!"*
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 PERFORMANCE OPTIMIZATION COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Profile first, optimize hot paths,  
+choose better algorithms, and use compiler flags!
+
+- ⚠️  REMEMBER:
+1. Measure before optimizing
+2. Algorithm choice > micro-optimizations
+3. Profile to find bottlenecks
+4. Readability matters - don't sacrifice needlessly
+5. Compile with -O2 or -O3 for production
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `run_example10_compiler()`
+
+🎯 PRINCIPLE: Use compiler optimization flags!
+
+**📊 OPTIMIZATION LEVELS:**
+
+-O0: No optimization (debugging)
+
+      - Easiest to debug
+      - Slowest execution
+      - ~1x speed
+
+-O1: Basic optimization
+
+      - Some optimizations
+      - Still debuggable
+      - ~1.5-2x speed
+
+-O2: Moderate optimization (recommended)
+
+      - Most optimizations
+      - Good balance
+      - ~2-3x speed
+
+-O3: Aggressive optimization
+
+      - All optimizations
+      - May increase binary size
+      - ~3-5x speed
+
+-Os: Optimize for size
+
+      - Minimize binary size
+      - Good for embedded
+
+-Ofast: Maximum speed (non-standard)
+
+      - May break standards compliance
+      - ~5-10x speed (use carefully!)
+
+- 💡 SPECIFIC OPTIMIZATIONS:
+
+-march=native      # Use CPU-specific instructions  
+-flto              # Link-time optimization  
+-ffast-math        # Fast floating-point (less precise)  
+-funroll-loops     # Loop unrolling  
+-finline-functions # Aggressive inlining
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer. UBSan reports signed `int` overflow in the sum loops (original code, not changed).
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

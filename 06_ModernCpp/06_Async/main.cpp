@@ -1,4 +1,3 @@
-#include <iostream>
 #include <future>
 #include <thread>
 #include <chrono>
@@ -23,7 +22,7 @@ using namespace std::chrono_literals;
 //   7.  wait, wait_for, wait_until — polling and timeouts
 //   8.  std::shared_future — multiple consumers
 //   9.  Parallel computation with multiple futures
-//  10.  Practical: async MCX operations pipeline
+//  10.  Practical: async job pipeline
 // ============================================================
 
 
@@ -42,8 +41,8 @@ std::string fetchConfig(const std::string& key)
 {
     std::this_thread::sleep_for(60ms);
     if (key == "server")   return "192.168.1.100";
-    if (key == "port")     return "5060";
-    if (key == "codec")    return "AMR-NB";
+    if (key == "port")     return "8080";
+    if (key == "format")   return "json";
     throw std::runtime_error("unknown config key: " + key);
 }
 
@@ -59,18 +58,18 @@ long long heavyComputation(int n)
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: std::async — simplest async launch\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: std::async — simplest async launch");
+    std::println("=====================================================");
 
     {
         // std::async launches a task on a new thread
         // returns std::future<T> to retrieve the result later
         auto fut = std::async(std::launch::async, computeSum, 1, 100);
 
-        std::cout << "[main] doing other work while async runs...\n";
+        std::println("[main] doing other work while async runs...");
         std::this_thread::sleep_for(20ms);
-        std::cout << "[main] still working...\n";
+        std::println("[main] still working...");
 
         // .get() blocks until result is ready
         int result = fut.get();
@@ -78,9 +77,10 @@ int main()
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: std::future — states and operations\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: std::future — states and operations");
+    std::println("=====================================================");
 
     {
         auto fut = std::async(std::launch::async, []() -> int {
@@ -106,9 +106,10 @@ int main()
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: launch::async vs launch::deferred\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: launch::async vs launch::deferred");
+    std::println("=====================================================");
 
     {
         // launch::async — runs immediately in a new thread
@@ -127,20 +128,21 @@ int main()
 
         std::println("[main] thread: {}",
                      std::hash<std::thread::id>{}(std::this_thread::get_id()));
-        std::cout << "[main] before deferred.get()\n";
+        std::println("[main] before deferred.get()");
 
         int r1 = asyncFut.get();
         int r2 = deferredFut.get();   // deferred runs HERE, in main thread
 
         std::println("async={} deferred={}", r1, r2);
-        std::cout << "Note: deferred runs in the CALLING thread at .get()\n";
-        std::cout << "Note: default policy may choose either — always specify!\n";
+        std::println("Note: deferred runs in the CALLING thread at .get()");
+        std::println("Note: default policy may choose either — always specify!");
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: std::promise + std::future — manual signaling\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: std::promise + std::future — manual signaling");
+    std::println("=====================================================");
 
     {
         // promise: the producer side — sets the value
@@ -168,21 +170,22 @@ int main()
         std::future<void>  signal = ready.get_future();
 
         std::thread worker([&ready]() {
-            std::cout << "[worker] initializing...\n";
+            std::println("[worker] initializing...");
             std::this_thread::sleep_for(40ms);
-            std::cout << "[worker] ready — signaling\n";
+            std::println("[worker] ready — signaling");
             ready.set_value();   // void signal
         });
 
         signal.get();   // blocks until worker signals
-        std::cout << "[main] worker is ready — proceeding\n";
+        std::println("[main] worker is ready — proceeding");
         worker.join();
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: std::packaged_task — wrap callable\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: std::packaged_task — wrap callable");
+    std::println("=====================================================");
 
     {
         // packaged_task wraps a callable and gives it a future
@@ -221,15 +224,16 @@ int main()
             workers.emplace_back(std::move(t));
         for (auto& w : workers) w.join();
 
-        std::cout << "queued task results: ";
-        for (auto& f : futures) std::cout << f.get() << ' ';
-        std::cout << '\n';
+        std::print("queued task results: ");
+        for (auto& f : futures) std::print("{} ", f.get());
+        std::println("");
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Exception propagation through futures\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Exception propagation through futures");
+    std::println("=====================================================");
 
     {
         // Exception in async task is stored in the future
@@ -284,9 +288,10 @@ int main()
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: wait, wait_for, wait_until\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: wait, wait_for, wait_until");
+    std::println("=====================================================");
 
     {
         auto slowTask = std::async(std::launch::async, []() {
@@ -297,9 +302,9 @@ int main()
         // wait_for — non-blocking poll with timeout
         auto status = slowTask.wait_for(50ms);
         if (status == std::future_status::timeout)
-            std::cout << "[main] not ready yet — doing other work\n";
+            std::println("[main] not ready yet — doing other work");
         else if (status == std::future_status::ready)
-            std::cout << "[main] ready already!\n";
+            std::println("[main] ready already!");
 
         // wait() — block until done (no result)
         slowTask.wait();
@@ -319,7 +324,7 @@ int main()
         if (status == std::future_status::ready)
             std::println("wait_until: ready before deadline: {}", task.get());
         else
-            std::cout << "wait_until: timed out\n";
+            std::println("wait_until: timed out");
     }
 
     {
@@ -329,19 +334,20 @@ int main()
             return std::string("background result");
         });
 
-        std::cout << "polling: ";
+        std::print("polling: ");
         int polls = 0;
         while (bgTask.wait_for(20ms) != std::future_status::ready) {
-            std::cout << '.' ;
+            std::print(".");
             ++polls;
         }
         std::println(" done after {} polls, result: {}", polls, bgTask.get());
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::shared_future — multiple consumers\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: std::shared_future — multiple consumers");
+    std::println("=====================================================");
 
     {
         // shared_future can be copied and .get() called multiple times
@@ -367,9 +373,10 @@ int main()
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Parallel computation — multiple futures\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Parallel computation — multiple futures");
+    std::println("=====================================================");
 
     {
         // Parallel sum of large range using multiple async tasks
@@ -377,8 +384,7 @@ int main()
         unsigned int cores = std::thread::hardware_concurrency();
         int chunkSize = TOTAL / cores;
 
-        std::cout << "parallel sum 1.." << TOTAL
-                  << " using " << cores << " cores\n";
+        std::println("parallel sum 1..{} using {} cores", TOTAL, cores);
 
         std::vector<std::future<long long>> futures;
         for (unsigned int i = 0; i < cores; ++i) {
@@ -409,30 +415,31 @@ int main()
 
         auto f1 = std::async(std::launch::async, fetchConfig, "server");
         auto f2 = std::async(std::launch::async, fetchConfig, "port");
-        auto f3 = std::async(std::launch::async, fetchConfig, "codec");
+        auto f3 = std::async(std::launch::async, fetchConfig, "format");
         auto f4 = std::async(std::launch::async, heavyComputation, 10000);
 
         // All 4 run concurrently — total time ≈ max(each), not sum
         std::string server = f1.get();
         std::string port   = f2.get();
-        std::string codec  = f3.get();
+        std::string format = f3.get();
         long long   comp   = f4.get();
 
         double ms = std::chrono::duration<double,std::milli>(
                         std::chrono::high_resolution_clock::now() - t0).count();
 
-        std::println("server={} port={} codec={}", server, port, codec);
+        std::println("server={} port={} format={}", server, port, format);
         std::println("computation={}", comp);
         std::println("total time: {:.1f}ms (concurrent, not sequential)", ms);
     }
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Practical — async MCX operations pipeline\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Practical — async job pipeline");
+    std::println("=====================================================");
 
     {
-        // Simulate an MCX call setup pipeline where stages run asynchronously
+        // Simulate a job-setup pipeline where stages run asynchronously
 
         // Stage 1: Authenticate user (async)
         auto authFut = std::async(std::launch::async, [](int userId) -> bool {
@@ -441,68 +448,69 @@ int main()
             return userId > 0;
         }, 42);
 
-        // Stage 2: Resolve group (async — runs concurrently with auth)
-        auto groupFut = std::async(std::launch::async,
-                                   [](const std::string& groupId) -> std::string {
+        // Stage 2: Resolve project (async — runs concurrently with auth)
+        auto projectFut = std::async(std::launch::async,
+                                   [](const std::string& projectId) -> std::string {
                                        std::this_thread::sleep_for(30ms);
-                                       std::println("[group] resolved group {}", groupId);
-                                       return "GROUP_" + groupId + "_MCPTT";
+                                       std::println("[project] resolved project {}", projectId);
+                                       return "PROJECT_" + projectId + "_V1";
                                    }, "ALPHA");
 
-        // Stage 3: Fetch floor control config (async)
-        auto floorFut = std::async(std::launch::async, []() -> int {
+        // Stage 3: Fetch limits config (async)
+        auto limitFut = std::async(std::launch::async, []() -> int {
             std::this_thread::sleep_for(25ms);
-            std::println("[floor] floor config fetched");
-            return 30;   // floor hold timeout in seconds
+            std::println("[limits] limits config fetched");
+            return 30;   // limit timeout in seconds
         });
 
         // Wait for all prerequisites
         bool authenticated = authFut.get();
-        std::string groupName = groupFut.get();
-        int floorTimeout = floorFut.get();
+        std::string projectName = projectFut.get();
+        int limitTimeout = limitFut.get();
 
         if (!authenticated) {
-            std::cout << "[MCX] authentication failed — aborting\n";
+            std::println("[pipeline] authentication failed — aborting");
             return 1;
         }
 
-        // Stage 4: Initiate the call (depends on all above)
-        auto callFut = std::async(std::launch::async,
-                                  [&groupName, floorTimeout]() -> int {
+        // Stage 4: Start the job (depends on all above)
+        auto jobFut = std::async(std::launch::async,
+                                  [&projectName, limitTimeout]() -> int {
                                       std::this_thread::sleep_for(20ms);
-                                      std::println("[call] starting {} with floor timeout {}s",
-                                                   groupName, floorTimeout);
-                                      return 1001;   // call ID
+                                      std::println("[job] starting {} with limit timeout {}s",
+                                                   projectName, limitTimeout);
+                                      return 1001;   // job ID
                                   });
 
-        int callId = callFut.get();
-        std::println("[MCX] call {} active on group {}", callId, groupName);
+        int jobId = jobFut.get();
+        std::println("[pipeline] job {} active in project {}", jobId, projectName);
 
-        // Stage 5: Request floor asynchronously while call is active
-        std::promise<bool> floorPromise;
-        std::future<bool>  floorGranted = floorPromise.get_future();
+        // Stage 5: Request approval asynchronously while the job is active
+        std::promise<bool> approvalPromise;
+        std::future<bool>  approved = approvalPromise.get_future();
 
-        std::thread floorController([&floorPromise, callId]() {
+        std::thread approver([&approvalPromise, jobId]() {
             std::this_thread::sleep_for(30ms);
-            std::println("[floor controller] granting floor for call {}", callId);
-            floorPromise.set_value(true);
+            std::println("[approver] granting approval for job {}", jobId);
+            approvalPromise.set_value(true);
         });
 
-        if (floorGranted.get())
-            std::println("[MCX] floor granted on call {} — transmitting", callId);
+        if (approved.get())
+            std::println("[pipeline] approval granted for job {} — continuing", jobId);
 
-        floorController.join();
+        approver.join();
 
-        // Stage 6: End call asynchronously
-        auto endFut = std::async(std::launch::async, [callId]() {
+        // Stage 6: Finish the job asynchronously
+        auto endFut = std::async(std::launch::async, [jobId]() {
             std::this_thread::sleep_for(15ms);
-            std::println("[call] {} released", callId);
+            std::println("[job] {} finished", jobId);
         });
         endFut.get();
 
-        std::cout << "[MCX] call pipeline complete\n";
+        std::println("[pipeline] complete");
     }
 
-    std::cout << "\n=== Async complete ===\n";
+    std::println("");
+    std::println("=== Async complete ===");
     return 0;
 }

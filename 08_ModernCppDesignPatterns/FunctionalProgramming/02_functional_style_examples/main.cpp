@@ -13,10 +13,9 @@
  * - Currying
  * - First-Class Functions
  *
- * Compile: g++ -std=c++20 -Wall -Wextra functional_style_examples.cpp -o functional_style
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <vector>
 #include <functional>
 #include <algorithm>
@@ -24,6 +23,7 @@
 #include <cmath>
 #include <string>
 #include <ranges>
+#include <print>
 
 // ============================================================================
 // CONCEPT 1: PURE FUNCTIONS
@@ -66,21 +66,14 @@ bool isPrime(int n) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Pure Functions ===\n";
-    std::cout << "Pure add(5, 3): " << add(5, 3) << " (always 8)\n";
-    std::cout << "Pure square(4): " << square(4) << " (always 16)\n";
+    std::println("");
+    std::println("=== Pure Functions ===");
+    std::println("Pure add(5, 3): {} (always 8)", add(5, 3));
+    std::println("Pure square(4): {} (always 16)", square(4));
 
-    std::cout << "\nImpure addAndCount(5, 3): " << addAndCount(5, 3)
-              << " (counter now: " << counter << ")\n";
-    std::cout << "Impure addAndCount(5, 3): " << addAndCount(5, 3)
-              << " (counter now: " << counter << ")\n";
-    std::cout << "❌ Different side effects each time!\n";
-
-    std::cout << "\n✅ Benefits of pure functions:\n";
-    std::cout << "   - Easy to test\n";
-    std::cout << "   - Easy to reason about\n";
-    std::cout << "   - Can be memoized (cached)\n";
-    std::cout << "   - Thread-safe\n";
+    std::println("");
+    std::println("Impure addAndCount(5, 3): {} (counter now: {})", addAndCount(5, 3), counter);
+    std::println("Impure addAndCount(5, 3): {} (counter now: {})", addAndCount(5, 3), counter);
 }
 }
 
@@ -113,31 +106,32 @@ auto createModifiedFunctional(const std::vector<int>& vec) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Immutability ===\n";
+    std::println("");
+    std::println("=== Immutability ===");
 
     std::vector<int> original = {1, 2, 3, 4, 5};
-    std::cout << "Original: ";
-    for (auto n : original) std::cout << n << " ";
+    std::print("Original: ");
+    for (auto n : original) std::print("{} ", n);
 
     // Mutable approach
     auto mutable_copy = original;
     modifyInPlace(mutable_copy);
-    std::cout << "\nAfter mutable operation: ";
-    for (auto n : mutable_copy) std::cout << n << " ";
-    std::cout << " (original changed if same object!)";
+    std::println("");
+    std::print("After mutable operation: ");
+    for (auto n : mutable_copy) std::print("{} ", n);
+    std::print(" (original changed if same object!)");
 
     // Immutable approach
     auto immutable_result = createModified(original);
-    std::cout << "\n\nOriginal (unchanged): ";
-    for (auto n : original) std::cout << n << " ";
-    std::cout << "\nImmutable result: ";
-    for (auto n : immutable_result) std::cout << n << " ";
+    std::println("");
+    std::println("");
+    std::print("Original (unchanged): ");
+    for (auto n : original) std::print("{} ", n);
+    std::println("");
+    std::print("Immutable result: ");
+    for (auto n : immutable_result) std::print("{} ", n);
 
-    std::cout << "\n\n✅ Benefits of immutability:\n";
-    std::cout << "   - No unexpected side effects\n";
-    std::cout << "   - Thread-safe by default\n";
-    std::cout << "   - Easier to reason about\n";
-    std::cout << "   - Can safely share data\n";
+    std::println("");
 }
 }
 
@@ -189,43 +183,46 @@ T reduce(const std::vector<T>& vec, T initial, Func func) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Higher-Order Functions ===\n";
+    std::println("");
+    std::println("=== Higher-Order Functions ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5};
 
     // Function as parameter
-    std::cout << "Apply function to each: ";
-    applyToEach(numbers, [](int x) { std::cout << x * 2 << " "; });
+    std::print("Apply function to each: ");
+    applyToEach(numbers, [](int x) { std::print("{} ", x * 2); });
 
     // Function as return value
     auto multiplyBy3 = makeMultiplier(3);
-    std::cout << "\n\nMultiply by 3: " << multiplyBy3(5) << "\n";
+    std::println("");
+    std::println("");
+    std::println("Multiply by 3: {}", multiplyBy3(5));
 
     auto multiplyBy10 = makeMultiplier(10);
-    std::cout << "Multiply by 10: " << multiplyBy10(5) << "\n";
+    std::println("Multiply by 10: {}", multiplyBy10(5));
 
     // Function transformation
     auto addOne = [](int x) { return x + 1; };
     auto addTwo = applyTwice(addOne);
-    std::cout << "\nApply twice (add 1): " << addTwo(5) << " (5+1+1=7)\n";
+    std::println("");
+    std::println("Apply twice (add 1): {} (5+1+1=7)", addTwo(5));
 
     // Map, Filter, Reduce
-    std::cout << "\nMap (square): ";
+    std::println("");
+    std::print("Map (square): ");
     auto squared = map(numbers, [](int x) { return x * x; });
-    for (auto n : squared) std::cout << n << " ";
+    for (auto n : squared) std::print("{} ", n);
 
-    std::cout << "\nFilter (evens): ";
+    std::println("");
+    std::print("Filter (evens): ");
     auto evens = filter(numbers, [](int x) { return x % 2 == 0; });
-    for (auto n : evens) std::cout << n << " ";
+    for (auto n : evens) std::print("{} ", n);
 
-    std::cout << "\nReduce (sum): ";
+    std::println("");
+    std::print("Reduce (sum): ");
     auto sum = reduce(numbers, 0, [](int a, int b) { return a + b; });
-    std::cout << sum << "\n";
+    std::println("{}", sum);
 
-    std::cout << "\n✅ Higher-order functions enable:\n";
-    std::cout << "   - Abstraction over behavior\n";
-    std::cout << "   - Code reuse\n";
-    std::cout << "   - Flexible composition\n";
 }
 }
 
@@ -251,7 +248,8 @@ auto compose_many(Funcs... funcs) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Function Composition ===\n";
+    std::println("");
+    std::println("=== Function Composition ===");
 
     // Define simple functions
     auto multiplyBy2 = [](int x) { return x * 2; };
@@ -260,23 +258,16 @@ void demonstrate() {
 
     // Compose: multiply then add
     auto multiplyThenAdd = compose(add10, multiplyBy2);
-    std::cout << "Compose (add10 ∘ multiply2): 5 → "
-              << multiplyThenAdd(5) << " (5*2+10=20)\n";
+    std::println("Compose (add10 ∘ multiply2): 5 → {} (5*2+10=20)", multiplyThenAdd(5));
 
     // Compose: add then multiply
     auto addThenMultiply = compose(multiplyBy2, add10);
-    std::cout << "Compose (multiply2 ∘ add10): 5 → "
-              << addThenMultiply(5) << " ((5+10)*2=30)\n";
+    std::println("Compose (multiply2 ∘ add10): 5 → {} ((5+10)*2=30)", addThenMultiply(5));
 
     // Triple composition
     auto complex = compose(square, compose(add10, multiplyBy2));
-    std::cout << "Triple compose (square ∘ add10 ∘ multiply2): 5 → "
-              << complex(5) << " ((5*2+10)²=400)\n";
+    std::println("Triple compose (square ∘ add10 ∘ multiply2): 5 → {} ((5*2+10)²=400)", complex(5));
 
-    std::cout << "\n✅ Composition allows:\n";
-    std::cout << "   - Building complex from simple\n";
-    std::cout << "   - Reusable building blocks\n";
-    std::cout << "   - Mathematical elegance\n";
 }
 }
 
@@ -309,28 +300,26 @@ auto multiply_curried(int a) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Currying ===\n";
+    std::println("");
+    std::println("=== Currying ===");
 
     // Regular use
-    std::cout << "Regular add(2, 3, 4): " << add(2, 3, 4) << "\n";
+    std::println("Regular add(2, 3, 4): {}", add(2, 3, 4));
 
     // Curried use - all at once
-    std::cout << "Curried add(2)(3)(4): " << add_curried(2)(3)(4) << "\n";
+    std::println("Curried add(2)(3)(4): {}", add_curried(2)(3)(4));
 
     // Partial application
     auto add2 = add_curried(2);
     auto add2and3 = add2(3);
-    std::cout << "Partial application add2and3(4): " << add2and3(4) << "\n";
+    std::println("Partial application add2and3(4): {}", add2and3(4));
 
     // Creating specialized functions
     auto multiplyBy10 = multiply_curried(10);
-    std::cout << "\nSpecialized multiplyBy10(5): " << multiplyBy10(5) << "\n";
-    std::cout << "Specialized multiplyBy10(7): " << multiplyBy10(7) << "\n";
+    std::println("");
+    std::println("Specialized multiplyBy10(5): {}", multiplyBy10(5));
+    std::println("Specialized multiplyBy10(7): {}", multiplyBy10(7));
 
-    std::cout << "\n✅ Currying enables:\n";
-    std::cout << "   - Partial application\n";
-    std::cout << "   - Creating specialized functions\n";
-    std::cout << "   - More flexible composition\n";
 }
 }
 
@@ -342,14 +331,15 @@ void demonstrate() {
 namespace FirstClassFunctions {
 
 void demonstrate() {
-    std::cout << "\n=== First-Class Functions ===\n";
+    std::println("");
+    std::println("=== First-Class Functions ===");
 
     // Store functions in variables
     std::function<int(int)> square = [](int x) { return x * x; };
     std::function<int(int)> cube = [](int x) { return x * x * x; };
 
-    std::cout << "Stored function square(5): " << square(5) << "\n";
-    std::cout << "Stored function cube(3): " << cube(3) << "\n";
+    std::println("Stored function square(5): {}", square(5));
+    std::println("Stored function cube(3): {}", cube(3));
 
     // Store functions in containers
     std::vector<std::function<int(int)>> operations = {
@@ -358,20 +348,17 @@ void demonstrate() {
         [](int x) { return x * x; }
     };
 
-    std::cout << "\nApply operations to 5:\n";
+    std::println("");
+    std::println("Apply operations to 5:");
     for (size_t i = 0; i < operations.size(); ++i) {
-        std::cout << "  Operation " << i << ": " << operations[i](5) << "\n";
+        std::println("  Operation {}: {}", i, operations[i](5));
     }
 
     // Choose function based on condition
     auto operation = (5 > 3) ? square : cube;
-    std::cout << "\nConditional function: " << operation(4) << "\n";
+    std::println("");
+    std::println("Conditional function: {}", operation(4));
 
-    std::cout << "\n✅ First-class functions allow:\n";
-    std::cout << "   - Storing functions in variables\n";
-    std::cout << "   - Passing functions as arguments\n";
-    std::cout << "   - Returning functions from functions\n";
-    std::cout << "   - Dynamic function selection\n";
 }
 }
 
@@ -412,13 +399,14 @@ public:
 };
 
 void demonstrate() {
-    std::cout << "\n=== Real-World: Event System ===\n";
+    std::println("");
+    std::println("=== Real-World: Event System ===");
 
     EventSystem events;
 
     // Register simple handlers
     events.on([](const std::string& e) {
-        std::cout << "Handler 1: " << e << "\n";
+        std::println("Handler 1: {}", e);
     });
 
     // Register filtered handler (composition)
@@ -426,20 +414,17 @@ void demonstrate() {
         return e.find("ERROR") != std::string::npos;
     };
     auto errorHandler = [](const std::string& e) {
-        std::cout << "🚨 Error Handler: " << e << "\n";
+        std::println("🚨 Error Handler: {}", e);
     };
     events.on(EventSystem::createFilteredHandler(errorFilter, errorHandler));
 
     // Emit events
-    std::cout << "\nEmitting events:\n";
+    std::println("");
+    std::println("Emitting events:");
     events.emit("INFO: System started");
     events.emit("ERROR: Connection failed");
     events.emit("WARNING: Low memory");
 
-    std::cout << "\n✅ Functional patterns in real system:\n";
-    std::cout << "   - Handlers as first-class functions\n";
-    std::cout << "   - Higher-order event processing\n";
-    std::cout << "   - Composition for filtering\n";
 }
 }
 
@@ -448,9 +433,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║       FUNCTIONAL PROGRAMMING CONCEPTS IN C++        ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║       FUNCTIONAL PROGRAMMING CONCEPTS IN C++          ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     PureFunctions::demonstrate();
     Immutability::demonstrate();
@@ -460,41 +445,5 @@ int main() {
     FirstClassFunctions::demonstrate();
     RealWorldExample::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 FUNCTIONAL PROGRAMMING PRINCIPLES:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "1. PURE FUNCTIONS - No side effects, deterministic\n";
-    std::cout << "2. IMMUTABILITY - Prefer const, create new instead of modify\n";
-    std::cout << "3. HIGHER-ORDER - Functions that work with functions\n";
-    std::cout << "4. COMPOSITION - Build complex from simple\n";
-    std::cout << "5. CURRYING - Partial application of functions\n";
-    std::cout << "6. FIRST-CLASS - Functions as values\n";
-    std::cout << "\n💡 think-cell uses these principles extensively!\n";
-    std::cout << "   Their code is a masterclass in functional C++.\n";
-    std::cout << std::string(60, '=') << "\n\n";
-
     return 0;
 }
-
-/*
- * COMPILE AND RUN:
- * ===============
- * g++ -std=c++20 -Wall -Wextra functional_style_examples.cpp -o functional_style
- * ./functional_style
- *
- * LEARNING OBJECTIVES:
- * ===================
- * 1. Understand what makes a function "pure"
- * 2. Learn the benefits of immutability
- * 3. Master higher-order functions (map, filter, reduce)
- * 4. Practice function composition
- * 5. Understand currying and partial application
- * 6. Use functions as first-class citizens
- *
- * NEXT STEPS:
- * ===========
- * After mastering these concepts, move to:
- * - lambda_composition.cpp (advanced lambda usage)
- * - ranges_introduction.cpp (C++20 ranges)
- * - ThinkCellPhilosophy/ (real-world patterns)
- */

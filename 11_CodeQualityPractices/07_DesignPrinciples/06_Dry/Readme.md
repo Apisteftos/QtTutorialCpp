@@ -948,3 +948,358 @@ AHA = Avoid Hasty Abstractions
 Start WET, refactor to DRY when pattern emerges,
 but avoid AHA (premature abstraction)!
 ```
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 DRY PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Don't repeat yourself! Extract common  
+patterns, use constants, and maintain a single  
+source of truth. But don't over-abstract!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_magic_numbers()`
+
+- ❌ BAD CODE (Magic Numbers & Duplication):
+
+```cpp
+
+```cpp
+double tax = amount * 0.1;  // What is 0.1?
+// Later in another function:
+double tax = amount * 0.1;  // 🚨 Duplicated!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Tax rate (0.1) appears multiple times
+  - If tax changes, must find/update all occurrences
+  - Magic numbers unclear meaning
+  - Email validation logic duplicated
+
+- ✅ GOOD CODE (Named Constants & Functions):
+
+```cpp
+
+```cpp
+const double TAX_RATE = 0.10;  // Clear meaning
+double calculateTax(double amount) {
+    return amount * TAX_RATE;  // ✅ Single source
+}
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+Processing order with good design:
+
+### From `example1_magic_numbers()`
+
+**✨ BENEFITS:**
+
+  - Change tax rate in ONE place
+  - Clear, self-documenting code
+  - Email validation reused everywhere
+  - Consistent behavior guaranteed
+
+### From `example2_duplicate_logic()`
+
+- ❌ BAD CODE:
+
+Validation logic repeated in:
+
+  - Rectangle constructor
+  - Rectangle::setWidth()
+  - Rectangle::setHeight()
+  - Circle constructor
+  - Circle::setRadius()
+
+- ✅ GOOD CODE:
+
+```cpp
+Single validatePositive() function used everywhere
+```
+
+**✨ DEMONSTRATION:**
+
+Creating shapes with validation:
+
+### From `example2_duplicate_logic()`
+
+**✨ BENEFITS:**
+
+  - Change validation logic in ONE place
+  - Consistent validation everywhere
+  - Less code to maintain
+
+### From `generateUserReport()`
+
+║   USER REPORT
+
+### From `generateProductReport()`
+
+║  PRODUCT REPORT
+
+### From `generateOrderReport()`
+
+║   ORDER REPORT
+
+### From `example3_copy_paste()`
+
+- ❌ BAD CODE:
+
+Three nearly identical report functions  
+To change format: update 3 functions!
+
+- ✅ GOOD CODE:
+
+```cpp
+One generic generateReport() function
+```
+
+To change format: update 1 function!
+
+**✨ DEMONSTRATION:**
+
+### From `example3_copy_paste()`
+
+**✨ BENEFITS:**
+
+  - Change report format in ONE place
+  - 70% less code
+  - Easier to maintain and extend
+
+### From `example4_structural()`
+
+- ❌ BAD CODE:
+
+PI value (3.14159) hardcoded in every function
+
+- ✅ GOOD CODE:
+
+```cpp
+const double PI = 3.14159265359;
+```
+
+Used everywhere, defined once
+
+**✨ DEMONSTRATION:**
+
+### From `example4_structural()`
+
+**✨ BENEFITS:**
+
+  - Need more precision? Change ONE constant
+  - Consistent value everywhere
+  - Self-documenting code
+
+### From `example5_algorithm()`
+
+- ❌ BAD CODE:
+
+Three functions: findMaxInt, findMaxDouble, findMaxString  
+Same algorithm, different types
+
+- ✅ GOOD CODE:
+
+```cpp
+One template function: findMax<T>
+```
+
+Works with any comparable type
+
+**✨ DEMONSTRATION:**
+
+### From `example5_algorithm()`
+
+**✨ BENEFITS:**
+
+  - One function for all types
+  - Fix bug once, fixed for all types
+  - Less code to maintain
+
+### From `example6_false_abstraction()`
+
+- ⚠️  WARNING: Don't Force DRY!
+
+- ❌ BAD (Over-abstraction):
+
+Combining user and product processing  
+Just because they LOOK similar  
+Different concepts forced together
+
+- ✅ GOOD (Separate Concerns):
+
+Keep them separate  
+They represent different business concepts  
+They will evolve differently
+
+- 💡 RULE OF THUMB:
+  - Same KNOWLEDGE → DRY (extract)
+  - Same CODE, different PURPOSE → Keep separate
+  - Coincidental similarity → Don't abstract yet
+
+**📝 THREE STRIKES RULE:**
+
+1st time: Write it  
+2nd time: Copy it (wince)  
+3rd time: Abstract it (DRY)
+
+**✨ DEMONSTRATION:**
+
+### From `example7_configuration()`
+
+- ❌ BAD CODE:
+
+Connection string hardcoded in 3 functions  
+Change database? Update 3 places!
+
+- ✅ GOOD CODE:
+
+Configuration class with constants  
+Change database? Update 1 place!
+
+**✨ DEMONSTRATION:**
+
+### From `example7_configuration()`
+
+**✨ BENEFITS:**
+
+  - Single source of truth for config
+  - Easy to switch environments
+  - Can load from config file
+
+### From `example8_how_to_apply()`
+
+- ✅ STRATEGIES TO APPLY DRY:
+
+1. EXTRACT FUNCTIONS:
+- ❌ Copy-pasted code blocks
+- ✅ Extract to reusable function
+
+2. USE CONSTANTS:
+- ❌ Magic numbers: 3.14159, 0.1, 100
+- ✅ Named constants: PI, TAX_RATE, MAX_SIZE
+
+3. EXTRACT CONFIGURATION:
+- ❌ Hardcoded URLs, connection strings
+- ✅ Config class or config file
+
+4. USE TEMPLATES:
+- ❌ findMaxInt(), findMaxDouble(), findMaxString()
+- ✅ template<T> findMax()
+
+5. CREATE BASE CLASSES:
+- ❌ Duplicate methods in multiple classes
+- ✅ Common functionality in base class
+
+6. EXTRACT VALIDATION:
+- ❌ Same validation in multiple places
+- ✅ Validator class or validation functions
+
+**🔍 DETECTION CHECKLIST:**
+
+□ Same code in multiple places?  
+□ Magic numbers/strings repeated?  
+□ Similar functions with slight variations?  
+□ Copy-paste history in version control?  
+□ Multiple places to update for one change?
+
+**⚖️  BALANCE DRY WITH:**
+
+  - Readability - Don't over-abstract
+  - Simplicity - Don't create complex abstractions
+  - Performance - Sometimes duplication is faster
+  - Different concepts - Don't force unrelated code together
+
+**📏 RULE: Apply DRY when you have:**
+
+  - Same KNOWLEDGE (business rule, algorithm)
+  - Same LOGIC (validation, calculation)
+  - Same CONFIGURATION (constants, settings)
+
+**📏 DON'T Apply DRY when you have:**
+
+  - Coincidental similarity (looks same, different purpose)
+  - Different concepts (will evolve separately)
+  - Only seen twice (wait for third occurrence)
+
+### From `example9_benefits()`
+
+- ✅ BENEFITS OF DRY:
+
+1. EASIER MAINTENANCE:
+  - Change in one place
+  - No hunting for duplicates
+  - Less chance of missing updates
+
+2. FEWER BUGS:
+  - Fix once, fixed everywhere
+  - Consistent behavior
+  - Single source of truth
+
+3. BETTER READABILITY:
+  - Named constants explain meaning
+  - Functions document intent
+  - Less code to read
+
+4. REDUCED CODE SIZE:
+  - 30-70% less code
+  - Smaller codebase
+  - Faster compilation
+
+5. CONSISTENT BEHAVIOR:
+  - Same logic everywhere
+  - No subtle differences
+  - Predictable system
+
+- ⚠️  WITHOUT DRY (WET Code):
+  - Changes require multiple updates
+  - Easy to miss locations
+  - Inconsistent behavior
+  - More bugs
+  - Harder to maintain
+
+- 💡 KEY INSIGHT:
+
+"Every piece of knowledge should have a single,  
+unambiguous, authoritative representation."
+
+**🎯 REMEMBER:**
+
+  - Don't repeat yourself
+  - Extract common patterns
+  - Single source of truth
+  - But don't over-abstract!
+
+**📊 DRY METRICS:**
+
+  - Code duplication < 5%
+  - Magic numbers = 0
+  - Copy-paste commits = 0
+  - Configuration centralized
+
+**🔄 DRY vs WET:**
+
+DRY: Don't Repeat Yourself  
+WET: Write Everything Twice  
+AHA: Avoid Hasty Abstractions  
+Balance: DRY when useful, AHA when uncertain!
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

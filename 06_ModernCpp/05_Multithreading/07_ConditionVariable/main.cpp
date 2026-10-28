@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -7,13 +6,14 @@
 #include <string>
 #include <chrono>
 #include <atomic>
+#include <print>
 
 using namespace std::chrono_literals;
 
 std::mutex g_coutMutex;
 void safePrint(const std::string& msg) {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 // ---- Example 1: Basic wait/notify ----
@@ -125,16 +125,17 @@ void barrierWorker(int id) {
 
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Basic wait / notify_one\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Basic wait / notify_one");
+    std::println("=====================================================");
     g_dataReady = false;
     std::thread p1(basicProducer), c1(basicConsumer);
     p1.join(); c1.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: notify_all — broadcast\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: notify_all — broadcast");
+    std::println("=====================================================");
     g_startSignal = false;
     std::vector<std::thread> racers;
     for (int i=1;i<=4;++i) racers.emplace_back(racingWorker, i);
@@ -142,30 +143,34 @@ int main()
     for (auto& t : racers) t.join();
     starter.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Bounded producer/consumer\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Bounded producer/consumer");
+    std::println("=====================================================");
     g_producingDone = false;
     while (!g_boundedQueue.empty()) g_boundedQueue.pop();
     std::thread prod(boundedProducer, 6);
     std::thread cons1(boundedConsumer, 1), cons2(boundedConsumer, 2);
     prod.join(); cons1.join(); cons2.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: wait_for — timeout\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: wait_for — timeout");
+    std::println("=====================================================");
     g_timeoutReady = false;
     std::thread tc(timeoutConsumer), ts(slowProducer);
     tc.join(); ts.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Barrier — wait for N threads\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Barrier — wait for N threads");
+    std::println("=====================================================");
     g_barrierCount = 0; g_barrierPassed = false;
     std::vector<std::thread> bw;
     for (int i=1;i<=BARRIER_N;++i) bw.emplace_back(barrierWorker, i);
     for (auto& t : bw) t.join();
 
-    std::cout << "\n=== ConditionVariable complete ===\n";
+    std::println("");
+    std::println("=== ConditionVariable complete ===");
     return 0;
 }

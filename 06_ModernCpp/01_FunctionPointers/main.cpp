@@ -1,4 +1,3 @@
-#include <iostream>
 #include <string>
 #include <array>
 #include <vector>
@@ -30,9 +29,9 @@ int  subtract (int a, int b) { return a - b; }
 int  multiply (int a, int b) { return a * b; }
 int  divide   (int a, int b) { return b != 0 ? a / b : 0; }
 
-void printDouble(int x) { std::cout << x * 2 << ' '; }
-void printSquare(int x) { std::cout << x * x << ' '; }
-void printNegate(int x) { std::cout << -x    << ' '; }
+void printDouble(int x) { std::print("{} ", x * 2); }
+void printSquare(int x) { std::print("{} ", x * x); }
+void printNegate(int x) { std::print("{} ", -x); }
 
 bool ascending (int a, int b) { return a < b; }
 bool descending(int a, int b) { return a > b; }
@@ -103,10 +102,10 @@ public:
 // ============================================================
 // Example 10 — Event handler system
 // ============================================================
-void onMouseClick  () { std::cout << "  [EVENT] Mouse clicked\n"; }
-void onKeyPress    () { std::cout << "  [EVENT] Key pressed\n";   }
-void onWindowResize() { std::cout << "  [EVENT] Window resized\n";}
-void onWindowClose () { std::cout << "  [EVENT] Window closing\n";}
+void onMouseClick  () { std::println("  [EVENT] Mouse clicked"); }
+void onKeyPress    () { std::println("  [EVENT] Key pressed");   }
+void onWindowResize() { std::println("  [EVENT] Window resized");}
+void onWindowClose () { std::println("  [EVENT] Window closing");}
 
 struct EventHandler {
     void      (*handler)();
@@ -120,9 +119,9 @@ struct EventHandler {
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Function address\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Function address");
+    std::println("=====================================================");
 
     // Every function has a memory address in the TEXT segment
     std::println("address of add():      {}", (void*)add);
@@ -133,13 +132,14 @@ int main()
     // add      → address of add
     // &add     → also address of add (equivalent)
     // add()    → calls add (needs arguments)
-    std::cout << "add == &add: " << (add == &add ? "true" : "false") << '\n';
+    std::println("add == &add: {}", (add == &add ? "true" : "false"));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Declaration and assignment\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Declaration and assignment");
+    std::println("=====================================================");
 
     // Syntax: ReturnType (*pointerName)(ParameterTypes)
     int (*funcPtr)(int, int);       // uninitialized — declare only
@@ -159,16 +159,17 @@ int main()
     // nullptr — safe default
     int (*safePtr)(int, int) = nullptr;
     if (safePtr == nullptr)
-        std::cout << "safePtr is null — not yet assigned\n";
+        std::println("safePtr is null — not yet assigned");
 
     safePtr = divide;
     std::println("safePtr(20, 4) = {}", safePtr(20, 4));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Calling — direct vs indirect\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Calling — direct vs indirect");
+    std::println("=====================================================");
 
     int (*fp)(int, int) = add;
 
@@ -180,43 +181,45 @@ int main()
     std::println("direct:            add(5,3)   = {}", r1);
     std::println("indirect (fp):     fp(5,3)    = {}", r2);
     std::println("indirect (*fp):    (*fp)(5,3) = {}", r3);
-    std::cout << "(all three produce the same result)\n";
+    std::println("(all three produce the same result)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Function pointer as parameter\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Function pointer as parameter");
+    std::println("=====================================================");
 
     int numbers[] = {1, 2, 3, 4, 5};
 
-    std::cout << "printDouble: ";
+    std::print("printDouble: ");
     processArray(numbers, 5, printDouble);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "printSquare: ";
+    std::print("printSquare: ");
     processArray(numbers, 5, printSquare);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "printNegate: ";
+    std::print("printNegate: ");
     processArray(numbers, 5, printNegate);
-    std::cout << '\n';
+    std::println("");
 
     // Custom sort with function pointer comparator
     int arr[] = {5, 3, 8, 1, 9, 2, 7};
     bubbleSort(arr, 7, ascending);
-    std::cout << "sorted asc:  ";
-    for (int x : arr) std::cout << x << ' '; std::cout << '\n';
+    std::print("sorted asc:  ");
+    for (int x : arr) std::print("{} ", x); std::println("");
 
     bubbleSort(arr, 7, descending);
-    std::cout << "sorted desc: ";
-    for (int x : arr) std::cout << x << ' '; std::cout << '\n';
+    std::print("sorted desc: ");
+    for (int x : arr) std::print("{} ", x); std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Array of function pointers — dispatch table\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Array of function pointers — dispatch table");
+    std::println("=====================================================");
 
     // Array of pointers — all same signature
     int (*ops[4])(int, int) = {add, subtract, multiply, divide};
@@ -235,16 +238,17 @@ int main()
     const char* tNames[]       = {"double", "square", "negate"};
 
     for (int i = 0; i < 3; ++i) {
-        std::cout << tNames[i] << ": ";
+        std::print("{}: ", tNames[i]);
         for (int n : {1, 2, 3, 4, 5}) transforms[i](n);
-        std::cout << '\n';
+        std::println("");
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Returning a function pointer\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Returning a function pointer");
+    std::println("=====================================================");
 
     // getOperation returns int(*)(int,int)
     char operators[] = {'+', '-', '*', '/'};
@@ -260,13 +264,14 @@ int main()
 
     // nullptr check
     BinaryOp bad = selectOp('?');
-    std::cout << "selectOp('?') = " << (bad == nullptr ? "nullptr" : "valid") << '\n';
+    std::println("selectOp('?') = {}", (bad == nullptr ? "nullptr" : "valid"));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: typedef and using — readable aliases\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: typedef and using — readable aliases");
+    std::println("=====================================================");
 
     // Without alias — hard to read
     void (*p1)(int) = printDouble;
@@ -283,48 +288,44 @@ int main()
     MathOp    mathFn  = add;
     IntTransform tfn  = printNegate;
 
-    std::cout << "IntTransform(printDouble): "; p1(5); std::cout << '\n';
-    std::cout << "IntTransform(printSquare): "; p2(5); std::cout << '\n';
-    std::cout << "MathOp(add)(8,2):          " << mathFn(8, 2) << '\n';
-    std::cout << "IntTransform(printNegate): "; tfn(5); std::cout << '\n';
+    std::print("IntTransform(printDouble): "); p1(5); std::println("");
+    std::print("IntTransform(printSquare): "); p2(5); std::println("");
+    std::println("MathOp(add)(8,2):          {}", mathFn(8, 2));
+    std::print("IntTransform(printNegate): "); tfn(5); std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Function pointer vs std::function vs template\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Function pointer vs std::function vs template");
+    std::println("=====================================================");
 
     // Function pointer — no state, no lambda with capture
     void (*fpNoCapture)(int) = printDouble;
-    std::cout << "function pointer: ";
-    fpNoCapture(5); std::cout << '\n';
+    std::print("function pointer: ");
+    fpNoCapture(5); std::println("");
 
     // std::function — accepts lambdas with capture
     int multiplier = 10;
     std::function<void(int)> sfn = [multiplier](int x) {
-        std::cout << x * multiplier << ' ';
+        std::print("{} ", x * multiplier);
     };
-    std::cout << "std::function:    "; sfn(5); std::cout << '\n';
+    std::print("std::function:    "); sfn(5); std::println("");
 
     // Function pointer CANNOT hold a capturing lambda:
     // void (*bad)(int) = [multiplier](int x){ ... };  // ERROR!
 
     // Template — zero overhead, inlined
     auto callWith5 = [](auto fn) { fn(5); };
-    std::cout << "template:         ";
-    callWith5([](int x) { std::cout << x * 3; });
-    std::cout << '\n';
-
-    std::cout << "\nComparison:\n";
-    std::cout << "  function ptr  — fastest, no capture, C-compatible\n";
-    std::cout << "  std::function — flexible, captures, small overhead\n";
-    std::cout << "  template      — fastest, inlined, compile-time only\n";
+    std::print("template:         ");
+    callWith5([](int x) { std::print("{}", x * 3); });
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Member function pointers\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Member function pointers");
+    std::println("=====================================================");
 
     Calculator calc;
 
@@ -353,18 +354,19 @@ int main()
     };
     const char* mathNames[] = {"add", "sub", "mul"};
 
-    std::cout << "member function dispatch:\n";
+    std::println("member function dispatch:");
     for (int i = 0; i < 3; ++i)
         std::println("  {}(15, 3) = {}", mathNames[i], (calc.*mathOps[i])(15, 3));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Practical — calculator, menu, events\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Practical — calculator, menu, events");
+    std::println("=====================================================");
 
     // --- Calculator ---
-    std::cout << "Calculator:\n";
+    std::println("Calculator:");
     struct Calculation { char op; int a; int b; };
     Calculation calcs[] = {{'+',10,5},{'-',10,5},{'*',10,5},{'/',10,5}};
     for (auto& c : calcs) {
@@ -373,12 +375,13 @@ int main()
     }
 
     // --- Menu system ---
-    std::cout << "\nMenu system:\n";
+    std::println("");
+    std::println("Menu system:");
     void (*menuActions[4])() = {
-        []() { std::cout << "  [1] New file created\n";   },
-        []() { std::cout << "  [2] File opened\n";        },
-        []() { std::cout << "  [3] File saved\n";         },
-        []() { std::cout << "  [4] Application quit\n";   }
+        []() { std::println("  [1] New file created");   },
+        []() { std::println("  [2] File opened");        },
+        []() { std::println("  [3] File saved");         },
+        []() { std::println("  [4] Application quit");   }
     };
     const char* menuLabels[] = {"New", "Open", "Save", "Quit"};
 
@@ -388,7 +391,8 @@ int main()
     }
 
     // --- Event handler table ---
-    std::cout << "\nEvent handler system:\n";
+    std::println("");
+    std::println("Event handler system:");
     EventHandler events[] = {
         {onMouseClick,   "MOUSE_CLICK"},
         {onKeyPress,     "KEY_PRESS"},
@@ -401,6 +405,7 @@ int main()
         ev.handler();
     }
 
-    std::cout << "\n=== FunctionPointers complete ===\n";
+    std::println("");
+    std::println("=== FunctionPointers complete ===");
     return 0;
 }

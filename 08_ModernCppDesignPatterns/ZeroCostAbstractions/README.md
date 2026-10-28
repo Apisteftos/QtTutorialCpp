@@ -7,7 +7,7 @@
 > **"What you don't use, you don't pay for. And what you do use, you couldn't hand code any better."**  
 > — Bjarne Stroustrup (Creator of C++)
 
-This is a **fundamental principle** of modern C++ and a core philosophy at companies like **think-cell**.
+This is a **fundamental principle** of modern C++ and a design goal of the standard library.
 
 ---
 
@@ -142,9 +142,9 @@ constexpr int result = factorial(5);  // Computed at compile-time!
 
 ---
 
-## 🎓 The think-cell Philosophy
+## 🎓 Style: Generic and Functional
 
-think-cell (Berlin-based tech company) follows these principles:
+The examples follow these principles:
 
 ### 1. **Functional Style Over Imperative**
 ```cpp
@@ -297,7 +297,6 @@ for (size_t i = 0; i < vec.size(); ++i) {
 ### Online Resources:
 - [Compiler Explorer (godbolt.org)](https://godbolt.org/) - See assembly in real-time
 - [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/)
-- [think-cell Blog](https://www.think-cell.com/en/career/devblog/) - Real-world examples
 
 ### Books:
 - "Effective Modern C++" by Scott Meyers
@@ -307,7 +306,6 @@ for (size_t i = 0; i < vec.size(); ++i) {
 ### Conference Talks:
 - CppCon talks on zero-cost abstractions
 - Bjarne Stroustrup's talks on C++ philosophy
-- think-cell presentations on their codebase
 
 ---
 
@@ -352,7 +350,7 @@ After mastering zero-cost abstractions:
 
 1. **Study Functional Programming** → See `../FunctionalProgramming/`
 2. **Learn Template Metaprogramming** → See `../TemplateMeta/`
-3. **Explore think-cell Philosophy** → See `../ThinkCellPhilosophy/`
+3. **Explore the ranges and generic style** → See `../RangesAndGenericStyle/`
 4. **Read C++20 Ranges** → Modern, composable abstractions
 5. **Practice on Real Projects** → Apply these principles!
 
@@ -368,3 +366,131 @@ Write clear code first. Profile later. Optimize only what matters. Modern C++ gi
 ---
 
 **🎓 Master zero-cost abstractions and you'll understand why C++ is the king of performance without sacrificing expressiveness!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Notes
+
+1. High-level code compiles to same assembly as low-level
+2. Abstractions are optimized away by the compiler
+3. No runtime overhead for safety and convenience
+4. Templates enable compile-time polymorphism
+5. Modern C++ is both safe AND fast
+
+- 💡 This is why code like this is possible:
+  - Beautiful, readable code
+  - That's also extremely performant
+  - Using functional-style abstractions
+  - With zero runtime cost!
+
+**🚀 Key Takeaway:**
+
+Don't write C in C++!  
+Use high-level abstractions - they're FREE!
+
+## Notes moved from the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### LoopAbstraction
+
+- Manual loop, range-`for` and `std::accumulate` are expected to compile to equivalent code with optimization. The program prints the measured times; this was not checked in assembly here.
+
+### FunctionObjects
+
+- A functor and a lambda are expected to compile to the same machine code; the lambda is shorter.
+
+### SmartPointers
+
+- `std::unique_ptr` is expected to have no overhead compared with a raw pointer, and it cannot leak.
+
+### RangesExample
+
+ and lazy-evaluated
+- Ranges are composable and lazy-evaluated
+- ✅ Compile to same code as manual loops!
+- ✅ Much more readable and maintainable
+
+### TemplateAbstraction
+
+- ✅ Template version has ZERO virtual function overhead!
+- ✅ Function call is inlined at compile-time
+
+### TypeErasure
+
+- ✅ Type erasure: Flexibility when you need it
+- ✅ Still better than traditional inheritance
+- ✅ Used in std::function, std::any
+
+### CompileTime
+
+- ✅ Compile-time result is a LITERAL in the binary!
+- ✅ ZERO runtime cost - computed before program runs
+- ✅ This is template metaprogramming power
+
+## Notes moved from the end of main.cpp
+
+The closing comment block of `main.cpp` (compile commands, optimization levels, assembly inspection, summary lists) is lecture material and lives here. These statements about generated code were not checked in this session.
+
+### Compile and run
+
+```bash
+g++ -std=c++23 -O3 -Wall -Wextra main.cpp -o zero_cost
+./zero_cost
+```
+
+View the assembly to compare manual and high-level code:
+
+```bash
+g++ -std=c++23 -O3 -S main.cpp -o zero_cost.s
+```
+
+### Optimization levels
+
+- `-O0`: no optimization (abstractions have a cost)
+- `-O1`: basic optimization
+- `-O2`: full optimization
+- `-O3`: aggressive optimization (abstractions typically disappear)
+
+### Assembly inspection
+
+1. Compile with `-S` (generates assembly).
+2. Look at `sum_manual`, `sum_range_for` and `sum_algorithm`.
+3. With optimization they are expected to produce equivalent code — compare them yourself.
+
+### Zero-cost examples
+
+- Range-based `for` loops
+- Lambdas vs functors
+- Smart pointers vs raw pointers
+- `std::` algorithms vs manual loops
+- Templates vs virtual functions
+- `constexpr` vs runtime computation
+
+### When abstractions have a cost
+
+- Virtual functions (vtable lookup)
+- `std::function` (type-erasure overhead)
+- Exceptions (table lookups)
+- RTTI (`dynamic_cast`, `typeid`)
+
+These costs are usually small and worth it for the flexibility and safety.
+
+### Next steps
+
+- Experiment with `-O0` vs `-O3`.
+- Compare assembly output.
+- Profile your own abstractions.
+- Use Compiler Explorer (godbolt.org) to see the assembly live.
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer. UBSan reports signed `int` overflow in the benchmark sum loops (this is how the original code is written; the overflow is not fixed here).
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

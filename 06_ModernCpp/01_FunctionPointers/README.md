@@ -290,3 +290,28 @@ TEXT SEGMENT:                  │
 ❌ Generic algorithms → use templates
 ❌ OOP polymorphism → use virtual functions
 ❌ Qt signals/slots → use Qt's own mechanism
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 8: Function pointer vs std::function vs template
+
+**Comparison:**
+
+function ptr  — fastest, no capture, C-compatible
+
+```cpp
+std::function — flexible, captures, small overhead
+template      — fastest, inlined, compile-time only
+```
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

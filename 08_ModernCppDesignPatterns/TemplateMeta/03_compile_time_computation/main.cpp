@@ -12,13 +12,13 @@
  * - Template specialization for base cases
  * - Modern vs Classic TMP
  *
- * Compile: g++ -std=c++20 -Wall -Wextra compile_time_computation.cpp -o compile_time
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <type_traits>
 #include <array>
 #include <cstdint>
+#include <print>
 
 // ============================================================================
 // PART 1: Classic Template Metaprogramming - Factorial
@@ -39,17 +39,19 @@ struct Factorial<0> {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Classic TMP: Factorial ===\n";
-    std::cout << "All computed at COMPILE-TIME!\n";
-    std::cout << "Factorial<5>::value = " << Factorial<5>::value << "\n";
-    std::cout << "Factorial<10>::value = " << Factorial<10>::value << "\n";
-    std::cout << "Factorial<12>::value = " << Factorial<12>::value << "\n";
+    std::println("");
+    std::println("=== Classic TMP: Factorial ===");
+    std::println("All computed at COMPILE-TIME!");
+    std::println("Factorial<5>::value = {}", Factorial<5>::value);
+    std::println("Factorial<10>::value = {}", Factorial<10>::value);
+    std::println("Factorial<12>::value = {}", Factorial<12>::value);
 
     // This is a compile-time constant!
     constexpr int f5 = Factorial<5>::value;
     static_assert(f5 == 120, "Factorial<5> should be 120");
 
-    std::cout << "\n✅ Zero runtime cost - computed during compilation!\n";
+    std::println("");
+    std::println("✅ Zero runtime cost - computed during compilation!");
 }
 }
 
@@ -65,20 +67,22 @@ constexpr int factorial(int n) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Modern C++11: constexpr Factorial ===\n";
+    std::println("");
+    std::println("=== Modern C++11: constexpr Factorial ===");
 
     // Compile-time evaluation
     constexpr int f5 = factorial(5);
     constexpr int f10 = factorial(10);
 
-    std::cout << "factorial(5) = " << f5 << "\n";
-    std::cout << "factorial(10) = " << f10 << "\n";
+    std::println("factorial(5) = {}", f5);
+    std::println("factorial(10) = {}", f10);
 
     // Can also be used at runtime
     int n = 7;
-    std::cout << "factorial(7) = " << factorial(n) << " (runtime)\n";
+    std::println("factorial(7) = {} (runtime)", factorial(n));
 
-    std::cout << "\n✅ Cleaner syntax, same zero-cost abstraction!\n";
+    std::println("");
+    std::println("✅ Cleaner syntax, same zero-cost abstraction!");
 }
 }
 
@@ -110,19 +114,22 @@ constexpr int fib(int n) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Fibonacci Sequence ===\n";
+    std::println("");
+    std::println("=== Fibonacci Sequence ===");
 
-    std::cout << "Classic TMP style:\n";
-    std::cout << "  Fib<10> = " << Fib<10>::value << "\n";
+    std::println("Classic TMP style:");
+    std::println("  Fib<10> = {}", Fib<10>::value);
 
-    std::cout << "\nModern constexpr style:\n";
-    std::cout << "  fib(10) = " << fib(10) << "\n";
+    std::println("");
+    std::println("Modern constexpr style:");
+    std::println("  fib(10) = {}", fib(10));
 
-    std::cout << "\nFirst 12 Fibonacci numbers:\n  ";
+    std::println("");
+    std::print("First 12 Fibonacci numbers:\n  ");
     for (int i = 0; i < 12; ++i) {
-        std::cout << fib(i) << " ";
+        std::print("{} ", fib(i));
     }
-    std::cout << "\n";
+    std::println("");
 }
 }
 
@@ -149,16 +156,18 @@ constexpr int pow(int base, int exp) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Power Calculation ===\n";
+    std::println("");
+    std::println("=== Power Calculation ===");
 
-    std::cout << "2^10 = " << Pow<2, 10>::value << "\n";
-    std::cout << "3^5 = " << Pow<3, 5>::value << "\n";
-    std::cout << "5^3 = " << pow(5, 3) << "\n";
+    std::println("2^10 = {}", Pow<2, 10>::value);
+    std::println("3^5 = {}", Pow<3, 5>::value);
+    std::println("5^3 = {}", pow(5, 3));
 
     // Compile-time array sizing
     constexpr int size = pow(2, 5);  // 32
     std::array<int, size> arr;
-    std::cout << "\nArray size (compile-time): " << arr.size() << "\n";
+    std::println("");
+    std::println("Array size (compile-time): {}", arr.size());
 }
 }
 
@@ -185,10 +194,11 @@ constexpr int gcd_func(int a, int b) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Greatest Common Divisor ===\n";
-    std::cout << "gcd(48, 18) = " << gcd<48, 18>::value << "\n";
-    std::cout << "gcd(100, 35) = " << gcd_func(100, 35) << "\n";
-    std::cout << "gcd(17, 19) = " << gcd_func(17, 19) << " (coprime)\n";
+    std::println("");
+    std::println("=== Greatest Common Divisor ===");
+    std::println("gcd(48, 18) = {}", gcd<48, 18>::value);
+    std::println("gcd(100, 35) = {}", gcd_func(100, 35));
+    std::println("gcd(17, 19) = {} (coprime)", gcd_func(17, 19));
 }
 }
 
@@ -227,17 +237,19 @@ constexpr bool isPrime(int n) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Prime Number Checking ===\n";
-    std::cout << "IsPrime<17>::value = " << IsPrime<17>::value << "\n";
-    std::cout << "IsPrime<20>::value = " << IsPrime<20>::value << "\n";
-    std::cout << "isPrime(23) = " << isPrime(23) << "\n";
-    std::cout << "isPrime(24) = " << isPrime(24) << "\n";
+    std::println("");
+    std::println("=== Prime Number Checking ===");
+    std::println("IsPrime<17>::value = {}", IsPrime<17>::value);
+    std::println("IsPrime<20>::value = {}", IsPrime<20>::value);
+    std::println("isPrime(23) = {}", isPrime(23));
+    std::println("isPrime(24) = {}", isPrime(24));
 
-    std::cout << "\nPrimes up to 30: ";
+    std::println("");
+    std::print("Primes up to 30: ");
     for (int i = 2; i <= 30; ++i) {
-        if (isPrime(i)) std::cout << i << " ";
+        if (isPrime(i)) std::print("{} ", i);
     }
-    std::cout << "\n";
+    std::println("");
 }
 }
 
@@ -259,16 +271,17 @@ constexpr size_t strlen_constexpr(const char* str) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Compile-Time String Length ===\n";
+    std::println("");
+    std::println("=== Compile-Time String Length ===");
 
     constexpr char hello[] = "Hello, World!";
     constexpr size_t len = strlen_constexpr(hello);
 
-    std::cout << "Length of \"" << hello << "\": " << len << "\n";
+    std::println("Length of \"{}\": {}", hello, len);
 
     // Can use as array size
     std::array<char, len> buffer;
-    std::cout << "Buffer size: " << buffer.size() << "\n";
+    std::println("Buffer size: {}", buffer.size());
 }
 }
 
@@ -284,12 +297,13 @@ constexpr T sum_array(const T (&arr)[N], size_t i = 0) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Compile-Time Array Sum ===\n";
+    std::println("");
+    std::println("=== Compile-Time Array Sum ===");
 
     constexpr int numbers[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     constexpr int sum = sum_array(numbers);
 
-    std::cout << "Sum of 1..10: " << sum << " (computed at compile-time)\n";
+    std::println("Sum of 1..10: {} (computed at compile-time)", sum);
 
     static_assert(sum == 55, "Sum should be 55");
 }
@@ -308,19 +322,21 @@ struct LargerType {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Type Size Comparison ===\n";
+    std::println("");
+    std::println("=== Type Size Comparison ===");
 
     using Larger = LargerType<int, long>::type;
 
-    std::cout << "sizeof(int) = " << sizeof(int) << "\n";
-    std::cout << "sizeof(long) = " << sizeof(long) << "\n";
-    std::cout << "Larger type size: " << sizeof(Larger) << "\n";
+    std::println("sizeof(int) = {}", sizeof(int));
+    std::println("sizeof(long) = {}", sizeof(long));
+    std::println("Larger type size: {}", sizeof(Larger));
 
-    std::cout << "\nLarger type is: ";
+    std::println("");
+    std::print("Larger type is: ");
     if constexpr (std::is_same_v<Larger, long>) {
-        std::cout << "long\n";
+        std::println("long");
     } else {
-        std::cout << "int\n";
+        std::println("int");
     }
 }
 }
@@ -338,19 +354,20 @@ struct Select {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Compile-Time Selection ===\n";
+    std::println("");
+    std::println("=== Compile-Time Selection ===");
 
     constexpr bool is_64bit = sizeof(void*) == 8;
     constexpr int buffer_size = Select<is_64bit, 1024, 512>::value;
 
-    std::cout << "System is " << (is_64bit ? "64-bit" : "32-bit") << "\n";
-    std::cout << "Buffer size: " << buffer_size << "\n";
+    std::println("System is {}", (is_64bit ? "64-bit" : "32-bit"));
+    std::println("Buffer size: {}", buffer_size);
 
     // Modern way with if constexpr
     if constexpr (sizeof(void*) == 8) {
-        std::cout << "Using 64-bit optimized code path\n";
+        std::println("Using 64-bit optimized code path");
     } else {
-        std::cout << "Using 32-bit code path\n";
+        std::println("Using 32-bit code path");
     }
 }
 }
@@ -360,9 +377,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║       COMPILE-TIME COMPUTATION WITH TMP             ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║       COMPILE-TIME COMPUTATION WITH TMP             ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     ClassicTMP::demonstrate();
     ModernConstexpr::demonstrate();
@@ -375,20 +392,12 @@ int main() {
     TypeSize::demonstrate();
     CompileTimeSelection::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 KEY TAKEAWAYS:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Template metaprogramming = Compile-time computation\n";
-    std::cout << "✅ Zero runtime cost - all work done by compiler\n";
-    std::cout << "✅ Classic TMP uses template recursion + specialization\n";
-    std::cout << "✅ Modern C++ uses constexpr (cleaner syntax)\n";
-    std::cout << "✅ Both achieve same goal: zero-cost abstractions\n";
-    std::cout << "✅ Use for: array sizes, type selection, optimization\n";
-    std::cout << "\n💡 think-cell uses these techniques for:\n";
-    std::cout << "   - Zero-cost generic algorithms\n";
-    std::cout << "   - Compile-time type checking\n";
-    std::cout << "   - Optimal code generation\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 KEY TAKEAWAYS:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }

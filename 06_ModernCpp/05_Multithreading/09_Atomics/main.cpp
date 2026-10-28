@@ -1,10 +1,10 @@
-#include <iostream>
 #include <thread>
 #include <atomic>
 #include <vector>
 #include <chrono>
 #include <string>
 #include <mutex>
+#include <print>
 
 using namespace std::chrono_literals;
 
@@ -29,7 +29,7 @@ std::mutex g_coutMutex;
 void safePrint(const std::string& msg)
 {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 
@@ -246,55 +246,55 @@ void mutexPerfWorker(int n)
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Race condition vs atomic\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Race condition vs atomic");
+    std::println("=====================================================");
 
     g_racyCounter = 0; g_atomicCounter = 0;
 
     std::thread r1(racyIncrement, 100000);
     std::thread r2(racyIncrement, 100000);
     r1.join(); r2.join();
-    std::cout << "Racy:   expected=200000 actual=" << g_racyCounter
-              << " (non-deterministic)\n";
+    std::println("Racy:   expected=200000 actual={} (non-deterministic)", g_racyCounter);
 
     std::thread a1(atomicIncrement, 100000);
     std::thread a2(atomicIncrement, 100000);
     a1.join(); a2.join();
-    std::cout << "Atomic: expected=200000 actual=" << g_atomicCounter
-              << " (always correct)\n";
+    std::println("Atomic: expected=200000 actual={} (always correct)", g_atomicCounter.load());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: std::atomic<int> — all basic operations\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: std::atomic<int> — all basic operations");
+    std::println("=====================================================");
 
     std::atomic<int> val{10};
 
-    std::cout << "Initial value:   " << val.load()    << '\n';
+    std::println("Initial value:   {}", val.load());
     val.store(20);
-    std::cout << "After store(20): " << val.load()    << '\n';
+    std::println("After store(20): {}", val.load());
 
     int old = val.exchange(99);
-    std::cout << "exchange(99):    new=" << val.load() << " old=" << old << '\n';
+    std::println("exchange(99):    new={} old={}", val.load(), old);
 
     ++val;
-    std::cout << "After ++val:     " << val.load()    << '\n';
+    std::println("After ++val:     {}", val.load());
     --val;
-    std::cout << "After --val:     " << val.load()    << '\n';
+    std::println("After --val:     {}", val.load());
     val += 5;
-    std::cout << "After val += 5:  " << val.load()    << '\n';
+    std::println("After val += 5:  {}", val.load());
     val -= 3;
-    std::cout << "After val -= 3:  " << val.load()    << '\n';
+    std::println("After val -= 3:  {}", val.load());
 
-    std::cout << "is_lock_free:    " << val.is_lock_free() << '\n';
+    std::println("is_lock_free:    {}", val.is_lock_free());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: std::atomic<bool> — flag patterns\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: std::atomic<bool> — flag patterns");
+    std::println("=====================================================");
 
     // Ready flag
     g_ready = false;
@@ -312,69 +312,74 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: std::atomic<T*> — atomic pointer\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: std::atomic<T*> — atomic pointer");
+    std::println("=====================================================");
 
     int arr[3] = {10, 20, 30};
     std::atomic<int*> ptr{arr};
 
-    std::cout << "ptr points to: " << *ptr.load() << '\n';
+    std::println("ptr points to: {}", *ptr.load());
 
     ptr.store(&arr[1]);
-    std::cout << "After store(&arr[1]): " << *ptr.load() << '\n';
+    std::println("After store(&arr[1]): {}", *ptr.load());
 
     // Atomic pointer arithmetic
     ptr.fetch_add(1);   // advances by sizeof(int)
-    std::cout << "After fetch_add(1): " << *ptr.load() << '\n';
+    std::println("After fetch_add(1): {}", *ptr.load());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: fetch_add, fetch_sub, fetch_and, fetch_or, fetch_xor\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: fetch_add, fetch_sub, fetch_and, fetch_or, fetch_xor");
+    std::println("=====================================================");
 
     g_fetchCounter = 100;
-    std::cout << "Initial:          " << g_fetchCounter.load() << '\n';
+    std::println("Initial:          {}", g_fetchCounter.load());
 
     int prev = g_fetchCounter.fetch_add(10);
-    std::cout << "fetch_add(10):    new=" << g_fetchCounter.load() << " prev=" << prev << '\n';
+    std::println("fetch_add(10):    new={} prev={}", g_fetchCounter.load(), prev);
 
     prev = g_fetchCounter.fetch_sub(5);
-    std::cout << "fetch_sub(5):     new=" << g_fetchCounter.load() << " prev=" << prev << '\n';
+    std::println("fetch_sub(5):     new={} prev={}", g_fetchCounter.load(), prev);
 
     // Bitwise operations
     g_bitFlags = 0b00001111;
-    std::cout << "\nBit flags initial:      " << g_bitFlags.load() << " (0b00001111)\n";
+    std::println("");
+    std::println("Bit flags initial:      {} (0b00001111)", g_bitFlags.load());
 
     g_bitFlags.fetch_and(0b00000101);
-    std::cout << "fetch_and(0b00000101):  " << g_bitFlags.load() << " (keep bits 0,2)\n";
+    std::println("fetch_and(0b00000101):  {} (keep bits 0,2)", g_bitFlags.load());
 
     g_bitFlags.fetch_or(0b00110000);
-    std::cout << "fetch_or(0b00110000):   " << g_bitFlags.load() << " (set bits 4,5)\n";
+    std::println("fetch_or(0b00110000):   {} (set bits 4,5)", g_bitFlags.load());
 
     g_bitFlags.fetch_xor(0b00000101);
-    std::cout << "fetch_xor(0b00000101):  " << g_bitFlags.load() << " (toggle bits 0,2)\n";
+    std::println("fetch_xor(0b00000101):  {} (toggle bits 0,2)", g_bitFlags.load());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Compare-and-Swap (CAS)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Compare-and-Swap (CAS)");
+    std::println("=====================================================");
 
     // Basic CAS
     g_casValue = 0;
-    std::cout << "Initial casValue: " << g_casValue.load() << '\n';
+    std::println("Initial casValue: {}", g_casValue.load());
 
     // T1 succeeds: 0 -> 42
     // T2 fails: expected 0 but finds 42
     std::thread ct1(casWorker, 1, 0, 42);
     std::thread ct2(casWorker, 2, 0, 99);
     ct1.join(); ct2.join();
-    std::cout << "Final casValue: " << g_casValue.load() << '\n';
+    std::println("Final casValue: {}", g_casValue.load());
 
     // Lock-free stack
-    std::cout << "\nLock-free stack:\n";
+    std::println("");
+    std::println("Lock-free stack:");
     LockFreeStack stack;
     std::vector<std::thread> pushers;
     for (int i = 1; i <= 5; ++i)
@@ -390,27 +395,22 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Memory Ordering\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Memory Ordering");
+    std::println("=====================================================");
 
     g_data = 0; g_dataReady = false;
     std::thread prod(producer_mo);
     std::thread cons(consumer_mo);
     prod.join(); cons.join();
 
-    std::cout << "\nMemory ordering options:\n";
-    std::cout << "  memory_order_relaxed  — no sync, just atomicity (fastest)\n";
-    std::cout << "  memory_order_acquire  — all writes before release visible after acquire\n";
-    std::cout << "  memory_order_release  — pairs with acquire\n";
-    std::cout << "  memory_order_acq_rel  — both acquire and release\n";
-    std::cout << "  memory_order_seq_cst  — total order, strongest (default)\n";
-
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::atomic_flag\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: std::atomic_flag");
+    std::println("=====================================================");
 
     g_atomicFlag.clear();
     std::thread af1(atomicFlagWorker, 1);
@@ -420,17 +420,18 @@ int main()
 
     // C++20: test() without setting
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
-    std::cout << "flag.test() before set: " << flag.test() << '\n';
+    std::println("flag.test() before set: {}", flag.test());
     flag.test_and_set();
-    std::cout << "flag.test() after set:  " << flag.test() << '\n';
+    std::println("flag.test() after set:  {}", flag.test());
     flag.clear();
-    std::cout << "flag.test() after clear:" << flag.test() << '\n';
+    std::println("flag.test() after clear:{}", flag.test());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Spinlock using atomic_flag\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Spinlock using atomic_flag");
+    std::println("=====================================================");
 
     g_spinCounter = 0;
     std::vector<std::thread> spinWorkers;
@@ -438,14 +439,15 @@ int main()
         spinWorkers.emplace_back(spinlockWorker, 25000);
     for (auto& t : spinWorkers) t.join();
 
-    std::cout << "Spinlock counter expected: 100000\n";
-    std::cout << "Spinlock counter actual:   " << g_spinCounter << '\n';
+    std::println("Spinlock counter expected: 100000");
+    std::println("Spinlock counter actual:   {}", g_spinCounter);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Atomic vs Mutex — performance\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Atomic vs Mutex — performance");
+    std::println("=====================================================");
 
     const int ITER = 1000000;
 
@@ -465,12 +467,13 @@ int main()
     double mutexMs = std::chrono::duration<double, std::milli>(
                          std::chrono::high_resolution_clock::now() - t2).count();
 
-    std::cout << "2x" << ITER << " increments:\n";
-    std::cout << "  Atomic (relaxed): " << atomicMs << " ms\n";
-    std::cout << "  Mutex:            " << mutexMs  << " ms\n";
-    std::cout << "  Speedup:          " << mutexMs / atomicMs << "x\n";
+    std::println("2x{} increments:", ITER);
+    std::println("  Atomic (relaxed): {} ms", atomicMs);
+    std::println("  Mutex:            {} ms", mutexMs);
+    std::println("  Speedup:          {}x", mutexMs / atomicMs);
 
 
-    std::cout << "\n=== Atomics complete ===\n";
+    std::println("");
+    std::println("=== Atomics complete ===");
     return 0;
 }

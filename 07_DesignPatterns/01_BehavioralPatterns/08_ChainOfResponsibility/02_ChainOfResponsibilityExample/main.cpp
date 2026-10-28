@@ -1,6 +1,6 @@
-#include <iostream>
 #include <string>
 #include <memory>
+#include <print>
 
 // Abstract Handler
 class SupportHandler {
@@ -22,12 +22,12 @@ class Level1Support : public SupportHandler {
 public:
     void handleRequest(const std::string& issue, int priority) override {
         if (priority <= 1) {
-            std::cout << "Level 1 Support: Handling issue - " << issue << std::endl;
+            std::println("Level 1 Support: Handling issue - {}", issue);
         } else if (nextHandler) {
-            std::cout << "Level 1 Support: Escalating to next level..." << std::endl;
+            std::println("Level 1 Support: Escalating to next level...");
             nextHandler->handleRequest(issue, priority);
         } else {
-            std::cout << "Level 1 Support: Cannot handle and no next handler!" << std::endl;
+            std::println("Level 1 Support: Cannot handle and no next handler!");
         }
     }
 };
@@ -37,12 +37,12 @@ class Level2Support : public SupportHandler {
 public:
     void handleRequest(const std::string& issue, int priority) override {
         if (priority <= 2) {
-            std::cout << "Level 2 Support: Handling issue - " << issue << std::endl;
+            std::println("Level 2 Support: Handling issue - {}", issue);
         } else if (nextHandler) {
-            std::cout << "Level 2 Support: Escalating to next level..." << std::endl;
+            std::println("Level 2 Support: Escalating to next level...");
             nextHandler->handleRequest(issue, priority);
         } else {
-            std::cout << "Level 2 Support: Cannot handle and no next handler!" << std::endl;
+            std::println("Level 2 Support: Cannot handle and no next handler!");
         }
     }
 };
@@ -52,13 +52,12 @@ class ManagerSupport : public SupportHandler {
 public:
     void handleRequest(const std::string& issue, int priority) override {
         if (priority <= 3) {
-            std::cout << "Manager Support: Handling critical issue - " << issue << std::endl;
+            std::println("Manager Support: Handling critical issue - {}", issue);
         } else if (nextHandler) {
-            std::cout << "Manager Support: Escalating to director..." << std::endl;
+            std::println("Manager Support: Escalating to director...");
             nextHandler->handleRequest(issue, priority);
         } else {
-            std::cout << "Manager Support: This is the highest level, handling anyway - "
-                      << issue << std::endl;
+            std::println("Manager Support: This is the highest level, handling anyway - {}", issue);
         }
     }
 };
@@ -73,22 +72,23 @@ int main() {
     level1->setNext(level2);
     level2->setNext(manager);
 
-    std::cout << "=== Customer Support System ===" << std::endl << std::endl;
+    std::println("=== Customer Support System ===");
+    std::println("");
 
     // Test various requests
-    std::cout << "Request 1 (Priority 1):" << std::endl;
+    std::println("Request 1 (Priority 1):");
     level1->handleRequest("Password reset", 1);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Request 2 (Priority 2):" << std::endl;
+    std::println("Request 2 (Priority 2):");
     level1->handleRequest("Software installation issue", 2);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Request 3 (Priority 3):" << std::endl;
+    std::println("Request 3 (Priority 3):");
     level1->handleRequest("System outage", 3);
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "Request 4 (Priority 4):" << std::endl;
+    std::println("Request 4 (Priority 4):");
     level1->handleRequest("Major security breach", 4);
 
     return 0;

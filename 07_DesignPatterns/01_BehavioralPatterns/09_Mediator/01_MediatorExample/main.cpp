@@ -1,107 +1,104 @@
-#include <iostream>
-#include <string>
-/**
- * The Mediator interface declares a method used by components to notify the
- * mediator about various events. The Mediator may react to these events and
- * pass the execution to other components.
+/*
+ * Mediator: a sign-up form
+ *
+ * Intent: components do not talk to each other directly. They report to a
+ * mediator, which knows the rules and updates the other components.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
-class BaseComponent;
+
+#include <print>
+#include <string>
+#include <utility>
+
+class Widget;
+
 class Mediator {
 public:
-    virtual void Notify(BaseComponent *sender, std::string event) const = 0;
+    virtual ~Mediator() = default;
+    virtual void changed(const Widget& source) = 0;
 };
 
-/**
- * The Base Component provides the basic functionality of storing a mediator's
- * instance inside component objects.
- */
-class BaseComponent {
+class Widget {
+public:
+    Widget(Mediator& mediator, std::string name) : mediator_(mediator), name_(std::move(name)) {}
+    virtual ~Widget() = default;
+    const std::string& name() const { return name_; }
+
 protected:
-    Mediator *mediator_;
+    void notifyMediator() { mediator_.changed(*this); }
 
-public:
-    BaseComponent(Mediator *mediator = nullptr) : mediator_(mediator) {
-    }
-    void set_mediator(Mediator *mediator) {
-        this->mediator_ = mediator;
-    }
-};
-
-/**
- * Concrete Components implement various functionality. They don't depend on
- * other components. They also don't depend on any concrete mediator classes.
- */
-class Component1 : public BaseComponent {
-public:
-    void DoA() {
-        std::cout << "Component 1 does A.\n";
-        this->mediator_->Notify(this, "A");
-    }
-    void DoB() {
-        std::cout << "Component 1 does B.\n";
-        this->mediator_->Notify(this, "B");
-    }
-};
-
-class Component2 : public BaseComponent {
-public:
-    void DoC() {
-        std::cout << "Component 2 does C.\n";
-        this->mediator_->Notify(this, "C");
-    }
-    void DoD() {
-        std::cout << "Component 2 does D.\n";
-        this->mediator_->Notify(this, "D");
-    }
-};
-
-/**
- * Concrete Mediators implement cooperative behavior by coordinating several
- * components.
- */
-class ConcreteMediator : public Mediator {
 private:
-    Component1 *component1_;
-    Component2 *component2_;
-
-public:
-    ConcreteMediator(Component1 *c1, Component2 *c2) : component1_(c1), component2_(c2) {
-        this->component1_->set_mediator(this);
-        this->component2_->set_mediator(this);
-    }
-    void Notify(BaseComponent *sender, std::string event) const override {
-        if (event == "A") {
-            std::cout << "Mediator reacts on A and triggers following operations:\n";
-            this->component2_->DoC();
-        }
-        if (event == "D") {
-            std::cout << "Mediator reacts on D and triggers following operations:\n";
-            this->component1_->DoB();
-            this->component2_->DoC();
-        }
-    }
+    Mediator& mediator_;
+    std::string name_;
 };
 
-/**
- * The client code.
- */
+class TextField : public Widget {
+public:
+    using Widget::Widget;
+    void type(const std::string& text) {
+        text_ = text;
+        std::println("{}: typed '{}'", name(), text_);
+        notifyMediator();
+    }
+    const std::string& text() const { return text_; }
 
-void ClientCode() {
-    Component1 *c1 = new Component1;
-    Component2 *c2 = new Component2;
-    ConcreteMediator *mediator = new ConcreteMediator(c1, c2);
-    std::cout << "Client triggers operation A.\n";
-    c1->DoA();
-    std::cout << "\n";
-    std::cout << "Client triggers operation D.\n";
-    c2->DoD();
+private:
+    std::string text_;
+};
 
-    delete c1;
-    delete c2;
-    delete mediator;
-}
+class CheckBox : public Widget {
+public:
+    using Widget::Widget;
+    void toggle() {
+        checked_ = !checked_;
+        std::println("{}: {}", name(), checked_ ? "checked" : "unchecked");
+        notifyMediator();
+    }
+    bool checked() const { return checked_; }
+
+private:
+    bool checked_ = false;
+};
+
+class SubmitButton : public Widget {
+public:
+    using Widget::Widget;
+    void setEnabled(bool enabled) {
+        enabled_ = enabled;
+        std::println("{}: {}", name(), enabled_ ? "enabled" : "disabled");
+    }
+    void click() const {
+        std::println("{}: {}", name(), enabled_ ? "form sent" : "click ignored (disabled)");
+    }
+
+private:
+    bool enabled_ = false;
+};
+
+// Concrete mediator: owns the widgets and contains all interaction rules.
+class SignupForm : public Mediator {
+public:
+    SignupForm() : userName_(*this, "user name"), terms_(*this, "terms"), submit_(*this, "submit") {}
+
+    void changed(const Widget&) override {
+        bool ready = !userName_.text().empty() && terms_.checked();
+        submit_.setEnabled(ready);
+    }
+
+    TextField userName_;
+    CheckBox terms_;
+    SubmitButton submit_;
+};
 
 int main() {
-    ClientCode();
+    SignupForm form;
+
+    form.submit_.click();
+    form.userName_.type("alex");
+    form.terms_.toggle();
+    form.submit_.click();
+    form.userName_.type("");
+    form.submit_.click();
     return 0;
 }

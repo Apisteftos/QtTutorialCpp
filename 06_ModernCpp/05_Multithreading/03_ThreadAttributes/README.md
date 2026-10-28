@@ -122,7 +122,7 @@ Scheduling policies on Linux:
 | `SCHED_RR` | Real-time round-robin — time sliced |
 
 > Changing to real-time scheduling (`SCHED_FIFO`, `SCHED_RR`) requires root privileges.
-> Relevant for MCX/MCPTT systems where call audio threads need real-time priority.
+> Relevant for real-time workloads (for example audio processing) where a thread needs a higher priority.
 
 ---
 
@@ -199,3 +199,51 @@ Use this as the basis for thread pool size.
 | CPU Registers | ❌ private |
 | `thread_local` variables | ❌ private copy per thread |
 | `errno` | ❌ private per thread |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### THREAD ATTRIBUTES AND PROPERTIES
+
+Note: Each thread has different stack addresses  
+But shared_counter address is the same!
+
+=== 4. PROGRAM COUNTER ===
+
+**Each thread has its own instruction pointer:**
+
+### SUMMARY OF THREAD ATTRIBUTES: (closing summary)
+
+1. Thread ID (unique identifier)
+2. Thread State (NEW, RUNNING, WAITING, TERMINATED)
+3. Stack (private memory for local variables)
+4. Program Counter (instruction pointer)
+5. CPU Registers (context)
+6. Priority (scheduling priority)
+7. Thread-Local Storage (private global variables)
+8. Parent Process (all threads share same process)
+9. Execution State (joinable/detached)
+10. CPU Affinity (which core it runs on)
+11. Resource Limits (stack size, etc.)
+12. Native Handle (platform-specific handle)
+13. Signal Mask (which signals it receives - Unix)
+14. errno value (thread-specific error number)
+
+**SHARED BETWEEN THREADS:**
+
+- Code (text segment)
+- Global variables
+- Heap memory
+- File descriptors
+- Process ID
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

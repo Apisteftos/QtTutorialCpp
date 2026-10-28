@@ -1,11 +1,11 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <memory>
 #include <fstream>
 #include <mutex>
 #include <cstring>
-using namespace std;
+#include <optional>
+#include <print>
 
 // ============================================
 // C++ BEST PRACTICES
@@ -62,14 +62,14 @@ namespace bad_example1 {
 void processFile() {
     FILE* file = fopen("data.txt", "r");
     if (!file) {
-        cout << "   ❌ Can't open file" << endl;
+        std::println("   ❌ Can't open file");
         return;  // 🚨 No cleanup needed here, but...
     }
 
     // Do some processing
     char buffer[100];
     if (!fgets(buffer, 100, file)) {
-        cout << "   ❌ Read error" << endl;
+        std::println("   ❌ Read error");
         // 🚨 FORGOT TO CLOSE FILE! Memory leak!
         return;
     }
@@ -78,7 +78,7 @@ void processFile() {
     try {
         // What if this throws?
         if (strlen(buffer) == 0) {
-            throw runtime_error("Empty file");
+            throw std::runtime_error("Empty file");
         }
     } catch (...) {
         // 🚨 FORGOT TO CLOSE FILE! Memory leak!
@@ -96,12 +96,12 @@ public:
 
     void connect() {
         connected = true;
-        cout << "   📡 Connected to database" << endl;
+        std::println("   📡 Connected to database");
     }
 
     void disconnect() {
         if (connected) {
-            cout << "   🔌 Disconnected from database" << endl;
+            std::println("   🔌 Disconnected from database");
             connected = false;
         }
     }
@@ -129,18 +129,18 @@ private:
     FILE* file;
 
 public:
-    FileHandle(const string& filename, const char* mode) {
+    FileHandle(const std::string& filename, const char* mode) {
         file = fopen(filename.c_str(), mode);
         if (!file) {
-            throw runtime_error("Can't open file: " + filename);
+            throw std::runtime_error("Can't open file: " + filename);
         }
-        cout << "   📂 Opened file: " << filename << endl;
+        std::println("   📂 Opened file: {}", filename);
     }
 
     ~FileHandle() {
         if (file) {
             fclose(file);
-            cout << "   📂 Closed file automatically" << endl;
+            std::println("   📂 Closed file automatically");
         }
     }
 
@@ -161,14 +161,14 @@ void processFile() {
         }
 
         if (strlen(buffer) == 0) {
-            throw runtime_error("Empty");  // ✅ File automatically closed!
+            throw std::runtime_error("Empty");  // ✅ File automatically closed!
         }
 
         // More processing...
 
     } // ✅ Destructor called here, file ALWAYS closed!
-    catch (const exception& e) {
-        cout << "   ❌ Error: " << e.what() << endl;
+    catch (const std::exception& e) {
+        std::println("   ❌ Error: {}", e.what());
     }
 }
 
@@ -179,12 +179,12 @@ private:
 public:
     DatabaseConnection() : connected(false) {
         connected = true;
-        cout << "   📡 Connected to database" << endl;
+        std::println("   📡 Connected to database");
     }
 
     ~DatabaseConnection() {
         if (connected) {
-            cout << "   🔌 Disconnected automatically" << endl;
+            std::println("   🔌 Disconnected automatically");
             connected = false;
         }
     }
@@ -194,7 +194,7 @@ public:
     DatabaseConnection& operator=(const DatabaseConnection&) = delete;
 
     void query() {
-        cout << "   🔍 Executing query..." << endl;
+        std::println("   🔍 Executing query...");
     }
 };
 
@@ -209,50 +209,17 @@ void queryDatabase() {
 }
 
 void example1_raii() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: RAII                                ║\n";
-    cout << "║   (Resource Acquisition Is Initialization)       ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: RAII                                ║");
+    std::println("║   (Resource Acquisition Is Initialization)       ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Manual Resource Management):\n";
-    cout << "   FILE* file = fopen(\"data.txt\", \"r\");\n";
-    cout << "   if (!file) return;\n";
-    cout << "   \n";
-    cout << "   // Do work...\n";
-    cout << "   if (error) {\n";
-    cout << "       return;  // 🚨 LEAK! Forgot to close file\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   fclose(file);  // Only in happy path!\n";
+    std::println("   ");
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (RAII):\n";
-    cout << "   class FileHandle {\n";
-    cout << "       FILE* file;\n";
-    cout << "   public:\n";
-    cout << "       FileHandle(const string& name) {\n";
-    cout << "           file = fopen(name.c_str(), \"r\");\n";
-    cout << "       }\n";
-    cout << "       ~FileHandle() {\n";
-    cout << "           if (file) fclose(file);  // ALWAYS called!\n";
-    cout << "       }\n";
-    cout << "   };\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
-    cout << "\n   Database connection example:\n";
     good_example1::queryDatabase();
 
-    cout << "\n💡 RAII BENEFITS:\n";
-    cout << "   ✅ Automatic cleanup - no leaks\n";
-    cout << "   ✅ Exception-safe - destructor always runs\n";
-    cout << "   ✅ No manual cleanup code needed\n";
-    cout << "   ✅ Impossible to forget to release\n";
-    cout << "   ✅ Scope-based lifetime management\n";
-
-    cout << "\n🎯 RAII PATTERN:\n";
-    cout << "   • Constructor acquires resource\n";
-    cout << "   • Destructor releases resource\n";
-    cout << "   • Lifetime tied to object scope\n";
-    cout << "   • Works with stack unwinding\n";
 }
 
 // ============================================
@@ -270,12 +237,12 @@ private:
 public:
     Buffer(size_t s) : size(s) {
         data = new int[size];
-        cout << "   📦 Allocated buffer of size " << size << endl;
+        std::println("   📦 Allocated buffer of size {}", size);
     }
 
     ~Buffer() {
         delete[] data;
-        cout << "   🗑️  Deleted buffer" << endl;
+        std::println("   🗑️  Deleted buffer");
     }
 
     // 🚨 NO COPY CONSTRUCTOR!
@@ -295,11 +262,11 @@ namespace good_example2 {
 
 class BufferRuleOfZero {
 private:
-    vector<int> data;  // ✅ Standard container handles everything
+    std::vector<int> data;  // ✅ Standard container handles everything
 
 public:
     BufferRuleOfZero(size_t size) : data(size) {
-        cout << "   📦 Created buffer (Rule of Zero)" << endl;
+        std::println("   📦 Created buffer (Rule of Zero)");
     }
 
     // ✅ Compiler-generated destructor is perfect!
@@ -318,20 +285,20 @@ public:
     // Constructor
     BufferRuleOfFive(size_t s) : size(s) {
         data = new int[size];
-        cout << "   📦 Allocated " << size << " ints" << endl;
+        std::println("   📦 Allocated {} ints", size);
     }
 
     // Destructor
     ~BufferRuleOfFive() {
         delete[] data;
-        cout << "   🗑️  Freed memory" << endl;
+        std::println("   🗑️  Freed memory");
     }
 
     // Copy Constructor
     BufferRuleOfFive(const BufferRuleOfFive& other) : size(other.size) {
         data = new int[size];
-        copy(other.data, other.data + size, data);
-        cout << "   📋 Copy constructed" << endl;
+        std::copy(other.data, other.data + size, data);
+        std::println("   📋 Copy constructed");
     }
 
     // Copy Assignment
@@ -340,8 +307,8 @@ public:
             delete[] data;
             size = other.size;
             data = new int[size];
-            copy(other.data, other.data + size, data);
-            cout << "   📋 Copy assigned" << endl;
+            std::copy(other.data, other.data + size, data);
+            std::println("   📋 Copy assigned");
         }
         return *this;
     }
@@ -351,7 +318,7 @@ public:
         : data(other.data), size(other.size) {
         other.data = nullptr;
         other.size = 0;
-        cout << "   🚚 Move constructed" << endl;
+        std::println("   🚚 Move constructed");
     }
 
     // Move Assignment
@@ -362,7 +329,7 @@ public:
             size = other.size;
             other.data = nullptr;
             other.size = 0;
-            cout << "   🚚 Move assigned" << endl;
+            std::println("   🚚 Move assigned");
         }
         return *this;
     }
@@ -370,51 +337,11 @@ public:
 }
 
 void example2_rule_of_five() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: RULE OF ZERO/THREE/FIVE            ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: RULE OF ZERO/THREE/FIVE             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n📜 THE RULES:\n";
-    cout << "\n   RULE OF ZERO:\n";
-    cout << "   • Use standard containers (vector, string, etc.)\n";
-    cout << "   • Let compiler generate all special members\n";
-    cout << "   • Preferred approach!\n";
-
-    cout << "\n   RULE OF THREE (C++98):\n";
-    cout << "   If you define ONE of:\n";
-    cout << "   • Destructor\n";
-    cout << "   • Copy constructor\n";
-    cout << "   • Copy assignment\n";
-    cout << "   You must define ALL THREE!\n";
-
-    cout << "\n   RULE OF FIVE (C++11+):\n";
-    cout << "   If you define ONE of:\n";
-    cout << "   • Destructor\n";
-    cout << "   • Copy constructor\n";
-    cout << "   • Copy assignment\n";
-    cout << "   • Move constructor\n";
-    cout << "   • Move assignment\n";
-    cout << "   You must define ALL FIVE!\n";
-
-    cout << "\n❌ BAD CODE (Violates Rule of Three):\n";
-    cout << "   class Buffer {\n";
-    cout << "       int* data;\n";
-    cout << "   public:\n";
-    cout << "       ~Buffer() { delete[] data; }\n";
-    cout << "       // 🚨 Missing copy constructor!\n";
-    cout << "       // 🚨 Missing copy assignment!\n";
-    cout << "       // Result: Double delete → CRASH!\n";
-    cout << "   };\n";
-
-    cout << "\n✅ GOOD CODE (Rule of Zero):\n";
-    cout << "   class Buffer {\n";
-    cout << "       vector<int> data;  // ✅ Perfect!\n";
-    cout << "   public:\n";
-    cout << "       Buffer(size_t size) : data(size) {}\n";
-    cout << "       // Compiler generates everything else!\n";
-    cout << "   };\n";
-
-    cout << "\n✨ DEMONSTRATION (Rule of Five):\n";
     {
         good_example2::BufferRuleOfFive buf1(5);
         good_example2::BufferRuleOfFive buf2 = buf1;  // Copy constructor
@@ -423,10 +350,6 @@ void example2_rule_of_five() {
         good_example2::BufferRuleOfFive buf4 = std::move(buf1);  // Move constructor
     }
 
-    cout << "\n💡 RECOMMENDATION:\n";
-    cout << "   🥇 First choice: Rule of Zero (use std containers)\n";
-    cout << "   🥈 Only if needed: Rule of Five (full implementation)\n";
-    cout << "   ⚠️  Never: Partial implementation!\n";
 }
 
 // ============================================
@@ -438,19 +361,19 @@ namespace bad_example3 {
 
 class Person {
 private:
-    string name;
+    std::string name;
     int age;
 
 public:
-    Person(string n, int a) : name(n), age(a) {}
+    Person(std::string n, int a) : name(n), age(a) {}
 
     // 🚨 Should be const but isn't!
-    string getName() { return name; }
+    std::string getName() { return name; }
     int getAge() { return age; }
 
     // 🚨 Can modify when it shouldn't!
     void print() {
-        cout << name << ", " << age << endl;
+        std::println("{}, {}", name, age);
     }
 };
 
@@ -465,22 +388,22 @@ namespace good_example3 {
 
 class Person {
 private:
-    string name;
+    std::string name;
     int age;
 
 public:
-    Person(const string& n, int a) : name(n), age(a) {}
+    Person(const std::string& n, int a) : name(n), age(a) {}
 
     // ✅ Const member functions
-    string getName() const { return name; }
+    std::string getName() const { return name; }
     int getAge() const { return age; }
 
     void print() const {
-        cout << "   " << name << ", age " << age << endl;
+        std::println("   {}, age {}", name, age);
     }
 
     // ✅ Non-const for modification
-    void setName(const string& n) { name = n; }
+    void setName(const std::string& n) { name = n; }
     void setAge(int a) { age = a; }
 };
 
@@ -492,7 +415,7 @@ void printPerson(const Person& p) {
 // ✅ Const reference return for members
 class Team {
 private:
-    vector<Person> members;
+    std::vector<Person> members;
 
 public:
     void addMember(const Person& p) {
@@ -500,67 +423,38 @@ public:
     }
 
     // ✅ Const version
-    const vector<Person>& getMembers() const {
+    const std::vector<Person>& getMembers() const {
         return members;
     }
 
     // ✅ Non-const version for modification
-    vector<Person>& getMembers() {
+    std::vector<Person>& getMembers() {
         return members;
     }
 };
 }
 
 void example3_const_correctness() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: CONST CORRECTNESS                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: CONST CORRECTNESS                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (No Const):\n";
-    cout << "   class Person {\n";
-    cout << "   public:\n";
-    cout << "       string getName() { return name; }  // 🚨 Not const!\n";
-    cout << "       void print() { /* ... */ }         // 🚨 Not const!\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   void func(Person& p) {  // 🚨 Can't accept const!\n";
-    cout << "       p.print();\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Const Correct):\n";
-    cout << "   class Person {\n";
-    cout << "   public:\n";
-    cout << "       string getName() const { return name; }  // ✅\n";
-    cout << "       void print() const { /* ... */ }         // ✅\n";
-    cout << "       void setName(const string& n) { }        // ✅\n";
-    cout << "   };\n";
-    cout << "   \n";
-    cout << "   void func(const Person& p) {  // ✅ Can accept const\n";
-    cout << "       p.print();  // Works!\n";
-    cout << "   }\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
 
     good_example3::Person john("John Doe", 30);
-    cout << "\n   Created person:\n";
+    std::println("");
+    std::println("   Created person:");
     john.print();
 
     const good_example3::Person jane("Jane Smith", 28);
-    cout << "\n   Const person can still be read:\n";
+    std::println("");
+    std::println("   Const person can still be read:");
     jane.print();
     // jane.setAge(29);  // ❌ Won't compile - const!
 
-    cout << "\n💡 CONST CORRECTNESS RULES:\n";
-    cout << "   ✅ Mark member functions const if they don't modify\n";
-    cout << "   ✅ Pass by const reference when not modifying\n";
-    cout << "   ✅ Use const for variables that don't change\n";
-    cout << "   ✅ Provide both const and non-const overloads\n";
-
-    cout << "\n🎯 BENEFITS:\n";
-    cout << "   • Compiler enforces immutability\n";
-    cout << "   • Self-documenting intent\n";
-    cout << "   • Enables optimizations\n";
-    cout << "   • Prevents accidental modifications\n";
 }
 
 // ============================================
@@ -583,12 +477,12 @@ void processData() {
 
 class User {
 private:
-    string name;  // ✅ OK - string initializes itself
+    std::string name;  // ✅ OK - string initializes itself
     int age;      // 🚨 Not initialized in constructor!
     bool active;  // 🚨 Not initialized!
 
 public:
-    User(const string& n) : name(n) {
+    User(const std::string& n) : name(n) {
         // 🚨 age and active contain garbage!
     }
 };
@@ -602,8 +496,8 @@ void processData() {
     double total = 0.0;   // ✅ Initialized
     bool flag = false;    // ✅ Initialized
 
-    vector<int> numbers;  // ✅ Empty, but valid state
-    string text;          // ✅ Empty string
+    std::vector<int> numbers;  // ✅ Empty, but valid state
+    std::string text;          // ✅ Empty string
 
     // All variables have defined values!
     if (flag) {
@@ -613,16 +507,15 @@ void processData() {
 
 class User {
 private:
-    string name;
+    std::string name;
     int age;
     bool active;
 
 public:
     // ✅ Initialize all members in constructor
-    User(const string& n, int a = 0)
+    User(const std::string& n, int a = 0)
         : name(n), age(a), active(true) {
-        cout << "   ✅ User created: " << name
-             << ", age " << age << endl;
+        std::println("   ✅ User created: {}, age {}", name, age);
     }
 
     // ✅ Or use default member initializers (C++11)
@@ -630,68 +523,34 @@ public:
 
 class Account {
 private:
-    string accountNumber;
+    std::string accountNumber;
     double balance = 0.0;      // ✅ Default initializer
     bool isActive = true;      // ✅ Default initializer
     int transactionCount = 0;  // ✅ Default initializer
 
 public:
-    Account(const string& num) : accountNumber(num) {
-        cout << "   ✅ Account created with defaults" << endl;
+    Account(const std::string& num) : accountNumber(num) {
+        std::println("   ✅ Account created with defaults");
     }
 };
 }
 
 void example4_initialize_variables() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: INITIALIZE ALL VARIABLES            ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: INITIALIZE ALL VARIABLES            ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Uninitialized):\n";
-    cout << "   int count;      // 🚨 Contains garbage!\n";
-    cout << "   bool flag;      // 🚨 Random value!\n";
-    cout << "   double total;   // 🚨 Undefined!\n";
-    cout << "   \n";
-    cout << "   if (flag) {     // 🚨 Undefined behavior!\n";
-    cout << "       count++;    // 🚨 Adding to garbage!\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Always Initialize):\n";
-    cout << "   int count = 0;        // ✅ Defined value\n";
-    cout << "   bool flag = false;    // ✅ Defined value\n";
-    cout << "   double total = 0.0;   // ✅ Defined value\n";
-    cout << "   \n";
-    cout << "   // Or use uniform initialization:\n";
-    cout << "   int count{0};\n";
-    cout << "   bool flag{false};\n";
-    cout << "   double total{0.0};\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
 
     good_example4::User user("Alice", 25);
     good_example4::Account account("ACC-12345");
 
-    cout << "\n💡 INITIALIZATION METHODS:\n";
-    cout << "\n   1. Direct initialization:\n";
-    cout << "      int x = 5;\n";
-    cout << "   \n";
-    cout << "   2. Uniform initialization (C++11):\n";
-    cout << "      int x{5};  // Preferred - prevents narrowing\n";
-    cout << "   \n";
-    cout << "   3. Member initializer list:\n";
-    cout << "      MyClass(int x) : member(x) { }\n";
-    cout << "   \n";
-    cout << "   4. Default member initializers (C++11):\n";
-    cout << "      class MyClass {\n";
-    cout << "          int member = 0;  // Default value\n";
-    cout << "      };\n";
-
-    cout << "\n🎯 BENEFITS:\n";
-    cout << "   ✅ No undefined behavior\n";
-    cout << "   ✅ No garbage values\n";
-    cout << "   ✅ Predictable program behavior\n";
-    cout << "   ✅ Easier debugging\n";
-    cout << "   ✅ Catches errors at compile time\n";
+    std::println("   ");
+    std::println("   ");
+    std::println("   ");
 }
 
 // ============================================
@@ -700,6 +559,13 @@ void example4_initialize_variables() {
 
 namespace bad_example5 {
 // ❌ BAD: Unnecessary pointer usage
+
+struct User {
+    std::string name;
+    int age;
+    User(std::string n, int a) : name(std::move(n)), age(a) {}
+    void print() const { std::println("User: {} ({})", name, age); }
+};
 
 void processUser(User* user) {  // 🚨 Can be null!
     if (user) {  // 🚨 Need null check
@@ -726,6 +592,7 @@ public:
 }
 
 namespace good_example5 {
+using good_example3::Person;
 // ✅ GOOD: Use references when possible
 
 void processUser(const Person& user) {  // ✅ Can't be null!
@@ -733,10 +600,9 @@ void processUser(const Person& user) {  // ✅ Can't be null!
 }
 
 // ✅ For optional values, use optional<T>
-#include <optional>
-optional<Person> findUser(int id) {
+std::optional<Person> findUser(int id) {
     if (id < 0) {
-        return nullopt;  // Clear: no value
+        return std::nullopt;  // Clear: no value
     }
     return Person("John", 30);
 }
@@ -748,7 +614,7 @@ private:
 public:
     // Reference must be initialized in constructor
     Team(Person& l) : leader(l) {
-        cout << "   ✅ Team created with leader: " << l.getName() << endl;
+        std::println("   ✅ Team created with leader: {}", l.getName());
     }
 
     Person& getLeader() {
@@ -759,72 +625,36 @@ public:
 // ✅ When ownership is needed, use smart pointers
 class Company {
 private:
-    unique_ptr<Person> ceo;  // ✅ Clear ownership
+    std::unique_ptr<Person> ceo;  // ✅ Clear ownership
 
 public:
-    void setCEO(unique_ptr<Person> p) {
+    void setCEO(std::unique_ptr<Person> p) {
         ceo = std::move(p);
-        cout << "   ✅ CEO set (ownership transferred)" << endl;
+        std::println("   ✅ CEO set (ownership transferred)");
     }
 };
 }
 
 void example5_references_vs_pointers() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: PREFER REFERENCES OVER POINTERS     ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: PREFER REFERENCES OVER POINTERS     ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Unnecessary Pointers):\n";
-    cout << "   void func(User* user) {  // 🚨 Can be null!\n";
-    cout << "       if (user) {          // 🚨 Need null check\n";
-    cout << "           user->process();\n";
-    cout << "       }\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   User* u = findUser(123);  // 🚨 Might be null\n";
-    cout << "   if (u) {                  // 🚨 Always checking\n";
-    cout << "       func(u);\n";
-    cout << "   }\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Use References):\n";
-    cout << "   void func(const User& user) {  // ✅ Can't be null!\n";
-    cout << "       user.process();            // ✅ No check needed\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   User& u = getUser(123);  // ✅ Must exist\n";
-    cout << "   func(u);                 // ✅ No null checks\n";
-    cout << "   \n";
-    cout << "   // For optional values:\n";
-    cout << "   optional<User> maybeUser = findUser(123);\n";
-    cout << "   if (maybeUser) { /* use *maybeUser */ }\n";
-
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::println("   ");
+    std::println("   ");
 
     good_example3::Person alice("Alice", 30);
-    cout << "\n   Using reference (can't be null):\n";
+    std::println("");
+    std::println("   Using reference (can't be null):");
     good_example5::processUser(alice);
 
-    cout << "\n   Creating team with reference:\n";
+    std::println("");
+    std::println("   Creating team with reference:");
     good_example5::Team team(alice);
 
-    cout << "\n📊 WHEN TO USE EACH:\n";
-    cout << "\n   USE REFERENCES when:\n";
-    cout << "   ✅ Value must exist (not optional)\n";
-    cout << "   ✅ No ownership transfer\n";
-    cout << "   ✅ No reassignment needed\n";
-    cout << "   ✅ Passing to/from functions\n";
-
-    cout << "\n   USE POINTERS when:\n";
-    cout << "   ⚠️  Value is optional (can be null)\n";
-    cout << "   ⚠️  Need to reassign (point to different object)\n";
-    cout << "   ⚠️  Polymorphism with ownership (use unique_ptr)\n";
-    cout << "   ⚠️  Shared ownership (use shared_ptr)\n";
-
-    cout << "\n🎯 BENEFITS OF REFERENCES:\n";
-    cout << "   ✅ No null pointer dereferences\n";
-    cout << "   ✅ Cleaner syntax (. instead of ->)\n";
-    cout << "   ✅ No null checks needed\n";
-    cout << "   ✅ Clear intent: value must exist\n";
 }
 
 // ============================================
@@ -834,12 +664,15 @@ void example5_references_vs_pointers() {
 namespace bad_example6 {
 // ❌ BAD: Raw pointers (manual memory management)
 
+using bad_example5::User;
+
 void createUser() {
     User* user = new User("John", 30);  // 🚨 Who deletes?
 
     // Do work...
 
-    if (/* some condition */) {
+    bool someCondition = false;  // pretend this depends on run-time input
+    if (someCondition) {
         return;  // 🚨 MEMORY LEAK!
     }
 
@@ -864,16 +697,18 @@ public:
 }
 
 namespace good_example6 {
+using good_example3::Person;
 // ✅ GOOD: Smart pointers (automatic memory management)
 
 void createUser() {
-    unique_ptr<Person> user = make_unique<Person>("John", 30);
+    std::unique_ptr<Person> user = std::make_unique<Person>("John", 30);
 
-    cout << "   ✅ User created with unique_ptr" << endl;
+    std::println("   ✅ User created with unique_ptr");
 
     // Do work...
 
-    if (/* some condition */) {
+    bool someCondition = false;  // pretend this depends on run-time input
+    if (someCondition) {
         return;  // ✅ Automatically deleted!
     }
 
@@ -881,12 +716,12 @@ void createUser() {
 
 class UserManager {
 private:
-    vector<unique_ptr<Person>> users;  // ✅ Clear ownership
+    std::vector<std::unique_ptr<Person>> users;  // ✅ Clear ownership
 
 public:
-    void addUser(unique_ptr<Person> user) {
+    void addUser(std::unique_ptr<Person> user) {
         users.push_back(std::move(user));  // ✅ Takes ownership
-        cout << "   ✅ Added user (ownership transferred)" << endl;
+        std::println("   ✅ Added user (ownership transferred)");
     }
 
     // ✅ Destructor automatically cleans up all users
@@ -895,15 +730,15 @@ public:
 // ✅ shared_ptr for shared ownership
 class Team {
 private:
-    shared_ptr<Person> leader;  // ✅ Can be shared
+    std::shared_ptr<Person> leader;  // ✅ Can be shared
 
 public:
-    void setLeader(shared_ptr<Person> l) {
+    void setLeader(std::shared_ptr<Person> l) {
         leader = l;  // ✅ Reference count increased
-        cout << "   ✅ Leader set (shared ownership)" << endl;
+        std::println("   ✅ Leader set (shared ownership)");
     }
 
-    shared_ptr<Person> getLeader() {
+    std::shared_ptr<Person> getLeader() {
         return leader;  // ✅ Safe to share
     }
 };
@@ -911,94 +746,54 @@ public:
 // ✅ weak_ptr to break cycles
 class Employee {
 private:
-    shared_ptr<Team> team;
-    weak_ptr<Person> manager;  // ✅ Doesn't increase ref count
+    std::shared_ptr<Team> team;
+    std::weak_ptr<Person> manager;  // ✅ Doesn't increase ref count
 
 public:
-    void setManager(shared_ptr<Person> m) {
+    void setManager(std::shared_ptr<Person> m) {
         manager = m;  // ✅ Weak reference
     }
 
     void contactManager() {
         if (auto m = manager.lock()) {  // ✅ Check if still alive
-            cout << "   ✅ Manager is: " << m->getName() << endl;
+            std::println("   ✅ Manager is: {}", m->getName());
         } else {
-            cout << "   ⚠️  Manager no longer available" << endl;
+            std::println("   ⚠️  Manager no longer available");
         }
     }
 };
 }
 
 void example6_smart_pointers() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: USE SMART POINTERS                  ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: USE SMART POINTERS                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Raw Pointers):\n";
-    cout << "   User* user = new User();  // 🚨 Who deletes?\n";
-    cout << "   \n";
-    cout << "   // Do work...\n";
-    cout << "   if (error) {\n";
-    cout << "       return;  // 🚨 MEMORY LEAK!\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   delete user;  // Must remember!\n";
+    std::println("   ");
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Smart Pointers):\n";
-    cout << "   unique_ptr<User> user = make_unique<User>();\n";
-    cout << "   \n";
-    cout << "   // Do work...\n";
-    cout << "   if (error) {\n";
-    cout << "       return;  // ✅ Automatically deleted!\n";
-    cout << "   }\n";
-    cout << "   // ✅ Automatically deleted at end of scope\n";
+    std::println("   ");
 
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    cout << "\n   unique_ptr (exclusive ownership):\n";
     {
-        unique_ptr<good_example3::Person> john =
-            make_unique<good_example3::Person>("John", 30);
-        cout << "   ✅ Created unique_ptr" << endl;
+        std::unique_ptr<good_example3::Person> john =
+            std::make_unique<good_example3::Person>("John", 30);
+        std::println("   ✅ Created unique_ptr");
     }
-    cout << "   ✅ Automatically deleted when scope ends" << endl;
+    std::println("   ✅ Automatically deleted when scope ends");
 
-    cout << "\n   shared_ptr (shared ownership):\n";
+    std::println("");
+    std::println("   shared_ptr (shared ownership):");
     {
-        shared_ptr<good_example3::Person> alice =
-            make_shared<good_example3::Person>("Alice", 28);
+        std::shared_ptr<good_example3::Person> alice =
+            std::make_shared<good_example3::Person>("Alice", 28);
         {
-            shared_ptr<good_example3::Person> aliceRef = alice;
-            cout << "   ✅ Reference count: 2" << endl;
+            std::shared_ptr<good_example3::Person> aliceRef = alice;
+            std::println("   ✅ Reference count: 2");
         }
-        cout << "   ✅ Reference count: 1 (inner scope ended)" << endl;
+        std::println("   ✅ Reference count: 1 (inner scope ended)");
     }
-    cout << "   ✅ Deleted when last reference goes away" << endl;
 
-    cout << "\n📊 SMART POINTER TYPES:\n";
-    cout << "\n   unique_ptr:\n";
-    cout << "   • Exclusive ownership\n";
-    cout << "   • Can't be copied, only moved\n";
-    cout << "   • Zero overhead\n";
-    cout << "   • Use by default\n";
-
-    cout << "\n   shared_ptr:\n";
-    cout << "   • Shared ownership\n";
-    cout << "   • Reference counted\n";
-    cout << "   • Slight overhead\n";
-    cout << "   • Use when multiple owners needed\n";
-
-    cout << "\n   weak_ptr:\n";
-    cout << "   • Non-owning reference\n";
-    cout << "   • Doesn't increase ref count\n";
-    cout << "   • Prevents cycles\n";
-    cout << "   • Must check if still valid\n";
-
-    cout << "\n🎯 BENEFITS:\n";
-    cout << "   ✅ No memory leaks\n";
-    cout << "   ✅ Exception-safe\n";
-    cout << "   ✅ Clear ownership semantics\n";
-    cout << "   ✅ RAII automatic cleanup\n";
 }
 
 // ============================================
@@ -1046,7 +841,7 @@ namespace good_example7 {
 // ✅ GOOD: Use containers and smart pointers
 
 void processData() {
-    vector<int> array(100);  // ✅ Automatic management
+    std::vector<int> array(100);  // ✅ Automatic management
 
     // Process data...
 
@@ -1060,11 +855,11 @@ void processData() {
 
 class DataProcessor {
 private:
-    vector<int> buffer;  // ✅ Automatic management
+    std::vector<int> buffer;  // ✅ Automatic management
 
 public:
     DataProcessor(size_t size) : buffer(size) {
-        cout << "   ✅ Buffer created (vector manages memory)" << endl;
+        std::println("   ✅ Buffer created (vector manages memory)");
     }
 
     // ✅ Compiler-generated destructor is perfect
@@ -1075,13 +870,13 @@ public:
 // ✅ If you must allocate dynamically, use smart pointers
 class CustomAllocator {
 private:
-    unique_ptr<int[]> buffer;  // ✅ Smart pointer for arrays
+    std::unique_ptr<int[]> buffer;  // ✅ Smart pointer for arrays
     size_t size;
 
 public:
     CustomAllocator(size_t s)
-        : buffer(make_unique<int[]>(s)), size(s) {
-        cout << "   ✅ Buffer allocated with unique_ptr" << endl;
+        : buffer(std::make_unique<int[]>(s)), size(s) {
+        std::println("   ✅ Buffer allocated with unique_ptr");
     }
 
     // ✅ Automatically cleaned up
@@ -1090,66 +885,27 @@ public:
 }
 
 void example7_avoid_raw_new_delete() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: AVOID RAW new/delete                ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: AVOID RAW new/delete                ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Manual new/delete):\n";
-    cout << "   int* array = new int[100];  // 🚨 Manual!\n";
-    cout << "   \n";
-    cout << "   // Process...\n";
-    cout << "   if (error) {\n";
-    cout << "       return;  // 🚨 LEAK! Forgot delete[]\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   delete[] array;  // Must remember!\n";
+    std::println("   ");
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Use Containers):\n";
-    cout << "   vector<int> array(100);  // ✅ Automatic!\n";
-    cout << "   \n";
-    cout << "   // Process...\n";
-    cout << "   if (error) {\n";
-    cout << "       return;  // ✅ No leak!\n";
-    cout << "   }\n";
-    cout << "   // ✅ Automatic cleanup\n";
+    std::println("   ");
 
-    cout << "\n✨ DEMONSTRATION:\n";
-
-    cout << "\n   Using vector (preferred):\n";
     {
         good_example7::DataProcessor proc(1000);
     }
-    cout << "   ✅ Memory automatically freed" << endl;
+    std::println("   ✅ Memory automatically freed");
 
-    cout << "\n   Using smart pointer (when needed):\n";
+    std::println("");
+    std::println("   Using smart pointer (when needed):");
     {
         good_example7::CustomAllocator alloc(500);
     }
-    cout << "   ✅ Memory automatically freed" << endl;
 
-    cout << "\n🎯 ALTERNATIVES TO new/delete:\n";
-    cout << "\n   1. Use standard containers:\n";
-    cout << "      vector<T>     - Dynamic array\n";
-    cout << "      string        - Text\n";
-    cout << "      array<T, N>   - Fixed-size array\n";
-    cout << "      map<K, V>     - Key-value pairs\n";
-
-    cout << "\n   2. Use smart pointers:\n";
-    cout << "      unique_ptr<T> - Single ownership\n";
-    cout << "      shared_ptr<T> - Shared ownership\n";
-    cout << "      make_unique<T>() - Preferred creation\n";
-    cout << "      make_shared<T>() - Preferred creation\n";
-
-    cout << "\n   3. Use stack allocation:\n";
-    cout << "      int array[100];  - Fixed size\n";
-    cout << "      MyClass obj;     - Local object\n";
-
-    cout << "\n💡 BENEFITS:\n";
-    cout << "   ✅ No memory leaks\n";
-    cout << "   ✅ Exception-safe\n";
-    cout << "   ✅ Less code to write\n";
-    cout << "   ✅ No manual cleanup needed\n";
-    cout << "   ✅ Rule of Zero achieved\n";
 }
 
 // ============================================
@@ -1164,15 +920,15 @@ void processPerson(good_example3::Person p) {  // 🚨 Copies entire object!
     // Expensive copy for just reading!
 }
 
-void processVector(vector<int> v) {  // 🚨 Copies entire vector!
+void processVector(std::vector<int> v) {  // 🚨 Copies entire vector!
     for (int x : v) {
-        cout << x << " ";
+        std::print("{} ", x);
     }
     // Could be thousands of elements copied!
 }
 
-vector<int> getLargeVector() {
-    vector<int> result(10000);
+std::vector<int> getLargeVector() {
+    std::vector<int> result(10000);
     // Fill vector...
     return result;  // 🚨 Potential copy (though RVO helps)
 }
@@ -1186,24 +942,24 @@ void processPerson(const good_example3::Person& p) {  // ✅ No copy!
     // Just a reference, no copying
 }
 
-void processVector(const vector<int>& v) {  // ✅ No copy!
-    cout << "   Processing " << v.size() << " elements: ";
+void processVector(const std::vector<int>& v) {  // ✅ No copy!
+    std::print("   Processing {} elements: ", v.size());
     for (int x : v) {
-        cout << x << " ";
+        std::print("{} ", x);
     }
-    cout << endl;
+    std::println("");
 }
 
 // ✅ When modifying, pass by non-const reference
-void modifyVector(vector<int>& v) {
+void modifyVector(std::vector<int>& v) {
     for (int& x : v) {
         x *= 2;
     }
 }
 
 // ✅ For output, return by value (RVO/move)
-vector<int> getLargeVector() {
-    vector<int> result(10);
+std::vector<int> getLargeVector() {
+    std::vector<int> result(10);
     for (int i = 0; i < 10; i++) {
         result[i] = i;
     }
@@ -1212,82 +968,41 @@ vector<int> getLargeVector() {
 
 // ✅ Small types can be passed by value
 void processInt(int value) {  // ✅ OK - int is small
-    cout << "   Value: " << value << endl;
+    std::println("   Value: {}", value);
 }
 
 void processDouble(double value) {  // ✅ OK - double is small
-    cout << "   Value: " << value << endl;
+    std::println("   Value: {}", value);
 }
 }
 
 void example8_pass_by_const_ref() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: PASS BY CONST REFERENCE             ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: PASS BY CONST REFERENCE             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n❌ BAD CODE (Pass by Value):\n";
-    cout << "   void processVector(vector<int> v) {  // 🚨 COPIES!\n";
-    cout << "       // Entire vector copied unnecessarily\n";
-    cout << "       for (int x : v) { /* ... */ }\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   vector<int> data(10000);  // Large vector\n";
-    cout << "   processVector(data);      // 🚨 10000 ints copied!\n";
+    std::println("   ");
 
-    cout << "\n✅ GOOD CODE (Pass by Const Reference):\n";
-    cout << "   void processVector(const vector<int>& v) {  // ✅ No copy!\n";
-    cout << "       // Just a reference, no copying\n";
-    cout << "       for (int x : v) { /* ... */ }\n";
-    cout << "   }\n";
-    cout << "   \n";
-    cout << "   vector<int> data(10000);\n";
-    cout << "   processVector(data);  // ✅ Just passes reference!\n";
+    std::println("   ");
 
-    cout << "\n✨ DEMONSTRATION:\n";
+    std::vector<int> numbers = {1, 2, 3, 4, 5};
 
-    vector<int> numbers = {1, 2, 3, 4, 5};
-
-    cout << "\n   Passing by const reference (no copy):\n";
+    std::println("");
+    std::println("   Passing by const reference (no copy):");
     good_example8::processVector(numbers);
 
-    cout << "\n   Modifying with non-const reference:\n";
-    cout << "   Before: ";
-    for (int x : numbers) cout << x << " ";
-    cout << endl;
+    std::println("");
+    std::println("   Modifying with non-const reference:");
+    std::print("   Before: ");
+    for (int x : numbers) std::print("{} ", x);
+    std::println("");
 
     good_example8::modifyVector(numbers);
-    cout << "   After:  ";
-    for (int x : numbers) cout << x << " ";
-    cout << endl;
+    std::print("   After:  ");
+    for (int x : numbers) std::print("{} ", x);
+    std::println("");
 
-    cout << "\n📊 PARAMETER PASSING GUIDELINES:\n";
-    cout << "\n   Pass by VALUE:\n";
-    cout << "   • Built-in types (int, double, char, bool)\n";
-    cout << "   • Small types (sizeof <= 2*pointer)\n";
-    cout << "   • When you need a copy anyway\n";
-
-    cout << "\n   Pass by CONST REFERENCE:\n";
-    cout << "   • Large objects (vector, string, custom classes)\n";
-    cout << "   • When reading only (not modifying)\n";
-    cout << "   • Default for user-defined types\n";
-
-    cout << "\n   Pass by NON-CONST REFERENCE:\n";
-    cout << "   • When function needs to modify argument\n";
-    cout << "   • Output parameters\n";
-
-    cout << "\n   Pass by POINTER:\n";
-    cout << "   • When value is optional (can be nullptr)\n";
-    cout << "   • When need to reassign\n";
-
-    cout << "\n   Pass by RVALUE REFERENCE (&&):\n";
-    cout << "   • For perfect forwarding\n";
-    cout << "   • When taking ownership\n";
-
-    cout << "\n🎯 BENEFITS:\n";
-    cout << "   ✅ No unnecessary copies\n";
-    cout << "   ✅ Better performance\n";
-    cout << "   ✅ Const prevents accidental modification\n";
-    cout << "   ✅ Clear intent (reading vs modifying)\n";
 }
 
 // ============================================
@@ -1295,14 +1010,14 @@ void example8_pass_by_const_ref() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║              C++ BEST PRACTICES                       ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Follow proven patterns and idioms that make         ║\n";
-    cout << "║   C++ code safer, more efficient, and maintainable.\" ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║              C++ BEST PRACTICES                       ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Follow proven patterns and idioms that make        ║");
+    std::println("║   C++ code safer, more efficient, and maintainable.\" ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     example1_raii();
     example2_rule_of_five();
@@ -1312,16 +1027,6 @@ int main() {
     example6_smart_pointers();
     example7_avoid_raw_new_delete();
     example8_pass_by_const_ref();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║         🎉 C++ BEST PRACTICES COMPLETE! 🎉            ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Modern C++ provides powerful tools     ║\n";
-    cout << "║  to write safe, efficient code. Use them!             ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
 
     return 0;
 }

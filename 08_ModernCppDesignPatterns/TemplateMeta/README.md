@@ -2,7 +2,7 @@
 
 ## 📚 Introduction
 
-Template metaprogramming (TMP) is a technique where templates are used to perform computations at **compile-time** rather than runtime. It's one of the most powerful features of C++ and is heavily used in high-performance libraries and by companies like think-cell.
+Template metaprogramming (TMP) is a technique where templates are used to perform computations at **compile-time** rather than runtime. It's one of the most powerful features of C++ and is heavily used in high-performance libraries.
 
 ## 🎯 What is Template Metaprogramming?
 
@@ -176,7 +176,7 @@ Type traits and type manipulation:
 8. Implement `type_list.cpp` structures
 9. Build your own metaprogramming utilities
 
-### Expert Level (think-cell level):
+### Expert Level:
 10. Combine TMP with ranges and concepts
 11. Build expression template libraries
 12. Create domain-specific embedded languages (DSELs)
@@ -319,11 +319,8 @@ constexpr bool isEven(int n) {
 
 ## 🏢 Real-World Applications
 
-### think-cell's Use of TMP:
-> "We constantly introduce and improve our own libraries that go far beyond what the standard library has to offer."
-
-think-cell uses TMP for:
-- Custom range library
+### Typical uses of TMP:
+- Custom range libraries
 - Type-safe interfaces
 - Compile-time optimizations
 - Zero-cost abstractions
@@ -375,7 +372,6 @@ think-cell uses TMP for:
 ### Online:
 - CppReference - Template documentation
 - Compiler Explorer (godbolt.org) - See assembly output
-- think-cell blog - Real-world TMP usage
 
 ### Conference Talks:
 - "C++ Template Metaprogramming" - Various CppCon talks
@@ -411,26 +407,23 @@ Apply TMP to:
 - [ ] Create template metafunctions
 - [ ] Use concepts (C++20)
 
-**Expert (think-cell level):**
+**Expert:**
 - [ ] Build complex metaprogramming libraries
 - [ ] Design DSELs with templates
 - [ ] Combine TMP with modern C++ features
 - [ ] Optimize template compilation times
 
-## 💡 think-cell Philosophy
+## 💡 When to Use TMP
 
-> "We're not afraid of advanced template metaprogramming or macros when they avoid code duplication or lead to cleaner, more readable code."
-
-think-cell's approach:
 - Use TMP when it improves code quality
-- Prefer modern alternatives when available
+- Prefer modern alternatives (`constexpr`, concepts) when available
 - Balance compile-time vs runtime complexity
 - Focus on zero-cost abstractions
 
 ## 🔜 Next Steps
 
 After mastering template metaprogramming:
-- Move to `ThinkCellPhilosophy/` for real-world patterns
+- Move to `../RangesAndGenericStyle/` for ranges and generic style
 - Study `ZeroCostAbstractions/` for performance analysis
 - Combine TMP with ranges and functional programming
 - Build production-ready generic libraries

@@ -1,9 +1,8 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: PAYMENT PROCESSING
@@ -18,7 +17,7 @@ class PaymentStrategy {
 public:
     virtual ~PaymentStrategy() {}
     virtual void pay(double amount) = 0;
-    virtual string getPaymentType() const = 0;
+    virtual std::string getPaymentType() const = 0;
 };
 
 /**
@@ -26,24 +25,24 @@ public:
  */
 class CreditCardPayment : public PaymentStrategy {
 private:
-    string cardNumber;
-    string cardHolder;
-    string cvv;
-    string expiryDate;
+    std::string cardNumber;
+    std::string cardHolder;
+    std::string cvv;
+    std::string expiryDate;
 
 public:
-    CreditCardPayment(const string& number, const string& holder,
-                      const string& cv, const string& expiry)
+    CreditCardPayment(const std::string& number, const std::string& holder,
+                      const std::string& cv, const std::string& expiry)
         : cardNumber(number), cardHolder(holder), cvv(cv), expiryDate(expiry) {}
 
     void pay(double amount) override {
-        cout << "💳 Processing Credit Card payment of $" << amount << "\n";
-        cout << "   Card: ****" << cardNumber.substr(cardNumber.length() - 4) << "\n";
-        cout << "   Holder: " << cardHolder << "\n";
-        cout << "✅ Payment successful!\n";
+        std::println("💳 Processing Credit Card payment of ${}", amount);
+        std::println("   Card: ****{}", cardNumber.substr(cardNumber.length() - 4));
+        std::println("   Holder: {}", cardHolder);
+        std::println("✅ Payment successful!");
     }
 
-    string getPaymentType() const override {
+    std::string getPaymentType() const override {
         return "Credit Card";
     }
 };
@@ -53,21 +52,21 @@ public:
  */
 class PayPalPayment : public PaymentStrategy {
 private:
-    string email;
-    string password;
+    std::string email;
+    std::string password;
 
 public:
-    PayPalPayment(const string& mail, const string& pass)
+    PayPalPayment(const std::string& mail, const std::string& pass)
         : email(mail), password(pass) {}
 
     void pay(double amount) override {
-        cout << "💰 Processing PayPal payment of $" << amount << "\n";
-        cout << "   Account: " << email << "\n";
-        cout << "   Authenticating...\n";
-        cout << "✅ Payment successful!\n";
+        std::println("💰 Processing PayPal payment of ${}", amount);
+        std::println("   Account: {}", email);
+        std::println("   Authenticating...");
+        std::println("✅ Payment successful!");
     }
 
-    string getPaymentType() const override {
+    std::string getPaymentType() const override {
         return "PayPal";
     }
 };
@@ -77,21 +76,21 @@ public:
  */
 class CryptoPayment : public PaymentStrategy {
 private:
-    string walletAddress;
-    string cryptoType;
+    std::string walletAddress;
+    std::string cryptoType;
 
 public:
-    CryptoPayment(const string& wallet, const string& crypto)
+    CryptoPayment(const std::string& wallet, const std::string& crypto)
         : walletAddress(wallet), cryptoType(crypto) {}
 
     void pay(double amount) override {
-        cout << "₿ Processing " << cryptoType << " payment of $" << amount << "\n";
-        cout << "   Wallet: " << walletAddress.substr(0, 10) << "...\n";
-        cout << "   Broadcasting to blockchain...\n";
-        cout << "✅ Payment successful!\n";
+        std::println("₿ Processing {} payment of ${}", cryptoType, amount);
+        std::println("   Wallet: {}...", walletAddress.substr(0, 10));
+        std::println("   Broadcasting to blockchain...");
+        std::println("✅ Payment successful!");
     }
 
-    string getPaymentType() const override {
+    std::string getPaymentType() const override {
         return cryptoType + " Cryptocurrency";
     }
 };
@@ -102,13 +101,13 @@ public:
  */
 class ShoppingCart {
 private:
-    shared_ptr<PaymentStrategy> paymentStrategy;
-    vector<pair<string, double>> items;
+    std::shared_ptr<PaymentStrategy> paymentStrategy;
+    std::vector<std::pair<std::string, double>> items;
 
 public:
-    void addItem(const string& item, double price) {
+    void addItem(const std::string& item, double price) {
         items.push_back({item, price});
-        cout << "🛒 Added: " << item << " - $" << price << "\n";
+        std::println("🛒 Added: {} - ${}", item, price);
     }
 
     double calculateTotal() const {
@@ -119,23 +118,25 @@ public:
         return total;
     }
 
-    void setPaymentStrategy(shared_ptr<PaymentStrategy> strategy) {
+    void setPaymentStrategy(std::shared_ptr<PaymentStrategy> strategy) {
         paymentStrategy = strategy;
-        cout << "💳 Payment method set to: " << strategy->getPaymentType() << "\n";
+        std::println("💳 Payment method set to: {}", strategy->getPaymentType());
     }
 
     void checkout() {
         if (!paymentStrategy) {
-            cout << "❌ Please select a payment method\n";
+            std::println("❌ Please select a payment method");
             return;
         }
 
         double total = calculateTotal();
-        cout << "\n📋 Checkout Summary:\n";
+        std::println("");
+        std::println("📋 Checkout Summary:");
         for (const auto& item : items) {
-            cout << "   • " << item.first << ": $" << item.second << "\n";
+            std::println("   • {}: ${}", item.first, item.second);
         }
-        cout << "   Total: $" << total << "\n\n";
+        std::println("   Total: ${}", total);
+        std::println("");
 
         paymentStrategy->pay(total);
     }
@@ -152,8 +153,8 @@ public:
 class SortStrategy {
 public:
     virtual ~SortStrategy() {}
-    virtual void sort(vector<int>& data) = 0;
-    virtual string getAlgorithmName() const = 0;
+    virtual void sort(std::vector<int>& data) = 0;
+    virtual std::string getAlgorithmName() const = 0;
 };
 
 /**
@@ -161,20 +162,20 @@ public:
  */
 class BubbleSort : public SortStrategy {
 public:
-    void sort(vector<int>& data) override {
-        cout << "🔢 Using Bubble Sort...\n";
+    void sort(std::vector<int>& data) override {
+        std::println("🔢 Using Bubble Sort...");
         int n = data.size();
         for (int i = 0; i < n - 1; i++) {
             for (int j = 0; j < n - i - 1; j++) {
                 if (data[j] > data[j + 1]) {
-                    swap(data[j], data[j + 1]);
+                    std::swap(data[j], data[j + 1]);
                 }
             }
         }
-        cout << "✅ Bubble Sort complete\n";
+        std::println("✅ Bubble Sort complete");
     }
 
-    string getAlgorithmName() const override {
+    std::string getAlgorithmName() const override {
         return "Bubble Sort (O(n²))";
     }
 };
@@ -184,7 +185,7 @@ public:
  */
 class QuickSort : public SortStrategy {
 private:
-    void quickSortHelper(vector<int>& data, int low, int high) {
+    void quickSortHelper(std::vector<int>& data, int low, int high) {
         if (low < high) {
             int pivot = partition(data, low, high);
             quickSortHelper(data, low, pivot - 1);
@@ -192,27 +193,27 @@ private:
         }
     }
 
-    int partition(vector<int>& data, int low, int high) {
+    int partition(std::vector<int>& data, int low, int high) {
         int pivot = data[high];
         int i = low - 1;
         for (int j = low; j < high; j++) {
             if (data[j] < pivot) {
                 i++;
-                swap(data[i], data[j]);
+                std::swap(data[i], data[j]);
             }
         }
-        swap(data[i + 1], data[high]);
+        std::swap(data[i + 1], data[high]);
         return i + 1;
     }
 
 public:
-    void sort(vector<int>& data) override {
-        cout << "⚡ Using Quick Sort...\n";
+    void sort(std::vector<int>& data) override {
+        std::println("⚡ Using Quick Sort...");
         quickSortHelper(data, 0, data.size() - 1);
-        cout << "✅ Quick Sort complete\n";
+        std::println("✅ Quick Sort complete");
     }
 
-    string getAlgorithmName() const override {
+    std::string getAlgorithmName() const override {
         return "Quick Sort (O(n log n))";
     }
 };
@@ -222,11 +223,11 @@ public:
  */
 class MergeSort : public SortStrategy {
 private:
-    void merge(vector<int>& data, int left, int mid, int right) {
+    void merge(std::vector<int>& data, int left, int mid, int right) {
         int n1 = mid - left + 1;
         int n2 = right - mid;
 
-        vector<int> L(n1), R(n2);
+        std::vector<int> L(n1), R(n2);
         for (int i = 0; i < n1; i++) L[i] = data[left + i];
         for (int j = 0; j < n2; j++) R[j] = data[mid + 1 + j];
 
@@ -242,7 +243,7 @@ private:
         while (j < n2) data[k++] = R[j++];
     }
 
-    void mergeSortHelper(vector<int>& data, int left, int right) {
+    void mergeSortHelper(std::vector<int>& data, int left, int right) {
         if (left < right) {
             int mid = left + (right - left) / 2;
             mergeSortHelper(data, left, mid);
@@ -252,13 +253,13 @@ private:
     }
 
 public:
-    void sort(vector<int>& data) override {
-        cout << "🔀 Using Merge Sort...\n";
+    void sort(std::vector<int>& data) override {
+        std::println("🔀 Using Merge Sort...");
         mergeSortHelper(data, 0, data.size() - 1);
-        cout << "✅ Merge Sort complete\n";
+        std::println("✅ Merge Sort complete");
     }
 
-    string getAlgorithmName() const override {
+    std::string getAlgorithmName() const override {
         return "Merge Sort (O(n log n))";
     }
 };
@@ -268,35 +269,35 @@ public:
  */
 class DataSorter {
 private:
-    shared_ptr<SortStrategy> strategy;
+    std::shared_ptr<SortStrategy> strategy;
 
 public:
-    void setSortStrategy(shared_ptr<SortStrategy> strat) {
+    void setSortStrategy(std::shared_ptr<SortStrategy> strat) {
         strategy = strat;
-        cout << "📊 Sort algorithm set to: " << strategy->getAlgorithmName() << "\n";
+        std::println("📊 Sort algorithm set to: {}", strategy->getAlgorithmName());
     }
 
-    void sortData(vector<int>& data) {
+    void sortData(std::vector<int>& data) {
         if (!strategy) {
-            cout << "❌ No sorting strategy set\n";
+            std::println("❌ No sorting strategy set");
             return;
         }
 
-        cout << "Unsorted: ";
+        std::print("Unsorted: ");
         printData(data);
 
         strategy->sort(data);
 
-        cout << "Sorted:   ";
+        std::print("Sorted:   ");
         printData(data);
     }
 
 private:
-    void printData(const vector<int>& data) {
+    void printData(const std::vector<int>& data) {
         for (int val : data) {
-            cout << val << " ";
+            std::print("{} ", val);
         }
-        cout << "\n";
+        std::println("");
     }
 };
 
@@ -311,9 +312,9 @@ private:
 class CompressionStrategy {
 public:
     virtual ~CompressionStrategy() {}
-    virtual string compress(const string& data) = 0;
-    virtual string decompress(const string& data) = 0;
-    virtual string getCompressionType() const = 0;
+    virtual std::string compress(const std::string& data) = 0;
+    virtual std::string decompress(const std::string& data) = 0;
+    virtual std::string getCompressionType() const = 0;
 };
 
 /**
@@ -321,21 +322,21 @@ public:
  */
 class ZipCompression : public CompressionStrategy {
 public:
-    string compress(const string& data) override {
-        cout << "🗜️  [ZIP] Compressing " << data.length() << " bytes...\n";
+    std::string compress(const std::string& data) override {
+        std::println("🗜️  [ZIP] Compressing {} bytes...", data.length());
         // Simulated compression
-        string compressed = "[ZIP:" + data + "]";
-        cout << "   Compressed to " << compressed.length() << " bytes\n";
+        std::string compressed = "[ZIP:" + data + "]";
+        std::println("   Compressed to {} bytes", compressed.length());
         return compressed;
     }
 
-    string decompress(const string& data) override {
-        cout << "📦 [ZIP] Decompressing...\n";
+    std::string decompress(const std::string& data) override {
+        std::println("📦 [ZIP] Decompressing...");
         // Simulated decompression
         return data.substr(5, data.length() - 6);
     }
 
-    string getCompressionType() const override {
+    std::string getCompressionType() const override {
         return "ZIP";
     }
 };
@@ -345,20 +346,20 @@ public:
  */
 class RarCompression : public CompressionStrategy {
 public:
-    string compress(const string& data) override {
-        cout << "🗜️  [RAR] Compressing " << data.length() << " bytes...\n";
+    std::string compress(const std::string& data) override {
+        std::println("🗜️  [RAR] Compressing {} bytes...", data.length());
         // Simulated compression with better ratio
-        string compressed = "[RAR:" + data + "]";
-        cout << "   Compressed to " << compressed.length() << " bytes (better ratio)\n";
+        std::string compressed = "[RAR:" + data + "]";
+        std::println("   Compressed to {} bytes (better ratio)", compressed.length());
         return compressed;
     }
 
-    string decompress(const string& data) override {
-        cout << "📦 [RAR] Decompressing...\n";
+    std::string decompress(const std::string& data) override {
+        std::println("📦 [RAR] Decompressing...");
         return data.substr(5, data.length() - 6);
     }
 
-    string getCompressionType() const override {
+    std::string getCompressionType() const override {
         return "RAR";
     }
 };
@@ -368,20 +369,20 @@ public:
  */
 class SevenZipCompression : public CompressionStrategy {
 public:
-    string compress(const string& data) override {
-        cout << "🗜️  [7z] Compressing " << data.length() << " bytes...\n";
+    std::string compress(const std::string& data) override {
+        std::println("🗜️  [7z] Compressing {} bytes...", data.length());
         // Simulated compression with best ratio
-        string compressed = "[7z:" + data + "]";
-        cout << "   Compressed to " << compressed.length() << " bytes (best ratio)\n";
+        std::string compressed = "[7z:" + data + "]";
+        std::println("   Compressed to {} bytes (best ratio)", compressed.length());
         return compressed;
     }
 
-    string decompress(const string& data) override {
-        cout << "📦 [7z] Decompressing...\n";
+    std::string decompress(const std::string& data) override {
+        std::println("📦 [7z] Decompressing...");
         return data.substr(4, data.length() - 5);
     }
 
-    string getCompressionType() const override {
+    std::string getCompressionType() const override {
         return "7-Zip";
     }
 };
@@ -391,34 +392,36 @@ public:
  */
 class FileCompressor {
 private:
-    shared_ptr<CompressionStrategy> strategy;
+    std::shared_ptr<CompressionStrategy> strategy;
 
 public:
-    void setCompressionStrategy(shared_ptr<CompressionStrategy> strat) {
+    void setCompressionStrategy(std::shared_ptr<CompressionStrategy> strat) {
         strategy = strat;
-        cout << "📁 Compression method set to: " << strategy->getCompressionType() << "\n";
+        std::println("📁 Compression method set to: {}", strategy->getCompressionType());
     }
 
-    void compressFile(const string& filename, const string& data) {
+    void compressFile(const std::string& filename, const std::string& data) {
         if (!strategy) {
-            cout << "❌ No compression strategy set\n";
+            std::println("❌ No compression strategy set");
             return;
         }
 
-        cout << "\n📄 Compressing file: " << filename << "\n";
-        string compressed = strategy->compress(data);
-        cout << "✅ File compressed successfully\n";
+        std::println("");
+        std::println("📄 Compressing file: {}", filename);
+        std::string compressed = strategy->compress(data);
+        std::println("✅ File compressed successfully");
     }
 
-    void decompressFile(const string& filename, const string& data) {
+    void decompressFile(const std::string& filename, const std::string& data) {
         if (!strategy) {
-            cout << "❌ No compression strategy set\n";
+            std::println("❌ No compression strategy set");
             return;
         }
 
-        cout << "\n📄 Decompressing file: " << filename << "\n";
-        string decompressed = strategy->decompress(data);
-        cout << "✅ File decompressed successfully\n";
+        std::println("");
+        std::println("📄 Decompressing file: {}", filename);
+        std::string decompressed = strategy->decompress(data);
+        std::println("✅ File decompressed successfully");
     }
 };
 
@@ -433,8 +436,8 @@ public:
 class NavigationStrategy {
 public:
     virtual ~NavigationStrategy() {}
-    virtual void buildRoute(const string& from, const string& to) = 0;
-    virtual string getRouteType() const = 0;
+    virtual void buildRoute(const std::string& from, const std::string& to) = 0;
+    virtual std::string getRouteType() const = 0;
 };
 
 /**
@@ -442,15 +445,11 @@ public:
  */
 class CarNavigation : public NavigationStrategy {
 public:
-    void buildRoute(const string& from, const string& to) override {
-        cout << "🚗 Building car route from " << from << " to " << to << "\n";
-        cout << "   • Taking highways\n";
-        cout << "   • Avoiding toll roads\n";
-        cout << "   • ETA: 45 minutes\n";
-        cout << "   • Distance: 30 miles\n";
+    void buildRoute(const std::string& from, const std::string& to) override {
+        std::println("🚗 Building car route from {} to {}", from, to);
     }
 
-    string getRouteType() const override {
+    std::string getRouteType() const override {
         return "Car (Fastest Route)";
     }
 };
@@ -460,15 +459,11 @@ public:
  */
 class WalkingNavigation : public NavigationStrategy {
 public:
-    void buildRoute(const string& from, const string& to) override {
-        cout << "🚶 Building walking route from " << from << " to " << to << "\n";
-        cout << "   • Using pedestrian paths\n";
-        cout << "   • Avoiding busy streets\n";
-        cout << "   • ETA: 2 hours\n";
-        cout << "   • Distance: 5 miles\n";
+    void buildRoute(const std::string& from, const std::string& to) override {
+        std::println("🚶 Building walking route from {} to {}", from, to);
     }
 
-    string getRouteType() const override {
+    std::string getRouteType() const override {
         return "Walking (Pedestrian Paths)";
     }
 };
@@ -478,15 +473,11 @@ public:
  */
 class PublicTransportNavigation : public NavigationStrategy {
 public:
-    void buildRoute(const string& from, const string& to) override {
-        cout << "🚌 Building public transport route from " << from << " to " << to << "\n";
-        cout << "   • Bus #45 to Central Station\n";
-        cout << "   • Transfer to Metro Line 2\n";
-        cout << "   • ETA: 1 hour 15 minutes\n";
-        cout << "   • Cost: $3.50\n";
+    void buildRoute(const std::string& from, const std::string& to) override {
+        std::println("🚌 Building public transport route from {} to {}", from, to);
     }
 
-    string getRouteType() const override {
+    std::string getRouteType() const override {
         return "Public Transport (Cheapest)";
     }
 };
@@ -496,15 +487,11 @@ public:
  */
 class BicycleNavigation : public NavigationStrategy {
 public:
-    void buildRoute(const string& from, const string& to) override {
-        cout << "🚴 Building bicycle route from " << from << " to " << to << "\n";
-        cout << "   • Using bike lanes\n";
-        cout << "   • Avoiding steep hills\n";
-        cout << "   • ETA: 1 hour\n";
-        cout << "   • Distance: 8 miles\n";
+    void buildRoute(const std::string& from, const std::string& to) override {
+        std::println("🚴 Building bicycle route from {} to {}", from, to);
     }
 
-    string getRouteType() const override {
+    std::string getRouteType() const override {
         return "Bicycle (Bike Lanes)";
     }
 };
@@ -514,21 +501,22 @@ public:
  */
 class Navigator {
 private:
-    shared_ptr<NavigationStrategy> strategy;
+    std::shared_ptr<NavigationStrategy> strategy;
 
 public:
-    void setNavigationStrategy(shared_ptr<NavigationStrategy> strat) {
+    void setNavigationStrategy(std::shared_ptr<NavigationStrategy> strat) {
         strategy = strat;
-        cout << "🗺️  Navigation mode set to: " << strategy->getRouteType() << "\n";
+        std::println("🗺️  Navigation mode set to: {}", strategy->getRouteType());
     }
 
-    void navigate(const string& from, const string& to) {
+    void navigate(const std::string& from, const std::string& to) {
         if (!strategy) {
-            cout << "❌ Please select navigation mode\n";
+            std::println("❌ Please select navigation mode");
             return;
         }
 
-        cout << "\n📍 Navigation Request\n";
+        std::println("");
+        std::println("📍 Navigation Request");
         strategy->buildRoute(from, to);
     }
 };
@@ -538,112 +526,130 @@ public:
 // ============================================
 
 void demonstratePaymentStrategies() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: PAYMENT PROCESSING     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: PAYMENT PROCESSING     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     ShoppingCart cart;
 
     // Add items
-    cout << "--- Adding Items to Cart ---\n";
+    std::println("--- Adding Items to Cart ---");
     cart.addItem("Laptop", 999.99);
     cart.addItem("Mouse", 29.99);
     cart.addItem("Keyboard", 79.99);
 
     // Pay with Credit Card
-    cout << "\n--- Paying with Credit Card ---\n";
-    auto creditCard = make_shared<CreditCardPayment>(
+    std::println("");
+    std::println("--- Paying with Credit Card ---");
+    auto creditCard = std::make_shared<CreditCardPayment>(
         "1234567890123456", "John Doe", "123", "12/25");
     cart.setPaymentStrategy(creditCard);
     cart.checkout();
 
     // Change to PayPal
-    cout << "\n--- Changing to PayPal ---\n";
-    auto paypal = make_shared<PayPalPayment>("john@example.com", "password");
+    std::println("");
+    std::println("--- Changing to PayPal ---");
+    auto paypal = std::make_shared<PayPalPayment>("john@example.com", "password");
     cart.setPaymentStrategy(paypal);
 
     // Change to Crypto
-    cout << "\n--- Changing to Cryptocurrency ---\n";
-    auto crypto = make_shared<CryptoPayment>("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "Bitcoin");
+    std::println("");
+    std::println("--- Changing to Cryptocurrency ---");
+    auto crypto = std::make_shared<CryptoPayment>("0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "Bitcoin");
     cart.setPaymentStrategy(crypto);
 }
 
 void demonstrateSortingStrategies() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: SORTING ALGORITHMS     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: SORTING ALGORITHMS     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     DataSorter sorter;
 
     // Test with different algorithms
-    vector<int> data1 = {64, 34, 25, 12, 22, 11, 90};
+    std::vector<int> data1 = {64, 34, 25, 12, 22, 11, 90};
 
-    cout << "--- Using Bubble Sort ---\n";
-    sorter.setSortStrategy(make_shared<BubbleSort>());
+    std::println("--- Using Bubble Sort ---");
+    sorter.setSortStrategy(std::make_shared<BubbleSort>());
     sorter.sortData(data1);
 
-    vector<int> data2 = {64, 34, 25, 12, 22, 11, 90};
-    cout << "\n--- Using Quick Sort ---\n";
-    sorter.setSortStrategy(make_shared<QuickSort>());
+    std::vector<int> data2 = {64, 34, 25, 12, 22, 11, 90};
+    std::println("");
+    std::println("--- Using Quick Sort ---");
+    sorter.setSortStrategy(std::make_shared<QuickSort>());
     sorter.sortData(data2);
 
-    vector<int> data3 = {64, 34, 25, 12, 22, 11, 90};
-    cout << "\n--- Using Merge Sort ---\n";
-    sorter.setSortStrategy(make_shared<MergeSort>());
+    std::vector<int> data3 = {64, 34, 25, 12, 22, 11, 90};
+    std::println("");
+    std::println("--- Using Merge Sort ---");
+    sorter.setSortStrategy(std::make_shared<MergeSort>());
     sorter.sortData(data3);
 }
 
 void demonstrateCompressionStrategies() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: FILE COMPRESSION       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: FILE COMPRESSION       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     FileCompressor compressor;
-    string fileData = "This is sample file data that needs compression";
+    std::string fileData = "This is sample file data that needs compression";
 
     // Try ZIP
-    cout << "--- Using ZIP Compression ---\n";
-    compressor.setCompressionStrategy(make_shared<ZipCompression>());
+    std::println("--- Using ZIP Compression ---");
+    compressor.setCompressionStrategy(std::make_shared<ZipCompression>());
     compressor.compressFile("document.txt", fileData);
 
     // Try RAR
-    cout << "\n--- Using RAR Compression ---\n";
-    compressor.setCompressionStrategy(make_shared<RarCompression>());
+    std::println("");
+    std::println("--- Using RAR Compression ---");
+    compressor.setCompressionStrategy(std::make_shared<RarCompression>());
     compressor.compressFile("document.txt", fileData);
 
     // Try 7-Zip
-    cout << "\n--- Using 7-Zip Compression ---\n";
-    compressor.setCompressionStrategy(make_shared<SevenZipCompression>());
+    std::println("");
+    std::println("--- Using 7-Zip Compression ---");
+    compressor.setCompressionStrategy(std::make_shared<SevenZipCompression>());
     compressor.compressFile("document.txt", fileData);
 }
 
 void demonstrateNavigationStrategies() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: NAVIGATION ROUTES      ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: NAVIGATION ROUTES      ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     Navigator nav;
-    string from = "Home";
-    string to = "Office";
+    std::string from = "Home";
+    std::string to = "Office";
 
     // Car navigation
-    cout << "--- Car Navigation ---\n";
-    nav.setNavigationStrategy(make_shared<CarNavigation>());
+    std::println("--- Car Navigation ---");
+    nav.setNavigationStrategy(std::make_shared<CarNavigation>());
     nav.navigate(from, to);
 
     // Walking navigation
-    cout << "\n--- Walking Navigation ---\n";
-    nav.setNavigationStrategy(make_shared<WalkingNavigation>());
+    std::println("");
+    std::println("--- Walking Navigation ---");
+    nav.setNavigationStrategy(std::make_shared<WalkingNavigation>());
     nav.navigate(from, to);
 
     // Public transport
-    cout << "\n--- Public Transport ---\n";
-    nav.setNavigationStrategy(make_shared<PublicTransportNavigation>());
+    std::println("");
+    std::println("--- Public Transport ---");
+    nav.setNavigationStrategy(std::make_shared<PublicTransportNavigation>());
     nav.navigate(from, to);
 
     // Bicycle
-    cout << "\n--- Bicycle Navigation ---\n";
-    nav.setNavigationStrategy(make_shared<BicycleNavigation>());
+    std::println("");
+    std::println("--- Bicycle Navigation ---");
+    nav.setNavigationStrategy(std::make_shared<BicycleNavigation>());
     nav.navigate(from, to);
 }
 
@@ -652,270 +658,14 @@ void demonstrateNavigationStrategies() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "STRATEGY PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("STRATEGY PATTERN DEMO");
+    std::println("========================================");
 
     demonstratePaymentStrategies();
     demonstrateSortingStrategies();
     demonstrateCompressionStrategies();
     demonstrateNavigationStrategies();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF STRATEGY PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Open/Closed: Add new strategies without modifying context\n";
-    cout << "✅ Single Responsibility: Isolates algorithm implementation\n";
-    cout << "✅ Runtime flexibility: Switch algorithms at runtime\n";
-    cout << "✅ Eliminates conditionals: No large if/switch statements\n";
-    cout << "✅ Testability: Easy to test strategies independently\n";
-    cout << "✅ Reusability: Strategies can be reused across contexts\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE STRATEGY\n";
-    cout << "========================================\n";
-    cout << "1. Need different variants of an algorithm\n";
-    cout << "2. Want to switch algorithms at runtime\n";
-    cout << "3. Have many related classes differing only in behavior\n";
-    cout << "4. Need to isolate algorithm implementation details\n";
-    cout << "5. Class has massive conditional statements\n";
-    cout << "6. Want to provide multiple implementations of same behavior\n";
-
-    cout << "\n========================================\n";
-    cout << "STRATEGY vs STATE\n";
-    cout << "========================================\n";
-    cout << "Strategy Pattern:\n";
-    cout << "  • Encapsulates interchangeable algorithms\n";
-    cout << "  • Client chooses strategy explicitly\n";
-    cout << "  • Strategies don't know about each other\n";
-    cout << "  • Example: Different payment methods\n";
-    cout << "\nState Pattern:\n";
-    cout << "  • Encapsulates state-dependent behavior\n";
-    cout << "  • States can transition to other states\n";
-    cout << "  • Context behavior changes with state\n";
-    cout << "  • Example: TCP connection states\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• Payment gateways (credit card, PayPal, crypto)\n";
-    cout << "• Sorting algorithms (bubble, quick, merge)\n";
-    cout << "• Compression algorithms (ZIP, RAR, 7z)\n";
-    cout << "• Navigation routes (car, walk, public transport)\n";
-    cout << "• Validation strategies (email, phone, format)\n";
-    cout << "• Pricing strategies (regular, discount, seasonal)\n";
-    cout << "• Authentication methods (password, OAuth, biometric)\n";
-    cout << "• Rendering engines (SVG, Canvas, WebGL)\n";
-    cout << "• Search algorithms (linear, binary, hash-based)\n";
-    cout << "• Notification delivery (email, SMS, push)\n";
-    cout << "• Export formats (PDF, Excel, CSV)\n";
-    cout << "• Encryption algorithms (AES, RSA, DES)\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY COMPONENTS\n";
-    cout << "========================================\n";
-    cout << "1. Strategy Interface: Defines common interface\n";
-    cout << "2. Concrete Strategies: Implement specific algorithms\n";
-    cout << "3. Context: Uses a strategy, can switch at runtime\n";
-    cout << "4. Client: Chooses appropriate strategy\n";
-
-    cout << "\n========================================\n";
-    cout << "STRUCTURE\n";
-    cout << "========================================\n";
-    cout << "┌─────────────────┐\n";
-    cout << "│     Client      │\n";
-    cout << "└────────┬────────┘\n";
-    cout << "         │ configures\n";
-    cout << "         ▼\n";
-    cout << "┌─────────────────┐\n";
-    cout << "│    Context      │\n";
-    cout << "│  (ShoppingCart) │\n";
-    cout << "│                 │\n";
-    cout << "│ - strategy ─────┼─────┐ uses\n";
-    cout << "│ + setStrategy() │     │\n";
-    cout << "│ + executeAlg()  │     │\n";
-    cout << "└─────────────────┘     │\n";
-    cout << "                        ▼\n";
-    cout << "                 ┌─────────────┐\n";
-    cout << "                 │  Strategy   │\n";
-    cout << "                 │ (Interface) │\n";
-    cout << "                 │             │\n";
-    cout << "                 │ + execute() │\n";
-    cout << "                 └─────────────┘\n";
-    cout << "                        △\n";
-    cout << "        ┌───────────────┼───────────────┐\n";
-    cout << "        │               │               │\n";
-    cout << "┌─────────────┐ ┌─────────────┐ ┌─────────────┐\n";
-    cout << "│ StrategyA   │ │ StrategyB   │ │ StrategyC   │\n";
-    cout << "│ (CreditCard)│ │ (PayPal)    │ │ (Crypto)    │\n";
-    cout << "│             │ │             │ │             │\n";
-    cout << "│ + execute() │ │ + execute() │ │ + execute() │\n";
-    cout << "└─────────────┘ └─────────────┘ └─────────────┘\n";
-
-    cout << "\n========================================\n";
-    cout << "ADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Algorithms are interchangeable\n";
-    cout << "• Easy to add new strategies\n";
-    cout << "• Eliminates conditional statements\n";
-    cout << "• Runtime algorithm selection\n";
-    cout << "• Isolates algorithm implementation\n";
-    cout << "• Promotes composition over inheritance\n";
-    cout << "• Follows Open/Closed Principle\n";
-    cout << "• Each strategy can be tested independently\n";
-
-    cout << "\n========================================\n";
-    cout << "DISADVANTAGES\n";
-    cout << "========================================\n";
-    cout << "• Increases number of objects/classes\n";
-    cout << "• Clients must be aware of different strategies\n";
-    cout << "• Communication overhead between context and strategy\n";
-    cout << "• May be overkill for simple variations\n";
-    cout << "• Context may pass data strategy doesn't need\n";
-
-    cout << "\n========================================\n";
-    cout << "BEST PRACTICES\n";
-    cout << "========================================\n";
-    cout << "• Keep strategy interface focused and cohesive\n";
-    cout << "• Use dependency injection for strategies\n";
-    cout << "• Consider default strategy in context\n";
-    cout << "• Document when each strategy should be used\n";
-    cout << "• Make strategies stateless when possible\n";
-    cout << "• Use factory pattern to create strategies\n";
-    cout << "• Consider strategy combination/composition\n";
-    cout << "• Profile performance of different strategies\n";
-
-    cout << "\n========================================\n";
-    cout << "IMPLEMENTATION VARIATIONS\n";
-    cout << "========================================\n";
-    cout << "Basic Strategy:\n";
-    cout << "  • Context has reference to strategy\n";
-    cout << "  • Strategy set via setter method\n";
-    cout << "  • Example: All examples above\n";
-    cout << "\nFunction Pointers/Lambdas:\n";
-    cout << "  • Use std::function instead of interface\n";
-    cout << "  • More lightweight, less boilerplate\n";
-    cout << "  • Good for simple strategies\n";
-    cout << "\nTemplate-Based:\n";
-    cout << "  • Strategy as template parameter\n";
-    cout << "  • Compile-time binding\n";
-    cout << "  • Better performance, no virtual calls\n";
-    cout << "\nStrategy with Parameters:\n";
-    cout << "  • Pass context data to strategy\n";
-    cout << "  • Strategy accesses context methods\n";
-    cout << "  • More flexible data exchange\n";
-
-    cout << "\n========================================\n";
-    cout << "STRATEGY SELECTION APPROACHES\n";
-    cout << "========================================\n";
-    cout << "Client Selection:\n";
-    cout << "  • Client explicitly chooses strategy\n";
-    cout << "  • Most common approach\n";
-    cout << "  • Example: User selects payment method\n";
-    cout << "\nAutomatic Selection:\n";
-    cout << "  • Context chooses based on conditions\n";
-    cout << "  • Rules-based selection\n";
-    cout << "  • Example: Choose sort based on data size\n";
-    cout << "\nFactory Pattern:\n";
-    cout << "  • Factory creates appropriate strategy\n";
-    cout << "  • Centralized strategy creation\n";
-    cout << "  • Example: Strategy factory based on config\n";
-    cout << "\nConfiguration-Based:\n";
-    cout << "  • Strategy loaded from config file\n";
-    cout << "  • Runtime configuration\n";
-    cout << "  • Example: Plugin-based architectures\n";
-
-    cout << "\n========================================\n";
-    cout << "COMMON ISSUES & SOLUTIONS\n";
-    cout << "========================================\n";
-    cout << "Too Many Strategies:\n";
-    cout << "  • Issue: Overwhelming number of strategy classes\n";
-    cout << "  • Solution: Group related strategies, use composition\n";
-    cout << "\nStrategy Coupling:\n";
-    cout << "  • Issue: Strategies depend on each other\n";
-    cout << "  • Solution: Keep strategies independent\n";
-    cout << "\nData Passing:\n";
-    cout << "  • Issue: Context passes unnecessary data\n";
-    cout << "  • Solution: Use specific interfaces, callbacks\n";
-    cout << "\nPerformance:\n";
-    cout << "  • Issue: Virtual function overhead\n";
-    cout << "  • Solution: Use template-based strategies\n";
-
-    cout << "\n========================================\n";
-    cout << "RELATED PATTERNS\n";
-    cout << "========================================\n";
-    cout << "State:\n";
-    cout << "  • Strategy focuses on algorithms\n";
-    cout << "  • State focuses on state-dependent behavior\n";
-    cout << "\nTemplate Method:\n";
-    cout << "  • Strategy uses composition\n";
-    cout << "  • Template Method uses inheritance\n";
-    cout << "  • Strategy is more flexible\n";
-    cout << "\nFactory:\n";
-    cout << "  • Often used to create strategies\n";
-    cout << "  • Centralizes strategy instantiation\n";
-    cout << "\nDecorator:\n";
-    cout << "  • Decorator adds responsibilities\n";
-    cout << "  • Strategy replaces entire algorithm\n";
-
-    cout << "\n========================================\n";
-    cout << "MODERN C++ IMPLEMENTATIONS\n";
-    cout << "========================================\n";
-    cout << "Using std::function:\n";
-    cout << "  • No need for interface hierarchy\n";
-    cout << "  • Can use lambdas or function pointers\n";
-    cout << "  • Example: std::function<void(int)> strategy\n";
-    cout << "\nUsing Templates:\n";
-    cout << "  • Compile-time polymorphism\n";
-    cout << "  • Better performance\n";
-    cout << "  • Example: template<typename Strategy> class Context\n";
-    cout << "\nUsing Variants:\n";
-    cout << "  • std::variant for type-safe strategies\n";
-    cout << "  • No virtual calls\n";
-    cout << "  • Example: std::variant<StrategyA, StrategyB>\n";
-
-    cout << "\n========================================\n";
-    cout << "TESTING STRATEGIES\n";
-    cout << "========================================\n";
-    cout << "Unit Tests:\n";
-    cout << "  • Test each strategy independently\n";
-    cout << "  • Mock context if needed\n";
-    cout << "  • Verify algorithm correctness\n";
-    cout << "\nIntegration Tests:\n";
-    cout << "  • Test context with different strategies\n";
-    cout << "  • Verify strategy switching\n";
-    cout << "  • Test with real data\n";
-    cout << "\nPerformance Tests:\n";
-    cout << "  • Benchmark different strategies\n";
-    cout << "  • Compare execution times\n";
-    cout << "  • Profile memory usage\n";
-
-    cout << "\n========================================\n";
-    cout << "USE CASES BY DOMAIN\n";
-    cout << "========================================\n";
-    cout << "E-commerce:\n";
-    cout << "  • Payment methods\n";
-    cout << "  • Shipping calculators\n";
-    cout << "  • Discount strategies\n";
-    cout << "  • Tax calculation\n";
-    cout << "\nData Processing:\n";
-    cout << "  • Sorting algorithms\n";
-    cout << "  • Search strategies\n";
-    cout << "  • Validation rules\n";
-    cout << "  • Export formats\n";
-    cout << "\nGaming:\n";
-    cout << "  • AI behaviors\n";
-    cout << "  • Movement strategies\n";
-    cout << "  • Combat tactics\n";
-    cout << "  • Pathfinding algorithms\n";
-    cout << "\nUI/UX:\n";
-    cout << "  • Layout strategies\n";
-    cout << "  • Rendering methods\n";
-    cout << "  • Animation timing\n";
-    cout << "  • Theme variations\n";
 
     return 0;
 }

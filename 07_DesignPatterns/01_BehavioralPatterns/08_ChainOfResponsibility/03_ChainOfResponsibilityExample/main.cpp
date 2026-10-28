@@ -1,6 +1,6 @@
-#include <iostream>
 #include <string>
 #include <memory>
+#include <print>
 
 enum LogLevel {
     INFO = 1,
@@ -43,7 +43,7 @@ public:
 
 protected:
     void write(const std::string& message) override {
-        std::cout << "[CONSOLE] " << message << std::endl;
+        std::println("[CONSOLE] {}", message);
     }
 };
 
@@ -54,7 +54,7 @@ public:
 
 protected:
     void write(const std::string& message) override {
-        std::cout << "[FILE] Writing to file: " << message << std::endl;
+        std::println("[FILE] Writing to file: {}", message);
     }
 };
 
@@ -65,7 +65,7 @@ public:
 
 protected:
     void write(const std::string& message) override {
-        std::cout << "[EMAIL] Sending email alert: " << message << std::endl;
+        std::println("[EMAIL] Sending email alert: {}", message);
     }
 };
 
@@ -79,17 +79,18 @@ int main() {
     consoleLogger->setNext(fileLogger);
     fileLogger->setNext(emailLogger);
 
-    std::cout << "=== Logging System with Chain of Responsibility ===" << std::endl << std::endl;
+    std::println("=== Logging System with Chain of Responsibility ===");
+    std::println("");
 
-    std::cout << "INFO Message:" << std::endl;
+    std::println("INFO Message:");
     consoleLogger->logMessage(INFO, "Application started successfully");
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "WARNING Message:" << std::endl;
+    std::println("WARNING Message:");
     consoleLogger->logMessage(WARNING, "High memory usage detected");
-    std::cout << std::endl;
+    std::println("");
 
-    std::cout << "ERROR Message:" << std::endl;
+    std::println("ERROR Message:");
     consoleLogger->logMessage(ERROR, "Critical system failure!");
 
     return 0;

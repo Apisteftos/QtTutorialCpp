@@ -138,20 +138,20 @@ flowchart LR
 
 ---
 
-## MCX session filtering example
+## Task filtering example
 
 ```cpp
-// Active GRP-ALPHA sessions sorted by priority
-std::vector<McxSession> alpha;
-for (const auto& s : sessions
-    | views::filter([](const McxSession& s){
-        return s.active && s.group == "GRP-ALPHA";
+// Active backend tasks sorted by priority
+std::vector<Task> alpha;
+for (const auto& s : tasks
+    | views::filter([](const Task& s){
+        return s.active && s.team == "backend";
       }))
     alpha.push_back(s);
-ranges::sort(alpha, {}, &McxSession::priority);
+ranges::sort(alpha, {}, &Task::priority);
 
-// All active session IDs
-for (const auto& id : sessions
+// All active task IDs
+for (const auto& id : tasks
     | views::filter([](const auto& s){ return s.active; })
     | views::transform([](const auto& s){ return s.id; }))
     std::cout << id << '\n';
@@ -169,3 +169,13 @@ for (const auto& id : sessions
 
 ❌ Simple single-step operations — a plain loop is clearer
 ❌ Performance-critical code needing manual SIMD
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

@@ -8,6 +8,7 @@
 #include <chrono>
 #include <string>
 #include <syncstream>   // C++20 osyncstream
+#include <print>
 
 using namespace std::chrono_literals;
 
@@ -73,14 +74,14 @@ void uniqueLockExample(int id)
     std::unique_lock<std::mutex> lock(g_uniqueMutex);   // locks immediately
 
     g_uniqueCounter++;
-    std::cout << "[unique_lock " << id << "] counter = " << g_uniqueCounter << '\n';
+    std::println("[unique_lock {}] counter = {}", id, g_uniqueCounter);
 
     lock.unlock();    // manually unlock — unique_lock allows this
     // do work that doesn't need the lock
     std::this_thread::sleep_for(10ms);
 
     lock.lock();      // re-lock when needed
-    std::cout << "[unique_lock " << id << "] back with lock\n";
+    std::println("[unique_lock {}] back with lock", id);
 }   // lock released here
 
 
@@ -93,7 +94,7 @@ std::recursive_mutex g_recursiveMutex;
 void recursiveFunction(int depth)
 {
     std::lock_guard<std::recursive_mutex> lock(g_recursiveMutex);
-    std::cout << "[recursive] depth = " << depth << '\n';
+    std::println("[recursive] depth = {}", depth);
     if (depth > 0)
         recursiveFunction(depth - 1);   // same thread locks again — OK with recursive_mutex
 }
@@ -108,11 +109,11 @@ std::timed_mutex g_timedMutex;
 void timedLockWorker(int id)
 {
     if (g_timedMutex.try_lock_for(50ms)) {
-        std::cout << "[timed " << id << "] acquired lock\n";
+        std::println("[timed {}] acquired lock", id);
         std::this_thread::sleep_for(30ms);
         g_timedMutex.unlock();
     } else {
-        std::cout << "[timed " << id << "] could not acquire lock — timeout!\n";
+        std::println("[timed {}] could not acquire lock — timeout!", id);
     }
 }
 
@@ -129,8 +130,7 @@ void reader(int id)
 {
     std::shared_lock<std::shared_mutex> lock(g_sharedMutex);
     g_readCount++;
-    std::cout << "[reader " << id << "] reading: '"
-              << g_sharedData << "' (concurrent readers: " << g_readCount << ")\n";
+    std::println("[reader {}] reading: '{}' (concurrent readers: {})", id, g_sharedData, g_readCount);
     std::this_thread::sleep_for(20ms);
     g_readCount--;
 }
@@ -138,7 +138,7 @@ void reader(int id)
 void writer(int id, const std::string& newValue)
 {
     std::unique_lock<std::shared_mutex> lock(g_sharedMutex);
-    std::cout << "[writer " << id << "] writing: '" << newValue << "'\n";
+    std::println("[writer {}] writing: '{}'", id, newValue);
     g_sharedData = newValue;
     std::this_thread::sleep_for(10ms);
 }
@@ -154,14 +154,14 @@ std::mutex g_mutexB;
 void taskA()
 {
     std::scoped_lock lock(g_mutexA, g_mutexB);
-    std::cout << "[taskA] holding mutexA and mutexB\n";
+    std::println("[taskA] holding mutexA and mutexB");
     std::this_thread::sleep_for(10ms);
 }
 
 void taskB()
 {
     std::scoped_lock lock(g_mutexA, g_mutexB);
-    std::cout << "[taskB] holding mutexA and mutexB\n";
+    std::println("[taskB] holding mutexA and mutexB");
     std::this_thread::sleep_for(10ms);
 }
 
@@ -182,7 +182,7 @@ void producer()
         {
             std::lock_guard<std::mutex> lock(g_cvMutex);
             g_queue.push_back(i);
-            std::cout << "[producer] produced: " << i << '\n';
+            std::println("[producer] produced: {}", i);
         }
         g_cv.notify_one();
     }
@@ -206,7 +206,7 @@ void consumer(int id)
             int value = g_queue.front();
             g_queue.erase(g_queue.begin());
             lock.unlock();
-            std::cout << "[consumer " << id << "] consumed: " << value << '\n';
+            std::println("[consumer {}] consumed: {}", id, value);
             lock.lock();
         }
 
@@ -232,14 +232,14 @@ void waitForFlag()
 {
     while (!g_flag.load())
         std::this_thread::yield();
-    std::cout << "[waiter] flag was set!\n";
+    std::println("[waiter] flag was set!");
 }
 
 void setFlag()
 {
     std::this_thread::sleep_for(50ms);
     g_flag.store(true);
-    std::cout << "[setter] flag set\n";
+    std::println("[setter] flag set");
 }
 
 
@@ -263,38 +263,40 @@ void syncPrint(int id)
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Race Condition — NO synchronization\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Race Condition — NO synchronization");
+    std::println("=====================================================");
 
     g_unsafeCounter = 0;
     std::thread u1(unsafeIncrement, 100000);
     std::thread u2(unsafeIncrement, 100000);
     u1.join(); u2.join();
 
-    std::cout << "Expected: 200000\n";
-    std::cout << "Actual:   " << g_unsafeCounter << '\n';
-    std::cout << "(result is non-deterministic — run multiple times)\n";
+    std::println("Expected: 200000");
+    std::println("Actual:   {}", g_unsafeCounter);
+    std::println("(result is non-deterministic — run multiple times)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: std::mutex + std::lock_guard\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: std::mutex + std::lock_guard");
+    std::println("=====================================================");
 
     g_safeCounter = 0;
     std::thread s1(safeIncrement, 100000);
     std::thread s2(safeIncrement, 100000);
     s1.join(); s2.join();
 
-    std::cout << "Expected: 200000\n";
-    std::cout << "Actual:   " << g_safeCounter << " (always correct)\n";
+    std::println("Expected: 200000");
+    std::println("Actual:   {} (always correct)", g_safeCounter);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: std::unique_lock (manual lock/unlock)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: std::unique_lock (manual lock/unlock)");
+    std::println("=====================================================");
 
     g_uniqueCounter = 0;
     std::thread ul1(uniqueLockExample, 1);
@@ -303,18 +305,20 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: std::recursive_mutex\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: std::recursive_mutex");
+    std::println("=====================================================");
 
     std::thread rm(recursiveFunction, 3);
     rm.join();
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: std::timed_mutex\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: std::timed_mutex");
+    std::println("=====================================================");
 
     g_timedMutex.lock();
     std::thread tm1(timedLockWorker, 1);
@@ -325,9 +329,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: std::shared_mutex (readers-writer lock)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: std::shared_mutex (readers-writer lock)");
+    std::println("=====================================================");
 
     g_readCount = 0;
     std::vector<std::thread> rwThreads;
@@ -341,20 +346,22 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: std::scoped_lock (deadlock-free multi-lock)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: std::scoped_lock (deadlock-free multi-lock)");
+    std::println("=====================================================");
 
     std::thread ta(taskA);
     std::thread tb(taskB);
     ta.join(); tb.join();
-    std::cout << "No deadlock — scoped_lock acquired both atomically\n";
+    std::println("No deadlock — scoped_lock acquired both atomically");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: std::condition_variable (producer/consumer)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: std::condition_variable (producer/consumer)");
+    std::println("=====================================================");
 
     g_done = false;
     g_queue.clear();
@@ -365,16 +372,17 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: std::atomic\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: std::atomic");
+    std::println("=====================================================");
 
     g_atomicCounter = 0;
     std::thread a1(atomicIncrement, 100000);
     std::thread a2(atomicIncrement, 100000);
     a1.join(); a2.join();
-    std::cout << "atomic counter expected: 200000\n";
-    std::cout << "atomic counter actual:   " << g_atomicCounter << " (always correct)\n";
+    std::println("atomic counter expected: 200000");
+    std::println("atomic counter actual:   {} (always correct)", g_atomicCounter.load());
 
     std::thread waiter(waitForFlag);
     std::thread setter(setFlag);
@@ -382,17 +390,19 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: std::osyncstream (synchronized cout)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: std::osyncstream (synchronized cout)");
+    std::println("=====================================================");
 
     std::vector<std::thread> printThreads;
     for (int i = 1; i <= 4; ++i)
         printThreads.emplace_back(syncPrint, i);
     for (auto& t : printThreads) t.join();
-    std::cout << "(no garbled output — each line printed atomically)\n";
+    std::println("(no garbled output — each line printed atomically)");
 
 
-    std::cout << "\n=== ThreadSynchronization complete ===\n";
+    std::println("");
+    std::println("=== ThreadSynchronization complete ===");
     return 0;
 }

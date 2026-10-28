@@ -12,14 +12,14 @@
  * - Compile-time type queries
  * - Practical applications
  *
- * Compile: g++ -std=c++20 -Wall -Wextra template_traits.cpp -o template_traits
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <type_traits>
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <print>
 
 // ============================================================================
 // PART 1: Standard Library Type Traits
@@ -29,18 +29,20 @@ namespace StandardTraits {
 
 template<typename T>
 void analyzeType() {
-    std::cout << "\nAnalyzing type: " << typeid(T).name() << "\n";
-    std::cout << "  Is integral: " << std::is_integral_v<T> << "\n";
-    std::cout << "  Is floating point: " << std::is_floating_point_v<T> << "\n";
-    std::cout << "  Is pointer: " << std::is_pointer_v<T> << "\n";
-    std::cout << "  Is reference: " << std::is_reference_v<T> << "\n";
-    std::cout << "  Is const: " << std::is_const_v<T> << "\n";
-    std::cout << "  Is class: " << std::is_class_v<T> << "\n";
-    std::cout << "  Size: " << sizeof(T) << " bytes\n";
+    std::println("");
+    std::println("Analyzing type: {}", typeid(T).name());
+    std::println("  Is integral: {}", std::is_integral_v<T>);
+    std::println("  Is floating point: {}", std::is_floating_point_v<T>);
+    std::println("  Is pointer: {}", std::is_pointer_v<T>);
+    std::println("  Is reference: {}", std::is_reference_v<T>);
+    std::println("  Is const: {}", std::is_const_v<T>);
+    std::println("  Is class: {}", std::is_class_v<T>);
+    std::println("  Size: {} bytes", sizeof(T));
 }
 
 void demonstrate() {
-    std::cout << "\n=== Standard Library Type Traits ===\n";
+    std::println("");
+    std::println("=== Standard Library Type Traits ===");
 
     analyzeType<int>();
     analyzeType<double>();
@@ -49,10 +51,11 @@ void demonstrate() {
     analyzeType<std::string>();
 
     // Type comparisons
-    std::cout << "\nType comparisons:\n";
-    std::cout << "  int == int: " << std::is_same_v<int, int> << "\n";
-    std::cout << "  int == long: " << std::is_same_v<int, long> << "\n";
-    std::cout << "  int == const int: " << std::is_same_v<int, const int> << "\n";
+    std::println("");
+    std::println("Type comparisons:");
+    std::println("  int == int: {}", std::is_same_v<int, int>);
+    std::println("  int == long: {}", std::is_same_v<int, long>);
+    std::println("  int == const int: {}", std::is_same_v<int, const int>);
 }
 }
 
@@ -106,19 +109,23 @@ template<typename T>
 inline constexpr bool is_vector_v = is_vector<T>::value;
 
 void demonstrate() {
-    std::cout << "\n=== Custom Type Traits ===\n";
+    std::println("");
+    std::println("=== Custom Type Traits ===");
 
-    std::cout << "\nPointer check:\n";
-    std::cout << "  is_pointer<int*>: " << is_pointer_v<int*> << "\n";
-    std::cout << "  is_pointer<int>: " << is_pointer_v<int> << "\n";
+    std::println("");
+    std::println("Pointer check:");
+    std::println("  is_pointer<int*>: {}", is_pointer_v<int*>);
+    std::println("  is_pointer<int>: {}", is_pointer_v<int>);
 
-    std::cout << "\nArray check:\n";
-    std::cout << "  is_array<int[5]>: " << is_array_v<int[5]> << "\n";
-    std::cout << "  is_array<int>: " << is_array_v<int> << "\n";
+    std::println("");
+    std::println("Array check:");
+    std::println("  is_array<int[5]>: {}", is_array_v<int[5]>);
+    std::println("  is_array<int>: {}", is_array_v<int>);
 
-    std::cout << "\nVector check:\n";
-    std::cout << "  is_vector<std::vector<int>>: " << is_vector_v<std::vector<int>> << "\n";
-    std::cout << "  is_vector<int>: " << is_vector_v<int> << "\n";
+    std::println("");
+    std::println("Vector check:");
+    std::println("  is_vector<std::vector<int>>: {}", is_vector_v<std::vector<int>>);
+    std::println("  is_vector<int>: {}", is_vector_v<int>);
 }
 }
 
@@ -129,37 +136,43 @@ void demonstrate() {
 namespace TypeTransformations {
 
 void demonstrate() {
-    std::cout << "\n=== Type Transformations ===\n";
+    std::println("");
+    std::println("=== Type Transformations ===");
 
     // Remove const
     using T1 = const int;
     using T2 = std::remove_const_t<T1>;
-    std::cout << "\nRemove const:\n";
-    std::cout << "  const int -> " << (std::is_const_v<T2> ? "const" : "non-const") << "\n";
+    std::println("");
+    std::println("Remove const:");
+    std::println("  const int -> {}", (std::is_const_v<T2> ? "const" : "non-const"));
 
     // Remove reference
     using T3 = int&;
     using T4 = std::remove_reference_t<T3>;
-    std::cout << "\nRemove reference:\n";
-    std::cout << "  int& -> " << (std::is_reference_v<T4> ? "reference" : "non-reference") << "\n";
+    std::println("");
+    std::println("Remove reference:");
+    std::println("  int& -> {}", (std::is_reference_v<T4> ? "reference" : "non-reference"));
 
     // Remove pointer
     using T5 = int*;
     using T6 = std::remove_pointer_t<T5>;
-    std::cout << "\nRemove pointer:\n";
-    std::cout << "  int* -> " << (std::is_pointer_v<T6> ? "pointer" : "non-pointer") << "\n";
+    std::println("");
+    std::println("Remove pointer:");
+    std::println("  int* -> {}", (std::is_pointer_v<T6> ? "pointer" : "non-pointer"));
 
     // Add const
     using T7 = int;
     using T8 = std::add_const_t<T7>;
-    std::cout << "\nAdd const:\n";
-    std::cout << "  int -> " << (std::is_const_v<T8> ? "const" : "non-const") << "\n";
+    std::println("");
+    std::println("Add const:");
+    std::println("  int -> {}", (std::is_const_v<T8> ? "const" : "non-const"));
 
     // Add pointer
     using T9 = int;
     using T10 = std::add_pointer_t<T9>;
-    std::cout << "\nAdd pointer:\n";
-    std::cout << "  int -> " << (std::is_pointer_v<T10> ? "pointer" : "non-pointer") << "\n";
+    std::println("");
+    std::println("Add pointer:");
+    std::println("  int -> {}", (std::is_pointer_v<T10> ? "pointer" : "non-pointer"));
 }
 }
 
@@ -202,24 +215,25 @@ struct OptimalInt {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Conditional Types ===\n";
+    std::println("");
+    std::println("=== Conditional Types ===");
 
     // Choose between int and double based on condition
     using TypeA = std::conditional_t<true, int, double>;
     using TypeB = std::conditional_t<false, int, double>;
 
-    std::cout << "\nConditional type selection:\n";
-    std::cout << "  conditional<true, int, double>: "
-              << (std::is_same_v<TypeA, int> ? "int" : "double") << "\n";
-    std::cout << "  conditional<false, int, double>: "
-              << (std::is_same_v<TypeB, int> ? "int" : "double") << "\n";
+    std::println("");
+    std::println("Conditional type selection:");
+    std::println("  conditional<true, int, double>: {}", (std::is_same_v<TypeA, int> ? "int" : "double"));
+    std::println("  conditional<false, int, double>: {}", (std::is_same_v<TypeB, int> ? "int" : "double"));
 
     // Optimal integer type
-    std::cout << "\nOptimal integer types:\n";
-    std::cout << "  For 5 bits: " << sizeof(OptimalInt<5>::type) << " bytes\n";
-    std::cout << "  For 10 bits: " << sizeof(OptimalInt<10>::type) << " bytes\n";
-    std::cout << "  For 20 bits: " << sizeof(OptimalInt<20>::type) << " bytes\n";
-    std::cout << "  For 40 bits: " << sizeof(OptimalInt<40>::type) << " bytes\n";
+    std::println("");
+    std::println("Optimal integer types:");
+    std::println("  For 5 bits: {} bytes", sizeof(OptimalInt<5>::type));
+    std::println("  For 10 bits: {} bytes", sizeof(OptimalInt<10>::type));
+    std::println("  For 20 bits: {} bytes", sizeof(OptimalInt<20>::type));
+    std::println("  For 40 bits: {} bytes", sizeof(OptimalInt<40>::type));
 }
 }
 
@@ -233,31 +247,34 @@ namespace EnableIfPattern {
 template<typename T>
 std::enable_if_t<std::is_integral_v<T>, void>
 printDouble(T value) {
-    std::cout << "  Integer doubled: " << value * 2 << "\n";
+    std::println("  Integer doubled: {}", value * 2);
 }
 
 // Only enable for floating point types
 template<typename T>
 std::enable_if_t<std::is_floating_point_v<T>, void>
 printDouble(T value) {
-    std::cout << "  Float doubled: " << value * 2.0 << "\n";
+    std::println("  Float doubled: {}", value * 2.0);
 }
 
 // Generic print for arithmetic types
 template<typename T>
 std::enable_if_t<std::is_arithmetic_v<T>, void>
 printType(T value) {
-    std::cout << "  Arithmetic value: " << value << "\n";
+    std::println("  Arithmetic value: {}", value);
 }
 
 void demonstrate() {
-    std::cout << "\n=== Enable If Pattern ===\n";
+    std::println("");
+    std::println("=== Enable If Pattern ===");
 
-    std::cout << "\nType-specific overloads:\n";
+    std::println("");
+    std::println("Type-specific overloads:");
     printDouble(5);        // Calls integer version
     printDouble(3.14);     // Calls floating point version
 
-    std::cout << "\nGeneric arithmetic:\n";
+    std::println("");
+    std::println("Generic arithmetic:");
     printType(42);
     printType(3.14159);
 }
@@ -270,7 +287,8 @@ void demonstrate() {
 namespace DecayType {
 
 void demonstrate() {
-    std::cout << "\n=== Decay Type ===\n";
+    std::println("");
+    std::println("=== Decay Type ===");
 
     // Decay removes references, const, and converts arrays/functions to pointers
     using T1 = int&;
@@ -282,12 +300,14 @@ void demonstrate() {
     using T5 = int[10];
     using T6 = std::decay_t<T5>;
 
-    std::cout << "\nDecay transformations:\n";
-    std::cout << "  int& -> " << (std::is_reference_v<T2> ? "reference" : "value") << "\n";
-    std::cout << "  const int -> " << (std::is_const_v<T4> ? "const" : "non-const") << "\n";
-    std::cout << "  int[10] -> " << (std::is_pointer_v<T6> ? "pointer" : "array") << "\n";
+    std::println("");
+    std::println("Decay transformations:");
+    std::println("  int& -> {}", (std::is_reference_v<T2> ? "reference" : "value"));
+    std::println("  const int -> {}", (std::is_const_v<T4> ? "const" : "non-const"));
+    std::println("  int[10] -> {}", (std::is_pointer_v<T6> ? "pointer" : "array"));
 
-    std::cout << "\n✅ Decay useful for template parameters!\n";
+    std::println("");
+    std::println("✅ Decay useful for template parameters!");
 }
 }
 
@@ -298,23 +318,26 @@ void demonstrate() {
 namespace CommonTypeExample {
 
 void demonstrate() {
-    std::cout << "\n=== Common Type ===\n";
+    std::println("");
+    std::println("=== Common Type ===");
 
     // Find common type between int and double
     using CommonT = std::common_type_t<int, double, float>;
 
-    std::cout << "\nCommon type of int, double, float:\n";
-    std::cout << "  Size: " << sizeof(CommonT) << " bytes\n";
-    std::cout << "  Is double: " << std::is_same_v<CommonT, double> << "\n";
+    std::println("");
+    std::println("Common type of int, double, float:");
+    std::println("  Size: {} bytes", sizeof(CommonT));
+    std::println("  Is double: {}", std::is_same_v<CommonT, double>);
 
     // Practical use: generic min function
     auto min = [](auto a, auto b) -> std::common_type_t<decltype(a), decltype(b)> {
         return (a < b) ? a : b;
     };
 
-    std::cout << "\nGeneric min function:\n";
-    std::cout << "  min(5, 3.14): " << min(5, 3.14) << "\n";
-    std::cout << "  min(2.5, 3): " << min(2.5, 3) << "\n";
+    std::println("");
+    std::println("Generic min function:");
+    std::println("  min(5, 3.14): {}", min(5, 3.14));
+    std::println("  min(2.5, 3): {}", min(2.5, 3));
 }
 }
 
@@ -333,19 +356,21 @@ enum class Size : uint32_t {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Underlying Type ===\n";
+    std::println("");
+    std::println("=== Underlying Type ===");
 
     using ColorType = std::underlying_type_t<Color>;
     using SizeType = std::underlying_type_t<Size>;
 
-    std::cout << "\nEnum underlying types:\n";
-    std::cout << "  Color size: " << sizeof(ColorType) << " bytes\n";
-    std::cout << "  Size size: " << sizeof(SizeType) << " bytes\n";
+    std::println("");
+    std::println("Enum underlying types:");
+    std::println("  Color size: {} bytes", sizeof(ColorType));
+    std::println("  Size size: {} bytes", sizeof(SizeType));
 
     // Convert enum to underlying type
     Color c = Color::Red;
     auto value = static_cast<ColorType>(c);
-    std::cout << "  Color::Red value: " << static_cast<int>(value) << "\n";
+    std::println("  Color::Red value: {}", static_cast<int>(value));
 }
 }
 
@@ -379,24 +404,27 @@ using UserID = ID<UserTag>;
 using ProductID = ID<ProductTag>;
 
 void demonstrate() {
-    std::cout << "\n=== Type-Safe ID Pattern ===\n";
+    std::println("");
+    std::println("=== Type-Safe ID Pattern ===");
 
     UserID user(123);
     ProductID product(456);
 
-    std::cout << "\nType-safe IDs:\n";
-    std::cout << "  User ID: " << user.get() << "\n";
-    std::cout << "  Product ID: " << product.get() << "\n";
+    std::println("");
+    std::println("Type-safe IDs:");
+    std::println("  User ID: {}", user.get());
+    std::println("  Product ID: {}", product.get());
 
     // This compiles
     UserID user2(123);
     bool same = (user == user2);
-    std::cout << "  user == user2: " << same << "\n";
+    std::println("  user == user2: {}", same);
 
     // This would NOT compile (different types):
     // bool wrong = (user == product);  // ❌ Compile error!
 
-    std::cout << "\n✅ Can't accidentally compare UserID with ProductID!\n";
+    std::println("");
+    std::println("✅ Can't accidentally compare UserID with ProductID!");
 }
 }
 
@@ -425,7 +453,8 @@ serialize(T value) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Generic Serialization ===\n";
+    std::println("");
+    std::println("=== Generic Serialization ===");
 
     int num = 42;
     double pi = 3.14159;
@@ -433,14 +462,16 @@ void demonstrate() {
     int* ptr = &num;
     int* null_ptr = nullptr;
 
-    std::cout << "\nSerializing different types:\n";
-    std::cout << "  int: " << serialize(num) << "\n";
-    std::cout << "  double: " << serialize(pi) << "\n";
-    std::cout << "  string: " << serialize(text) << "\n";
-    std::cout << "  pointer: " << serialize(ptr) << "\n";
-    std::cout << "  nullptr: " << serialize(null_ptr) << "\n";
+    std::println("");
+    std::println("Serializing different types:");
+    std::println("  int: {}", serialize(num));
+    std::println("  double: {}", serialize(pi));
+    std::println("  string: {}", serialize(text));
+    std::println("  pointer: {}", serialize(ptr));
+    std::println("  nullptr: {}", serialize(null_ptr));
 
-    std::cout << "\n✅ Different serialization for each type!\n";
+    std::println("");
+    std::println("✅ Different serialization for each type!");
 }
 }
 
@@ -449,9 +480,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║           TYPE TRAITS AND TYPE MANIPULATION         ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║           TYPE TRAITS AND TYPE MANIPULATION         ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     StandardTraits::demonstrate();
     CustomTraits::demonstrate();
@@ -464,20 +495,12 @@ int main() {
     TypeSafeID::demonstrate();
     GenericSerialization::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 TYPE TRAITS MASTERY:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Use type traits to query type properties\n";
-    std::cout << "✅ Transform types at compile-time\n";
-    std::cout << "✅ Enable/disable code based on types\n";
-    std::cout << "✅ Create type-safe abstractions\n";
-    std::cout << "✅ Build generic, reusable code\n";
-    std::cout << "\n💡 think-cell uses type traits for:\n";
-    std::cout << "   - Type-safe interfaces\n";
-    std::cout << "   - Generic algorithm selection\n";
-    std::cout << "   - Compile-time optimizations\n";
-    std::cout << "   - Zero-cost abstractions\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 TYPE TRAITS MASTERY:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }

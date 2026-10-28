@@ -1866,3 +1866,12 @@ Custom operation: 2 6 12 20 30
 
 **Best description:** *"Callbacks are a programming technique that enables passing executable code as parameters, implemented in C++ through function pointers, std::function, lambdas, or functors."*
 
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

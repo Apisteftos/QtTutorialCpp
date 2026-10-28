@@ -1,7 +1,7 @@
-#include <iostream>
 #include <unistd.h>     // pipe(), fork(), read(), write()
 #include <cstring>
 #include <sys/wait.h>   // waitpid()
+#include <print>
 
 // ============================================
 // ANONYMOUS PIPE
@@ -14,14 +14,15 @@
 // ============================================
 
 int main() {
-    std::cout << "=== Anonymous Pipe Example ===\n\n";
+    std::println("=== Anonymous Pipe Example ===");
+    std::println("");
 
     int pipe_fd[2];  // pipe_fd[0] = read end
                      // pipe_fd[1] = write end
 
     // 1. Create the pipe BEFORE forking
     if (pipe(pipe_fd) == -1) {
-        std::cerr << "Failed to create pipe\n";
+        std::println(stderr, "Failed to create pipe");
         return 1;
     }
 
@@ -29,7 +30,7 @@ int main() {
     pid_t pid = fork();
 
     if (pid < 0) {
-        std::cerr << "Fork failed\n";
+        std::println(stderr, "Fork failed");
         return 1;
     }
 
@@ -44,14 +45,14 @@ int main() {
         };
 
         for (const char* msg : messages) {
-            std::cout << "[Parent] Writing: " << msg << "\n";
+            std::println("[Parent] Writing: {}", msg);
             write(pipe_fd[1], msg, strlen(msg) + 1);
             sleep(1);
         }
 
         close(pipe_fd[1]);  // done writing, close write end
         waitpid(pid, nullptr, 0);  // wait for child to finish
-        std::cout << "[Parent] Child finished. Done.\n";
+        std::println("[Parent] Child finished. Done.");
     }
 
     // ─── CHILD PROCESS ───
@@ -62,11 +63,11 @@ int main() {
         ssize_t bytes_read;
 
         while ((bytes_read = read(pipe_fd[0], buffer, sizeof(buffer))) > 0) {
-            std::cout << "[Child]  Received: " << buffer << "\n";
+            std::println("[Child]  Received: {}", buffer);
         }
 
         close(pipe_fd[0]);
-        std::cout << "[Child]  Pipe closed. Exiting.\n";
+        std::println("[Child]  Pipe closed. Exiting.");
     }
 
     return 0;

@@ -128,26 +128,26 @@ flowchart LR
 
 ---
 
-## MCX Codec concept
+## Text encoder concept
 
 ```cpp
 template<typename T>
-concept McxCodec = requires(T codec, const std::string& data) {
-    { codec.name()       } -> std::convertible_to<std::string>;
-    { codec.bitrate()    } -> std::convertible_to<int>;
-    { codec.encode(data) } -> std::convertible_to<std::string>;
-    { codec.decode(data) } -> std::convertible_to<std::string>;
+concept TextEncoder = requires(T encoder, const std::string& data) {
+    { encoder.name()       } -> std::convertible_to<std::string>;
+    { encoder.maxLength()    } -> std::convertible_to<int>;
+    { encoder.encode(data) } -> std::convertible_to<std::string>;
+    { encoder.decode(data) } -> std::convertible_to<std::string>;
 };
 
-// Works with any type satisfying McxCodec
-template<McxCodec T>
-void processAudio(const T& codec, const std::string& audio) {
-    auto encoded = codec.encode(audio);
+// Works with any type satisfying TextEncoder
+template<TextEncoder T>
+void processText(const T& encoder, const std::string& text) {
+    auto encoded = encoder.encode(text);
 }
 
-// AmrWbCodec satisfies McxCodec ✅
-// OpusCodec satisfies McxCodec  ✅
-// int does not satisfy McxCodec ❌ — compile error
+// BracketEncoder satisfies TextEncoder ✅
+// PrefixEncoder satisfies TextEncoder  ✅
+// int does not satisfy TextEncoder ❌ — compile error
 ```
 
 ---
@@ -157,5 +157,67 @@ void processAudio(const T& codec, const std::string& audio) {
 ✅ Template functions that only work for certain types
 ✅ Replacing SFINAE — clearer error messages
 ✅ Overload resolution based on type properties
-✅ Interface contracts (like McxCodec above)
+✅ Interface contracts (like TextEncoder above)
 ✅ Constrained auto in lambdas and parameters
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 1: What are Concepts?
+
+Concepts are COMPILE-TIME constraints on template types.
+
+**Without concepts:**
+
+```cpp
+template<typename T>
+T add(T a, T b) { return a + b; }
+// Works on int, double, string — even if that's wrong!
+```
+
+**With concepts:**
+
+```cpp
+template<std::integral T>
+T add(T a, T b) { return a + b; }
+// ONLY works on int, long, short etc.
+// Clear error message if you try double or string
+```
+
+### Example 6: requires expression — inspect type
+
+**requires expressions check:**
+
+```cpp
+Simple:     { expr }          — expr must be valid
+Type:       typename T::type  — type must exist
+Compound:   { expr } -> T     — expr must return T
+```
+
+Nested:     requires(...)     — sub-requires
+
+### Example 8: Concepts vs SFINAE
+
+**SFINAE error message (old):**
+
+'enable_if' not found, candidate not viable...  
+substitution failure... template argument deduction...
+
+**Concepts error message (new):**
+
+```cpp
+'double' does not satisfy 'std::integral'
+```
+
+Much clearer — exactly what constraint failed
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

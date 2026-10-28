@@ -20,7 +20,7 @@ Client                         Server
 
 - ✅ **Bidirectional** — both sides can send and receive
 - ✅ Works **locally** (localhost) or over a **network**
-- ✅ Foundation of all internet communication (HTTP, FTP, MCX/MCPTT)
+- ✅ Foundation of all internet communication (HTTP, FTP, SMTP)
 - ✅ Well-supported on every OS
 - ✅ Can handle **multiple clients** simultaneously
 
@@ -151,7 +151,7 @@ std::thread t(handleClient, client_fd);
 t.detach();
 
 // Option 3: select()/poll()/epoll() — non-blocking I/O multiplexing
-// (used in production servers, MCX/MCPTT systems)
+// (used in production servers)
 ```
 
 ---

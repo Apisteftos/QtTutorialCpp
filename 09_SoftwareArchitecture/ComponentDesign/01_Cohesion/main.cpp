@@ -9,13 +9,13 @@
 //   AFTER:  Authenticator + EmailSender + Logger + Validator (1 reason each)
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
 #include <sstream>
+#include <print>
 
 // =============================================================================
 // ❌ BEFORE — Low Cohesion
@@ -115,7 +115,7 @@ class Logger {
 public:
     void log(const std::string& msg) {
         entries_.push_back("[LOG] " + msg);
-        std::cout << "  " << entries_.back() << '\n';
+        std::println("  {}", entries_.back());
     }
 
     const std::vector<std::string>& entries() const { return entries_; }
@@ -174,20 +174,22 @@ private:
 
 int main()
 {
-    std::cout << "=== Cohesion Demo ===\n\n";
+    std::println("=== Cohesion Demo ===");
+    std::println("");
 
     // ── BEFORE ───────────────────────────────────────────────────────────────
-    std::cout << "--- BEFORE: Low Cohesion ---\n";
+    std::println("--- BEFORE: Low Cohesion ---");
     before::UserManager um;
     bool ok1 = um.login("admin", "secret");
     bool ok2 = um.login("hacker", "wrong");
     um.sendEmail("user@example.com", "Welcome", "Hello!");
     um.validateUsername("ko");   // too short — silent fail, no logging
 
-    std::cout << "Login admin: "  << ok1 << '\n';
-    std::cout << "Login hacker: " << ok2 << '\n';
-    std::cout << "Logs: "         << um.logs().size()     << " entries\n";
-    std::cout << "Emails: "       << um.emailLog().size() << " sent\n\n";
+    std::println("Login admin: {}", ok1);
+    std::println("Login hacker: {}", ok2);
+    std::println("Logs: {} entries", um.logs().size());
+    std::println("Emails: {} sent", um.emailLog().size());
+    std::println("");
 
     assert(ok1 == true);
     assert(ok2 == false);
@@ -195,7 +197,7 @@ int main()
     assert(um.emailLog().size() == 1);
 
     // ── AFTER ────────────────────────────────────────────────────────────────
-    std::cout << "--- AFTER: High Cohesion ---\n";
+    std::println("--- AFTER: High Cohesion ---");
 
     after::Authenticator auth;
     after::EmailSender   email;
@@ -209,7 +211,7 @@ int main()
     assert(validator.validateUsername("x y z") == false);  // spaces
     assert(validator.validateEmail("a@b.com")  == true);
     assert(validator.validateEmail("notvalid") == false);
-    std::cout << "✓ Validator tests pass\n";
+    std::println("✓ Validator tests pass");
 
     bool a1 = loginFlow.execute("admin", "secret");
     bool a2 = loginFlow.execute("hacker", "wrong");
@@ -219,7 +221,7 @@ int main()
     assert(a2 == false);
     assert(a3 == false);
     assert(logger.entries().size() == 3);
-    std::cout << "✓ LoginWorkflow tests pass\n";
+    std::println("✓ LoginWorkflow tests pass");
 
     bool e1 = email.send("dev@example.com", "Welcome", "Hello!");
     bool e2 = email.send("bad-address", "Hi", "...");
@@ -227,18 +229,12 @@ int main()
     assert(e1 == true);
     assert(e2 == false);
     assert(email.sent().size() == 1);
-    std::cout << "✓ EmailSender tests pass\n";
+    std::println("✓ EmailSender tests pass");
 
     // Hash is deterministic
     std::string h1 = auth.hashPassword("secret");
     std::string h2 = auth.hashPassword("secret");
     assert(h1 == h2);
     assert(h1 != "secret");
-    std::cout << "✓ Authenticator tests pass\n";
-
-    std::cout << "\nKey difference:\n";
-    std::cout << "  BEFORE — 1 class, 4 reasons to change\n";
-    std::cout << "  AFTER  — 4 classes, 1 reason each\n";
-    std::cout << "\nAll assertions passed.\n";
     return 0;
 }

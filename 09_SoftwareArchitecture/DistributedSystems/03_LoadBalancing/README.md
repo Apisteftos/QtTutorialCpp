@@ -79,6 +79,16 @@ sequenceDiagram
 ✅ High-traffic services that need horizontal scaling  
 ✅ Zero-downtime deployments — remove one server, update, add back  
 ✅ Geographic distribution — route to nearest server  
-✅ MCX: multiple dispatch servers handling call setup load  
+✅ Web services: several servers sharing the request load  
 ❌ Single-server systems with no replication  
 ❌ When session state can't be shared across servers (solve with sticky sessions or shared cache)
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

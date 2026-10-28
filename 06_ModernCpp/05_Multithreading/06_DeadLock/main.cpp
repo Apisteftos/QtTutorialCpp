@@ -1,15 +1,15 @@
-#include <iostream>
 #include <thread>
 #include <mutex>
 #include <chrono>
 #include <string>
+#include <print>
 
 using namespace std::chrono_literals;
 
 std::mutex g_coutMutex;
 void safePrint(const std::string& msg) {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 std::mutex g_mutexA, g_mutexB;
@@ -93,57 +93,56 @@ void safeWithException() {
 
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Classic Deadlock (shown in comments)\n";
-    std::cout << "=====================================================\n";
-    std::cout << "T1: lock(A) -> sleep -> lock(B)  <- waits forever\n";
-    std::cout << "T2: lock(B) -> sleep -> lock(A)  <- waits forever\n";
-    std::cout << "(not executed — would hang the program)\n";
-
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Fix 1 — Consistent lock ordering\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Fix 1 — Consistent lock ordering");
+    std::println("=====================================================");
     std::thread t1(thread1_ordered);
     std::thread t2(thread2_ordered);
     t1.join(); t2.join();
-    std::cout << "No deadlock\n";
+    std::println("No deadlock");
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Fix 2 — std::scoped_lock (preferred)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Fix 2 — std::scoped_lock (preferred)");
+    std::println("=====================================================");
     std::thread t3(thread1_scoped);
     std::thread t4(thread2_scoped);
     t3.join(); t4.join();
-    std::cout << "Different lock orders — scoped_lock still safe\n";
+    std::println("Different lock orders — scoped_lock still safe");
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Fix 3 — std::lock() + adopt_lock (C++11)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Fix 3 — std::lock() + adopt_lock (C++11)");
+    std::println("=====================================================");
     std::thread t5(thread1_stdlock);
     std::thread t6(thread2_stdlock);
     t5.join(); t6.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Self-deadlock\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Self-deadlock");
+    std::println("=====================================================");
     std::thread t7(selfDeadlockDemo);
     t7.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Livelock simulation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Livelock simulation");
+    std::println("=====================================================");
     g_resourceAvailable = true;
     std::thread ll1(livelockThread, 1, 10);
     std::thread ll2(livelockThread, 2, 10);
     ll1.join(); ll2.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Exception safety — RAII lock\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Exception safety — RAII lock");
+    std::println("=====================================================");
     std::thread t8(safeWithException);
     t8.join();
-    std::cout << "lock_guard always unlocks — even with exception\n";
+    std::println("lock_guard always unlocks — even with exception");
 
-    std::cout << "\n=== Deadlock complete ===\n";
+    std::println("");
+    std::println("=== Deadlock complete ===");
     return 0;
 }

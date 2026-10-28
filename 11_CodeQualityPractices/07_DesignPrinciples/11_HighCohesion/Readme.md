@@ -858,3 +858,432 @@ Everything in the class:
 If something doesn't fit:
 → Extract it to another class!
 ```
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 HIGH COHESION PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Keep related functionality together!  
+Each class should have a single, well-defined  
+purpose with all methods working toward that goal.
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_god_class()`
+
+- ❌ BAD CODE (Low Cohesion - God Class):
+
+```cpp
+
+```cpp
+class UserManager {
+    // User data
+    // Database operations 🚨
+    // Email operations 🚨
+    // Logging operations 🚨
+    // Validation operations 🚨
+    // Order operations 🚨
+};
+// One class doing everything!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Very low cohesion - unrelated responsibilities
+  - Changes to email affect user management
+  - Hard to test individual pieces
+  - Cannot reuse email logic elsewhere
+  - Difficult to maintain
+
+- ✅ GOOD CODE (High Cohesion - Focused Classes):
+
+```cpp
+
+```cpp
+class User { /* user data only */ };
+class UserRepository { /* database only */ };
+class EmailService { /* email only */ };
+class Validator { /* validation only */ };
+class Logger { /* logging only */ };
+// Each class has single, clear purpose!
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example1_god_class()`
+
+**✨ BENEFITS:**
+
+  - Each class has clear, single purpose
+  - EmailService reusable anywhere
+  - Easy to test each component
+  - Changes localized to specific class
+  - Clear organization
+
+### From `example2_utility_class()`
+
+- ❌ BAD CODE:
+
+```cpp
+class Utils {
+    toUpperCase()    // String
+    factorial()      // Math
+    getCurrentDate() // Date
+    fileExists()     // File
+    isValidIP()      // Network
+};
+```
+
+🚨 Completely unrelated operations!
+
+- ✅ GOOD CODE:
+
+```cpp
+class StringUtils { /* string operations */ };
+class MathUtils { /* math operations */ };
+class FileUtils { /* file operations */ };
+class NetworkUtils { /* network operations */ };
+```
+
+- ✅ Each class groups related operations!
+
+**✨ DEMONSTRATION:**
+
+String operations:
+
+### From `example2_utility_class()`
+
+**✨ BENEFITS:**
+
+  - Clear organization by purpose
+  - Easy to find related operations
+  - Can use StringUtils without pulling in network code
+  - Each class has high cohesion
+
+### From `example3_data_operations()`
+
+- ❌ BAD CODE (Low Cohesion):
+
+```cpp
+struct OrderData { ... };  // Just data
+class OrderOperations {    // Separate operations
+```
+
+calculateTotal(OrderData&)  
+updateStatus(OrderData&)
+
+```cpp
+};
+```
+
+🚨 Data and operations separated!
+
+- ✅ GOOD CODE (High Cohesion):
+
+```cpp
+class Order {
+    int orderId;           // Data
+    double amount;
+    calculateTotal()       // Operations
+    updateStatus()
+};
+```
+
+- ✅ Data and operations together!
+
+**✨ DEMONSTRATION:**
+
+### From `example3_data_operations()`
+
+**✨ BENEFITS:**
+
+  - Data and operations naturally together
+  - Methods use the data they need
+  - High cohesion within Order class
+  - Object-oriented design
+
+### From `example4_cohesion_levels()`
+
+**📊 COHESION LEVELS (Best to Worst):**
+
+1. 🏆 FUNCTIONAL COHESION (Best):
+
+```cpp
+class PasswordHasher {
+    hash()      // Single purpose
+    addSalt()   // Support hashing
+    computeHash() // Support hashing
+};
+```
+
+- ✅ All methods work toward single goal
+
+2. ⚠️  SEQUENTIAL COHESION:
+
+```cpp
+class DataProcessor {
+    validate() → clean() → format()
+};
+```
+
+- ⚠️  Output of one is input of next
+
+7. 🚨 COINCIDENTAL COHESION (Worst):
+
+```cpp
+class MiscHelper {
+    add()            // Math
+    getCurrentTime() // Time
+    isEven()         // Math
+    printMessage()   // I/O
+};
+```
+
+🚨 No relationship between methods!
+
+**✨ DEMONSTRATION:**
+
+### From `example4_cohesion_levels()`
+
+- 💡 GOAL:
+
+Always aim for FUNCTIONAL COHESION!
+
+```cpp
+Each class = one clear purpose
+```
+
+### From `example5_measuring_cohesion()`
+
+**📏 HOW TO MEASURE COHESION:**
+
+- ❌ LOW COHESION:
+
+```cpp
+class LowCohesion {
+    name, age, salary, address  // 4 fields
+    printName()     → uses only 'name'
+    printAge()      → uses only 'age'
+    calculateTax()  → uses only 'salary'
+    printAddress()  → uses only 'address'
+};
+```
+
+🚨 Each method uses 25% of data (low cohesion)
+
+- ✅ HIGH COHESION:
+
+```cpp
+class HighCohesion {
+    balance, interestRate  // 2 fields
+    calculateInterest() → uses both fields
+    addInterest()       → uses both fields
+    getBalance()        → uses balance
+    deposit()           → uses balance
+};
+```
+
+- ✅ Methods use 50-100% of data (high cohesion)
+
+**📊 COHESION METRIC:**
+
+LCOM (Lack of Cohesion of Methods):
+
+  - Count methods that don't share fields
+  - Lower LCOM = Higher cohesion
+  - LCOM = 0 is ideal (all methods share data)
+
+- 💡 RULE OF THUMB:
+
+If methods use < 50% of class data:
+
+- → Consider splitting the class!
+
+### From `example6_improving_cohesion()`
+
+**🔧 HOW TO IMPROVE COHESION:**
+
+- ❌ BEFORE (Low Cohesion):
+
+```cpp
+class Employee {
+    // Employee data
+```
+
+name, salary, department
+
+```cpp
+// Unrelated: Report data 🚨
+```
+
+reportFormat, reportHeader
+
+```cpp
+    generateReport()
+};
+```
+
+- ✅ AFTER (High Cohesion):
+
+```cpp
+class Employee {
+    name, salary, department  // Related data
+    setSalary(), setDepartment()
+};
+class EmployeeReportGenerator {
+    format, header            // Related data
+```
+
+generateReport(Employee&)
+
+```cpp
+};
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example6_improving_cohesion()`
+
+**📋 IMPROVEMENT STEPS:**
+
+1. Identify unrelated data/methods
+2. Group related items together
+3. Create new class for unrelated group
+4. Move unrelated items to new class
+5. Verify each class has single purpose
+
+### From `example7_benefits()`
+
+- ✅ BENEFITS OF HIGH COHESION:
+
+1. EASIER TO UNDERSTAND:
+  - Class has clear, single purpose
+  - Related functionality in one place
+  - Easy to name the class
+
+2. EASIER TO MAINTAIN:
+  - Changes localized to one class
+  - Less ripple effect
+  - Fewer dependencies
+
+3. MORE REUSABLE:
+  - Focused functionality
+  - Can use class independently
+  - No unnecessary baggage
+
+4. EASIER TO TEST:
+  - Test single responsibility
+  - Fewer test cases
+  - Clear test scenarios
+
+5. BETTER ORGANIZATION:
+  - Logical grouping
+  - Clear structure
+  - Easy to navigate codebase
+
+- ⚠️  LOW COHESION PROBLEMS:
+  - Hard to understand purpose
+  - Changes affect multiple areas
+  - Hard to reuse
+  - Difficult to test
+  - Poor organization
+  - God classes
+
+- 💡 KEY INSIGHT:
+
+High cohesion means:  
+"Everything in this class belongs together  
+and nothing else should be here."
+
+**🎯 RELATIONSHIP TO OTHER PRINCIPLES:**
+
+```cpp
+High Cohesion + Low Coupling = Good Design
+```
+
+High Cohesion ≈ Single Responsibility Principle  
+High Cohesion → Easier to apply SOLID
+
+### From `example8_how_to_achieve()`
+
+- ✅ STRATEGIES FOR HIGH COHESION:
+
+1. SINGLE RESPONSIBILITY:
+  - Each class does ONE thing
+  - One reason to change
+  - Clear, focused purpose
+
+2. GROUP RELATED DATA AND OPERATIONS:
+  - Data and methods that work with it together
+  - Don't separate data from operations
+  - Object-oriented design
+
+3. AVOID UTILITY/HELPER CLASSES:
+- ❌ class Utils { /* random methods */ }
+- ✅ class StringUtils { /* string methods */ }
+- ✅ class MathUtils { /* math methods */ }
+
+4. CHECK METHOD-DATA USAGE:
+  - Do methods use most of the class data?
+  - If not, consider splitting
+  - Aim for 50%+ data usage per method
+
+5. ONE CONCEPT PER CLASS:
+  - User management → UserManager
+  - Email sending → EmailService
+  - Database access → Repository
+  - Don't mix concepts
+
+6. EXTRACT UNRELATED FUNCTIONALITY:
+  - If methods don't use class data → extract
+  - If functionality unrelated → new class
+  - Split large classes
+
+**🔍 COHESION CHECKLIST:**
+
+□ Does class have single, clear purpose?  
+□ Can you name it without 'and' or 'or'?  
+□ Do methods use most of the data?  
+□ Are all methods related to the purpose?  
+□ Would you reuse this class as-is?  
+□ Is it easy to explain what class does?
+
+- ⚠️  WARNING SIGNS (Low Cohesion):
+
+🚨 Class name has 'Manager', 'Handler', 'Helper', 'Utils'  
+🚨 Methods use different subsets of data  
+🚨 Hard to name the class  
+🚨 Class doing multiple unrelated things  
+🚨 Changes affect multiple areas
+
+**📏 MEASURING COHESION:**
+
+Simple formula:
+
+```cpp
+Cohesion = (Methods using field) / (Total methods)
+```
+
+Average across all fields:
+
+  - 80-100% = High cohesion ✅
+  - 50-79%  = Medium cohesion ⚠️
+  - < 50%   = Low cohesion 🚨
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

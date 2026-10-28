@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -8,8 +7,7 @@
 #include <iomanip>
 #include <unordered_set>
 #include <deque>
-using namespace std;
-using namespace chrono;
+#include <print>
 
 // ============================================
 // PERFORMANCE OPTIMIZATION
@@ -48,16 +46,16 @@ OPTIMIZATION CATEGORIES:
 // Timing utility
 class Timer {
 private:
-    high_resolution_clock::time_point start_time;
+    std::chrono::high_resolution_clock::time_point start_time;
 
 public:
     void start() {
-        start_time = high_resolution_clock::now();
+        start_time = std::chrono::high_resolution_clock::now();
     }
 
     double elapsed_ms() {
-        auto end_time = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(end_time - start_time);
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         return duration.count() / 1000.0;
     }
 };
@@ -68,7 +66,7 @@ public:
 
 namespace example1_algorithm {
 // ❌ BAD: O(n²) - Nested loops
-bool hasDuplicates_Bad(const vector<int>& arr) {
+bool hasDuplicates_Bad(const std::vector<int>& arr) {
     for (size_t i = 0; i < arr.size(); i++) {
         for (size_t j = i + 1; j < arr.size(); j++) {
             if (arr[i] == arr[j]) {
@@ -80,8 +78,8 @@ bool hasDuplicates_Bad(const vector<int>& arr) {
 }
 
 // ✅ GOOD: O(n) - Using hash set
-bool hasDuplicates_Good(const vector<int>& arr) {
-    unordered_set<int> seen;
+bool hasDuplicates_Good(const std::vector<int>& arr) {
+    std::unordered_set<int> seen;
     for (int val : arr) {
         if (seen.count(val)) {
             return true;
@@ -92,49 +90,51 @@ bool hasDuplicates_Good(const vector<int>& arr) {
 }
 
 // ❌ BAD: O(n²) - Bubble sort
-void sort_Bad(vector<int>& arr) {
+void sort_Bad(std::vector<int>& arr) {
     for (size_t i = 0; i < arr.size(); i++) {
         for (size_t j = 0; j < arr.size() - i - 1; j++) {
             if (arr[j] > arr[j + 1]) {
-                swap(arr[j], arr[j + 1]);
+                std::swap(arr[j], arr[j + 1]);
             }
         }
     }
 }
 
 // ✅ GOOD: O(n log n) - STL sort
-void sort_Good(vector<int>& arr) {
+void sort_Good(std::vector<int>& arr) {
     sort(arr.begin(), arr.end());
 }
 }
 
 void run_example1_algorithm() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 1: ALGORITHM OPTIMIZATION              ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 1: ALGORITHM OPTIMIZATION              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Algorithm choice has BIGGEST impact!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Algorithm choice has BIGGEST impact!");
 
     // Test duplicate detection
-    vector<int> data(10000);
+    std::vector<int> data(10000);
     for (int i = 0; i < 10000; i++) data[i] = i;
     data[5000] = 42;  // Duplicate
 
     Timer timer;
 
-    cout << "\n📊 DUPLICATE DETECTION:\n";
+    std::println("");
+    std::println("📊 DUPLICATE DETECTION:");
 
     timer.start();
     bool result1 = example1_algorithm::hasDuplicates_Bad(data);
-    cout << "   ❌ BAD (O(n²)):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (O(n²)):  {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     bool result2 = example1_algorithm::hasDuplicates_Good(data);
-    cout << "   ✅ GOOD (O(n)):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (O(n)):  {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: ~1000x faster with better algorithm!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: ~1000x faster with better algorithm!");
 }
 
 // ============================================
@@ -170,12 +170,14 @@ long long sumMatrix_Good(int matrix[SIZE][SIZE]) {
 }
 
 void run_example2_cache() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 2: CACHE OPTIMIZATION                  ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 2: CACHE OPTIMIZATION                  ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Access memory sequentially!\n";
-    cout << "   Arrays in C++ are stored row-major (rows are contiguous)\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Access memory sequentially!");
+    std::println("   Arrays in C++ are stored row-major (rows are contiguous)");
 
     // Allocate matrix
     int (*matrix)[example2_cache::SIZE] = new int[example2_cache::SIZE][example2_cache::SIZE];
@@ -187,21 +189,21 @@ void run_example2_cache() {
 
     Timer timer;
 
-    cout << "\n📊 MATRIX SUMMATION:\n";
+    std::println("");
+    std::println("📊 MATRIX SUMMATION:");
 
     timer.start();
     long long sum1 = example2_cache::sumMatrix_Bad(matrix);
-    cout << "   ❌ BAD (column-major):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (cache misses)" << endl;
+    std::println("   ❌ BAD (column-major):  {:.3f} ms (cache misses)", timer.elapsed_ms());
 
     timer.start();
     long long sum2 = example2_cache::sumMatrix_Good(matrix);
-    cout << "   ✅ GOOD (row-major):    " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (cache hits)" << endl;
+    std::println("   ✅ GOOD (row-major):    {:.3f} ms (cache hits)", timer.elapsed_ms());
 
     delete[] matrix;
 
-    cout << "\n💡 IMPROVEMENT: 2-3x faster with cache-friendly access!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: 2-3x faster with cache-friendly access!");
 }
 
 // ============================================
@@ -210,8 +212,8 @@ void run_example2_cache() {
 
 namespace example3_memory {
 // ❌ BAD: Multiple allocations
-vector<int> createVector_Bad(int size) {
-    vector<int> vec;  // No capacity reserved
+std::vector<int> createVector_Bad(int size) {
+    std::vector<int> vec;  // No capacity reserved
     for (int i = 0; i < size; i++) {
         vec.push_back(i);  // May reallocate multiple times!
     }
@@ -219,8 +221,8 @@ vector<int> createVector_Bad(int size) {
 }
 
 // ✅ GOOD: Single allocation with reserve
-vector<int> createVector_Good(int size) {
-    vector<int> vec;
+std::vector<int> createVector_Good(int size) {
+    std::vector<int> vec;
     vec.reserve(size);  // Allocate once!
     for (int i = 0; i < size; i++) {
         vec.push_back(i);  // No reallocation
@@ -231,14 +233,14 @@ vector<int> createVector_Good(int size) {
 // ❌ BAD: Allocation inside loop
 void processData_Bad(int iterations) {
     for (int i = 0; i < iterations; i++) {
-        vector<int> temp(1000);  // Allocate every iteration!
+        std::vector<int> temp(1000);  // Allocate every iteration!
         // Process temp...
     }
 }
 
 // ✅ GOOD: Single allocation, reuse
 void processData_Good(int iterations) {
-    vector<int> temp(1000);  // Allocate once!
+    std::vector<int> temp(1000);  // Allocate once!
     for (int i = 0; i < iterations; i++) {
         fill(temp.begin(), temp.end(), 0);  // Reuse
         // Process temp...
@@ -247,28 +249,30 @@ void processData_Good(int iterations) {
 }
 
 void run_example3_memory() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 3: MEMORY ALLOCATION                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 3: MEMORY ALLOCATION                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Minimize allocations!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Minimize allocations!");
 
     Timer timer;
     int size = 100000;
 
-    cout << "\n📊 VECTOR CREATION:\n";
+    std::println("");
+    std::println("📊 VECTOR CREATION:");
 
     timer.start();
     auto vec1 = example3_memory::createVector_Bad(size);
-    cout << "   ❌ BAD (no reserve):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (multiple allocations)" << endl;
+    std::println("   ❌ BAD (no reserve):  {:.3f} ms (multiple allocations)", timer.elapsed_ms());
 
     timer.start();
     auto vec2 = example3_memory::createVector_Good(size);
-    cout << "   ✅ GOOD (with reserve): " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (single allocation)" << endl;
+    std::println("   ✅ GOOD (with reserve): {:.3f} ms (single allocation)", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: reserve() eliminates reallocations!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: reserve() eliminates reallocations!");
 }
 
 // ============================================
@@ -277,7 +281,7 @@ void run_example3_memory() {
 
 namespace example4_loop {
 // ❌ BAD: Repeated calculation in loop
-double sumWithCalc_Bad(const vector<int>& arr, int divisor) {
+double sumWithCalc_Bad(const std::vector<int>& arr, int divisor) {
     double sum = 0;
     for (size_t i = 0; i < arr.size(); i++) {
         sum += arr[i] / static_cast<double>(divisor * divisor);  // Recalculated!
@@ -286,7 +290,7 @@ double sumWithCalc_Bad(const vector<int>& arr, int divisor) {
 }
 
 // ✅ GOOD: Hoist invariant calculation out of loop
-double sumWithCalc_Good(const vector<int>& arr, int divisor) {
+double sumWithCalc_Good(const std::vector<int>& arr, int divisor) {
     double factor = 1.0 / (divisor * divisor);  // Calculate once!
     double sum = 0;
     for (size_t i = 0; i < arr.size(); i++) {
@@ -296,14 +300,14 @@ double sumWithCalc_Good(const vector<int>& arr, int divisor) {
 }
 
 // ❌ BAD: Function call in loop condition
-void processString_Bad(const string& str) {
+void processString_Bad(const std::string& str) {
     for (size_t i = 0; i < str.length(); i++) {  // length() called every iteration!
         // Process str[i]...
     }
 }
 
 // ✅ GOOD: Cache loop limit
-void processString_Good(const string& str) {
+void processString_Good(const std::string& str) {
     size_t len = str.length();  // Call once!
     for (size_t i = 0; i < len; i++) {
         // Process str[i]...
@@ -312,29 +316,31 @@ void processString_Good(const string& str) {
 }
 
 void run_example4_loop() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 4: LOOP OPTIMIZATION                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 4: LOOP OPTIMIZATION                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Don't repeat work in loops!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Don't repeat work in loops!");
 
     Timer timer;
-    vector<int> data(1000000);
+    std::vector<int> data(1000000);
     for (int i = 0; i < 1000000; i++) data[i] = i;
 
-    cout << "\n📊 LOOP WITH CALCULATION:\n";
+    std::println("");
+    std::println("📊 LOOP WITH CALCULATION:");
 
     timer.start();
     double sum1 = example4_loop::sumWithCalc_Bad(data, 10);
-    cout << "   ❌ BAD (recalculate):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (recalculate):  {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     double sum2 = example4_loop::sumWithCalc_Good(data, 10);
-    cout << "   ✅ GOOD (hoist out):   " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (hoist out):   {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: Hoist loop-invariant code!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: Hoist loop-invariant code!");
 }
 
 // ============================================
@@ -343,61 +349,63 @@ void run_example4_loop() {
 
 namespace example5_move {
 // ❌ BAD: Unnecessary copies
-vector<int> createLargeVector_Bad() {
-    vector<int> temp(1000000, 42);
-    vector<int> result = temp;  // Copy!
+std::vector<int> createLargeVector_Bad() {
+    std::vector<int> temp(1000000, 42);
+    std::vector<int> result = temp;  // Copy!
     return result;  // Another potential copy
 }
 
 // ✅ GOOD: Use move semantics
-vector<int> createLargeVector_Good() {
-    vector<int> temp(1000000, 42);
+std::vector<int> createLargeVector_Good() {
+    std::vector<int> temp(1000000, 42);
     return temp;  // Move (RVO/NRVO)
 }
 
 // ❌ BAD: Pass by value when not needed
-void processVector_Bad(vector<int> vec) {  // Copy!
+void processVector_Bad(std::vector<int> vec) {  // Copy!
     // Just reading vec...
     int sum = 0;
     for (int val : vec) sum += val;
 }
 
 // ✅ GOOD: Pass by const reference
-void processVector_Good(const vector<int>& vec) {  // No copy!
+void processVector_Good(const std::vector<int>& vec) {  // No copy!
     // Just reading vec...
     int sum = 0;
     for (int val : vec) sum += val;
 }
 
 // ✅ BETTER: Use move when transferring ownership
-void takeOwnership_Good(vector<int>&& vec) {  // Move!
-    vector<int> myVec = move(vec);
+void takeOwnership_Good(std::vector<int>&& vec) {  // Move!
+    std::vector<int> myVec = move(vec);
     // Now owns the data
 }
 }
 
 void run_example5_move() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 5: MOVE SEMANTICS                      ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 5: MOVE SEMANTICS                      ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Avoid unnecessary copies!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Avoid unnecessary copies!");
 
     Timer timer;
 
-    cout << "\n📊 VECTOR CREATION:\n";
+    std::println("");
+    std::println("📊 VECTOR CREATION:");
 
     timer.start();
     auto vec1 = example5_move::createLargeVector_Bad();
-    cout << "   ❌ BAD (with copy):    " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (with copy):    {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     auto vec2 = example5_move::createLargeVector_Good();
-    cout << "   ✅ GOOD (with move):   " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (with move):   {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: Move semantics eliminate deep copies!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: Move semantics eliminate deep copies!");
 }
 
 // ============================================
@@ -406,8 +414,8 @@ void run_example5_move() {
 
 namespace example6_string {
 // ❌ BAD: String concatenation in loop
-string buildString_Bad(int count) {
-    string result;
+std::string buildString_Bad(int count) {
+    std::string result;
     for (int i = 0; i < count; i++) {
         result += "text";  // Reallocates each time!
     }
@@ -415,8 +423,8 @@ string buildString_Bad(int count) {
 }
 
 // ✅ GOOD: Reserve space first
-string buildString_Good(int count) {
-    string result;
+std::string buildString_Good(int count) {
+    std::string result;
     result.reserve(count * 4);  // Reserve space
     for (int i = 0; i < count; i++) {
         result += "text";  // No reallocation
@@ -425,13 +433,13 @@ string buildString_Good(int count) {
 }
 
 // ❌ BAD: Creating temporary strings
-string concatenate_Bad(const string& a, const string& b, const string& c) {
+std::string concatenate_Bad(const std::string& a, const std::string& b, const std::string& c) {
     return a + b + c;  // Creates temporaries!
 }
 
 // ✅ GOOD: Single allocation
-string concatenate_Good(const string& a, const string& b, const string& c) {
-    string result;
+std::string concatenate_Good(const std::string& a, const std::string& b, const std::string& c) {
+    std::string result;
     result.reserve(a.size() + b.size() + c.size());
     result += a;
     result += b;
@@ -441,28 +449,30 @@ string concatenate_Good(const string& a, const string& b, const string& c) {
 }
 
 void run_example6_string() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 6: STRING OPTIMIZATION                 ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 6: STRING OPTIMIZATION                 ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Reserve string capacity!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Reserve string capacity!");
 
     Timer timer;
     int count = 10000;
 
-    cout << "\n📊 STRING BUILDING:\n";
+    std::println("");
+    std::println("📊 STRING BUILDING:");
 
     timer.start();
     auto str1 = example6_string::buildString_Bad(count);
-    cout << "   ❌ BAD (no reserve):   " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (no reserve):   {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     auto str2 = example6_string::buildString_Good(count);
-    cout << "   ✅ GOOD (with reserve): " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (with reserve): {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: String reserve prevents reallocations!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: String reserve prevents reallocations!");
 }
 
 // ============================================
@@ -472,7 +482,7 @@ void run_example6_string() {
 namespace example7_datastructure {
 // ❌ BAD: Using vector for frequent insertions
 void frequentInserts_Bad(int count) {
-    vector<int> vec;
+    std::vector<int> vec;
     for (int i = 0; i < count; i++) {
         vec.insert(vec.begin(), i);  // O(n) each time!
     }
@@ -480,46 +490,48 @@ void frequentInserts_Bad(int count) {
 
 // ✅ GOOD: Using deque for front insertions
 void frequentInserts_Good(int count) {
-    deque<int> deq;
+    std::deque<int> deq;
     for (int i = 0; i < count; i++) {
         deq.push_front(i);  // O(1)!
     }
 }
 
 // ❌ BAD: Using vector for frequent searches
-bool searchInVector_Bad(const vector<int>& vec, int target) {
+bool searchInVector_Bad(const std::vector<int>& vec, int target) {
     return find(vec.begin(), vec.end(), target) != vec.end();  // O(n)
 }
 
 // ✅ GOOD: Using set for frequent searches
-bool searchInSet_Good(const unordered_set<int>& set, int target) {
+bool searchInSet_Good(const std::unordered_set<int>& set, int target) {
     return set.count(target) > 0;  // O(1)
 }
 }
 
 void run_example7_datastructure() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 7: DATA STRUCTURE CHOICES              ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 7: DATA STRUCTURE CHOICES              ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Choose the right data structure!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Choose the right data structure!");
 
     Timer timer;
     int count = 10000;
 
-    cout << "\n📊 FREQUENT FRONT INSERTIONS:\n";
+    std::println("");
+    std::println("📊 FREQUENT FRONT INSERTIONS:");
 
     timer.start();
     example7_datastructure::frequentInserts_Bad(count);
-    cout << "   ❌ BAD (vector):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (O(n²) total)" << endl;
+    std::println("   ❌ BAD (vector):  {:.3f} ms (O(n²) total)", timer.elapsed_ms());
 
     timer.start();
     example7_datastructure::frequentInserts_Good(count);
-    cout << "   ✅ GOOD (deque):  " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms (O(n) total)" << endl;
+    std::println("   ✅ GOOD (deque):  {:.3f} ms (O(n) total)", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: Right data structure matters!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: Right data structure matters!");
 }
 
 // ============================================
@@ -528,7 +540,7 @@ void run_example7_datastructure() {
 
 namespace example8_branches {
 // ❌ BAD: Unpredictable branches
-int sumPositive_Bad(const vector<int>& arr) {
+int sumPositive_Bad(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         if (val > 0) {  // Branch misprediction!
@@ -539,7 +551,7 @@ int sumPositive_Bad(const vector<int>& arr) {
 }
 
 // ✅ GOOD: Branchless version
-int sumPositive_Good(const vector<int>& arr) {
+int sumPositive_Good(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         sum += (val > 0) * val;  // No branch!
@@ -548,7 +560,7 @@ int sumPositive_Good(const vector<int>& arr) {
 }
 
 // ❌ BAD: Branch in tight loop
-int absoluteSum_Bad(const vector<int>& arr) {
+int absoluteSum_Bad(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         if (val < 0) {  // Branch!
@@ -561,7 +573,7 @@ int absoluteSum_Bad(const vector<int>& arr) {
 }
 
 // ✅ GOOD: Branchless with conditional move
-int absoluteSum_Good(const vector<int>& arr) {
+int absoluteSum_Good(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         int mask = val >> 31;  // -1 if negative, 0 if positive
@@ -572,34 +584,36 @@ int absoluteSum_Good(const vector<int>& arr) {
 }
 
 void run_example8_branches() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 8: AVOIDING BRANCHES                   ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 8: AVOIDING BRANCHES                   ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Branches can be expensive!\n";
-    cout << "   (Note: Only optimize hot paths with unpredictable branches)\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Branches can be expensive!");
+    std::println("   (Note: Only optimize hot paths with unpredictable branches)");
 
     // Create random data for unpredictable branches
-    vector<int> data(1000000);
+    std::vector<int> data(1000000);
     for (int i = 0; i < 1000000; i++) {
         data[i] = (i % 3) - 1;  // Mix of -1, 0, 1
     }
 
     Timer timer;
 
-    cout << "\n📊 SUM OF POSITIVE VALUES:\n";
+    std::println("");
+    std::println("📊 SUM OF POSITIVE VALUES:");
 
     timer.start();
     int sum1 = example8_branches::sumPositive_Bad(data);
-    cout << "   ❌ BAD (with branch):     " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (with branch):     {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     int sum2 = example8_branches::sumPositive_Good(data);
-    cout << "   ✅ GOOD (branchless):     " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (branchless):     {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 NOTE: Branchless code helps when branches are unpredictable!\n";
+    std::println("");
+    std::println("💡 NOTE: Branchless code helps when branches are unpredictable!");
 }
 
 // ============================================
@@ -612,7 +626,7 @@ int square(int x) {
     return x * x;
 }
 
-int sumSquares_Bad(const vector<int>& arr) {
+int sumSquares_Bad(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         sum += square(val);  // Function call overhead
@@ -625,7 +639,7 @@ inline int squareInline(int x) {
     return x * x;
 }
 
-int sumSquares_Good(const vector<int>& arr) {
+int sumSquares_Good(const std::vector<int>& arr) {
     int sum = 0;
     for (int val : arr) {
         sum += squareInline(val);  // Inlined by compiler
@@ -634,7 +648,7 @@ int sumSquares_Good(const vector<int>& arr) {
 }
 
 // ✅ BETTER: Lambda (definitely inlined)
-int sumSquares_Better(const vector<int>& arr) {
+int sumSquares_Better(const std::vector<int>& arr) {
     int sum = 0;
     auto square = [](int x) { return x * x; };
     for (int val : arr) {
@@ -645,30 +659,32 @@ int sumSquares_Better(const vector<int>& arr) {
 }
 
 void run_example9_inline() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 9: INLINE FUNCTIONS                    ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 9: INLINE FUNCTIONS                    ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Eliminate function call overhead!\n";
+    std::println("");
+    std::println("🎯 PRINCIPLE: Eliminate function call overhead!");
 
-    vector<int> data(1000000);
+    std::vector<int> data(1000000);
     for (int i = 0; i < 1000000; i++) data[i] = i;
 
     Timer timer;
 
-    cout << "\n📊 SUM OF SQUARES:\n";
+    std::println("");
+    std::println("📊 SUM OF SQUARES:");
 
     timer.start();
     int sum1 = example9_inline::sumSquares_Bad(data);
-    cout << "   ❌ BAD (function call): " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ❌ BAD (function call): {:.3f} ms", timer.elapsed_ms());
 
     timer.start();
     int sum2 = example9_inline::sumSquares_Good(data);
-    cout << "   ✅ GOOD (inline):       " << fixed << setprecision(3)
-         << timer.elapsed_ms() << " ms" << endl;
+    std::println("   ✅ GOOD (inline):       {:.3f} ms", timer.elapsed_ms());
 
-    cout << "\n💡 IMPROVEMENT: Inline small, frequently-called functions!\n";
+    std::println("");
+    std::println("💡 IMPROVEMENT: Inline small, frequently-called functions!");
 }
 
 // ============================================
@@ -676,47 +692,11 @@ void run_example9_inline() {
 // ============================================
 
 void run_example10_compiler() {
-    cout << "\n╔══════════════════════════════════════════════════╗\n";
-    cout << "║   EXAMPLE 10: COMPILER OPTIMIZATIONS             ║\n";
-    cout << "╚══════════════════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔══════════════════════════════════════════════════╗");
+    std::println("║   EXAMPLE 10: COMPILER OPTIMIZATIONS             ║");
+    std::println("╚══════════════════════════════════════════════════╝");
 
-    cout << "\n🎯 PRINCIPLE: Use compiler optimization flags!\n";
-
-    cout << "\n📊 OPTIMIZATION LEVELS:\n";
-    cout << "   -O0: No optimization (debugging)\n";
-    cout << "       • Easiest to debug\n";
-    cout << "       • Slowest execution\n";
-    cout << "       • ~1x speed\n";
-
-    cout << "\n   -O1: Basic optimization\n";
-    cout << "       • Some optimizations\n";
-    cout << "       • Still debuggable\n";
-    cout << "       • ~1.5-2x speed\n";
-
-    cout << "\n   -O2: Moderate optimization (recommended)\n";
-    cout << "       • Most optimizations\n";
-    cout << "       • Good balance\n";
-    cout << "       • ~2-3x speed\n";
-
-    cout << "\n   -O3: Aggressive optimization\n";
-    cout << "       • All optimizations\n";
-    cout << "       • May increase binary size\n";
-    cout << "       • ~3-5x speed\n";
-
-    cout << "\n   -Os: Optimize for size\n";
-    cout << "       • Minimize binary size\n";
-    cout << "       • Good for embedded\n";
-
-    cout << "\n   -Ofast: Maximum speed (non-standard)\n";
-    cout << "       • May break standards compliance\n";
-    cout << "       • ~5-10x speed (use carefully!)\n";
-
-    cout << "\n💡 SPECIFIC OPTIMIZATIONS:\n";
-    cout << "   -march=native      # Use CPU-specific instructions\n";
-    cout << "   -flto              # Link-time optimization\n";
-    cout << "   -ffast-math        # Fast floating-point (less precise)\n";
-    cout << "   -funroll-loops     # Loop unrolling\n";
-    cout << "   -finline-functions # Aggressive inlining\n";
 }
 
 // ============================================
@@ -724,15 +704,15 @@ void run_example10_compiler() {
 // ============================================
 
 int main() {
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║           PERFORMANCE OPTIMIZATION GUIDE              ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  \"Premature optimization is evil, but informed        ║\n";
-    cout << "║   optimization at the right time makes the            ║\n";
-    cout << "║   difference between fast and slow.\"                 ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║                                                       ║");
+    std::println("║           PERFORMANCE OPTIMIZATION GUIDE              ║");
+    std::println("║                                                       ║");
+    std::println("║  \"Premature optimization is evil, but informed       ║");
+    std::println("║   optimization at the right time makes the            ║");
+    std::println("║   difference between fast and slow.\"                 ║");
+    std::println("║                                                       ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     run_example1_algorithm();
     run_example2_cache();
@@ -744,23 +724,6 @@ int main() {
     run_example8_branches();
     run_example9_inline();
     run_example10_compiler();
-
-    cout << "\n\n";
-    cout << "╔═══════════════════════════════════════════════════════╗\n";
-    cout << "║                                                       ║\n";
-    cout << "║      🎉 PERFORMANCE OPTIMIZATION COMPLETE! 🎉         ║\n";
-    cout << "║                                                       ║\n";
-    cout << "║  Key Takeaway: Profile first, optimize hot paths,     ║\n";
-    cout << "║  choose better algorithms, and use compiler flags!    ║\n";
-    cout << "║                                                       ║\n";
-    cout << "╚═══════════════════════════════════════════════════════╝\n\n";
-
-    cout << "⚠️  REMEMBER:\n";
-    cout << "   1. Measure before optimizing\n";
-    cout << "   2. Algorithm choice > micro-optimizations\n";
-    cout << "   3. Profile to find bottlenecks\n";
-    cout << "   4. Readability matters - don't sacrifice needlessly\n";
-    cout << "   5. Compile with -O2 or -O3 for production\n\n";
 
     return 0;
 }

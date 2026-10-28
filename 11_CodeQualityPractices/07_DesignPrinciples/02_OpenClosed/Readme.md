@@ -626,3 +626,269 @@ After mastering OCP, explore:
 - **"Design Patterns" by Gang of Four** - Strategy pattern
 - **"Clean Architecture" by Robert C. Martin** - Architecture and OCP
 - **C++ Core Guidelines** - Abstract classes and interfaces
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 OPEN/CLOSED PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Extend behavior through inheritance,  
+not by modifying existing code!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_shape_calculation()`
+
+- ❌ BAD CODE (Violates OCP):
+
+```cpp
+
+```cpp
+class AreaCalculator {
+    double calculateArea(const Shape& shape) {
+        switch (shape.type) {
+            case CIRCLE: return 3.14 * r * r;
+            case RECTANGLE: return w * h;
+            case TRIANGLE: return 0.5 * b * h;
+            // Add Pentagon? → Modify this code!
+        }
+    }
+};
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Must modify AreaCalculator for every new shape
+  - Violates OCP (not closed for modification)
+  - Risk of breaking existing calculations
+  - Must retest entire class
+
+- ✅ GOOD CODE (Follows OCP):
+
+```cpp
+
+```cpp
+class Shape {
+```
+
+**public:**
+
+```cpp
+    virtual double calculateArea() const = 0;
+};
+
+class Circle : public Shape {
+    double calculateArea() const override { return 3.14*r*r; }
+};
+
+class Rectangle : public Shape {
+    double calculateArea() const override { return w*h; }
+};
+
+// Add new shape? Just inherit, don't modify!
+class Pentagon : public Shape {
+    double calculateArea() const override { return 1.72*s*s; }
+};
+```
+
+```
+
+**🔧 DEMONSTRATION:**
+
+### From `example1_shape_calculation()`
+
+**✨ BENEFITS:**
+
+- ✅ Add Pentagon without modifying AreaCalculator
+- ✅ No risk of breaking existing shapes
+- ✅ No need to retest old code
+- ✅ Each shape encapsulates its logic
+
+### From `example2_payment_processing()`
+
+- ❌ BAD: Switch statement on payment type
+  - Add Apple Pay → Modify switch statement
+  - Risk breaking existing payments
+  - Must retest all payment methods
+
+- ✅ GOOD: Strategy pattern
+  - Add Apple Pay → Create new class
+  - No changes to existing code
+  - Only test new payment method
+
+**🔧 DEMONSTRATION:**
+
+### From `example3_notification_system()`
+
+- ❌ BAD: if-else chain on notification type
+- ✅ GOOD: Polymorphic notification channels
+
+**🔧 DEMONSTRATION:**
+
+**Sending notifications through multiple channels:**
+
+### From `example3_notification_system()`
+
+**✨ BENEFITS:**
+
+- ✅ Add Slack notification → Just create SlackNotification
+- ✅ No modification to NotificationService
+- ✅ Can add channels at runtime
+
+### From `example4_report_generation()`
+
+- ❌ BAD: if-else chain checking format
+- ✅ GOOD: Strategy pattern with formatters
+
+**🔧 DEMONSTRATION:**
+
+### From `example5_how_to_achieve()`
+
+**🎯 TECHNIQUES TO ACHIEVE OCP:**
+
+1. ABSTRACTION (Interfaces/Abstract Classes):
+
+```cpp
+class PaymentMethod {
+```
+
+public:
+
+```cpp
+    virtual void process(double amount) = 0;
+};
+```
+
+2. INHERITANCE (Extend behavior):
+
+```cpp
+class CreditCard : public PaymentMethod {
+    void process(double amount) override { }
+};
+```
+
+3. POLYMORPHISM (Dynamic dispatch):
+
+```cpp
+PaymentMethod* method = new CreditCard();
+method->process(100);  // Calls CreditCard::process
+```
+
+4. STRATEGY PATTERN:
+
+```cpp
+class Context {
+    Strategy* strategy;
+```
+
+public:
+
+```cpp
+    void setStrategy(Strategy* s) { strategy = s; }
+    void execute() { strategy->algorithm(); }
+};
+```
+
+5. TEMPLATE METHOD PATTERN:
+
+```cpp
+class Algorithm {
+```
+
+public:
+
+```cpp
+void execute() {
+    step1(); step2(); step3();
+}
+```
+
+protected:
+
+```cpp
+    virtual void step2() = 0;  // Customize this
+};
+```
+
+**📊 COMPARISON:**
+
+- ❌ CLOSED for Extension (Hard to extend):
+    - Final classes
+    - Private/hidden interfaces
+    - Tight coupling
+
+- ✅ OPEN for Extension (Easy to extend):
+    - Abstract base classes
+    - Virtual functions
+    - Plugin architecture
+
+### From `example6_benefits_tradeoffs()`
+
+- ✅ BENEFITS OF OCP:
+
+1. STABILITY:
+  - Existing code doesn't change
+  - Less risk of breaking features
+  - "If it works, don't touch it!"
+
+2. MAINTAINABILITY:
+  - Add features without fear
+  - No need to understand all old code
+  - Changes are isolated
+
+3. TESTABILITY:
+  - No need to retest old code
+  - Test only new extensions
+  - Faster test cycles
+
+4. FLEXIBILITY:
+  - Easy to add new behaviors
+  - Plugin architecture
+  - Runtime configuration
+
+- ⚠️  TRADEOFFS:
+
+1. COMPLEXITY:
+  - More classes and interfaces
+  - Deeper inheritance hierarchies
+  - Need to design abstractions upfront
+
+2. OVERHEAD:
+  - Virtual function calls
+  - Slight performance cost
+  - More memory for vtables
+
+3. OVER-ENGINEERING:
+  - Can lead to too many abstractions
+  - YAGNI violation (You Aren't Gonna Need It)
+  - Balance needed
+
+- 💡 WHEN TO APPLY OCP:
+- ✅ You expect variations in behavior
+- ✅ You have if-else/switch on types
+- ✅ Adding features requires code changes
+- ✅ Code is stable and used by many
+
+- ❌ Simple, unlikely to change
+- ❌ Performance critical (virtual calls overhead)
+- ❌ Over-engineering simple code
+
+**🎯 GOLDEN RULE:**
+
+"Make abstractions when you need them,  
+not when you might need them!"
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

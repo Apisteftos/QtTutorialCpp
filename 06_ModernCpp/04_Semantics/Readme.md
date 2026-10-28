@@ -1188,3 +1188,680 @@ auto data = createData();        // Clean and fast!
 *Last Updated: 2024*
 *C++ Standard: C++11 and later*
 *Feature: Move Semantics*
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### WHAT IS MOVE SEMANTICS?
+
+**Move Semantics (C++11):**
+
+- Optimization technique
+- Transfer ownership instead of copying
+- "Steal" resources from temporary objects
+- Massive performance improvement
+
+Goal: Avoid expensive deep copies
+
+```cpp
+Copy:  obj2 = obj1;              // Deep copy (expensive)
+Move:  obj2 = std::move(obj1);   // Transfer ownership (cheap)
+```
+
+### CORE CONCEPTS
+
+**Lvalues:**
+
+- Named objects
+- Persist beyond expression
+- Can take address (&x)
+- Example: int x = 5;
+
+**Rvalues:**
+
+- Temporaries
+- Exist only during expression
+- Cannot take address
+- Example: int x = 5 + 3;  // (5+3) is rvalue
+
+**Rvalue Reference (&&):**
+
+- Binds to rvalues (temporaries)
+- Enables move semantics
+- Syntax: Type&& name
+
+### MOVE OPERATIONS
+
+**Move Constructor:**
+
+```cpp
+MyClass(MyClass&& other) noexcept {
+    // Steal resources from 'other'
+    data = other.data;
+    other.data = nullptr;
+}
+```
+
+**Move Assignment:**
+
+```cpp
+MyClass& operator=(MyClass&& other) noexcept {
+    if (this != &other) {
+        delete data;  // Free current resources
+        data = other.data;  // Steal resources
+        other.data = nullptr;
+    }
+    return *this;
+}
+```
+
+### std::move
+
+**What it does:**
+
+- Casts lvalue to rvalue reference
+- Doesn't actually move anything!
+- Enables move constructor/assignment to be called
+
+**Usage:**
+
+```cpp
+  MyClass obj1;                    // lvalue
+  MyClass obj2 = std::move(obj1);  // Cast to rvalue
+  // obj1 is now in 'moved-from' state
+
+After std::move:
+```
+
+- Original object is in valid but unspecified state
+- Can assign new value or destroy
+- Don't use it otherwise!
+
+### WHEN MOVES HAPPEN AUTOMATICALLY
+
+1. Returning local variables:
+
+```cpp
+MyClass func() {
+    MyClass local;
+    return local;  // Automatically moved (or RVO)
+}
+```
+
+2. Passing temporaries:
+
+```cpp
+vec.push_back(MyClass());  // Temporary - auto moved
+```
+
+3. Initializing from rvalue:
+
+```cpp
+MyClass obj = createObject();  // Auto moved
+```
+
+### WHEN TO USE std::move
+
+```cpp
+Use std::move when:
+```
+
+- ✓ You're done with an object
+- ✓ Transferring ownership explicitly
+- ✓ Inserting into containers when copy not needed
+- ✓ Implementing move operations
+
+```cpp
+Don't use std::move:
+```
+
+- ❌ On const objects (won't move, will copy)
+- ❌ On return of local variable (prevents RVO)
+- ❌ When you still need the object
+- ❌ On temporaries (already rvalues)
+
+### PERFORMANCE COMPARISON
+
+**Copy (Deep Copy):**
+
+- Allocate new memory
+- Copy every element
+- O(n) complexity
+- Example: Copying 1M integers = 1M copies
+
+**Move (Transfer Ownership):**
+
+- Swap/steal pointers
+- No element copying
+- O(1) complexity
+- Example: Moving 1M integers = 3 pointer ops
+
+**Speed Difference:**
+
+Copy:  ~100ms  (for 1M elements)  
+Move:  ~0.001ms (1000x faster!)
+
+### RETURN VALUE OPTIMIZATION (RVO)
+
+```cpp
+RVO = Compiler optimization that eliminates copy/move
+```
+
+**Correct:**
+
+```cpp
+MyClass func() {
+    MyClass local;
+    return local;  ✅ Enables RVO
+}
+```
+
+**Wrong:**
+
+```cpp
+  MyClass func() {
+      MyClass local;
+      return std::move(local);  ❌ Prevents RVO!
+  }
+
+Rule: Never std::move return values!
+```
+
+### MOVE-ONLY TYPES
+
+**Some types cannot be copied, only moved:**
+
+- unique_ptr<T>     - Exclusive ownership
+- thread            - Thread handles
+- ifstream/ofstream - File streams
+- mutex             - Mutex locks
+- atomic<T>         - Atomic operations
+
+**Creating move-only types:**
+
+```cpp
+class MoveOnly {
+    // Delete copy operations
+    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly& operator=(const MoveOnly&) = delete;
+
+    // Define/default move operations
+    MoveOnly(MoveOnly&&) = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
+};
+```
+
+### PERFECT FORWARDING
+
+Universal/Forwarding Reference: T&&
+
+- In template context only
+- Binds to both lvalues and rvalues
+- Used with std::forward
+
+**Example:**
+
+```cpp
+  template<typename T>
+  void wrapper(T&& arg) {  // Universal reference
+      func(std::forward<T>(arg));  // Perfect forwarding
+  }
+
+std::forward:
+```
+
+- Preserves lvalue/rvalue-ness
+- lvalue → forwards as lvalue
+- rvalue → forwards as rvalue
+
+### RULE OF FIVE
+
+**If you define ANY of these, define ALL FIVE:**
+
+```cpp
+1. Destructor              ~MyClass()
+```
+
+2. Copy Constructor        MyClass(const MyClass&)
+3. Copy Assignment         operator=(const MyClass&)
+4. Move Constructor        MyClass(MyClass&&)
+5. Move Assignment         operator=(MyClass&&)
+
+```cpp
+Or use = default / = delete
+```
+
+**When to use:**
+
+- Managing raw resources (new/delete)
+- Custom memory management
+- Wrapping C APIs
+
+### RULE OF ZERO (PREFERRED!)
+
+Don't define ANY special members!
+
+**Instead, use RAII types:**
+
+```cpp
+class MyClass {
+    unique_ptr<int> data;    // Instead of int*
+    vector<int> numbers;     // Instead of int*
+    string name;             // Instead of char*
+
+    // No need to define any special members!
+    // Compiler generates correct versions!
+};
+```
+
+**Benefits:**
+
+- ✅ Less code
+- ✅ Less bugs
+- ✅ Compiler-optimized
+- ✅ Automatically correct
+
+### COMMON MISTAKES
+
+1. Using moved-from objects:
+- ❌ MyClass obj1;
+
+```cpp
+MyClass obj2 = std::move(obj1);
+obj1.doSomething();  // Undefined behavior!
+```
+
+2. Moving const objects:
+- ❌ const MyClass obj1;
+
+```cpp
+      MyClass obj2 = std::move(obj1);  // Copies, doesn't move!
+
+3. std::move in return:
+```
+
+- ❌ return std::move(local);  // Prevents RVO
+- ✅ return local;             // Correct
+
+4. Forgetting noexcept:
+- ❌ MyClass(MyClass&& other)  // Might not be used!
+- ✅ MyClass(MyClass&& other) noexcept  // Preferred
+
+5. Moving temporaries:
+- ❌ vec.push_back(std::move(MyClass()));  // Redundant
+- ✅ vec.push_back(MyClass());             // Already moved
+
+### BEST PRACTICES
+
+1. Follow Rule of Zero when possible
+2. Mark move operations noexcept
+3. Leave moved-from objects in valid state
+
+```cpp
+4. Don't std::move const objects
+5. Don't std::move return values
+6. Use std::move explicitly for lvalues
+```
+
+7. Document move-only types clearly
+8. Test moved-from state is valid
+9. Prefer emplace_back over push_back
+
+```cpp
+10. Use std::forward for perfect forwarding
+```
+
+### SYNTAX REFERENCE
+
+**Rvalue Reference:**
+
+```cpp
+  MyClass&& rref = MyClass();  // Binds to temporary
+
+std::move:
+  MyClass obj1;
+  MyClass&& rref = std::move(obj1);  // Cast to rvalue
+```
+
+**Move Constructor:**
+
+```cpp
+MyClass(MyClass&& other) noexcept;
+```
+
+**Move Assignment:**
+
+```cpp
+MyClass& operator=(MyClass&& other) noexcept;
+```
+
+**Universal Reference:**
+
+```cpp
+template<typename T>
+void func(T&& arg);  // Universal reference
+```
+
+**Perfect Forwarding:**
+
+```cpp
+std::forward<T>(arg);
+```
+
+### BENEFITS
+
+- ✅ Massive Performance Gain
+  - Avoid expensive copies
+  - O(1) instead of O(n)
+  - Can be 100-1000x faster
+
+- ✅ Enables Move-Only Types
+  - unique_ptr for exclusive ownership
+  - Resources that can't be copied
+
+- ✅ Better Resource Management
+  - Clear ownership transfer
+  - No accidental copies
+
+- ✅ More Expressive Code
+  - Intent is clear (move vs copy)
+  - Ownership semantics explicit
+
+### CONTAINER OPERATIONS
+
+**vector operations with move:**
+
+```cpp
+vector<MyClass> vec;
+
+MyClass obj;
+vec.push_back(obj);              // Copy
+vec.push_back(std::move(obj));   // Move
+vec.push_back(MyClass());        // Move (temporary)
+vec.emplace_back(args...);       // Construct in-place (best!)
+```
+
+**Performance ranking:**
+
+```cpp
+1. emplace_back()           - Best (no move/copy)
+```
+
+2. push_back(temporary)     - Good (auto move)
+
+```cpp
+3. push_back(std::move())   - Good (explicit move)
+```
+
+4. push_back(lvalue)        - Worst (copy)
+
+### WHY noexcept MATTERS
+
+**Move operations should be noexcept:**
+
+```cpp
+MyClass(MyClass&&) noexcept;  ✅
+MyClass(MyClass&&);           ⚠️ Might not be used!
+```
+
+**Why:**
+
+- STL containers need strong exception guarantee
+- If move can throw, they use copy instead
+- noexcept enables optimizations
+
+**Example:**
+
+```cpp
+vector::resize() will:
+```
+
+  - Use move if noexcept
+  - Use copy if not noexcept
+
+### REAL-WORLD IMPACT
+
+**Before Move Semantics (C++03):**
+
+- Expensive string/vector returns
+- Awkward workarounds (swap trick)
+- Performance sacrifices
+
+**After Move Semantics (C++11+):**
+
+- Zero-cost string/vector returns
+- Natural, efficient code
+- 10-100x speedup in many cases
+
+**Example:**
+
+```cpp
+vector<string> readFile() {
+    vector<string> lines;
+    // ... read millions of lines ...
+    return lines;  // C++03: Copy millions!
+                   // C++11: Move (instant!)
+}
+```
+
+### KEY TAKEAWAYS
+
+```cpp
+1. Move = Transfer ownership (cheap)
+2. Copy = Duplicate resources (expensive)
+3. std::move = Cast to rvalue reference
+4. Moved-from = Valid but unspecified state
+5. noexcept = Required for optimal performance
+6. RVO = Compiler optimization (better than move)
+7. Rule of Zero = Use RAII types (best!)
+8. Rule of Five = If custom, define all five
+```
+
+### COMPARISON TABLE
+
+┌──────────────┬──────────┬──────────┬────────────┐  
+│ Operation    │ Copy     │ Move     │ Emplace    │  
+├──────────────┼──────────┼──────────┼────────────┤  
+│ Complexity   │ O(n)     │ O(1)     │ O(1)       │  
+│ Allocations  │ New      │ Steal    │ In-place   │  
+│ Performance  │ Slow     │ Fast     │ Fastest    │  
+│ Use Case     │ Need     │ Done     │ Create     │  
+│              │ both     │ with src │ new object │  
+└──────────────┴──────────┴──────────┴────────────┘
+
+### THE MOVE REVOLUTION (closing summary)
+
+**Move Semantics fundamentally changed C++:**
+
+**Before (C++03):**
+
+- Returning vectors was slow
+- Pass-by-reference everywhere
+- Complex ownership patterns
+
+**After (C++11+):**
+
+- Return by value is fast
+- Natural, modern code
+- Clear ownership with unique_ptr
+
+**Move Semantics enabled:**
+
+- unique_ptr (exclusive ownership)
+- Move-only types
+- Efficient standard library
+- Modern C++ style
+
+## Notes moved from the example functions
+
+The demo functions in `main.cpp` used to print this explanation between the demo steps. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 1: Lvalues vs Rvalues
+
+```cpp
+int x = 10;           // x is lvalue (has name)
+int y = 20;           // y is lvalue (has name)
+int* ptr = &x;        // Can take address of lvalue
+```
+
+**Rvalues (Right values / Temporaries)**
+
+```cpp
+int z = x + y;        // (x + y) is rvalue (temporary)
+// int* bad = &(x + y);  ❌ ERROR: can't take address of rvalue
+
+int result = getValue();  // Function return is rvalue
+```
+
+**String Literals**
+
+```cpp
+string s1 = "Hello";      // String literal is rvalue
+// string& ref = "Hello";  ❌ Can't bind lvalue ref to rvalue
+// const string& ref = "Hello"; ✅ Can bind const lvalue ref to rvalue
+```
+
+**Summary**
+
+**Lvalues:**
+
+- Have names
+- Persist beyond expression
+- Can appear on left of '='
+- Can take address with &
+
+**Rvalues:**
+
+- Temporaries
+- Exist only during expression
+- Can only appear on right of '='
+- Cannot take address
+
+### Example 2: The Copy Problem
+
+- ⚠️  Problem: We just copied 1,000,000 integers!
+
+This is expensive and unnecessary if we don't need original anymore.
+
+### Example 3: Move Constructor
+
+✨ Move is just pointer swapping - O(1) instead of O(n)!
+
+### Example 4: std::move Usage
+
+```cpp
+**What is std::move?**
+std::move() doesn't actually move anything!
+```
+
+It just casts an lvalue to an rvalue reference.  
+This allows the move constructor/assignment to be called.
+
+- ⚠️  Important: Don't use moved-from objects!
+
+r1 and r2 are now in 'moved-from' state.  
+Only safe operations: assign new value or destroy.
+
+### Example 5: Move With Vectors
+
+**✨ Performance Ranking:**
+
+```cpp
+1. emplace_back()      - Construct in-place (best)
+```
+
+2. push_back(temporary) - Automatic move
+
+```cpp
+3. push_back(std::move) - Explicit move
+```
+
+4. push_back(lvalue)    - Copy (worst)
+
+### Example 6: RVO (Return Value Optimization)
+
+- ✓ Compiler optimizes away copy/move (RVO)
+
+- ❌ std::move prevents RVO optimization!
+
+- 💡 Rule: Never use std::move on return of local variable!
+
+```cpp
+return local;              ✅ Correct (RVO or auto-move)
+return std::move(local);   ❌ Wrong (prevents RVO)
+```
+
+### Example 7: Move-Only Types
+
+**Attempting copy (would fail)**
+
+```cpp
+// MoveOnlyResource res2 = res1;  ❌ Error: copy deleted
+```
+
+**Move-only types in STL**
+
+**Examples of move-only types:**
+
+- unique_ptr<T>     - Exclusive ownership
+- thread            - Thread handle
+- ifstream/ofstream - File streams
+- mutex             - Mutex locks
+- atomic<T>         - Atomic types
+
+- ✓ Move-only types can be stored in containers
+
+### Example 8: Perfect Forwarding
+
+--- What is T&&? ---  
+T&& is a 'forwarding reference' (or 'universal reference')  
+It can bind to BOTH lvalues and rvalues
+
+```cpp
+int x = 42;
+wrapper(x);  // x is lvalue
+
+wrapper(100);  // 100 is rvalue
+
+wrapper(std::move(x));  // x cast to rvalue
+```
+
+- 💡 std::forward preserves the value category!
+
+If arg is lvalue → forwards as lvalue  
+If arg is rvalue → forwards as rvalue
+
+### Example 9: Rule Of Five
+
+**If you define ANY of these 5, define ALL:**
+
+1. Destructor
+2. Copy Constructor
+3. Copy Assignment
+4. Move Constructor
+5. Move Assignment
+
+### Example 10: Rule Of Zero (Best!)
+
+--- Rule of Zero: Don't define ANY special members! ---  
+Instead: Use RAII types (smart pointers, containers)  
+Compiler auto-generates correct move/copy operations!
+
+- ✓ Moved successfully (compiler-generated)
+
+- 💡 Rule of Zero is BETTER than Rule of Five!
+  - Less code to write
+  - Less code to maintain
+  - Compiler generates optimal code
+  - Harder to make mistakes
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

@@ -10,14 +10,14 @@
 
 ```mermaid
 flowchart TD
-    P1["📡 Publisher A\n(PTT Button)"]
+    P1["📡 Publisher A\n(Panel Button)"]
     P2["📡 Publisher B\n(Network Monitor)"]
     EB["🚌 Event Bus\nRoutes events by type\nDecouples producers from consumers"]
-    S1["🔔 Subscriber 1\nAudio Engine"]
+    S1["🔔 Subscriber 1\nSound Module"]
     S2["🔔 Subscriber 2\nDisplay Module"]
     S3["🔔 Subscriber 3\nLogger"]
 
-    P1 -->|"emit: PTT_PRESSED"| EB
+    P1 -->|"emit: BUTTON_PRESSED"| EB
     P2 -->|"emit: LINK_DOWN"| EB
     EB -->|"dispatch"| S1
     EB -->|"dispatch"| S2
@@ -42,8 +42,8 @@ sequenceDiagram
     participant SubscriberA
     participant SubscriberB
 
-    Publisher->>EventBus: emit(PTT_PRESSED, payload)
-    Note over EventBus: look up subscribers for PTT_PRESSED
+    Publisher->>EventBus: emit(BUTTON_PRESSED, payload)
+    Note over EventBus: look up subscribers for BUTTON_PRESSED
     EventBus->>SubscriberA: dispatch(event)
     EventBus->>SubscriberB: dispatch(event)
     SubscriberA-->>EventBus: handled
@@ -64,16 +64,15 @@ classDiagram
     }
     class EventBus {
         +subscribe(type, handler)
-        +unsubscribe(type, handler)
         +emit(event)
         -handlers: map~EventType, vector~Handler~~
     }
-    class AudioEngine {
-        +onPttPressed(event)
+    class SoundModule {
+        +onButtonPressed(event)
         +onLinkDown(event)
     }
     class DisplayModule {
-        +onPttPressed(event)
+        +onButtonPressed(event)
         +onLinkDown(event)
     }
     class Logger {
@@ -81,7 +80,7 @@ classDiagram
     }
 
     EventBus --> Event : routes
-    AudioEngine ..> EventBus : subscribes to
+    SoundModule ..> EventBus : subscribes to
     DisplayModule ..> EventBus : subscribes to
     Logger ..> EventBus : subscribes to
 ```
@@ -93,14 +92,14 @@ classDiagram
 ```mermaid
 flowchart LR
     subgraph Direct["❌ Direct Call — tight coupling"]
-        A1[PTT Button] -->|calls| B1[Audio Engine]
+        A1[Panel Button] -->|calls| B1[Sound Module]
         A1 -->|calls| C1[Display]
         A1 -->|calls| D1[Logger]
     end
 
     subgraph EventDriven["✅ Event-Driven — loose coupling"]
-        A2[PTT Button] -->|emit| BUS[Event Bus]
-        BUS --> B2[Audio Engine]
+        A2[Panel Button] -->|emit| BUS[Event Bus]
+        BUS --> B2[Sound Module]
         BUS --> C2[Display]
         BUS --> D2[Logger]
     end
@@ -110,9 +109,19 @@ flowchart LR
 
 ## When to Use
 
-✅ MCX/MCPTT dispatch — PTT events, call state changes, link status  
+✅ Device and UI control — button events, message arrivals, link status  
 ✅ Qt applications — signals/slots are event-driven  
 ✅ Any system where producers and consumers must be independent  
 ✅ Adding new subscribers without changing existing code (Open/Closed Principle)  
 ❌ When you need guaranteed synchronous call order  
-❌ When debugging — event chains can be hard to trace  
+❌ When debugging — event chains can be hard to trace
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

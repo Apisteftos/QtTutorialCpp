@@ -355,7 +355,7 @@ Developed by **Basecamp**, Shape Up replaces sprints with **6-week cycles**. Wor
 |---|---|---|
 | **Automotive** (hardware/safety) | V-Model, Waterfall | Lean, Agile (software) |
 | **Aerospace** (avionics, DO-178C) | V-Model, Spiral | Waterfall, SAFe |
-| **Defence** (mission-critical systems) | V-Model, Waterfall | SAFe, Scrum (software teams) |
+| **Defence** (safety-critical systems) | V-Model, Waterfall | SAFe, Scrum (software teams) |
 | **Medical Devices** (IEC 62304) | V-Model, Waterfall | Lean |
 | **Railway Systems** | V-Model | Waterfall |
 | **Banking & Finance** | Waterfall (legacy) | SAFe, Scrum |

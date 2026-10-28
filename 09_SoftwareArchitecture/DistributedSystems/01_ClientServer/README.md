@@ -105,6 +105,16 @@ flowchart LR
 
 ✅ Simple request/response interactions  
 ✅ When the client needs the result before continuing  
-✅ HTTP APIs, database queries, MCX SIP registration  
+✅ HTTP APIs, database queries, login and registration services  
 ❌ When the server takes too long — client blocks  
 ❌ When you need broadcast (one → many) — use Pub-Sub instead
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

@@ -14,11 +14,11 @@
 //   PresentationLayer — handles user interaction (console I/O)
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
 #include <iomanip>
+#include <print>
 
 // =============================================================================
 // LAYER 1 — Data Layer
@@ -108,39 +108,38 @@ public:
         : business_(business) {}
 
     void run() {
-        std::cout << "=== Warehouse Inventory System ===\n\n";
+        std::println("=== Warehouse Inventory System ===");
+        std::println("");
         showAllStock();
         placeOrder("widget",  10);
         placeOrder("gadget",  30);  // should fail — insufficient stock
         placeOrder("doohick",  1);  // should trigger reorder
-        std::cout << "\n--- Stock after orders ---\n";
+        std::println("");
+        std::println("--- Stock after orders ---");
         showAllStock();
     }
 
 private:
     void showAllStock() const {
-        std::cout << std::left << std::setw(12) << "Item"
-                  << std::setw(8) << "Stock" << '\n';
-        std::cout << std::string(20, '-') << '\n';
+        std::println("{:<12}{:<8}", "Item", "Stock");
+        std::println("{}", std::string(20, '-'));
         for (const auto& [item, qty] : business_.getAllStock())
-            std::cout << std::setw(12) << item << std::setw(8) << qty << '\n';
-        std::cout << '\n';
+            std::println("{:<12}{:<8}", item, qty);
+        std::println("");
     }
 
     void placeOrder(const std::string& item, int qty) {
-        std::cout << "Order: " << qty << "x " << item << " → ";
+        std::print("Order: {}x {} → ", qty, item);
         try {
             bool ok = business_.processOrder(item, qty);
             if (ok) {
-                std::cout << "✓ Accepted  (stock now: "
-                          << business_.getStock(item) << ")\n";
+                std::println("✓ Accepted  (stock now: {})", business_.getStock(item));
                 business_.checkAndReorder(item);
             } else {
-                std::cout << "✗ Rejected  (insufficient stock: "
-                          << business_.getStock(item) << ")\n";
+                std::println("✗ Rejected  (insufficient stock: {})", business_.getStock(item));
             }
         } catch (const std::exception& e) {
-            std::cout << "✗ Error: " << e.what() << '\n';
+            std::println("✗ Error: {}", e.what());
         }
     }
 

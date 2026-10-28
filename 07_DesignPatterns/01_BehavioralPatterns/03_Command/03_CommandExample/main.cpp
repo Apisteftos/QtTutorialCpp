@@ -1,7 +1,7 @@
-#include <iostream>
 #include <string>
 #include <memory>
 #include <stack>
+#include <print>
 
 // Receiver: Document
 class Document {
@@ -11,8 +11,8 @@ private:
 public:
     void insertText(const std::string& txt) {
         text += txt;
-        std::cout << "Text inserted: \"" << txt << "\"" << std::endl;
-        std::cout << "Current document: \"" << text << "\"" << std::endl;
+        std::println("Text inserted: \"{}\"", txt);
+        std::println("Current document: \"{}\"", text);
     }
 
     void deleteText(int length) {
@@ -20,8 +20,8 @@ public:
             length = text.length();
         }
         text = text.substr(0, text.length() - length);
-        std::cout << "Deleted " << length << " characters" << std::endl;
-        std::cout << "Current document: \"" << text << "\"" << std::endl;
+        std::println("Deleted {} characters", length);
+        std::println("Current document: \"{}\"", text);
     }
 
     std::string getText() const {
@@ -97,25 +97,27 @@ public:
 
     void undo() {
         if (!undoStack.empty()) {
-            std::cout << "\n--- UNDO ---" << std::endl;
+            std::println("");
+            std::println("--- UNDO ---");
             auto cmd = undoStack.top();
             undoStack.pop();
             cmd->undo();
             redoStack.push(cmd);
         } else {
-            std::cout << "Nothing to undo!" << std::endl;
+            std::println("Nothing to undo!");
         }
     }
 
     void redo() {
         if (!redoStack.empty()) {
-            std::cout << "\n--- REDO ---" << std::endl;
+            std::println("");
+            std::println("--- REDO ---");
             auto cmd = redoStack.top();
             redoStack.pop();
             cmd->execute();
             undoStack.push(cmd);
         } else {
-            std::cout << "Nothing to redo!" << std::endl;
+            std::println("Nothing to redo!");
         }
     }
 };
@@ -124,36 +126,37 @@ int main() {
     Document doc;
     TextEditor editor;
 
-    std::cout << "=== Text Editor with Command Pattern ===" << std::endl << std::endl;
+    std::println("=== Text Editor with Command Pattern ===");
+    std::println("");
 
     // Execute commands
     auto cmd1 = std::make_shared<InsertCommand>(&doc, "Hello ");
     editor.executeCommand(cmd1);
-    std::cout << std::endl;
+    std::println("");
 
     auto cmd2 = std::make_shared<InsertCommand>(&doc, "World!");
     editor.executeCommand(cmd2);
-    std::cout << std::endl;
+    std::println("");
 
     auto cmd3 = std::make_shared<InsertCommand>(&doc, " How are you?");
     editor.executeCommand(cmd3);
-    std::cout << std::endl;
+    std::println("");
 
     // Undo operations
     editor.undo();
-    std::cout << std::endl;
+    std::println("");
 
     editor.undo();
-    std::cout << std::endl;
+    std::println("");
 
     // Redo operations
     editor.redo();
-    std::cout << std::endl;
+    std::println("");
 
     // New command after redo
     auto cmd4 = std::make_shared<DeleteCommand>(&doc, 6);
     editor.executeCommand(cmd4);
-    std::cout << std::endl;
+    std::println("");
 
     // Undo delete
     editor.undo();

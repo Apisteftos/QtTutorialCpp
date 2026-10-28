@@ -10,7 +10,6 @@
 // Production equivalent: MQTT broker, RabbitMQ topic exchange, Kafka
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -18,6 +17,7 @@
 #include <cassert>
 #include <algorithm>
 #include <sstream>
+#include <print>
 
 // =============================================================================
 // Message
@@ -43,8 +43,7 @@ public:
                    const std::string& subscriberName,
                    Handler handler) {
         subscriptions_.push_back({topicPattern, subscriberName, std::move(handler)});
-        std::cout << "  [Broker] " << subscriberName
-                  << " subscribed to \"" << topicPattern << "\"\n";
+        std::println("  [Broker] {} subscribed to \"{}\"", subscriberName, topicPattern);
     }
 
     void unsubscribe(const std::string& subscriberName) {
@@ -58,7 +57,8 @@ public:
     void publish(const std::string& topic, const std::string& payload) {
         msg_count_++;
         Message msg{topic, payload, msg_count_};
-        std::cout << "\n  [Broker] publish [" << topic << "] " << payload << '\n';
+        std::println("");
+        std::println("  [Broker] publish [{}] {}", topic, payload);
 
         int dispatched = 0;
         for (auto& sub : subscriptions_) {
@@ -68,7 +68,7 @@ public:
             }
         }
         if (dispatched == 0)
-            std::cout << "  [Broker] no subscribers for \"" << topic << "\"\n";
+            std::println("  [Broker] no subscribers for \"{}\"", topic);
 
         dispatch_counts_[topic] += dispatched;
     }
@@ -124,7 +124,7 @@ public:
 private:
     void onWeather(const Message& m) {
         weather_count_++;
-        std::cout << "    [MobileApp]   📱 weather received: " << m.payload << '\n';
+        std::println("    [MobileApp]   📱 weather received: {}", m.payload);
     }
     int weather_count_{0};
 };
@@ -143,7 +143,7 @@ public:
 private:
     void onMessage(const Message& m, const std::string& label) {
         total_++;
-        std::cout << "    [Dashboard]   " << label << ": " << m.payload << '\n';
+        std::println("    [Dashboard]   {}: {}", label, m.payload);
     }
     int total_{0};
 };
@@ -163,7 +163,7 @@ public:
 private:
     void onAlert(const std::string& type, const Message& m) {
         alert_count_++;
-        std::cout << "    [AlertService] 🚨 ALERT [" << type << "]: " << m.payload << '\n';
+        std::println("    [AlertService] 🚨 ALERT [{}]: {}", type, m.payload);
     }
     int alert_count_{0};
 };
@@ -180,8 +180,7 @@ public:
 private:
     void onAny(const Message& m) {
         log_count_++;
-        std::cout << "    [AuditLogger]  📋 t=" << m.timestamp
-                  << " [" << m.topic << "] " << m.payload << '\n';
+        std::println("    [AuditLogger]  📋 t={} [{}] {}", m.timestamp, m.topic, m.payload);
     }
     int log_count_{0};
 };
@@ -226,10 +225,11 @@ private:
 
 int main()
 {
-    std::cout << "=== Publish-Subscribe Pattern Demo ===\n\n";
+    std::println("=== Publish-Subscribe Pattern Demo ===");
+    std::println("");
 
     // ── Setup ─────────────────────────────────────────────────────────────────
-    std::cout << "--- Subscriptions ---\n";
+    std::println("--- Subscriptions ---");
     Broker broker;
 
     // Subscribers self-register
@@ -239,10 +239,11 @@ int main()
     AuditLogger  audit(broker);
 
     assert(broker.subscriberCount() == 6);  // mobile(1) + dashboard(2) + alerts(2) + audit(1)
-    std::cout << "  " << broker.subscriberCount() << " subscriptions registered\n";
+    std::println("  {} subscriptions registered", broker.subscriberCount());
 
     // ── Publish events ────────────────────────────────────────────────────────
-    std::cout << "\n--- Publishing events ---\n";
+    std::println("");
+    std::println("--- Publishing events ---");
 
     WeatherStation weather(broker);
     TrafficSensor  traffic(broker);
@@ -264,12 +265,13 @@ int main()
     // → AuditLogger only (wildcard #) — no other subscriber
 
     // ── Assertions ────────────────────────────────────────────────────────────
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "Total messages published : " << broker.totalMessages()          << '\n';
-    std::cout << "MobileApp weather updates: " << mobile.weatherUpdates()         << '\n';
-    std::cout << "Dashboard total received : " << dashboard.totalReceived()       << '\n';
-    std::cout << "AlertService alerts fired: " << alerts.alertCount()             << '\n';
-    std::cout << "AuditLogger log entries  : " << audit.logCount()                << '\n';
+    std::println("");
+    std::println("=== Summary ===");
+    std::println("Total messages published : {}", broker.totalMessages());
+    std::println("MobileApp weather updates: {}", mobile.weatherUpdates());
+    std::println("Dashboard total received : {}", dashboard.totalReceived());
+    std::println("AlertService alerts fired: {}", alerts.alertCount());
+    std::println("AuditLogger log entries  : {}", audit.logCount());
 
     assert(broker.totalMessages()    == 5);
     assert(mobile.weatherUpdates()   == 2);   // weather.update + weather.alert
@@ -277,6 +279,7 @@ int main()
     assert(alerts.alertCount()       == 2);   // weather.alert + traffic.jam
     assert(audit.logCount()          == 5);   // all messages (wildcard #)
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

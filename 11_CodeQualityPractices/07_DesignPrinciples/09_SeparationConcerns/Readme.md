@@ -1097,3 +1097,532 @@ Together, they create maintainable, professional software.
 ---
 
 **Master Separation of Concerns, and you'll write code that's maintainable, testable, and professional. 🚀**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 SEPARATION OF CONCERNS COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Break complex problems into focused  
+pieces. Each piece should handle ONE concern well.  
+Keep concerns separate and independent!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_mixed_concerns()`
+
+- ❌ BAD CODE (Everything mixed):
+
+```cpp
+
+```cpp
+class UserManager {
+    void createUser() {
+        // UI code
+        cout << "Enter username: ";
+        cin >> username;
+        // Validation code
+        if (username.empty()) { ... }
+        // Database code
+        saveToDatabase(...);
+        // Logging code
+        cout << "User created";
+    }
+};
+// 🚨 Everything tangled together!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Can't test business logic without UI
+  - Can't reuse validation elsewhere
+  - Can't change UI without touching business logic
+  - Hard to maintain and understand
+  - Different concerns all mixed together
+
+- ✅ GOOD CODE (Separated concerns):
+
+```cpp
+
+```cpp
+// Concern 1: Data
+struct User { string username, email, password; };
+
+// Concern 2: Validation
+class UserValidator { bool validate(...); };
+
+// Concern 3: Business logic
+class UserService { User createUser(...); };
+
+// Concern 4: Database
+class UserRepository { void save(User); };
+
+// Concern 5: UI
+class UserUI { void createUserInterface(); };
+```
+
+```
+
+**✨ BENEFITS:**
+
+  - Each class has ONE clear responsibility
+  - Can test each concern independently
+  - Can reuse validation, business logic, etc.
+  - Changes isolated to relevant concern
+  - Much easier to understand and maintain
+
+### From `example1_mixed_concerns()`
+
+Sending email confirmation...  
+To: customer@example.com  
+Subject: Order confirmed
+
+### From `example2_data_access()`
+
+- ❌ BAD CODE (Mixed concerns):
+
+Single class doing:
+
+  - Database queries
+  - Business logic (discount calculation)
+  - Email sending
+
+🚨 Can't test discount logic without database!
+
+- ✅ GOOD CODE (Separated concerns):
+  - OrderRepository: Database access
+  - OrderService: Business logic
+  - EmailService: Notifications
+  - OrderProcessor: Orchestrates the flow
+
+**✨ DEMONSTRATION:**
+
+### From `example2_data_access()`
+
+**✨ BENEFITS:**
+
+  - Can test business logic with mock repository
+  - Can reuse OrderService for other operations
+  - Can change database without touching business logic
+  - Can change email service independently
+  - Each concern clear and focused
+
+### From `example3_reporting()`
+
+- ❌ BAD CODE:
+
+One method doing:
+
+  - Fetching data from database
+  - Calculating totals and averages
+  - Formatting output
+  - Writing to file
+
+🚨 Impossible to reuse or test separately!
+
+- ✅ GOOD CODE:
+  - SalesRepository: Data access
+  - SalesCalculator: Business logic
+  - ReportFormatter: Presentation (Console, HTML, JSON)
+  - ReportWriter: File I/O
+  - SalesReportGenerator: Orchestration
+
+**✨ DEMONSTRATION:**
+
+### From `example3_reporting()`
+
+**✨ BENEFITS:**
+
+  - Can test calculations without database
+  - Can easily add new formats (XML, CSV)
+  - Can reuse calculator for other reports
+  - Can change data source without affecting calculations
+  - Each component has single, clear purpose
+
+### From `example3_reporting()`
+
+[LOG] Validating payment method  
+[LOG] Contacting payment gateway  
+[LOG] Payment successful
+
+### From `example4_logging()`
+
+- ❌ BAD CODE:
+  - cout << "[LOG]" scattered everywhere
+  - Hard to disable logging
+  - Hard to change output destination
+  - Business logic obscured
+
+- ✅ GOOD CODE:
+  - Logger interface for logging concern
+  - Multiple implementations (Console, File, Null)
+  - Business logic clean and focused
+  - Easy to swap logging strategies
+
+**✨ DEMONSTRATION:**
+
+### From `example4_logging()`
+
+**✨ BENEFITS:**
+
+  - Can disable logging easily
+  - Can log to file, console, or network
+  - Business logic stays clean
+  - Can test without logging noise
+
+### From `example4_logging()`
+
+Product Details  
+╠════════════════════════════╣
+
+### From `example4_logging()`
+
+Inventory Value  
+╠════════════════════════════╣
+
+### From `example5_layered_architecture()`
+
+- ✅ LAYERED ARCHITECTURE:
+
+Layer 4: Presentation (UI/Controllers)  
+↓ uses  
+Layer 3: Business Logic (Services)  
+↓ uses  
+Layer 2: Data Access (Repositories)  
+↓ uses  
+Layer 1: Domain (Models/Entities)
+
+**🔒 RULES:**
+
+  - Each layer only depends on layers below
+  - No skipping layers
+  - Clear separation of concerns
+
+**✨ DEMONSTRATION:**
+
+### From `example5_layered_architecture()`
+
+**✨ BENEFITS:**
+
+  - Clear organization
+  - Easy to test each layer
+  - Can replace layers (e.g., swap database)
+  - Changes isolated to relevant layer
+  - Standard pattern, easy to understand
+
+### From `example6_god_class()`
+
+- ❌ BAD CODE (God Class):
+
+```cpp
+
+```cpp
+class Application {
+    // User management
+    void registerUser();
+    void loginUser();
+    // Inventory
+    void addProduct();
+    // Orders
+    void processOrder();
+    // Reporting
+    void generateReport();
+    // Logging, Email, Files...
+    // ... 50+ methods
+};
+// 🚨 One class doing EVERYTHING!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - 1000+ lines in one class
+  - Hard to understand what it does
+  - Impossible to test properly
+  - Multiple people can't work on it
+  - Changes affect everything
+  - Violates Single Responsibility Principle
+
+- ✅ GOOD CODE (Separated classes):
+  - UserManager: User operations only
+  - InventoryManager: Inventory operations only
+  - OrderProcessor: Order processing only
+  - ReportGenerator: Reporting only
+  - Logger: Logging only
+
+**✨ DEMONSTRATION:**
+
+### From `example6_god_class()`
+
+**✨ BENEFITS:**
+
+  - Each class focused on one concern
+  - Easy to understand each component
+  - Easy to test independently
+  - Multiple people can work in parallel
+  - Changes isolated to relevant class
+
+### From `example7_cross_cutting()`
+
+**📚 CROSS-CUTTING CONCERNS:**
+
+Concerns that span multiple modules:
+
+  - Logging
+  - Security/Authentication
+  - Caching
+  - Error handling
+  - Transactions
+  - Monitoring
+
+- ✅ SOLUTION: Aspect-Oriented approach
+  - Separate aspect classes
+  - Applied consistently across system
+  - Don't duplicate in every method
+
+**✨ DEMONSTRATION:**
+
+### From `example7_cross_cutting()`
+
+**✨ BENEFITS:**
+
+  - Logging consistent everywhere
+  - Security applied uniformly
+  - Caching reusable
+  - Easy to modify cross-cutting logic
+  - Business logic stays clean
+
+### From `example8_identifying_concerns()`
+
+**🔍 HOW TO IDENTIFY CONCERNS:**
+
+1. LOOK FOR DIFFERENT RESPONSIBILITIES:
+- ❌ Bad: class UserManager {
+
+```cpp
+    void saveUser();      // Database
+    void validateUser();  // Validation
+    void displayUser();   // UI
+    void emailUser();     // Communication
+}
+```
+
+- ✅ Good: Separate classes for each concern
+
+2. APPLY THE 'REASON TO CHANGE' TEST:
+
+Ask: Why would this class need to change?
+
+  - Change database? → Data access concern
+  - Change validation rules? → Validation concern
+  - Change UI? → Presentation concern
+  - Change email format? → Communication concern
+
+If multiple reasons → Multiple concerns → Separate!
+
+3. IDENTIFY TECHNICAL VS BUSINESS CONCERNS:
+
+Technical concerns:
+
+  - Database access
+  - File I/O
+  - Network communication
+  - Caching
+  - Logging
+
+Business concerns:
+
+  - Business rules
+  - Calculations
+  - Workflows
+  - Domain logic
+
+Keep them separate!
+
+4. USE VERB ANALYSIS:
+
+Different verbs often indicate different concerns:
+
+  - Validate → Validation concern
+  - Calculate → Business logic concern
+  - Save/Load → Data access concern
+  - Display/Show → Presentation concern
+  - Send/Notify → Communication concern
+
+5. WATCH FOR MIXED ABSTRACTIONS:
+- ❌ class ReportGenerator {
+
+```cpp
+        void connectToDatabase();  // Low-level
+        void generateReport();     // High-level
+    }
+Different levels of abstraction = Different concerns
+```
+
+### From `example9_benefits()`
+
+- ✅ BENEFITS OF SEPARATION OF CONCERNS:
+
+1. MAINTAINABILITY:
+  - Changes isolated to one concern
+  - Don't break unrelated functionality
+  - Easy to find where to make changes
+
+2. TESTABILITY:
+  - Test each concern independently
+  - Mock dependencies easily
+  - Smaller, focused tests
+
+3. REUSABILITY:
+  - Concerns can be reused
+  - Validation logic reusable
+  - Data access reusable
+
+4. UNDERSTANDABILITY:
+  - Each module has clear purpose
+  - Easier to learn codebase
+  - Less cognitive load
+
+5. PARALLEL DEVELOPMENT:
+  - Different people work on different concerns
+  - Less merge conflicts
+  - Faster development
+
+6. FLEXIBILITY:
+  - Swap implementations easily
+  - Change database without affecting business logic
+  - Change UI without affecting data access
+
+**🎯 BEST PRACTICES:**
+
+1. SINGLE RESPONSIBILITY PRINCIPLE:
+
+Each class should have one reason to change
+
+2. HIGH COHESION:
+
+Keep related things together
+
+3. LOW COUPLING:
+
+Minimize dependencies between concerns
+
+4. CLEAR BOUNDARIES:
+
+Define interfaces between concerns
+
+5. CONSISTENT PATTERNS:
+
+Use layered architecture or similar patterns
+
+6. AVOID GOD CLASSES:
+
+No class should do everything
+
+- 💡 COMMON PATTERNS:
+  - MVC (Model-View-Controller)
+  - Layered Architecture
+  - Repository Pattern
+  - Service Layer Pattern
+  - Dependency Injection
+
+### From `example10_summary()`
+
+🎯 SEPARATION OF CONCERNS: KEY POINTS
+
+1. WHAT IS A CONCERN?
+
+A distinct feature or behavior of the system  
+Examples:
+
+  - Data storage
+  - Business rules
+  - User interface
+  - Validation
+  - Communication
+
+2. WHY SEPARATE?
+  - Easier to understand
+  - Easier to maintain
+  - Easier to test
+  - Easier to reuse
+  - Easier to modify
+
+3. HOW TO SEPARATE?
+  - Identify different concerns
+  - Create separate classes/modules
+  - Define clear interfaces
+  - Keep concerns independent
+
+4. SIGNS OF GOOD SEPARATION:
+- ✅ Each class has one clear purpose
+- ✅ Can explain what class does in one sentence
+- ✅ Can test each concern independently
+- ✅ Can change one concern without affecting others
+- ✅ Can reuse concerns in different contexts
+
+5. SIGNS OF POOR SEPARATION:
+
+🚨 Classes doing many different things  
+🚨 Hard to explain what class does  
+🚨 Can't test without complex setup  
+🚨 Changes ripple across unrelated code  
+🚨 Code duplication across concerns
+
+**📊 BEFORE vs AFTER:**
+
+WITHOUT Separation of Concerns:
+
+  - 1 God class, 1000+ lines
+  - Everything tangled together
+  - Hard to understand
+  - Hard to test
+  - Changes break everything
+  - Can't reuse anything
+
+WITH Separation of Concerns:
+
+  - 10 focused classes, 100 lines each
+  - Each handles one concern
+  - Easy to understand
+  - Easy to test
+  - Changes isolated
+  - High reusability
+
+**💭 REMEMBER:**
+
+"Separation of Concerns is the art of dividing  
+software into distinct sections, each addressing  
+a separate concern."
+
+Each module should:
+
+  - Do ONE thing well
+  - Have a clear responsibility
+  - Be independent of other concerns
+
+**🎓 FINAL WISDOM:**
+
+Good separation of concerns leads to:
+
+  - Maintainable code
+  - Testable code
+  - Reusable code
+  - Flexible code
+  - Professional code
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

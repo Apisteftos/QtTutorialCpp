@@ -45,8 +45,8 @@ flowchart LR
 
 | Pattern | Sync/Async | Failure mode | Real examples |
 |---|---|---|---|
-| Client-Server | Synchronous | Server down → client blocked | HTTP, MCX SIP signalling |
-| Pub-Sub | Asynchronous | Broker down → messages lost | MQTT, MCX group calls |
+| Client-Server | Synchronous | Server down → client blocked | HTTP, request/response APIs |
+| Pub-Sub | Asynchronous | Broker down → messages lost | MQTT, event notifications |
 | Load Balancing | Transparent | Node down → traffic rerouted | Nginx, cloud ALB |
 | Consensus | Negotiated | Split-brain → quorum decides | Raft, ETCD, ZooKeeper |
 

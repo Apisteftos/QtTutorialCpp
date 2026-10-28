@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <semaphore>
 #include <mutex>
@@ -6,13 +5,14 @@
 #include <chrono>
 #include <string>
 #include <atomic>
+#include <print>
 
 using namespace std::chrono_literals;
 
 std::mutex g_coutMutex;
 void safePrint(const std::string& msg) {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 // ---- Example 1: counting_semaphore ----
@@ -119,16 +119,17 @@ void semConsumer(int id) {
 
 int main()
 {
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: counting_semaphore — max 3 concurrent\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: counting_semaphore — max 3 concurrent");
+    std::println("=====================================================");
     std::vector<std::thread> workers;
     for (int i=1;i<=7;++i) workers.emplace_back(limitedWorker, i);
     for (auto& t : workers) t.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: binary_semaphore — one-shot signal\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: binary_semaphore — one-shot signal");
+    std::println("=====================================================");
     std::thread sw(signalWorker);
     std::this_thread::sleep_for(30ms);
     safePrint("[main] sending start signal");
@@ -137,35 +138,40 @@ int main()
     safePrint("[main] worker done");
     sw.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Connection pool (pool size: 3, clients: 7)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Connection pool (pool size: 3, clients: 7)");
+    std::println("=====================================================");
     std::vector<std::thread> clients;
     for (int i=1;i<=7;++i) clients.emplace_back(databaseQuery, i);
     for (auto& t : clients) t.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Rate limiting with try_acquire\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Rate limiting with try_acquire");
+    std::println("=====================================================");
     std::vector<std::thread> requests;
     for (int i=1;i<=10;++i) requests.emplace_back(apiRequest, i);
     for (auto& t : requests) t.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: try_acquire_for timeout\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: try_acquire_for timeout");
+    std::println("=====================================================");
     std::vector<std::thread> tw;
     for (int i=1;i<=5;++i) tw.emplace_back(timedWorker, i);
     for (auto& t : tw) t.join();
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Producer/Consumer with semaphores\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Producer/Consumer with semaphores");
+    std::println("=====================================================");
     g_semDone = false; g_buffer.clear();
     std::thread sp(semProducer, 6);
     std::thread sc1(semConsumer, 1), sc2(semConsumer, 2);
     sp.join(); sc1.join(); sc2.join();
 
-    std::cout << "\n=== Semaphores complete ===\n";
+    std::println("");
+    std::println("=== Semaphores complete ===");
     return 0;
 }

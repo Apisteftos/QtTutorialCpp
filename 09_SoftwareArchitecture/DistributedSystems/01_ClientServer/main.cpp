@@ -13,7 +13,6 @@
 //   Client     — sends requests, receives responses
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +21,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <functional>
+#include <print>
 
 // =============================================================================
 // Request / Response
@@ -158,18 +158,19 @@ public:
     void registerHandler(std::unique_ptr<IHandler> handler) {
         std::string key = handler->method() + " " + handler->path();
         handlers_[key] = std::move(handler);
-        std::cout << "  [Server] registered: " << key << '\n';
+        std::println("  [Server] registered: {}", key);
     }
 
     Response dispatch(const Request& req) {
-        std::cout << "\n→ " << req.toString() << '\n';
+        std::println("");
+        std::println("→ {}", req.toString());
 
         // Try exact match first
         std::string key = req.method + " " + req.path;
         auto it = handlers_.find(key);
         if (it != handlers_.end()) {
             auto resp = it->second->handle(req);
-            std::cout << "← " << resp.toString() << '\n';
+            std::println("← {}", resp.toString());
             return resp;
         }
 
@@ -183,14 +184,14 @@ public:
                 if (req.path.substr(0, brace) == hpath.substr(0, brace)
                     && req.path.size() > brace + 1) {
                     auto resp = handler->handle(req);
-                    std::cout << "← " << resp.toString() << '\n';
+                    std::println("← {}", resp.toString());
                     return resp;
                 }
             }
         }
 
         auto resp = notFound404(req.path);
-        std::cout << "← " << resp.toString() << '\n';
+        std::println("← {}", resp.toString());
         return resp;
     }
 
@@ -234,10 +235,11 @@ private:
 
 int main()
 {
-    std::cout << "=== Client-Server Pattern Demo ===\n\n";
+    std::println("=== Client-Server Pattern Demo ===");
+    std::println("");
 
     // ── Setup server ──────────────────────────────────────────────────────────
-    std::cout << "--- Server setup ---\n";
+    std::println("--- Server setup ---");
     Server server;
     server.registerHandler(std::make_unique<HealthHandler>());
     server.registerHandler(std::make_unique<ListUsersHandler>());
@@ -246,7 +248,8 @@ int main()
     assert(server.handlerCount() == 4);
 
     // ── Client A: admin operations ────────────────────────────────────────────
-    std::cout << "\n--- Client A (admin) ---\n";
+    std::println("");
+    std::println("--- Client A (admin) ---");
     Client admin(server, "admin-client");
 
     auto health = admin.get("/health");
@@ -264,7 +267,8 @@ int main()
     assert(missing.notFound());
 
     // ── Client B: creates a new user ──────────────────────────────────────────
-    std::cout << "\n--- Client B (new user registration) ---\n";
+    std::println("");
+    std::println("--- Client B (new user registration) ---");
     Client app(server, "app-client");
 
     auto created = app.post("/users", "name=Dieter");
@@ -277,7 +281,8 @@ int main()
     assert(newUser.body.find("Dieter") != std::string::npos);
 
     // ── Error cases ───────────────────────────────────────────────────────────
-    std::cout << "\n--- Error cases ---\n";
+    std::println("");
+    std::println("--- Error cases ---");
     auto badPost = app.post("/users", "");   // missing body
     assert(badPost.statusCode == 400);
 
@@ -287,8 +292,9 @@ int main()
     auto wrongMethod = app.del("/users");   // DELETE /users not registered
     assert(wrongMethod.notFound());
 
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "Handlers registered: " << server.handlerCount() << '\n';
-    std::cout << "All assertions passed.\n";
+    std::println("");
+    std::println("=== Summary ===");
+    std::println("Handlers registered: {}", server.handlerCount());
+    std::println("All assertions passed.");
     return 0;
 }

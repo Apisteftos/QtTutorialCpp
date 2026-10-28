@@ -1,110 +1,86 @@
-/**
- * The Strategy interface declares operations common to all supported versions
- * of some algorithm.
+/*
+ * Strategy: discount rules at a checkout
  *
- * The Context uses this interface to call the algorithm defined by Concrete
- * Strategies.
+ * Intent: put a family of algorithms behind one interface so the client can
+ * swap them at run time.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
-#include <iostream>
-#include <memory>
-#include <string>
-#include <algorithm>
 
-class Strategy
-{
+#include <algorithm>
+#include <format>
+#include <memory>
+#include <numeric>
+#include <print>
+#include <string>
+#include <utility>
+#include <vector>
+
+class DiscountStrategy {
 public:
-    virtual ~Strategy() = default;
-    virtual std::string doAlgorithm(std::string_view data) const = 0;
+    virtual ~DiscountStrategy() = default;
+    virtual double apply(double total) const = 0;
+    virtual std::string label() const = 0;
 };
 
-/**
- * The Context defines the interface of interest to clients.
- */
-
-class Context
-{
-    /**
-     * @var Strategy The Context maintains a reference to one of the Strategy
-     * objects. The Context does not know the concrete class of a strategy. It
-     * should work with all strategies via the Strategy interface.
-     */
-private:
-    std::unique_ptr<Strategy> strategy_;
-    /**
-     * Usually, the Context accepts a strategy through the constructor, but also
-     * provides a setter to change it at runtime.
-     */
+class NoDiscount : public DiscountStrategy {
 public:
-    explicit Context(std::unique_ptr<Strategy> &&strategy = {}) : strategy_(std::move(strategy))
-    {
-    }
-    /**
-     * Usually, the Context allows replacing a Strategy object at runtime.
-     */
-    void set_strategy(std::unique_ptr<Strategy> &&strategy)
-    {
+    double apply(double total) const override { return total; }
+    std::string label() const override { return "no discount"; }
+};
+
+class PercentDiscount : public DiscountStrategy {
+public:
+    explicit PercentDiscount(double percent) : percent_(percent) {}
+    double apply(double total) const override { return total * (1.0 - percent_ / 100.0); }
+    std::string label() const override { return std::format("{}% off", percent_); }
+
+private:
+    double percent_;
+};
+
+class FixedDiscount : public DiscountStrategy {
+public:
+    explicit FixedDiscount(double amount) : amount_(amount) {}
+    double apply(double total) const override { return std::max(0.0, total - amount_); }
+    std::string label() const override { return std::format("{} off", amount_); }
+
+private:
+    double amount_;
+};
+
+class Checkout {
+public:
+    explicit Checkout(std::unique_ptr<DiscountStrategy> strategy)
+        : strategy_(std::move(strategy)) {}
+
+    void setStrategy(std::unique_ptr<DiscountStrategy> strategy) {
         strategy_ = std::move(strategy);
     }
-    /**
-     * The Context delegates some work to the Strategy object instead of
-     * implementing +multiple versions of the algorithm on its own.
-     */
-    void doSomeBusinessLogic() const
-    {
-        if (strategy_) {
-            std::cout << "Context: Sorting data using the strategy (not sure how it'll do it)\n";
-            std::string result = strategy_->doAlgorithm("aecbd");
-            std::cout << result << "\n";
-        } else {
-            std::cout << "Context: Strategy isn't set\n";
-        }
+
+    void pay(const std::vector<double>& prices) const {
+        double sum = std::accumulate(prices.begin(), prices.end(), 0.0);
+        std::println("items: {}  rule: {}  to pay: {}", sum, strategy_->label(),
+                     strategy_->apply(sum));
     }
+
+private:
+    std::unique_ptr<DiscountStrategy> strategy_;
 };
 
-/**
- * Concrete Strategies implement the algorithm while following the base Strategy
- * interface. The interface makes them interchangeable in the Context.
- */
-class ConcreteStrategyA : public Strategy
-{
-public:
-    std::string doAlgorithm(std::string_view data) const override
-    {
-        std::string result(data);
-        std::sort(std::begin(result), std::end(result));
+int main() {
+    const std::vector<double> basket = {20.0, 30.0, 50.0};
 
-        return result;
-    }
-};
-class ConcreteStrategyB : public Strategy
-{
-    std::string doAlgorithm(std::string_view data) const override
-    {
-        std::string result(data);
-        std::sort(std::begin(result), std::end(result), std::greater<>());
+    Checkout checkout(std::make_unique<NoDiscount>());
+    checkout.pay(basket);
 
-        return result;
-    }
-};
-/**
- * The client code picks a concrete strategy and passes it to the context. The
- * client should be aware of the differences between strategies in order to make
- * the right choice.
- */
+    checkout.setStrategy(std::make_unique<PercentDiscount>(10));
+    checkout.pay(basket);
 
-void clientCode()
-{
-    Context context(std::make_unique<ConcreteStrategyA>());
-    std::cout << "Client: Strategy is set to normal sorting.\n";
-    context.doSomeBusinessLogic();
-    std::cout << "\n";
-    std::cout << "Client: Strategy is set to reverse sorting.\n";
-    context.set_strategy(std::make_unique<ConcreteStrategyB>());
-    context.doSomeBusinessLogic();
-}
+    checkout.setStrategy(std::make_unique<FixedDiscount>(15));
+    checkout.pay(basket);
 
-int main()
-{
-    clientCode();
+    checkout.setStrategy(std::make_unique<FixedDiscount>(500));
+    checkout.pay(basket);
     return 0;
 }

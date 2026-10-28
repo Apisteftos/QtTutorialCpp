@@ -106,4 +106,26 @@ classDiagram
 ✅ When you want to swap views (console → GUI → web) without touching model  
 ✅ Qt is fundamentally MVC — signals/slots are the notification mechanism  
 ❌ Overkill for simple scripts with no real UI  
-❌ Can be over-engineered if the model is trivial  
+❌ Can be over-engineered if the model is trivial
+
+## Notes moved from main.cpp
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `file`
+
+┌─────────────────────────────┐  
+│         TASK LIST           │  
+├─────────────────────────────┤
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

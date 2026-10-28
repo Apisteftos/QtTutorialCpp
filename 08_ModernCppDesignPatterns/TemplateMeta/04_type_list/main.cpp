@@ -12,13 +12,13 @@
  * - Parameter packs
  * - Variadic templates
  *
- * Compile: g++ -std=c++20 -Wall -Wextra type_list.cpp -o type_list
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <type_traits>
 #include <string>
 #include <algorithm>
+#include <print>
 
 // ============================================================================
 // COMMON TYPE LIST DEFINITION (used across namespaces)
@@ -61,16 +61,19 @@ template<typename... Types>
 using MakeTypeList_t = typename MakeTypeList<Types...>::type;
 
 void demonstrate() {
-    std::cout << "\n=== Basic Type List ===\n";
+    std::println("");
+    std::println("=== Basic Type List ===");
 
     // Create a type list: int, double, char
     using MyList = MakeTypeList_t<int, double, char>;
 
-    std::cout << "\nType list created: int, double, char\n";
-    std::cout << "  Head: " << typeid(typename MyList::head).name() << "\n";
-    std::cout << "  Tail head: " << typeid(typename MyList::tail::head).name() << "\n";
+    std::println("");
+    std::println("Type list created: int, double, char");
+    std::println("  Head: {}", typeid(typename MyList::head).name());
+    std::println("  Tail head: {}", typeid(typename MyList::tail::head).name());
 
-    std::cout << "\n✅ Type list = compile-time data structure!\n";
+    std::println("");
+    std::println("✅ Type list = compile-time data structure!");
 }
 }
 
@@ -115,17 +118,20 @@ template<typename List>
 using Front_t = typename Front<List>::type;
 
 void demonstrate() {
-    std::cout << "\n=== Modern Type List ===\n";
+    std::println("");
+    std::println("=== Modern Type List ===");
 
     using MyList = TypeList<int, double, char, float>;
 
-    std::cout << "\nType list: int, double, char, float\n";
-    std::cout << "  Length: " << Length_v<MyList> << "\n";
-    std::cout << "  Is empty: " << IsEmpty_v<MyList> << "\n";
-    std::cout << "  Is empty (empty list): " << IsEmpty_v<TypeList<>> << "\n";
-    std::cout << "  Front type: " << typeid(Front_t<MyList>).name() << "\n";
+    std::println("");
+    std::println("Type list: int, double, char, float");
+    std::println("  Length: {}", Length_v<MyList>);
+    std::println("  Is empty: {}", IsEmpty_v<MyList>);
+    std::println("  Is empty (empty list): {}", IsEmpty_v<TypeList<>>);
+    std::println("  Front type: {}", typeid(Front_t<MyList>).name());
 
-    std::cout << "\n✅ Variadic templates = cleaner type lists!\n";
+    std::println("");
+    std::println("✅ Variadic templates = cleaner type lists!");
 }
 }
 
@@ -172,20 +178,23 @@ template<typename List>
 using PopFront_t = typename PopFront<List>::type;
 
 void demonstrate() {
-    std::cout << "\n=== Type List Operations ===\n";
+    std::println("");
+    std::println("=== Type List Operations ===");
 
     using List1 = TypeList<int, double>;
     using List2 = PushBack_t<List1, char>;      // int, double, char
     using List3 = PushFront_t<List2, float>;    // float, int, double, char
     using List4 = PopFront_t<List3>;            // int, double, char
 
-    std::cout << "\nOperations:\n";
-    std::cout << "  Start: int, double\n";
-    std::cout << "  After PushBack<char>: length = " << Modern::Length_v<List2> << "\n";
-    std::cout << "  After PushFront<float>: length = " << Modern::Length_v<List3> << "\n";
-    std::cout << "  After PopFront: length = " << Modern::Length_v<List4> << "\n";
+    std::println("");
+    std::println("Operations:");
+    std::println("  Start: int, double");
+    std::println("  After PushBack<char>: length = {}", Modern::Length_v<List2>);
+    std::println("  After PushFront<float>: length = {}", Modern::Length_v<List3>);
+    std::println("  After PopFront: length = {}", Modern::Length_v<List4>);
 
-    std::cout << "\n✅ Manipulate types like data!\n";
+    std::println("");
+    std::println("✅ Manipulate types like data!");
 }
 }
 
@@ -233,21 +242,25 @@ template<typename List, typename T>
 inline constexpr size_t IndexOf_v = IndexOf<List, T>::value;
 
 void demonstrate() {
-    std::cout << "\n=== Type List Search ===\n";
+    std::println("");
+    std::println("=== Type List Search ===");
 
     using MyList = TypeList<int, double, char, float>;
 
-    std::cout << "\nSearching in: int, double, char, float\n";
-    std::cout << "  Contains int: " << Contains_v<MyList, int> << "\n";
-    std::cout << "  Contains char: " << Contains_v<MyList, char> << "\n";
-    std::cout << "  Contains std::string: " << Contains_v<MyList, std::string> << "\n";
+    std::println("");
+    std::println("Searching in: int, double, char, float");
+    std::println("  Contains int: {}", Contains_v<MyList, int>);
+    std::println("  Contains char: {}", Contains_v<MyList, char>);
+    std::println("  Contains std::string: {}", Contains_v<MyList, std::string>);
 
-    std::cout << "\nIndices:\n";
-    std::cout << "  Index of int: " << IndexOf_v<MyList, int> << "\n";
-    std::cout << "  Index of char: " << IndexOf_v<MyList, char> << "\n";
-    std::cout << "  Index of float: " << IndexOf_v<MyList, float> << "\n";
+    std::println("");
+    std::println("Indices:");
+    std::println("  Index of int: {}", IndexOf_v<MyList, int>);
+    std::println("  Index of char: {}", IndexOf_v<MyList, char>);
+    std::println("  Index of float: {}", IndexOf_v<MyList, float>);
 
-    std::cout << "\n✅ Search types at compile-time!\n";
+    std::println("");
+    std::println("✅ Search types at compile-time!");
 }
 }
 
@@ -290,19 +303,20 @@ struct AddConst {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Type List Transformations ===\n";
+    std::println("");
+    std::println("=== Type List Transformations ===");
 
     using Original = TypeList<int, double, char>;
     using WithPointers = Transform_t<Original, AddPointer>;
     using WithConst = Transform_t<Original, AddConst>;
 
-    std::cout << "\nOriginal: int, double, char\n";
-    std::cout << "  First of WithPointers is pointer: "
-              << std::is_pointer_v<Modern::Front_t<WithPointers>> << "\n";
-    std::cout << "  First of WithConst is const: "
-              << std::is_const_v<Modern::Front_t<WithConst>> << "\n";
+    std::println("");
+    std::println("Original: int, double, char");
+    std::println("  First of WithPointers is pointer: {}", std::is_pointer_v<Modern::Front_t<WithPointers>>);
+    std::println("  First of WithConst is const: {}", std::is_const_v<Modern::Front_t<WithConst>>);
 
-    std::cout << "\n✅ Transform all types in list!\n";
+    std::println("");
+    std::println("✅ Transform all types in list!");
 }
 }
 
@@ -334,17 +348,20 @@ template<typename List, template<typename> class Pred>
 using Filter_t = typename Filter<List, Pred>::type;
 
 void demonstrate() {
-    std::cout << "\n=== Type List Filter ===\n";
+    std::println("");
+    std::println("=== Type List Filter ===");
 
     using AllTypes = TypeList<int, int*, double, char*, float, double*>;
     using OnlyPointers = Filter_t<AllTypes, std::is_pointer>;
     using OnlyIntegral = Filter_t<AllTypes, std::is_integral>;
 
-    std::cout << "\nOriginal list: int, int*, double, char*, float, double*\n";
-    std::cout << "  Only pointers length: " << Modern::Length_v<OnlyPointers> << "\n";
-    std::cout << "  Only integral length: " << Modern::Length_v<OnlyIntegral> << "\n";
+    std::println("");
+    std::println("Original list: int, int*, double, char*, float, double*");
+    std::println("  Only pointers length: {}", Modern::Length_v<OnlyPointers>);
+    std::println("  Only integral length: {}", Modern::Length_v<OnlyIntegral>);
 
-    std::cout << "\n✅ Filter types by predicate!\n";
+    std::println("");
+    std::println("✅ Filter types by predicate!");
 }
 }
 
@@ -411,7 +428,8 @@ public:
 };
 
 void demonstrate() {
-    std::cout << "\n=== Practical: Type-Safe Variant ===\n";
+    std::println("");
+    std::println("=== Practical: Type-Safe Variant ===");
 
     using MyVariant = SimpleVariant<int, double, std::string>;
 
@@ -419,15 +437,17 @@ void demonstrate() {
     MyVariant v2(3.14);
     MyVariant v3(std::string("hello"));
 
-    std::cout << "\nVariant indices:\n";
-    std::cout << "  v1(int) index: " << v1.index() << "\n";
-    std::cout << "  v2(double) index: " << v2.index() << "\n";
-    std::cout << "  v3(string) index: " << v3.index() << "\n";
+    std::println("");
+    std::println("Variant indices:");
+    std::println("  v1(int) index: {}", v1.index());
+    std::println("  v2(double) index: {}", v2.index());
+    std::println("  v3(string) index: {}", v3.index());
 
     // This would NOT compile:
     // MyVariant v4(3.14f);  // ❌ float not in variant!
 
-    std::cout << "\n✅ Type lists enable type-safe variants!\n";
+    std::println("");
+    std::println("✅ Type lists enable type-safe variants!");
 }
 }
 
@@ -474,24 +494,29 @@ template<typename List, template<typename> class Pred>
 inline constexpr bool AnyOf_v = AnyOf<List, Pred>::value;
 
 void demonstrate() {
-    std::cout << "\n=== Type List Algorithms ===\n";
+    std::println("");
+    std::println("=== Type List Algorithms ===");
 
     using List1 = TypeList<int, long, short>;
     using List2 = TypeList<int*, double*, char*>;
     using List3 = TypeList<int, double, char*>;
 
-    std::cout << "\nList1: int, long, short\n";
-    std::cout << "  All integral: " << AllOf_v<List1, std::is_integral> << "\n";
-    std::cout << "  Any pointer: " << AnyOf_v<List1, std::is_pointer> << "\n";
+    std::println("");
+    std::println("List1: int, long, short");
+    std::println("  All integral: {}", AllOf_v<List1, std::is_integral>);
+    std::println("  Any pointer: {}", AnyOf_v<List1, std::is_pointer>);
 
-    std::cout << "\nList2: int*, double*, char*\n";
-    std::cout << "  All pointer: " << AllOf_v<List2, std::is_pointer> << "\n";
+    std::println("");
+    std::println("List2: int*, double*, char*");
+    std::println("  All pointer: {}", AllOf_v<List2, std::is_pointer>);
 
-    std::cout << "\nList3: int, double, char*\n";
-    std::cout << "  All pointer: " << AllOf_v<List3, std::is_pointer> << "\n";
-    std::cout << "  Any pointer: " << AnyOf_v<List3, std::is_pointer> << "\n";
+    std::println("");
+    std::println("List3: int, double, char*");
+    std::println("  All pointer: {}", AllOf_v<List3, std::is_pointer>);
+    std::println("  Any pointer: {}", AnyOf_v<List3, std::is_pointer>);
 
-    std::cout << "\n✅ Compile-time algorithms on type lists!\n";
+    std::println("");
+    std::println("✅ Compile-time algorithms on type lists!");
 }
 }
 
@@ -500,9 +525,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║            TYPE LISTS AND TYPE MANIPULATION         ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║            TYPE LISTS AND TYPE MANIPULATION         ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     Basic::demonstrate();
     Modern::demonstrate();
@@ -513,26 +538,12 @@ int main() {
     VariantHelper::demonstrate();
     Algorithms::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 TYPE LIST MASTERY:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Type lists = compile-time type collections\n";
-    std::cout << "✅ Operations: push, pop, search, filter, transform\n";
-    std::cout << "✅ Algorithms: all, any, contains, index\n";
-    std::cout << "✅ All computed at compile-time!\n";
-    std::cout << "✅ Zero runtime cost\n";
-    std::cout << "\n💡 Practical uses:\n";
-    std::cout << "   - Type-safe variants\n";
-    std::cout << "   - Generic visitors\n";
-    std::cout << "   - Compile-time polymorphism\n";
-    std::cout << "   - Meta-data structures\n";
-    std::cout << "\n💡 think-cell uses type lists for:\n";
-    std::cout << "   - Generic algorithm selection\n";
-    std::cout << "   - Type-safe interfaces\n";
-    std::cout << "   - Compile-time dispatch\n";
-    std::cout << "   - Zero-cost abstractions\n";
-    std::cout << "\n🚀 This is EXPERT-level template metaprogramming!\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 TYPE LIST MASTERY:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }

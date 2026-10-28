@@ -1,7 +1,6 @@
 // caching_proxy_example.cpp
 // Caching Proxy Pattern - Database Query Optimization
 
-#include <iostream>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -10,6 +9,7 @@
 #include <ctime>
 #include <iomanip>
 #include <vector>
+#include <print>
 
 // ===== SUBJECT INTERFACE =====
 class IDatabase {
@@ -26,7 +26,7 @@ private:
 
     // Simulate expensive database operation
     std::string executeQuery(const std::string& sql) {
-        std::cout << "  💾 Executing query on database..." << std::endl;
+        std::println("  💾 Executing query on database...");
 
         // Simulate network latency and processing time
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -44,11 +44,11 @@ private:
 
 public:
     explicit RealDatabase(const std::string& name) : dbName(name) {
-        std::cout << "🔌 Connected to database: " << dbName << std::endl;
+        std::println("🔌 Connected to database: {}", dbName);
     }
 
     std::string query(const std::string& sql) override {
-        std::cout << "  🔍 Database processing: " << sql << std::endl;
+        std::println("  🔍 Database processing: {}", sql);
         return executeQuery(sql);
     }
 
@@ -92,7 +92,7 @@ private:
             }
         }
 
-        std::cout << "  🗑️  Evicting old cache entry for: " << oldest->first << std::endl;
+        std::println("  🗑️  Evicting old cache entry for: {}", oldest->first);
         cache.erase(oldest);
     }
 
@@ -103,12 +103,12 @@ public:
         : database(std::make_unique<RealDatabase>(dbName)),
         cacheTimeout(timeoutSeconds),
         maxCacheSize(maxSize) {
-        std::cout << "📦 Caching proxy initialized (timeout: " << timeoutSeconds
-                  << "s, max size: " << maxSize << ")" << std::endl;
+        std::println("📦 Caching proxy initialized (timeout: {}s, max size: {})", timeoutSeconds, maxSize);
     }
 
     std::string query(const std::string& sql) override {
-        std::cout << "\n🔄 Proxy received query: " << sql << std::endl;
+        std::println("");
+        std::println("🔄 Proxy received query: {}", sql);
 
         // Check cache first
         auto it = cache.find(sql);
@@ -117,23 +117,22 @@ public:
             cacheHits++;
             it->second.hitCount++;
 
-            std::cout << "  ✅ CACHE HIT! (hit #" << it->second.hitCount
-                      << " for this query)" << std::endl;
-            std::cout << "  ⚡ Returning cached result immediately" << std::endl;
+            std::println("  ✅ CACHE HIT! (hit #{} for this query)", it->second.hitCount);
+            std::println("  ⚡ Returning cached result immediately");
 
             return it->second.result;
         }
 
         // Cache miss - need to query database
         cacheMisses++;
-        std::cout << "  ❌ CACHE MISS - querying database..." << std::endl;
+        std::println("  ❌ CACHE MISS - querying database...");
 
         auto start = std::chrono::high_resolution_clock::now();
         std::string result = database->query(sql);
         auto end = std::chrono::high_resolution_clock::now();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "  ⏱️  Query took: " << duration.count() << "ms" << std::endl;
+        std::println("  ⏱️  Query took: {}ms", duration.count());
 
         // Store in cache
         if (cache.size() >= maxCacheSize) {
@@ -146,7 +145,7 @@ public:
         entry.hitCount = 0;
         cache[sql] = entry;
 
-        std::cout << "  💾 Result cached for future use" << std::endl;
+        std::println("  💾 Result cached for future use");
 
         return result;
     }
@@ -155,28 +154,26 @@ public:
         cache.clear();
         cacheHits = 0;
         cacheMisses = 0;
-        std::cout << "🧹 Cache cleared!" << std::endl;
+        std::println("🧹 Cache cleared!");
     }
 
     void showStatistics() const {
-        std::cout << "\n📊 === Cache Statistics ===" << std::endl;
-        std::cout << "  Cache Hits: " << cacheHits << std::endl;
-        std::cout << "  Cache Misses: " << cacheMisses << std::endl;
+        std::println("");
+        std::println("📊 === Cache Statistics ===");
+        std::println("  Cache Hits: {}", cacheHits);
+        std::println("  Cache Misses: {}", cacheMisses);
 
         if (cacheHits + cacheMisses > 0) {
             double hitRate = (double)cacheHits / (cacheHits + cacheMisses) * 100;
-            std::cout << "  Hit Rate: " << std::fixed << std::setprecision(1)
-                      << hitRate << "%" << std::endl;
+            std::println("  Hit Rate: {:.1f}%", hitRate);
         }
 
-        std::cout << "  Current Cache Size: " << cache.size() << "/"
-                  << maxCacheSize << std::endl;
+        std::println("  Current Cache Size: {}/{}", cache.size(), maxCacheSize);
 
         if (!cache.empty()) {
-            std::cout << "  Cached Queries:" << std::endl;
+            std::println("  Cached Queries:");
             for (const auto& [query, entry] : cache) {
-                std::cout << "    - " << query.substr(0, 30) << "... (hits: "
-                          << entry.hitCount << ")" << std::endl;
+                std::println("    - {}... (hits: {})", query.substr(0, 30), entry.hitCount);
             }
         }
     }
@@ -210,34 +207,38 @@ public:
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-            std::cout << "  📋 Result: " << result.substr(0, 50) << "..." << std::endl;
-            std::cout << "  ⏰ Total time: " << duration.count() << "ms" << std::endl;
+            std::println("  📋 Result: {}...", result.substr(0, 50));
+            std::println("  ⏰ Total time: {}ms", duration.count());
         }
     }
 
     void demonstrateCacheExpiry() {
-        std::cout << "\n===== Cache Expiry Test =====" << std::endl;
+        std::println("");
+        std::println("===== Cache Expiry Test =====");
 
         std::string sql = "SELECT * FROM customers";
 
-        std::cout << "First query:" << std::endl;
+        std::println("First query:");
         database->query(sql);
 
-        std::cout << "\nImmediate second query (should hit cache):" << std::endl;
+        std::println("");
+        std::println("Immediate second query (should hit cache):");
         database->query(sql);
 
-        std::cout << "\nWaiting for cache to expire (6 seconds)..." << std::endl;
+        std::println("");
+        std::println("Waiting for cache to expire (6 seconds)...");
         std::this_thread::sleep_for(std::chrono::seconds(6));
 
-        std::cout << "Query after expiry (should miss cache):" << std::endl;
+        std::println("Query after expiry (should miss cache):");
         database->query(sql);
     }
 };
 
 // ===== DEMONSTRATION =====
 int main() {
-    std::cout << "===== Caching Proxy Pattern Demo =====" << std::endl;
-    std::cout << "Database Query Optimization with Caching\n" << std::endl;
+    std::println("===== Caching Proxy Pattern Demo =====");
+    std::println("Database Query Optimization with Caching");
+    std::println("");
 
     // Create database with caching proxy (5 second timeout, max 10 entries)
     auto proxy = std::make_unique<CachingDatabaseProxy>("MainDB", 5, 10);
@@ -247,7 +248,8 @@ int main() {
     Application app(std::move(proxy));
 
     // Run queries
-    std::cout << "\n===== Running Database Queries =====" << std::endl;
+    std::println("");
+    std::println("===== Running Database Queries =====");
     app.runQueries();
 
     // Show statistics
@@ -258,13 +260,6 @@ int main() {
 
     // Final statistics
     proxyPtr->showStatistics();
-
-    std::cout << "\n===== Performance Summary =====" << std::endl;
-    std::cout << "✓ First queries: ~1000ms (database hit)" << std::endl;
-    std::cout << "✓ Cached queries: ~0ms (cache hit)" << std::endl;
-    std::cout << "✓ Performance improvement: >99% for cached queries" << std::endl;
-    std::cout << "✓ Cache automatically expires old entries" << std::endl;
-    std::cout << "✓ LRU eviction when cache is full" << std::endl;
 
     return 0;
 }

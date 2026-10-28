@@ -1,9 +1,9 @@
-#include <iostream>
 #include <sys/socket.h>   // socket(), bind(), listen(), accept()
 #include <netinet/in.h>   // sockaddr_in
 #include <arpa/inet.h>    // inet_ntoa()
 #include <unistd.h>       // close(), read(), write()
 #include <cstring>
+#include <print>
 
 // ============================================
 // WHAT ARE SOCKETS?
@@ -34,9 +34,10 @@ const int   BACKLOG    = 5;     // max pending connections
 const char* SERVER_IP  = "127.0.0.1";
 
 int main() {
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║      IPC — Socket Server             ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n\n";
+    std::println("╔══════════════════════════════════════╗");
+    std::println("║      IPC — Socket Server             ║");
+    std::println("╚══════════════════════════════════════╝");
+    std::println("");
 
     // 1. Create socket
     // AF_INET = IPv4, SOCK_STREAM = TCP
@@ -45,7 +46,7 @@ int main() {
         perror("socket() failed");
         return 1;
     }
-    std::cout << "[Server] Socket created.\n";
+    std::println("[Server] Socket created.");
 
     // 2. Allow reuse of port immediately after restart
     int opt = 1;
@@ -63,7 +64,7 @@ int main() {
         close(server_fd);
         return 1;
     }
-    std::cout << "[Server] Bound to port " << PORT << ".\n";
+    std::println("[Server] Bound to port {}.", PORT);
 
     // 4. Start listening
     if (listen(server_fd, BACKLOG) == -1) {
@@ -71,7 +72,8 @@ int main() {
         close(server_fd);
         return 1;
     }
-    std::cout << "[Server] Listening for connections...\n\n";
+    std::println("[Server] Listening for connections...");
+    std::println("");
 
     // 5. Accept ONE client connection
     sockaddr_in client_addr;
@@ -83,8 +85,8 @@ int main() {
         close(server_fd);
         return 1;
     }
-    std::cout << "[Server] Client connected from "
-              << inet_ntoa(client_addr.sin_addr) << "\n\n";
+    std::println("[Server] Client connected from {}", inet_ntoa(client_addr.sin_addr));
+    std::println("");
 
     // 6. Communication loop — receive then respond
     char buffer[1024];
@@ -96,15 +98,15 @@ int main() {
         ssize_t bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
         if (bytes <= 0) {
-            std::cout << "[Server] Client disconnected.\n";
+            std::println("[Server] Client disconnected.");
             break;
         }
 
-        std::cout << "[Server] Received: \"" << buffer << "\"\n";
+        std::println("[Server] Received: \"{}\"", buffer);
 
         // Check for exit command
         if (strcmp(buffer, "quit") == 0) {
-            std::cout << "[Server] Client sent quit. Closing.\n";
+            std::println("[Server] Client sent quit. Closing.");
             break;
         }
 
@@ -114,13 +116,14 @@ int main() {
                  "Server ACK #%d — got your message: \"%s\"", round, buffer);
 
         send(client_fd, response, strlen(response), 0);
-        std::cout << "[Server] Sent:     \"" << response << "\"\n\n";
+        std::println("[Server] Sent:     \"{}\"", response);
+        std::println("");
         round++;
     }
 
     // 7. Cleanup
     close(client_fd);
     close(server_fd);
-    std::cout << "[Server] Shutdown complete.\n";
+    std::println("[Server] Shutdown complete.");
     return 0;
 }

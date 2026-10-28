@@ -14,15 +14,15 @@
  * - Range-based transformations
  *
  * Requirements: C++20 compiler (GCC 10+, Clang 13+, MSVC 2019+)
- * Compile: g++ -std=c++20 -Wall -Wextra ranges_introduction.cpp -o ranges_intro
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <vector>
 #include <ranges>
 #include <algorithm>
 #include <string>
 #include <numeric>
+#include <print>
 
 // ============================================================================
 // PART 1: Basic Range Views
@@ -31,39 +31,42 @@
 namespace BasicViews {
 
 void demonstrate() {
-    std::cout << "\n=== Basic Range Views ===\n";
+    std::println("");
+    std::println("=== Basic Range Views ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
     // filter - select elements matching predicate
-    std::cout << "\nfilter (even numbers): ";
+    std::println("");
+    std::print("filter (even numbers): ");
     auto evens = numbers | std::views::filter([](int n) { return n % 2 == 0; });
-    for (auto n : evens) std::cout << n << " ";
+    for (auto n : evens) std::print("{} ", n);
 
     // transform - apply function to each element
-    std::cout << "\ntransform (square): ";
+    std::println("");
+    std::print("transform (square): ");
     auto squared = numbers | std::views::transform([](int n) { return n * n; });
-    for (auto n : squared) std::cout << n << " ";
+    for (auto n : squared) std::print("{} ", n);
 
     // take - first N elements
-    std::cout << "\ntake (first 5): ";
+    std::println("");
+    std::print("take (first 5): ");
     auto first5 = numbers | std::views::take(5);
-    for (auto n : first5) std::cout << n << " ";
+    for (auto n : first5) std::print("{} ", n);
 
     // drop - skip first N elements
-    std::cout << "\ndrop (skip first 5): ";
+    std::println("");
+    std::print("drop (skip first 5): ");
     auto skip5 = numbers | std::views::drop(5);
-    for (auto n : skip5) std::cout << n << " ";
+    for (auto n : skip5) std::print("{} ", n);
 
     // reverse - elements in reverse order
-    std::cout << "\nreverse: ";
+    std::println("");
+    std::print("reverse: ");
     auto reversed = numbers | std::views::reverse;
-    for (auto n : reversed) std::cout << n << " ";
+    for (auto n : reversed) std::print("{} ", n);
 
-    std::cout << "\n\n✅ Views are:\n";
-    std::cout << "   - Lazy (computed on-demand)\n";
-    std::cout << "   - Composable (chain multiple views)\n";
-    std::cout << "   - Non-owning (don't copy data)\n";
+    std::println("");
 }
 }
 
@@ -74,33 +77,33 @@ void demonstrate() {
 namespace LazyEvaluation {
 
 void demonstrate() {
-    std::cout << "\n=== Lazy Evaluation ===\n";
+    std::println("");
+    std::println("=== Lazy Evaluation ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    std::cout << "\nCreating a view pipeline (no computation yet):\n";
+    std::println("");
+    std::println("Creating a view pipeline (no computation yet):");
     auto pipeline = numbers
                     | std::views::filter([](int n) {
-                          std::cout << "  Filtering " << n << "\n";
+                          std::println("  Filtering {}", n);
                           return n % 2 == 0;
                       })
                     | std::views::transform([](int n) {
-                          std::cout << "  Transforming " << n << "\n";
+                          std::println("  Transforming {}", n);
                           return n * n;
                       })
                     | std::views::take(3);
 
-    std::cout << "\nPipeline created but not executed!\n";
-    std::cout << "\nNow iterating (computation happens):\n";
+    std::println("");
+    std::println("Pipeline created but not executed!");
+    std::println("");
+    std::println("Now iterating (computation happens):");
 
     for (auto n : pipeline) {
-        std::cout << "Result: " << n << "\n";
+        std::println("Result: {}", n);
     }
 
-    std::cout << "\n✅ Notice:\n";
-    std::cout << "   - Only filtered/transformed 6 elements (not all 10!)\n";
-    std::cout << "   - Stopped after finding 3 matches\n";
-    std::cout << "   - This is LAZY EVALUATION!\n";
 }
 }
 
@@ -111,14 +114,16 @@ void demonstrate() {
 namespace PipelineComposition {
 
 void demonstrate() {
-    std::cout << "\n=== Pipeline Composition ===\n";
+    std::println("");
+    std::println("=== Pipeline Composition ===");
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
     // Complex pipeline: filter evens, square, take 5, reverse
-    std::cout << "\nComplex pipeline:\n";
-    std::cout << "numbers | filter(even) | transform(square) | take(5) | reverse\n";
-    std::cout << "Result: ";
+    std::println("");
+    std::println("Complex pipeline:");
+    std::println("numbers | filter(even) | transform(square) | take(5) | reverse");
+    std::print("Result: ");
 
     auto result = numbers
                   | std::views::filter([](int n) { return n % 2 == 0; })
@@ -126,24 +131,23 @@ void demonstrate() {
                   | std::views::take(5)
                   | std::views::reverse;
 
-    for (auto n : result) std::cout << n << " ";
+    for (auto n : result) std::print("{} ", n);
 
     // Another example: filter > 5, double, skip first 2
-    std::cout << "\n\nAnother pipeline:\n";
-    std::cout << "numbers | filter(>5) | transform(*2) | drop(2)\n";
-    std::cout << "Result: ";
+    std::println("");
+    std::println("");
+    std::println("Another pipeline:");
+    std::println("numbers | filter(>5) | transform(*2) | drop(2)");
+    std::print("Result: ");
 
     auto result2 = numbers
                    | std::views::filter([](int n) { return n > 5; })
                    | std::views::transform([](int n) { return n * 2; })
                    | std::views::drop(2);
 
-    for (auto n : result2) std::cout << n << " ";
+    for (auto n : result2) std::print("{} ", n);
 
-    std::cout << "\n\n✅ Pipelines are:\n";
-    std::cout << "   - Readable (left-to-right data flow)\n";
-    std::cout << "   - Efficient (lazy evaluation)\n";
-    std::cout << "   - Composable (build complex from simple)\n";
+    std::println("");
 }
 }
 
@@ -154,50 +158,54 @@ void demonstrate() {
 namespace RangeAlgorithms {
 
 void demonstrate() {
-    std::cout << "\n=== Range Algorithms ===\n";
+    std::println("");
+    std::println("=== Range Algorithms ===");
 
     std::vector<int> numbers = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
 
     // std::ranges::sort
     auto sorted = numbers;
     std::ranges::sort(sorted);
-    std::cout << "\nSorted: ";
-    for (auto n : sorted) std::cout << n << " ";
+    std::println("");
+    std::print("Sorted: ");
+    for (auto n : sorted) std::print("{} ", n);
 
     // std::ranges::find
     auto it = std::ranges::find(numbers, 5);
     if (it != numbers.end()) {
-        std::cout << "\nFound 5 at position: "
-                  << std::distance(numbers.begin(), it);
+        std::println("");
+        std::print("Found 5 at position: {}", std::distance(numbers.begin(), it));
     }
 
     // std::ranges::count
     auto count = std::ranges::count(numbers, 1);
-    std::cout << "\nCount of 1: " << count;
+    std::println("");
+    std::print("Count of 1: {}", count);
 
     // std::ranges::count_if
     auto evens_count = std::ranges::count_if(numbers,
                                              [](int n) { return n % 2 == 0; });
-    std::cout << "\nCount of even numbers: " << evens_count;
+    std::println("");
+    std::print("Count of even numbers: {}", evens_count);
 
     // std::ranges::any_of, all_of, none_of
     bool hasEven = std::ranges::any_of(numbers,
                                        [](int n) { return n % 2 == 0; });
-    std::cout << "\nHas even numbers: " << (hasEven ? "yes" : "no");
+    std::println("");
+    std::print("Has even numbers: {}", (hasEven ? "yes" : "no"));
 
     bool allPositive = std::ranges::all_of(numbers,
                                            [](int n) { return n > 0; });
-    std::cout << "\nAll positive: " << (allPositive ? "yes" : "no");
+    std::println("");
+    std::print("All positive: {}", (allPositive ? "yes" : "no"));
 
     // std::ranges::max, min
     auto max = std::ranges::max(numbers);
     auto min = std::ranges::min(numbers);
-    std::cout << "\nMin: " << min << ", Max: " << max;
+    std::println("");
+    std::print("Min: {}, Max: {}", min, max);
 
-    std::cout << "\n\n✅ Range algorithms:\n";
-    std::cout << "   - Cleaner syntax than iterator-based\n";
-    std::cout << "   - Work directly with ranges\n";
-    std::cout << "   - More expressive\n";
+    std::println("");
 }
 }
 
@@ -208,45 +216,43 @@ void demonstrate() {
 namespace StringRanges {
 
 void demonstrate() {
-    std::cout << "\n=== Ranges with Strings ===\n";
+    std::println("");
+    std::println("=== Ranges with Strings ===");
 
     std::string text = "Hello, World! This is C++20 Ranges!";
 
     // Filter uppercase letters
-    std::cout << "\nUppercase letters: ";
+    std::println("");
+    std::print("Uppercase letters: ");
     auto uppercase = text
                      | std::views::filter([](char c) { return std::isupper(c); });
-    for (char c : uppercase) std::cout << c;
+    for (char c : uppercase) std::print("{}", c);
 
     // Convert to uppercase
-    std::cout << "\nTo uppercase: ";
+    std::println("");
+    std::print("To uppercase: ");
     auto uppercased = text
                       | std::views::transform([](char c) { return std::toupper(c); });
-    for (char c : uppercased) std::cout << c;
+    for (char c : uppercased) std::print("{}", c);
 
     // Take first 5 chars
-    std::cout << "\nFirst 5 chars: ";
+    std::println("");
+    std::print("First 5 chars: ");
     auto first5 = text | std::views::take(5);
-    for (char c : first5) std::cout << c;
+    for (char c : first5) std::print("{}", c);
 
     // Split into words (using views::split)
     // Note: In C++20, split returns subranges that we iterate over directly
-    std::cout << "\nWords:\n";
+    std::println("");
+    std::println("Words:");
     for (auto word : text | std::views::split(' ')) {
-        std::cout << "  '";
+        std::print("  '");
         for (char c : word) {
-            std::cout << c;
+            std::print("{}", c);
         }
-        std::cout << "'\n";
+        std::println("'");
     }
 
-    std::cout << "\n💡 C++20 note: split returns subranges, not strings.\n";
-    std::cout << "   C++23 adds ranges::to<> for easier conversion.\n";
-
-    std::cout << "\n✅ String ranges enable:\n";
-    std::cout << "   - Character-level transformations\n";
-    std::cout << "   - Easy filtering\n";
-    std::cout << "   - String splitting\n";
 }
 }
 
@@ -257,36 +263,38 @@ void demonstrate() {
 namespace IotaView {
 
 void demonstrate() {
-    std::cout << "\n=== iota - Generate Sequences ===\n";
+    std::println("");
+    std::println("=== iota - Generate Sequences ===");
 
     // Generate numbers 1 to 10
-    std::cout << "\niota(1, 11): ";
+    std::println("");
+    std::print("iota(1, 11): ");
     for (auto n : std::views::iota(1, 11)) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // Infinite sequence (take first 10)
-    std::cout << "\nInfinite iota(1) | take(10): ";
+    std::println("");
+    std::print("Infinite iota(1) | take(10): ");
     for (auto n : std::views::iota(1) | std::views::take(10)) {
-        std::cout << n << " ";
+        std::print("{} ", n);
     }
 
     // Generate and transform
-    std::cout << "\niota(1, 6) squared: ";
+    std::println("");
+    std::print("iota(1, 6) squared: ");
     auto squares = std::views::iota(1, 6)
                    | std::views::transform([](int n) { return n * n; });
-    for (auto n : squares) std::cout << n << " ";
+    for (auto n : squares) std::print("{} ", n);
 
     // Even numbers using iota
-    std::cout << "\nEven numbers 2-20: ";
+    std::println("");
+    std::print("Even numbers 2-20: ");
     auto evens = std::views::iota(1, 11)
                  | std::views::transform([](int n) { return n * 2; });
-    for (auto n : evens) std::cout << n << " ";
+    for (auto n : evens) std::print("{} ", n);
 
-    std::cout << "\n\n✅ iota is useful for:\n";
-    std::cout << "   - Generating sequences\n";
-    std::cout << "   - Index generation\n";
-    std::cout << "   - Infinite sequences (with take)\n";
+    std::println("");
 }
 }
 
@@ -297,7 +305,8 @@ void demonstrate() {
 namespace JoinAndFlatten {
 
 void demonstrate() {
-    std::cout << "\n=== join - Flatten Nested Ranges ===\n";
+    std::println("");
+    std::println("=== join - Flatten Nested Ranges ===");
 
     std::vector<std::vector<int>> nested = {
         {1, 2, 3},
@@ -305,27 +314,28 @@ void demonstrate() {
         {6, 7, 8, 9}
     };
 
-    std::cout << "\nNested vector: {{1,2,3}, {4,5}, {6,7,8,9}}\n";
-    std::cout << "Flattened: ";
+    std::println("");
+    std::println("Nested vector: {{{{1,2,3}}, {{4,5}}, {{6,7,8,9}}}}");
+    std::print("Flattened: ");
 
     auto flattened = nested | std::views::join;
-    for (auto n : flattened) std::cout << n << " ";
+    for (auto n : flattened) std::print("{} ", n);
 
     // Practical example: words to characters
-    std::cout << "\n\nWords to characters:\n";
+    std::println("");
+    std::println("");
+    std::println("Words to characters:");
     std::vector<std::string> words = {"Hello", "World", "C++20"};
 
-    std::cout << "Words: ";
-    for (const auto& word : words) std::cout << word << " ";
+    std::print("Words: ");
+    for (const auto& word : words) std::print("{} ", word);
 
-    std::cout << "\nAll characters: ";
+    std::println("");
+    std::print("All characters: ");
     auto chars = words | std::views::join;
-    for (char c : chars) std::cout << c;
+    for (char c : chars) std::print("{}", c);
 
-    std::cout << "\n\n✅ join useful for:\n";
-    std::cout << "   - Flattening nested containers\n";
-    std::cout << "   - Processing multi-level data\n";
-    std::cout << "   - Combining sequences\n";
+    std::println("");
 }
 }
 
@@ -336,7 +346,8 @@ void demonstrate() {
 namespace ElementsView {
 
 void demonstrate() {
-    std::cout << "\n=== elements - Access Tuple Elements ===\n";
+    std::println("");
+    std::println("=== elements - Access Tuple Elements ===");
 
     std::vector<std::pair<int, std::string>> data = {
         {1, "Alice"},
@@ -345,33 +356,36 @@ void demonstrate() {
         {4, "Diana"}
     };
 
-    std::cout << "\nOriginal pairs:\n";
+    std::println("");
+    std::println("Original pairs:");
     for (const auto& [id, name] : data) {
-        std::cout << "  " << id << ": " << name << "\n";
+        std::println("  {}: {}", id, name);
     }
 
     // Extract first elements (keys)
-    std::cout << "\nIDs only (elements<0>): ";
+    std::println("");
+    std::print("IDs only (elements<0>): ");
     auto ids = data | std::views::elements<0>;
-    for (auto id : ids) std::cout << id << " ";
+    for (auto id : ids) std::print("{} ", id);
 
     // Extract second elements (values)
-    std::cout << "\nNames only (elements<1>): ";
+    std::println("");
+    std::print("Names only (elements<1>): ");
     auto names = data | std::views::elements<1>;
-    for (const auto& name : names) std::cout << name << " ";
+    for (const auto& name : names) std::print("{} ", name);
 
     // Alias: keys and values
-    std::cout << "\n\nUsing keys/values aliases:\n";
-    std::cout << "Keys: ";
-    for (auto key : data | std::views::keys) std::cout << key << " ";
+    std::println("");
+    std::println("");
+    std::println("Using keys/values aliases:");
+    std::print("Keys: ");
+    for (auto key : data | std::views::keys) std::print("{} ", key);
 
-    std::cout << "\nValues: ";
-    for (const auto& value : data | std::views::values) std::cout << value << " ";
+    std::println("");
+    std::print("Values: ");
+    for (const auto& value : data | std::views::values) std::print("{} ", value);
 
-    std::cout << "\n\n✅ elements useful for:\n";
-    std::cout << "   - Extracting from pairs/tuples\n";
-    std::cout << "   - Working with map-like structures\n";
-    std::cout << "   - Projecting specific fields\n";
+    std::println("");
 }
 }
 
@@ -389,7 +403,8 @@ struct Product {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Real-World: Product Analysis ===\n";
+    std::println("");
+    std::println("=== Real-World: Product Analysis ===");
 
     std::vector<Product> products = {
                                      {"Laptop", 1200.0, 5, "Electronics"},
@@ -401,7 +416,8 @@ void demonstrate() {
                                      };
 
     // Task 1: Total value of electronics
-    std::cout << "\nTask 1: Total value of Electronics\n";
+    std::println("");
+    std::println("Task 1: Total value of Electronics");
     auto electronics_value = products
                              | std::views::filter([](const Product& p) {
                                    return p.category == "Electronics";
@@ -414,44 +430,41 @@ void demonstrate() {
     for (auto value : electronics_value) {
         total += value;
     }
-    std::cout << "Total: $" << total << "\n";
+    std::println("Total: ${}", total);
 
     // Task 2: Expensive products (> $100)
-    std::cout << "\nTask 2: Expensive products (>$100):\n";
+    std::println("");
+    std::println("Task 2: Expensive products (>$100):");
     auto expensive = products
                      | std::views::filter([](const Product& p) { return p.price > 100; })
                      | std::views::transform([](const Product& p) { return p.name; });
 
     for (const auto& name : expensive) {
-        std::cout << "  - " << name << "\n";
+        std::println("  - {}", name);
     }
 
     // Task 3: Low stock items (< 20)
-    std::cout << "\nTask 3: Low stock items (<20):\n";
+    std::println("");
+    std::println("Task 3: Low stock items (<20):");
     auto low_stock = products
                      | std::views::filter([](const Product& p) { return p.quantity < 20; })
                      | std::views::take(3);  // Top 3
 
     for (const auto& p : low_stock) {
-        std::cout << "  - " << p.name << " (qty: " << p.quantity << ")\n";
+        std::println("  - {} (qty: {})", p.name, p.quantity);
     }
 
     // Task 4: Price range
-    std::cout << "\nTask 4: Prices sorted:\n";
+    std::println("");
+    std::println("Task 4: Prices sorted:");
     auto prices = products
                   | std::views::transform([](const Product& p) { return p.price; });
 
     std::vector<double> price_vec(prices.begin(), prices.end());
     std::ranges::sort(price_vec);
 
-    std::cout << "  Min: $" << price_vec.front()
-              << ", Max: $" << price_vec.back() << "\n";
+    std::println("  Min: ${}, Max: ${}", price_vec.front(), price_vec.back());
 
-    std::cout << "\n✅ Ranges enable clean data pipelines:\n";
-    std::cout << "   - Readable business logic\n";
-    std::cout << "   - Easy to modify and extend\n";
-    std::cout << "   - Efficient (lazy evaluation)\n";
-    std::cout << "   - Type-safe\n";
 }
 }
 
@@ -462,36 +475,12 @@ void demonstrate() {
 namespace BestPractices {
 
 void demonstrate() {
-    std::cout << "\n=== Best Practices ===\n";
+    std::println("");
+    std::println("=== Best Practices ===");
 
     std::vector<int> large_data(1000);
     std::iota(large_data.begin(), large_data.end(), 1);
 
-    std::cout << "\n✅ DO: Use ranges for clarity\n";
-    std::cout << "auto result = data | filter(...) | transform(...);\n";
-
-    std::cout << "\n✅ DO: Leverage lazy evaluation\n";
-    std::cout << "auto result = data | view1 | view2 | take(10);\n";
-    std::cout << "(Only processes what's needed!)\n";
-
-    std::cout << "\n✅ DO: Compose reusable views\n";
-    std::cout << "auto evens = numbers | filter(is_even);\n";
-    std::cout << "auto squared_evens = evens | transform(square);\n";
-
-    std::cout << "\n❌ DON'T: Over-complicate simple cases\n";
-    std::cout << "For simple loops, traditional for may be clearer\n";
-
-    std::cout << "\n❌ DON'T: Materialize unless needed\n";
-    std::cout << "Views are lazy - don't convert to vector unnecessarily\n";
-
-    std::cout << "\n💡 Performance tips:\n";
-    std::cout << "   - Views don't copy data (zero overhead)\n";
-    std::cout << "   - Lazy evaluation = better performance\n";
-    std::cout << "   - Composable = reusable code\n";
-    std::cout << "   - Type-safe = fewer bugs\n";
-
-    std::cout << "\n💡 C++23 upgrade: ranges::to<> makes conversions easier\n";
-    std::cout << "   auto vec = range | ranges::to<std::vector>(); // C++23\n";
 }
 }
 
@@ -500,9 +489,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║              C++20 RANGES INTRODUCTION              ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║              C++20 RANGES INTRODUCTION              ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     BasicViews::demonstrate();
     LazyEvaluation::demonstrate();
@@ -515,22 +504,12 @@ int main() {
     RealWorldExample::demonstrate();
     BestPractices::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 RANGES MASTERY CHECKLIST:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Understand lazy evaluation\n";
-    std::cout << "✅ Use pipe operator for composition\n";
-    std::cout << "✅ Know common views (filter, transform, take, drop)\n";
-    std::cout << "✅ Use range algorithms (sort, find, count, etc.)\n";
-    std::cout << "✅ Work with iota for sequences\n";
-    std::cout << "✅ Flatten with join\n";
-    std::cout << "✅ Extract with elements/keys/values\n";
-    std::cout << "✅ Build production pipelines\n";
-    std::cout << "\n💡 think-cell Philosophy:\n";
-    std::cout << "   'We prefer functional-style generic algorithms\n";
-    std::cout << "    and ranges over imperative programming.'\n";
-    std::cout << "\n🚀 Ranges are the FUTURE of C++ collections!\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 RANGES MASTERY CHECKLIST:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }
@@ -578,7 +557,7 @@ int main() {
  * ===========
  * - Practice building your own pipelines
  * - Explore TemplateMeta/ for compile-time patterns
- * - Study ThinkCellPhilosophy/ for production examples
+ * - Study ../../RangesAndGenericStyle/ for production examples
  * - Read C++20 ranges documentation
  * - Consider upgrading to C++23 for ranges::to<>
  */

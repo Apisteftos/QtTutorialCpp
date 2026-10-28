@@ -1,8 +1,8 @@
-#include <iostream>
 #include <fcntl.h>        // O_CREAT, O_WRONLY
 #include <mqueue.h>       // mq_open, mq_send, mq_close, mq_unlink
 #include <cstring>
 #include <unistd.h>
+#include <print>
 
 // ============================================
 // WHAT IS A MESSAGE QUEUE?
@@ -34,9 +34,10 @@ struct Message {
 };
 
 int main() {
-    std::cout << "╔══════════════════════════════════════╗\n";
-    std::cout << "║    IPC — Message Queue Sender        ║\n";
-    std::cout << "╚══════════════════════════════════════╝\n\n";
+    std::println("╔══════════════════════════════════════╗");
+    std::println("║    IPC — Message Queue Sender        ║");
+    std::println("╚══════════════════════════════════════╝");
+    std::println("");
 
     // 1. Configure queue attributes
     struct mq_attr attr;
@@ -52,9 +53,10 @@ int main() {
         return 1;
     }
 
-    std::cout << "Queue created: " << QUEUE_NAME << "\n";
-    std::cout << "Max messages: " << MAX_MSGS << "\n";
-    std::cout << "Max msg size: " << MAX_MSG_SIZE << " bytes\n\n";
+    std::println("Queue created: {}", QUEUE_NAME);
+    std::println("Max messages: {}", MAX_MSGS);
+    std::println("Max msg size: {} bytes", MAX_MSG_SIZE);
+    std::println("");
 
     // 3. Send messages with different priorities
     const char* texts[] = {
@@ -75,14 +77,13 @@ int main() {
         if (result == -1) {
             perror("mq_send failed");
         } else {
-            std::cout << "[Sender] Sent msg #" << msg.id
-                      << " priority=" << priorities[i]
-                      << " → \"" << msg.text << "\"\n";
+            std::println("[Sender] Sent msg #{} priority={} → \"{}\"", msg.id, priorities[i], msg.text);
         }
         usleep(200000);  // 200ms between sends
     }
 
-    std::cout << "\n[Sender] All messages sent. Closing queue.\n";
+    std::println("");
+    std::println("[Sender] All messages sent. Closing queue.");
 
     // 4. Close (does NOT delete the queue)
     mq_close(mq);

@@ -22,7 +22,7 @@
 //   7.  Read JSON from file
 //   8.  Write JSON to file
 //   9.  Error handling — malformed JSON
-//  10.  Real use case — MCX session config
+//  10.  Real use case — service config
 // ============================================================
 
 using json = nlohmann::json;
@@ -31,14 +31,14 @@ using json = nlohmann::json;
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Create JSON object from scratch\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Create JSON object from scratch");
+    std::println("=====================================================");
 
     json config;
-    config["app"]     = "MCXApp";
+    config["app"]     = "MyApp";
     config["version"] = "2.3.1";
-    config["port"]    = 5060;
+    config["port"]    = 8080;
     config["debug"]   = true;
     config["pi"]      = 3.14159;
 
@@ -49,16 +49,18 @@ int main()
     std::println("pi:      {}", config["pi"].get<double>());
 
     // Check type
-    std::println("\ntype checks:");
+    std::println("");
+    std::println("type checks:");
     std::println("  config[port] is_number: {}", config["port"].is_number());
     std::println("  config[app]  is_string: {}", config["app"].is_string());
     std::println("  config[debug] is_bool:  {}", config["debug"].is_boolean());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Parse JSON from string\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Parse JSON from string");
+    std::println("=====================================================");
 
     std::string jsonStr = R"({
         "name": "Kostas",
@@ -76,11 +78,12 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Access values — [], at(), value()\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Access values — [], at(), value()");
+    std::println("=====================================================");
 
-    json data = json::parse(R"({"host":"192.168.1.1","port":5060,"timeout":30})");
+    json data = json::parse(R"({"host":"192.168.1.1","port":8080,"timeout":30})");
 
     // [] — no bounds check, creates key if missing
     std::println("host ([]): {}", data["host"].get<std::string>());
@@ -103,43 +106,46 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Nested objects\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Nested objects");
+    std::println("=====================================================");
 
-    json session;
-    session["id"]              = "SES-001";
-    session["group"]["id"]     = "GRP-ALPHA";
-    session["group"]["name"]   = "Alpha Team";
-    session["group"]["active"] = true;
-    session["server"]["host"]  = "192.168.1.100";
-    session["server"]["port"]  = 5060;
-    session["server"]["tls"]   = false;
+    json service;
+    service["id"]              = "SVC-001";
+    service["team"]["id"]     = "TEAM-A";
+    service["team"]["name"]   = "Platform Team";
+    service["team"]["active"] = true;
+    service["server"]["host"]  = "192.168.1.100";
+    service["server"]["port"]  = 8080;
+    service["server"]["tls"]   = false;
 
-    std::println("session id:       {}", session["id"].get<std::string>());
-    std::println("group id:         {}", session["group"]["id"].get<std::string>());
-    std::println("group name:       {}", session["group"]["name"].get<std::string>());
-    std::println("server host:      {}", session["server"]["host"].get<std::string>());
-    std::println("server port:      {}", session["server"]["port"].get<int>());
-    std::println("server tls:       {}", session["server"]["tls"].get<bool>());
+    std::println("service id:       {}", service["id"].get<std::string>());
+    std::println("team id:          {}", service["team"]["id"].get<std::string>());
+    std::println("team name:        {}", service["team"]["name"].get<std::string>());
+    std::println("server host:      {}", service["server"]["host"].get<std::string>());
+    std::println("server port:      {}", service["server"]["port"].get<int>());
+    std::println("server tls:       {}", service["server"]["tls"].get<bool>());
 
     // Iterate over nested object
-    std::cout << "\nserver keys:\n";
-    for (auto& [key, value] : session["server"].items())
+    std::println("");
+    std::println("server keys:");
+    for (auto& [key, value] : service["server"].items())
         std::println("  {} = {}", key, value.dump());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: JSON arrays ↔ std::vector\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: JSON arrays ↔ std::vector");
+    std::println("=====================================================");
 
     // JSON array from initializer list
     json colors = {"red", "green", "blue"};
     std::println("colors size: {}", colors.size());
     for (const auto& c : colors)
         std::print("  {}", c.get<std::string>());
-    std::cout << '\n';
+    std::println("");
 
     // Array of objects
     json users = json::array();
@@ -147,62 +153,67 @@ int main()
     users.push_back({{"name","Bob"},  {"age",25}});
     users.push_back({{"name","Carol"},{"age",35}});
 
-    std::cout << "\nusers array:\n";
+    std::println("");
+    std::println("users array:");
     for (const auto& u : users)
         std::println("  {} age {}", u["name"].get<std::string>(), u["age"].get<int>());
 
     // Convert JSON array ↔ std::vector
     json nums = {10, 20, 30, 40, 50};
     std::vector<int> vec = nums.get<std::vector<int>>();
-    std::cout << "\nvector from JSON: ";
+    std::println("");
+    std::print("vector from JSON: ");
     for (int n : vec) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // vector → JSON
-    std::vector<std::string> groups = {"GRP-ALPHA", "GRP-BETA", "GRP-GAMMA"};
-    json groupJson = groups;
-    std::println("JSON from vector: {}", groupJson.dump());
+    std::vector<std::string> tags = {"TEAM-A", "TEAM-B", "TEAM-C"};
+    json tagJson = tags;
+    std::println("JSON from vector: {}", tagJson.dump());
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Serialize — dump() and pretty print\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Serialize — dump() and pretty print");
+    std::println("=====================================================");
 
     json obj;
-    obj["name"]    = "MCXApp";
-    obj["port"]    = 5060;
-    obj["groups"]  = {"ALPHA", "BETA"};
+    obj["name"]    = "MyApp";
+    obj["port"]    = 8080;
+    obj["tags"]  = {"alpha", "beta"};
     obj["enabled"] = true;
 
     // Compact
     std::println("compact: {}", obj.dump());
 
     // Pretty print with indent
-    std::println("\npretty (2 spaces):\n{}", obj.dump(2));
+    std::println("");
+    std::println("pretty (2 spaces):\n{}", obj.dump(2));
 
     // Pretty print with 4 spaces
     std::println("pretty (4 spaces):\n{}", obj.dump(4));
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Write JSON to file\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Write JSON to file");
+    std::println("=====================================================");
 
     json configFile;
-    configFile["app"]             = "MCXApp";
+    configFile["app"]             = "MyApp";
     configFile["version"]         = "2.3.1";
     configFile["server"]["host"]  = "192.168.1.100";
-    configFile["server"]["port"]  = 5060;
+    configFile["server"]["port"]  = 8080;
     configFile["server"]["tls"]   = true;
-    configFile["groups"]          = {"GRP-ALPHA", "GRP-BETA"};
+    configFile["tags"]          = {"TEAM-A", "TEAM-B"};
     configFile["debug"]           = false;
 
     {
         std::ofstream outFile("config.json");
         if (!outFile) {
-            std::cerr << "ERROR: cannot write config.json\n";
+            std::println(stderr, "ERROR: cannot write config.json");
             return 1;
         }
         outFile << configFile.dump(4);   // pretty print to file
@@ -210,7 +221,8 @@ int main()
     }
 
     // Verify by printing file contents
-    std::cout << "\nconfig.json contents:\n";
+    std::println("");
+    std::println("config.json contents:");
     {
         std::ifstream f("config.json");
         std::string line;
@@ -220,14 +232,15 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Read JSON from file\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Read JSON from file");
+    std::println("=====================================================");
 
     {
         std::ifstream inFile("config.json");
         if (!inFile) {
-            std::cerr << "ERROR: cannot read config.json\n";
+            std::println(stderr, "ERROR: cannot read config.json");
             return 1;
         }
 
@@ -241,17 +254,18 @@ int main()
         std::println("  tls:     {}", loaded["server"]["tls"].get<bool>());
         std::println("  debug:   {}", loaded["debug"].get<bool>());
 
-        std::cout << "  groups: ";
-        for (const auto& g : loaded["groups"])
+        std::print("  tags: ");
+        for (const auto& g : loaded["tags"])
             std::print("{} ", g.get<std::string>());
-        std::cout << '\n';
+        std::println("");
     }
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Error handling — malformed JSON\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Error handling — malformed JSON");
+    std::println("=====================================================");
 
     // Parse error
     try {
@@ -286,60 +300,62 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Real use case — MCX session config\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Real use case — service config");
+    std::println("=====================================================");
 
-    // Build MCX config
-    json mcxConfig;
-    mcxConfig["session"]["id"]              = "MCX-SES-001";
-    mcxConfig["session"]["group"]           = "GRP-BOS-Network-ALPHA";
-    mcxConfig["session"]["priority"]        = 1;
-    mcxConfig["session"]["floor_timeout"]   = 30;
+    // Build the service config
+    json appConfig;
+    appConfig["service"]["id"]              = "SVC-001";
+    appConfig["service"]["team"]           = "TEAM-PLATFORM";
+    appConfig["service"]["priority"]        = 1;
+    appConfig["service"]["request_timeout"]   = 30;
 
-    mcxConfig["network"]["host"]            = "192.168.100.1";
-    mcxConfig["network"]["port"]            = 5060;
-    mcxConfig["network"]["protocol"]        = "UDP";
-    mcxConfig["network"]["tls"]             = true;
+    appConfig["network"]["host"]            = "192.168.100.1";
+    appConfig["network"]["port"]            = 8080;
+    appConfig["network"]["protocol"]        = "TCP";
+    appConfig["network"]["tls"]             = true;
 
-    mcxConfig["codec"]["name"]              = "AMR-WB";
-    mcxConfig["codec"]["bitrate"]           = 23850;
-    mcxConfig["codec"]["sample_rate"]       = 16000;
+    appConfig["compression"]["name"]        = "zstd";
+    appConfig["compression"]["level"]       = 3;
+    appConfig["compression"]["block_size"]  = 65536;
 
-    mcxConfig["participants"] = json::array();
+    appConfig["users"] = json::array();
     for (auto& [id, role] : std::vector<std::pair<std::string,std::string>>{
-                                                                             {"PTT-001","dispatcher"}, {"PTT-002","unit"}, {"PTT-003","unit"}})
+                                                                             {"USER-001","admin"}, {"USER-002","member"}, {"USER-003","member"}})
     {
-        mcxConfig["participants"].push_back({{"id",id},{"role",role}});
+        appConfig["users"].push_back({{"id",id},{"role",role}});
     }
 
     // Save to file
     {
-        std::ofstream f("mcx_config.json");
-        f << mcxConfig.dump(4);
+        std::ofstream f("app_config.json");
+        f << appConfig.dump(4);
     }
 
     // Load and use
     {
-        std::ifstream f("mcx_config.json");
+        std::ifstream f("app_config.json");
         json loaded = json::parse(f);
 
-        std::println("MCX Session Config:");
-        std::println("  session:    {}", loaded["session"]["id"].get<std::string>());
-        std::println("  group:      {}", loaded["session"]["group"].get<std::string>());
+        std::println("Service Config:");
+        std::println("  service:    {}", loaded["service"]["id"].get<std::string>());
+        std::println("  team:       {}", loaded["service"]["team"].get<std::string>());
         std::println("  host:       {}", loaded["network"]["host"].get<std::string>());
-        std::println("  codec:      {}", loaded["codec"]["name"].get<std::string>());
-        std::println("  bitrate:    {} bps", loaded["codec"]["bitrate"].get<int>());
+        std::println("  compression:{}", loaded["compression"]["name"].get<std::string>());
+        std::println("  level:      {}", loaded["compression"]["level"].get<int>());
 
-        std::cout << "  participants:\n";
-        for (const auto& p : loaded["participants"])
+        std::println("  users:");
+        for (const auto& p : loaded["users"])
             std::println("    {} ({})", p["id"].get<std::string>(), p["role"].get<std::string>());
     }
 
     // Cleanup
     std::filesystem::remove("config.json");
-    std::filesystem::remove("mcx_config.json");
+    std::filesystem::remove("app_config.json");
 
-    std::cout << "\n=== JSON complete ===\n";
+    std::println("");
+    std::println("=== JSON complete ===");
     return 0;
 }

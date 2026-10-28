@@ -1,4 +1,3 @@
-#include <iostream>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -11,13 +10,14 @@
 #include <chrono>
 #include <string>
 #include <numeric>
+#include <print>
 
 using namespace std::chrono_literals;
 
 std::mutex g_coutMutex;
 void safePrint(const std::string& msg) {
     std::lock_guard<std::mutex> lock(g_coutMutex);
-    std::cout << msg << '\n';
+    std::println("{}", msg);
 }
 
 // ============================================================
@@ -84,11 +84,12 @@ public:
 int main()
 {
     unsigned int cores = std::thread::hardware_concurrency();
-    std::cout << "Hardware cores: " << cores << '\n';
+    std::println("Hardware cores: {}", cores);
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 1: Submit void tasks\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 1: Submit void tasks");
+    std::println("=====================================================");
     {
         ThreadPool pool(4);
         for (int i=0;i<8;++i) {
@@ -99,37 +100,40 @@ int main()
             });
         }
         pool.waitAll();
-        std::cout << "All tasks done\n";
+        std::println("All tasks done");
     }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Submit with return values\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Submit with return values");
+    std::println("=====================================================");
     {
         ThreadPool pool(cores);
         auto f1 = pool.submit([](int a, int b) { std::this_thread::sleep_for(20ms); return a+b; }, 10, 20);
         auto f2 = pool.submit([](int n) { long long s=0; for(int i=1;i<=n;++i)s+=i; return s; }, 100);
         auto f3 = pool.submit([]() -> std::string { std::this_thread::sleep_for(15ms); return "hello from pool"; });
-        std::cout << "f1 (10+20):     " << f1.get() << '\n';
-        std::cout << "f2 (sum 1-100): " << f2.get() << '\n';
-        std::cout << "f3 (string):    " << f3.get() << '\n';
+        std::println("f1 (10+20):     {}", f1.get());
+        std::println("f2 (sum 1-100): {}", f2.get());
+        std::println("f3 (string):    {}", f3.get());
     }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Exception handling\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Exception handling");
+    std::println("=====================================================");
     {
         ThreadPool pool(2);
         auto ok  = pool.submit([]() { return 42; });
         auto bad = pool.submit([]() -> int { throw std::runtime_error("task failed!"); return 0; });
-        std::cout << "OK task: " << ok.get() << '\n';
+        std::println("OK task: {}", ok.get());
         try { bad.get(); } catch (const std::exception& e) {
-            std::cout << "Caught: " << e.what() << '\n'; }
+            std::println("Caught: {}", e.what()); }
     }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Parallel computation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Parallel computation");
+    std::println("=====================================================");
     {
         ThreadPool pool(cores);
         const int SIZE = 1000000;
@@ -143,13 +147,14 @@ int main()
                 long long sum=0; for(int j=s;j<e;++j)sum+=data[j]; return sum; }));
         }
         long long total=0; for (auto& f:futures) total+=f.get();
-        std::cout << "Parallel sum: " << total << '\n';
-        std::cout << "Expected:     " << (long long)SIZE*(SIZE+1)/2 << '\n';
+        std::println("Parallel sum: {}", total);
+        std::println("Expected:     {}", (long long)SIZE*(SIZE+1)/2);
     }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Task pipeline (chained futures)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Task pipeline (chained futures)");
+    std::println("=====================================================");
     {
         ThreadPool pool(4);
         auto fetch = pool.submit([]() -> std::string {
@@ -161,12 +166,13 @@ int main()
         auto process = pool.submit([parsed]() -> std::string {
             safePrint("[stage 3] processed: " + std::to_string(parsed));
             return "result_" + std::to_string(parsed * 2); });
-        std::cout << "Pipeline result: " << process.get() << '\n';
+        std::println("Pipeline result: {}", process.get());
     }
 
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Pool vs raw threads (performance)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Pool vs raw threads (performance)");
+    std::println("=====================================================");
     {
         const int N = 100;
         auto t1 = std::chrono::high_resolution_clock::now();
@@ -184,10 +190,11 @@ int main()
         double poolMs = std::chrono::duration<double,std::milli>(
                             std::chrono::high_resolution_clock::now()-t2).count();
 
-        std::cout << N << " tasks — raw: " << rawMs << " ms | pool: " << poolMs << " ms\n";
-        std::cout << "Pool speedup: " << rawMs/poolMs << "x\n";
+        std::println("{} tasks — raw: {} ms | pool: {} ms", N, rawMs, poolMs);
+        std::println("Pool speedup: {}x", rawMs/poolMs);
     }
 
-    std::cout << "\n=== ThreadPool complete ===\n";
+    std::println("");
+    std::println("=== ThreadPool complete ===");
     return 0;
 }

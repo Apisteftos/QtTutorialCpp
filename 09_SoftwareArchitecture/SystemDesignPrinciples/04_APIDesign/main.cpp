@@ -10,7 +10,6 @@
 //   5. Const Correctness         — promises to callers via const
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <optional>
@@ -20,6 +19,7 @@
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
+#include <print>
 
 // =============================================================================
 // 1. Fluent Interface — Query Builder
@@ -171,9 +171,7 @@ struct ConnectOptions {
 };
 
 void good_connect(const std::string& host, ConnectOptions opts = {}) {
-    std::cout << "  connect(" << host
-              << " secure=" << opts.secure
-              << " async="  << opts.async << ")\n";
+    std::println("  connect({} secure={} async={})", host, opts.secure, opts.async);
 }
 // Caller: good_connect("host", {.secure=true, .retry=false});  — clear!
 
@@ -206,13 +204,13 @@ std::string good_greet(const std::string& name) {
 
 // ❌ Bad — takes User just to send email
 void bad_send_welcome(const User& user) {
-    std::cout << "  send email to: " << user.email << '\n';
+    std::println("  send email to: {}", user.email);
     // Has unnecessary access to age, password_hash, etc.
 }
 
 // ✅ Good — takes only the email address
 void good_send_welcome(const std::string& email) {
-    std::cout << "  send email to: " << email << '\n';
+    std::println("  send email to: {}", email);
 }
 
 } // namespace narrow_inputs
@@ -250,7 +248,7 @@ private:
 // This function takes const ref — it only needs to read
 // Compiler enforces: cannot accidentally call non-const methods
 void printRepo(const UserRepository& repo) {
-    std::cout << "  Repository has " << repo.count() << " users\n";
+    std::println("  Repository has {} users", repo.count());
     // repo.remove(1);  // ← compile error: remove() is not const
     //                  // const correctness catches bugs at compile time
 }
@@ -263,10 +261,11 @@ void printRepo(const UserRepository& repo) {
 
 int main()
 {
-    std::cout << "=== API Design Principles Demo ===\n\n";
+    std::println("=== API Design Principles Demo ===");
+    std::println("");
 
     // ── 1. Fluent Interface ───────────────────────────────────────────────────
-    std::cout << "--- 1. Fluent Interface (Query Builder) ---\n";
+    std::println("--- 1. Fluent Interface (Query Builder) ---");
     {
         auto query = fluent::QueryBuilder{}
                          .select({"id", "name", "email"})
@@ -277,7 +276,8 @@ int main()
                          .limit(10)
                          .build();
 
-        std::cout << query << "\n\n";
+        std::println("{}", query);
+        std::println("");
         assert(query.find("SELECT") != std::string::npos);
         assert(query.find("LIMIT 10") != std::string::npos);
 
@@ -287,68 +287,70 @@ int main()
             fluent::QueryBuilder{}.select({"id"}).build();
         } catch (const std::logic_error&) { threw = true; }
         assert(threw);
-        std::cout << "  ✓ Validation catches missing table at build()\n";
+        std::println("  ✓ Validation catches missing table at build()");
     }
 
     // ── 2. Typed Errors ───────────────────────────────────────────────────────
-    std::cout << "\n--- 2. Typed Errors ---\n";
+    std::println("");
+    std::println("--- 2. Typed Errors ---");
     {
         // Bad API — easy to ignore -1
         int bad = typed_errors::bad_parse_age("abc");
         assert(bad == -1);  // silent failure — easy to miss
-        std::cout << "  Bad API: parse_age('abc') = " << bad << " (easy to ignore)\n";
+        std::println("  Bad API: parse_age('abc') = {} (easy to ignore)", bad);
 
         // Good API — caller must handle error case
         auto r1 = typed_errors::parse_age("25");
         assert(r1.has_value() && *r1 == 25);
-        std::cout << "  Good API: parse_age('25') = " << *r1 << '\n';
+        std::println("  Good API: parse_age('25') = {}", *r1);
 
         auto r2 = typed_errors::parse_age("abc");
         assert(!r2.has_value());
         assert(r2.error() == typed_errors::ParseError::InvalidFormat);
-        std::cout << "  Good API: parse_age('abc') = error: "
-                  << typed_errors::to_string(r2.error()) << '\n';
+        std::println("  Good API: parse_age('abc') = error: {}", typed_errors::to_string(r2.error()));
 
         auto r3 = typed_errors::parse_age("999");
         assert(r3.error() == typed_errors::ParseError::OutOfRange);
-        std::cout << "  Good API: parse_age('999') = error: "
-                  << typed_errors::to_string(r3.error()) << '\n';
-        std::cout << "  ✓ Caller cannot accidentally ignore typed errors\n";
+        std::println("  Good API: parse_age('999') = error: {}", typed_errors::to_string(r3.error()));
+        std::println("  ✓ Caller cannot accidentally ignore typed errors");
     }
 
     // ── 3. Boolean Parameter Smell ────────────────────────────────────────────
-    std::cout << "\n--- 3. Boolean Parameter → Enum ---\n";
+    std::println("");
+    std::println("--- 3. Boolean Parameter → Enum ---");
     {
         std::vector<int> v = {5, 2, 8, 1, 9, 3};
 
         bool_smell::good_sort(v, bool_smell::SortOrder::Ascending);
         assert(std::is_sorted(v.begin(), v.end()));
-        std::cout << "  good_sort(v, SortOrder::Ascending) ✓\n";
+        std::println("  good_sort(v, SortOrder::Ascending) ✓");
 
         bool_smell::good_sort(v, bool_smell::SortOrder::Descending);
         assert(std::is_sorted(v.rbegin(), v.rend()));
-        std::cout << "  good_sort(v, SortOrder::Descending) ✓\n";
+        std::println("  good_sort(v, SortOrder::Descending) ✓");
 
         bool_smell::good_connect("db.server.com", {.secure=true, .async=false});
-        std::cout << "  ✓ Named options — intent is obvious at call site\n";
+        std::println("  ✓ Named options — intent is obvious at call site");
     }
 
     // ── 4. Narrow Inputs ─────────────────────────────────────────────────────
-    std::cout << "\n--- 4. Narrow Inputs ---\n";
+    std::println("");
+    std::println("--- 4. Narrow Inputs ---");
     {
         narrow_inputs::User user{1, "Kostas", "k@example.com", "hash123", 35};
 
         auto g1 = narrow_inputs::good_greet(user.name);
         assert(g1 == "Hello, Kostas!");
-        std::cout << "  good_greet(name): " << g1 << '\n';
-        std::cout << "  ✓ No access to password_hash or age\n";
+        std::println("  good_greet(name): {}", g1);
+        std::println("  ✓ No access to password_hash or age");
 
         narrow_inputs::good_send_welcome(user.email);
-        std::cout << "  ✓ Only email passed — principle of least privilege\n";
+        std::println("  ✓ Only email passed — principle of least privilege");
     }
 
     // ── 5. Const Correctness ──────────────────────────────────────────────────
-    std::cout << "\n--- 5. Const Correctness ---\n";
+    std::println("");
+    std::println("--- 5. Const Correctness ---");
     {
         const_correct::UserRepository repo;
         repo.add(1, "Kostas");
@@ -364,10 +366,11 @@ int main()
 
         repo.remove(2);
         assert(repo.count() == 1);
-        std::cout << "  ✓ const methods callable on const ref\n";
-        std::cout << "  ✓ non-const methods only callable on mutable object\n";
+        std::println("  ✓ const methods callable on const ref");
+        std::println("  ✓ non-const methods only callable on mutable object");
     }
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

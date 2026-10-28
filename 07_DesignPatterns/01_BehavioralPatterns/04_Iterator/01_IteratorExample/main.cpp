@@ -1,120 +1,79 @@
-/**
- * Iterator Design Pattern
+/*
+ * Iterator: a ring buffer that can be used in a range-based for loop
  *
- * Intent: Lets you traverse elements of a collection without exposing its
- * underlying representation (list, stack, tree, etc.).
+ * Intent: traverse a collection without exposing how it stores its elements.
+ * Here the iterator follows the C++ convention (begin/end, operator*, ++, !=),
+ * so the standard range-for loop and algorithms work with it.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
+#include <array>
+#include <cstddef>
+#include <print>
 #include <string>
-#include <vector>
 
-/**
- * C++ has its own implementation of iterator that works with a different
- * generics containers defined by the standard library.
- */
-
-template <typename T, typename U>
-class Iterator {
+template <typename T, std::size_t Capacity>
+class RingBuffer {
 public:
-    typedef typename std::vector<T>::iterator iter_type;
-    Iterator(U *p_data, bool reverse = false) : m_p_data_(p_data) {
-        m_it_ = m_p_data_->m_data_.begin();
+    // When the buffer is full, the oldest element is overwritten.
+    void push(const T& value) {
+        data_[(head_ + size_) % Capacity] = value;
+        if (size_ < Capacity) {
+            ++size_;
+        } else {
+            head_ = (head_ + 1) % Capacity;
+        }
     }
 
-    void First() {
-        m_it_ = m_p_data_->m_data_.begin();
-    }
+    std::size_t size() const { return size_; }
 
-    void Next() {
-        m_it_++;
-    }
+    class Iterator {
+    public:
+        Iterator(const RingBuffer* buffer, std::size_t position)
+            : buffer_(buffer), position_(position) {}
 
-    bool IsDone() {
-        return (m_it_ == m_p_data_->m_data_.end());
-    }
+        const T& operator*() const {
+            return buffer_->data_[(buffer_->head_ + position_) % Capacity];
+        }
+        Iterator& operator++() {
+            ++position_;
+            return *this;
+        }
+        bool operator!=(const Iterator& other) const { return position_ != other.position_; }
 
-    iter_type Current() {
-        return m_it_;
-    }
+    private:
+        const RingBuffer* buffer_;
+        std::size_t position_;
+    };
+
+    Iterator begin() const { return Iterator(this, 0); }
+    Iterator end() const { return Iterator(this, size_); }
 
 private:
-    U *m_p_data_;
-    iter_type m_it_;
+    std::array<T, Capacity> data_{};
+    std::size_t head_ = 0;
+    std::size_t size_ = 0;
 };
-
-/**
- * Generic Collections/Containers provides one or several methods for retrieving
- * fresh iterator instances, compatible with the collection class.
- */
-
-template <class T>
-class Container {
-    friend class Iterator<T, Container>;
-
-public:
-    void Add(T a) {
-        m_data_.push_back(a);
-    }
-
-    Iterator<T, Container> *CreateIterator() {
-        return new Iterator<T, Container>(this);
-    }
-
-private:
-    std::vector<T> m_data_;
-};
-
-class Data {
-public:
-    Data(int a = 0) : m_data_(a) {}
-
-    void set_data(int a) {
-        m_data_ = a;
-    }
-
-    int data() {
-        return m_data_;
-    }
-
-private:
-    int m_data_;
-};
-
-/**
- * The client code may or may not know about the Concrete Iterator or Collection
- * classes, for this implementation the container is generic so you can used
- * with an int or with a custom class.
- */
-void ClientCode() {
-    std::cout << "________________Iterator with int______________________________________" << std::endl;
-    Container<int> cont;
-
-    for (int i = 0; i < 10; i++) {
-        cont.Add(i);
-    }
-
-    Iterator<int, Container<int>> *it = cont.CreateIterator();
-    for (it->First(); !it->IsDone(); it->Next()) {
-        std::cout << *it->Current() << std::endl;
-    }
-
-    Container<Data> cont2;
-    Data a(100), b(1000), c(10000);
-    cont2.Add(a);
-    cont2.Add(b);
-    cont2.Add(c);
-
-    std::cout << "________________Iterator with custom Class______________________________" << std::endl;
-    Iterator<Data, Container<Data>> *it2 = cont2.CreateIterator();
-    for (it2->First(); !it2->IsDone(); it2->Next()) {
-        std::cout << it2->Current()->data() << std::endl;
-    }
-    delete it;
-    delete it2;
-}
 
 int main() {
-    ClientCode();
+    RingBuffer<int, 4> numbers;
+    for (int i = 1; i <= 6; ++i) {
+        numbers.push(i);
+    }
+
+    std::println("numbers (capacity 4, pushed 1..6):");
+    for (int value : numbers) {
+        std::println("  {}", value);
+    }
+
+    RingBuffer<std::string, 3> words;
+    words.push("alpha");
+    words.push("beta");
+
+    std::println("words ({} stored):", words.size());
+    for (const auto& word : words) {
+        std::println("  {}", word);
+    }
     return 0;
 }

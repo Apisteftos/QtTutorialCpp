@@ -1,138 +1,96 @@
-#include <iostream>
-#include <unordered_map>
-
-using std::string;
-
-// Prototype Design Pattern
-//
-// Intent: Lets you copy existing objects without making your code dependent on
-// their classes.
-
-enum Type {
-    PROTOTYPE_1 = 0,
-    PROTOTYPE_2
-};
-
-/**
- * The example class that has cloning ability. We'll see how the values of field
- * with different types will be cloned.
+/*
+ * Prototype: a sticker book
+ *
+ * Intent: create new objects by copying existing ones. The client asks for a
+ * copy of a registered template and never needs to know its concrete class.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-class Prototype {
+#include <map>
+#include <memory>
+#include <print>
+#include <string>
+#include <utility>
+
+class Sticker {
+public:
+    virtual ~Sticker() = default;
+    virtual std::unique_ptr<Sticker> clone() const = 0;
+    virtual void show() const = 0;
+
+    void moveTo(int x, int y) {
+        x_ = x;
+        y_ = y;
+    }
+
 protected:
-    string prototype_name_;
-    float prototype_field_;
-
-public:
-    Prototype() {}
-    Prototype(string prototype_name)
-        : prototype_name_(prototype_name) {
-    }
-    virtual ~Prototype() {}
-    virtual Prototype *Clone() const = 0;
-    virtual void Method(float prototype_field) {
-        this->prototype_field_ = prototype_field;
-        std::cout << "Call Method from " << prototype_name_ << " with field : " << prototype_field << std::endl;
-    }
+    int x_ = 0;
+    int y_ = 0;
 };
 
-/**
- * ConcretePrototype1 is a Sub-Class of Prototype and implement the Clone Method
- * In this example all data members of Prototype Class are in the Stack. If you
- * have pointers in your properties for ex: String* name_ ,you will need to
- * implement the Copy-Constructor to make sure you have a deep copy from the
- * clone method
- */
+class TextSticker : public Sticker {
+public:
+    explicit TextSticker(std::string text) : text_(std::move(text)) {}
+    std::unique_ptr<Sticker> clone() const override { return std::make_unique<TextSticker>(*this); }
+    void show() const override { std::println("text '{}' at ({}, {})", text_, x_, y_); }
 
-class ConcretePrototype1 : public Prototype {
 private:
-    float concrete_prototype_field1_;
-
-public:
-    ConcretePrototype1(string prototype_name, float concrete_prototype_field)
-        : Prototype(prototype_name), concrete_prototype_field1_(concrete_prototype_field) {
-    }
-
-    /**
-   * Notice that Clone method return a Pointer to a new ConcretePrototype1
-   * replica. so, the client (who call the clone method) has the responsability
-   * to free that memory. If you have smart pointer knowledge you may prefer to
-   * use unique_pointer here.
-   */
-    Prototype *Clone() const override {
-        return new ConcretePrototype1(*this);
-    }
+    std::string text_;
 };
 
-class ConcretePrototype2 : public Prototype {
+class ImageSticker : public Sticker {
+public:
+    ImageSticker(std::string file, double scale) : file_(std::move(file)), scale_(scale) {}
+    std::unique_ptr<Sticker> clone() const override { return std::make_unique<ImageSticker>(*this); }
+    void show() const override {
+        std::println("image {} x{} at ({}, {})", file_, scale_, x_, y_);
+    }
+
 private:
-    float concrete_prototype_field2_;
-
-public:
-    ConcretePrototype2(string prototype_name, float concrete_prototype_field)
-        : Prototype(prototype_name), concrete_prototype_field2_(concrete_prototype_field) {
-    }
-    Prototype *Clone() const override {
-        return new ConcretePrototype2(*this);
-    }
+    std::string file_;
+    double scale_;
 };
 
-/**
- * In PrototypeFactory you have two concrete prototypes, one for each concrete
- * prototype class, so each time you want to create a bullet , you can use the
- * existing ones and clone those.
- */
+// Registry of ready-made templates.
+class StickerBook {
+public:
+    void add(const std::string& name, std::unique_ptr<Sticker> prototype) {
+        templates_[name] = std::move(prototype);
+    }
 
-class PrototypeFactory {
+    std::unique_ptr<Sticker> create(const std::string& name) const {
+        auto it = templates_.find(name);
+        if (it == templates_.end()) {
+            return nullptr;
+        }
+        return it->second->clone();
+    }
+
 private:
-    std::unordered_map<Type, Prototype *, std::hash<int>> prototypes_;
-
-public:
-    PrototypeFactory() {
-        prototypes_[Type::PROTOTYPE_1] = new ConcretePrototype1("PROTOTYPE_1 ", 50.f);
-        prototypes_[Type::PROTOTYPE_2] = new ConcretePrototype2("PROTOTYPE_2 ", 60.f);
-    }
-
-    /**
-   * Be carefull of free all memory allocated. Again, if you have smart pointers
-   * knowelege will be better to use it here.
-   */
-
-    ~PrototypeFactory() {
-        delete prototypes_[Type::PROTOTYPE_1];
-        delete prototypes_[Type::PROTOTYPE_2];
-    }
-
-    /**
-   * Notice here that you just need to specify the type of the prototype you
-   * want and the method will create from the object with this type.
-   */
-    Prototype *CreatePrototype(Type type) {
-        return prototypes_[type]->Clone();
-    }
+    std::map<std::string, std::unique_ptr<Sticker>> templates_;
 };
-
-void Client(PrototypeFactory &prototype_factory) {
-    std::cout << "Let's create a Prototype 1\n";
-
-    Prototype *prototype = prototype_factory.CreatePrototype(Type::PROTOTYPE_1);
-    prototype->Method(90);
-    delete prototype;
-
-    std::cout << "\n";
-
-    std::cout << "Let's create a Prototype 2 \n";
-
-    prototype = prototype_factory.CreatePrototype(Type::PROTOTYPE_2);
-    prototype->Method(10);
-
-    delete prototype;
-}
 
 int main() {
-    PrototypeFactory *prototype_factory = new PrototypeFactory();
-    Client(*prototype_factory);
-    delete prototype_factory;
+    StickerBook book;
+    book.add("greeting", std::make_unique<TextSticker>("Hello!"));
+    book.add("star", std::make_unique<ImageSticker>("star.png", 1.5));
 
+    auto first = book.create("greeting");
+    first->moveTo(10, 20);
+
+    auto second = book.create("greeting");
+    second->moveTo(200, 40);
+
+    auto star = book.create("star");
+    star->moveTo(5, 5);
+
+    first->show();
+    second->show();
+    star->show();
+
+    if (!book.create("unknown")) {
+        std::println("no template called 'unknown'");
+    }
     return 0;
 }

@@ -953,3 +953,429 @@ it's too complex.
 
 Make it simpler!
 ```
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 KISS PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Keep it simple! Favor clarity over  
+cleverness, avoid unnecessary complexity, and use  
+the simplest solution that solves the problem.
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_conditionals()`
+
+- ❌ BAD CODE (Overcomplicated):
+
+```cpp
+
+```cpp
+function<bool()> ageValidator = [this, age]() { ... };
+vector<function<bool()>> validators = {...};
+for (const auto& validator : validators) { ... }
+// 🚨 Too complex for simple validation!
+```
+
+```
+
+**🚨 PROBLEMS:**
+
+  - Unnecessary abstraction with lambdas
+  - Hard to understand at a glance
+  - Difficult to debug
+  - Over-engineering simple validation
+
+- ✅ GOOD CODE (Simple):
+
+```cpp
+
+```cpp
+bool validateUser(int age, string email, string name) {
+```
+
+return isValidAge(age) &&  
+isValidEmail(email) &&
+
+```cpp
+           isValidName(name);
+}
+// ✅ Clear, simple, easy to understand!
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+Valid user:
+
+### From `example1_conditionals()`
+
+**✨ BENEFITS:**
+
+  - Immediately clear what's happening
+  - Easy to modify or extend
+  - Less code, fewer bugs
+  - Anyone can understand it
+
+### From `example2_calculator()`
+
+- ❌ BAD CODE (Over-engineered):
+  - 6 classes: Operation, AddOperation, SubtractOperation, etc.
+  - Factory pattern
+  - Inheritance hierarchy
+  - shared_ptr management
+  - 100+ lines of code
+
+🚨 All for simple addition/subtraction!
+
+- ✅ GOOD CODE (Simple):
+  - Simple functions
+  - One function to dispatch
+  - 15 lines of code
+  - Clear and maintainable
+
+**✨ DEMONSTRATION:**
+
+### From `example2_calculator()`
+
+**✨ BENEFITS:**
+
+  - 85% less code
+  - Anyone can understand it
+  - Easy to modify
+  - No unnecessary abstractions
+
+- 💡 LESSON:
+
+Don't use design patterns just because you can!  
+Use them when the complexity is justified.
+
+### From `example3_boolean()`
+
+- ❌ BAD CODE:
+
+Nested if-else statements  
+Comparing booleans to true/false  
+Hard to follow logic flow
+
+- ✅ GOOD CODE:
+
+```cpp
+
+```cpp
+if (isResourcePublic) return true;
+if (!isLoggedIn) return false;
+return hasPermission || isAdmin;
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example3_boolean()`
+
+**✨ BENEFITS:**
+
+  - 70% less code
+  - Logic clear at a glance
+  - Easy to understand and modify
+
+### From `example4_abstraction()`
+
+- ❌ BAD CODE:
+
+5 classes: Interface → Implementation → Proxy → Decorator → Service  
+Multiple layers of indirection  
+Shared pointers everywhere  
+All to return a simple string!
+
+- ✅ GOOD CODE:
+
+```cpp
+
+```cpp
+class DataService {
+```
+
+**public:**
+
+```cpp
+    string getData() { return "data"; }
+};
+```
+
+```
+
+- 💡 RULE:
+
+Add abstraction layers ONLY when:
+
+  - Multiple implementations needed NOW
+  - Testing requires mocking
+  - Requirement clearly documented
+
+Don't add layers "just in case"!
+
+### From `example5_data_structures()`
+
+- ❌ BAD CODE:
+
+Custom linked list with:
+
+  - shared_ptr for next
+  - weak_ptr for prev
+  - Manual memory management
+  - Complex add/remove logic
+
+- ✅ GOOD CODE:
+
+```cpp
+Use vector<T> from standard library!
+```
+
+  - Well-tested
+  - Optimized
+  - Simple to use
+
+**✨ DEMONSTRATION:**
+
+### From `example5_data_structures()`
+
+- 💡 RULE:
+
+Use standard library containers!  
+Don't reinvent the wheel unless:
+
+  - Specific performance requirement
+  - Unique behavior needed
+  - Standard library doesn't fit
+
+### From `example6_clever_vs_clear()`
+
+- ❌ BAD CODE (Clever):
+
+```cpp
+
+```cpp
+bool isEven(int n) { return !(n & 1); }
+void swap(int& a, int& b) { a ^= b ^= a ^= b; }
+// 🚨 Clever, but unclear!
+```
+
+```
+
+- ✅ GOOD CODE (Clear):
+
+```cpp
+
+```cpp
+bool isEven(int n) { return n % 2 == 0; }
+void swap(int& a, int& b) {
+    int temp = a; a = b; b = temp;
+}
+// ✅ Clear and obvious!
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example6_clever_vs_clear()`
+
+- 💡 RULE:
+
+Code is read much more than it's written!  
+Optimize for readability, not cleverness.  
+"Any fool can write code that a computer can understand.  
+Good programmers write code that humans can understand."  
+— Martin Fowler
+
+### From `example7_justified_complexity()`
+
+⚖️  BALANCE: Simple vs Complete
+
+- ❌ TOO SIMPLE:
+
+Simple cache with no size limit
+
+  - Easy to understand ✅
+  - But grows forever 🚨
+  - Memory leak 🚨
+
+- ✅ APPROPRIATELY COMPLEX:
+
+LRU Cache with eviction
+
+  - More complex ⚠️
+  - But handles real requirements ✅
+  - Prevents memory issues ✅
+
+- 💡 WHEN COMPLEXITY IS JUSTIFIED:
+- ✅ Solving real, documented requirements
+- ✅ Handling necessary edge cases
+- ✅ Performance critical code
+- ✅ Security requirements
+- ✅ Scalability needs
+
+- ❌ WHEN COMPLEXITY IS NOT JUSTIFIED:
+
+🚨 "Future-proofing" for unknown needs  
+🚨 Showing off programming skills  
+🚨 Following patterns blindly  
+🚨 Premature optimization  
+🚨 "Because it might be needed"
+
+**✨ DEMONSTRATION:**
+
+### From `example8_how_to_keep_simple()`
+
+- ✅ STRATEGIES FOR SIMPLICITY:
+
+1. START SIMPLE, ADD COMPLEXITY ONLY WHEN NEEDED:
+  - Begin with simplest solution
+  - Add features when requirements appear
+  - Don't anticipate future needs
+
+2. AVOID PREMATURE ABSTRACTION:
+  - Wait for patterns to emerge
+  - Don't create abstractions "just in case"
+  - YAGNI: You Aren't Gonna Need It
+
+3. USE STANDARD LIBRARY:
+  - Don't reinvent vector, map, string
+  - Use proven, tested implementations
+  - Focus on business logic
+
+4. FAVOR CLARITY OVER CLEVERNESS:
+  - Write code that's obvious
+  - Avoid tricks and shortcuts
+  - Optimize for reading, not writing
+
+5. MINIMIZE DEPENDENCIES:
+  - Fewer dependencies = simpler code
+  - Each dependency adds complexity
+  - Question each new dependency
+
+6. AVOID DEEP NESTING:
+- ❌ if (a) { if (b) { if (c) { ... }}}
+- ✅ if (!a) return; if (!b) return; if (!c) return;
+
+7. SMALL FUNCTIONS:
+  - One function, one purpose
+  - 5-15 lines ideal
+  - Easy to understand and test
+
+8. MEANINGFUL NAMES:
+- ❌ int d; // elapsed time in days
+- ✅ int elapsedTimeInDays;
+
+**🔍 SIMPLICITY CHECKLIST:**
+
+□ Can I explain this in one sentence?  
+□ Would a junior developer understand it?  
+□ Is this the simplest solution that works?  
+□ Am I solving a problem I actually have?  
+□ Can I remove any abstraction layers?  
+□ Am I using standard library where possible?  
+□ Is my clever code actually clearer?
+
+**⚖️  THE SIMPLICITY BALANCE:**
+
+Too Simple ←--- Sweet Spot ---→ Too Complex  
+(Missing features)           (Over-engineered)  
+Aim for: Simplest solution that meets requirements!
+
+### From `example9_benefits()`
+
+- ✅ BENEFITS OF KISS:
+
+1. EASIER TO UNDERSTAND:
+  - New team members onboard faster
+  - Less time spent understanding code
+  - Clearer intent and purpose
+
+2. FEWER BUGS:
+  - Less code = less surface for bugs
+  - Simple logic easier to test
+  - Edge cases more obvious
+
+3. FASTER DEVELOPMENT:
+  - Less time writing
+  - Less time debugging
+  - Quicker to modify
+
+4. EASIER MAINTENANCE:
+  - Quick to understand and fix
+  - Changes less likely to break things
+  - Lower cost of ownership
+
+5. BETTER TESTABILITY:
+  - Simple code easier to test
+  - Fewer test cases needed
+  - Tests easier to understand
+
+- ⚠️  COST OF COMPLEXITY:
+  - Takes longer to understand
+  - More bugs hiding places
+  - Harder to modify
+  - Scares away contributors
+  - Higher maintenance cost
+
+- 💡 KEY INSIGHTS:
+
+"Simplicity is the ultimate sophistication."  
+— Leonardo da Vinci  
+"The art of programming is the art of organizing complexity."  
+— Dijkstra  
+"Simple is better than complex.  
+Complex is better than complicated."  
+— Zen of Python
+
+**🎯 REMEMBER:**
+
+  - Start simple
+  - Add complexity only when justified
+  - Optimize for readability
+  - Use standard library
+  - Avoid premature optimization
+  - YAGNI: You Aren't Gonna Need It
+
+**📊 SIMPLICITY METRICS:**
+
+  - Lines of code: Fewer is often better
+  - Cyclomatic complexity: < 10 per function
+  - Nesting depth: < 3 levels
+  - Dependencies: Minimize
+  - Abstraction layers: Only when needed
+
+**🔄 KISS & OTHER PRINCIPLES:**
+
+```cpp
+KISS + DRY = Simple and non-repetitive
+KISS + YAGNI = Build what you need now
+KISS + SOLID = Well-designed and simple
+```
+
+- ⚠️  COMPLEXITY SMELLS:
+
+🚨 "Let me explain how this works..."  
+🚨 Need to draw diagrams to explain  
+🚨 Lots of abstraction layers  
+🚨 Design patterns used everywhere  
+🚨 Code review takes hours  
+🚨 "It's clever but..."
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

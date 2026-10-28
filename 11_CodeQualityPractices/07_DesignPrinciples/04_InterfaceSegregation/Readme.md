@@ -884,3 +884,273 @@ Think of a **Swiss Army Knife** vs **Specialized Tools**:
 - No unused features
 
 **ISP says: Give people specialized tools, not a Swiss Army Knife!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 INTERFACE SEGREGATION PRINCIPLE COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Many small, focused interfaces are  
+better than one large, fat interface. Design from  
+the client's perspective!
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_printer()`
+
+- ❌ BAD CODE (Fat Interface):
+
+```cpp
+
+```cpp
+class IMachine {
+    virtual void print() = 0;
+    virtual void scan() = 0;
+    virtual void fax() = 0;
+    virtual void staple() = 0;
+};
+
+class SimplePrinter : public IMachine {
+    void scan() override { throw exception(); }  // 🚨
+    void fax() override { throw exception(); }   // 🚨
+};
+```
+
+```
+
+**🚨 DEMONSTRATION OF VIOLATION:**
+
+### From `example1_printer()`
+
+**🚨 PROBLEMS:**
+
+  - SimplePrinter forced to implement scan(), fax(), staple()
+  - Methods throw exceptions (runtime errors!)
+  - Violates ISP - depends on methods it doesn't use
+  - Client code might call unsupported methods
+
+- ✅ GOOD CODE (Segregated Interfaces):
+
+```cpp
+
+```cpp
+class IPrinter {
+    virtual void print() = 0;
+};
+
+class IScanner {
+    virtual void scan() = 0;
+};
+
+class SimplePrinter : public IPrinter {
+    void print() override { /* only this! */ }
+};
+
+class MultiFunctionPrinter : public IPrinter, IScanner {
+    void print() override { /* ... */ }
+    void scan() override { /* ... */ }
+};
+```
+
+```
+
+**✨ DEMONSTRATION OF SOLUTION:**
+
+### From `example1_printer()`
+
+**✨ SOLUTION:**
+
+  - Each interface has single responsibility
+  - SimplePrinter only implements IPrinter
+  - MultiFunctionPrinter implements multiple interfaces
+  - No forced implementation of unused methods
+
+### From `example2_worker()`
+
+- ❌ BAD CODE (Fat Interface):
+
+```cpp
+
+```cpp
+class IWorker {
+    virtual void work() = 0;
+    virtual void eat() = 0;
+    virtual void sleep() = 0;
+};
+
+class RobotWorker : public IWorker {
+    void eat() override { throw exception(); }   // 🚨
+    void sleep() override { throw exception(); } // 🚨
+};
+```
+
+```
+
+**🚨 DEMONSTRATION:**
+
+### From `example2_worker()`
+
+- ✅ GOOD CODE (Segregated Interfaces):
+
+```cpp
+
+```cpp
+class IWorkable { virtual void work() = 0; };
+class IFeedable { virtual void eat() = 0; };
+class ISleepable { virtual void sleep() = 0; };
+
+class HumanWorker : public IWorkable, IFeedable, ISleepable { };
+class RobotWorker : public IWorkable { /* only work! */ };
+```
+
+```
+
+**✨ DEMONSTRATION:**
+
+### From `example2_worker()`
+
+**✨ BENEFITS:**
+
+  - RobotWorker only implements IWorkable
+  - No forced implementation of eat() and sleep()
+  - Type system prevents calling non-existent methods
+  - Cleaner, more maintainable code
+
+### From `example3_document()`
+
+**✨ BENEFITS:**
+
+  - Type system enforces read-only nature
+  - No runtime exceptions for unsupported operations
+  - Clear intent from interface
+
+### From `example4_shapes()`
+
+- ✅ GOOD CODE:
+
+2D shapes implement IShape2D  
+3D shapes implement IShape3D
+
+### From `example4_shapes()`
+
+**✨ BENEFITS:**
+
+  - 2D shapes don't have getVolume() method
+  - 3D shapes have both surface area and volume
+  - Type system enforces correct usage
+
+### From `example5_how_to_follow()`
+
+- ✅ GUIDELINES TO FOLLOW ISP:
+
+1. IDENTIFY CLIENT NEEDS:
+  - What does each client actually use?
+  - Group related functionality
+  - Create role-based interfaces
+
+2. SPLIT FAT INTERFACES:
+- ❌ interface IWorker { work(); eat(); sleep(); }
+- ✅ interface IWorkable { work(); }
+- ✅ interface IFeedable { eat(); }
+- ✅ interface ISleepable { sleep(); }
+
+3. USE MULTIPLE SMALL INTERFACES:
+  - Each interface = one responsibility
+  - Classes can implement multiple interfaces
+  - More flexible composition
+
+4. AVOID THESE PATTERNS:
+- ❌ Empty implementations
+- ❌ Throwing NotImplementedException
+- ❌ Returning null/default for unsupported methods
+- ❌ Comments like "not supported" or "not applicable"
+
+5. PREFER COHESIVE INTERFACES:
+  - Methods should be related
+  - High cohesion = methods work together
+  - Low coupling = independent interfaces
+
+6. CONSIDER THE CLIENT:
+  - Design from client perspective
+  - What does the client need?
+  - Don't force unnecessary dependencies
+
+**🔍 CHECKLIST:**
+
+□ Does the class implement methods it doesn't use?  
+□ Are there empty or throwing method implementations?  
+□ Can the interface be split into smaller parts?  
+□ Do clients depend on methods they don't call?  
+□ Is the interface too large (10+ methods)?
+
+- 💡 INTERFACE SIZE GUIDELINE:
+  - 1-3 methods = Good ✅
+  - 4-6 methods = Acceptable ⚠️  (consider splitting)
+  - 7+ methods = Too large 🚨 (definitely split)
+
+### From `example6_benefits()`
+
+- ✅ BENEFITS OF ISP:
+
+1. CLEANER CODE:
+  - No forced empty implementations
+  - Clear intent from interface name
+  - Easier to understand what class does
+
+2. BETTER FLEXIBILITY:
+  - Classes implement only what they need
+  - Easy to add new implementations
+  - Multiple small interfaces = more combinations
+
+3. REDUCED COUPLING:
+  - Clients depend only on methods they use
+  - Changes to unused methods don't affect clients
+  - Less ripple effect from changes
+
+4. COMPILE-TIME SAFETY:
+  - Type system prevents calling unsupported methods
+  - No runtime exceptions for "not implemented"
+  - Errors caught during compilation
+
+5. EASIER TESTING:
+  - Mock only the methods you need
+  - Smaller interfaces = simpler mocks
+  - More focused unit tests
+
+- ⚠️  COMMON VIOLATIONS:
+  - Multifunction printer with all methods
+  - Worker interface with eat/sleep for robots
+  - Document interface forcing write on read-only
+  - Shape interface with volume for 2D shapes
+
+- 💡 KEY INSIGHT:
+
+"Make fine-grained interfaces that are client-specific.  
+Many small interfaces beat one large interface!"
+
+**🎯 REMEMBER:**
+
+  - No client should depend on methods it doesn't use
+  - Split large interfaces into smaller, focused ones
+  - Design from client perspective
+  - Prefer multiple inheritance of small interfaces
+
+**📊 ISP vs OTHER PRINCIPLES:**
+
+  - ISP + SRP = Well-designed interfaces
+  - ISP + OCP = Easy to extend
+  - ISP + LSP = Proper inheritance
+  - ISP + DIP = Flexible dependencies
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

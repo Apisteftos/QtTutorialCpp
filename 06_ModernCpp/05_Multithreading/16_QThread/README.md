@@ -268,3 +268,36 @@ class BadThread : public QThread {
 | Monitor async progress in UI | `QFutureWatcher` |
 | Synchronize threads | `QMutex` + `QMutexLocker` |
 | Wait for condition | `QWaitCondition` |
+
+## Notes moved from main.cpp
+
+This text used to be printed at the end of `main()`. It is lecture material, so it lives here.
+
+### Example 10: std::thread vs QThread
+
+**std::thread:**
+
+- ✅ Portable, standard C++23
+- ✅ Works with `std::mutex`, `std::future`, `std::atomic`
+- ❌ No signals/slots
+- ❌ No Qt event loop
+- ❌ Cannot use `QObject` in the thread without an event loop
+
+**QThread:**
+
+- ✅ Signals/slots (queued connections across threads)
+- ✅ Qt event loop (`QTimer`, network, etc. in the thread)
+- ✅ `moveToThread` pattern (clean ownership)
+- ✅ `QThreadPool` / `QtConcurrent` integration
+- ❌ Qt dependency
+- ❌ Slightly more boilerplate
+
+**Rule:** use `QThread` when you need Qt features in the thread; use `std::thread` for pure C++ computation tasks.
+
+## What was tested
+
+- Not built or run here: this example needs Qt or C++ modules support, which the test environment did not have. The `std::println` conversion in this file is therefore unverified.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

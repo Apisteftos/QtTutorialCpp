@@ -1,8 +1,7 @@
-#include <iostream>
 #include <string>
 #include <memory>
 #include <cmath>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: MEDIA PLAYER ADAPTER
@@ -16,7 +15,7 @@ using namespace std;
 class MediaPlayer {
 public:
     virtual ~MediaPlayer() {}
-    virtual void play(const string& audioType, const string& fileName) = 0;
+    virtual void play(const std::string& audioType, const std::string& fileName) = 0;
 };
 
 /**
@@ -25,8 +24,8 @@ public:
  */
 class MP4Player {
 public:
-    void playMP4(const string& fileName) {
-        cout << "🎬 Playing MP4 file: " << fileName << "\n";
+    void playMP4(const std::string& fileName) {
+        std::println("🎬 Playing MP4 file: {}", fileName);
     }
 };
 
@@ -36,8 +35,8 @@ public:
  */
 class VLCPlayer {
 public:
-    void playVLC(const string& fileName) {
-        cout << "🎥 Playing VLC file: " << fileName << "\n";
+    void playVLC(const std::string& fileName) {
+        std::println("🎥 Playing VLC file: {}", fileName);
     }
 };
 
@@ -47,22 +46,22 @@ public:
  */
 class MediaAdapter : public MediaPlayer {
 private:
-    unique_ptr<MP4Player> mp4Player;
-    unique_ptr<VLCPlayer> vlcPlayer;
+    std::unique_ptr<MP4Player> mp4Player;
+    std::unique_ptr<VLCPlayer> vlcPlayer;
 
 public:
     MediaAdapter() {
-        mp4Player = make_unique<MP4Player>();
-        vlcPlayer = make_unique<VLCPlayer>();
+        mp4Player = std::make_unique<MP4Player>();
+        vlcPlayer = std::make_unique<VLCPlayer>();
     }
 
-    void play(const string& audioType, const string& fileName) override {
+    void play(const std::string& audioType, const std::string& fileName) override {
         if (audioType == "mp4") {
             mp4Player->playMP4(fileName);
         } else if (audioType == "vlc") {
             vlcPlayer->playVLC(fileName);
         } else {
-            cout << "❌ Invalid media type: " << audioType << "\n";
+            std::println("❌ Invalid media type: {}", audioType);
         }
     }
 };
@@ -73,23 +72,23 @@ public:
  */
 class AudioPlayer : public MediaPlayer {
 private:
-    unique_ptr<MediaAdapter> mediaAdapter;
+    std::unique_ptr<MediaAdapter> mediaAdapter;
 
 public:
-    void play(const string& audioType, const string& fileName) override {
+    void play(const std::string& audioType, const std::string& fileName) override {
         // Built-in support for mp3
         if (audioType == "mp3") {
-            cout << "🎵 Playing MP3 file: " << fileName << "\n";
+            std::println("🎵 Playing MP3 file: {}", fileName);
         }
         // Use adapter for other formats
         else if (audioType == "mp4" || audioType == "vlc") {
             if (!mediaAdapter) {
-                mediaAdapter = make_unique<MediaAdapter>();
+                mediaAdapter = std::make_unique<MediaAdapter>();
             }
             mediaAdapter->play(audioType, fileName);
         }
         else {
-            cout << "❌ Invalid media type: " << audioType << "\n";
+            std::println("❌ Invalid media type: {}", audioType);
         }
     }
 };
@@ -112,8 +111,7 @@ public:
         : x(x), y(y), width(w), height(h) {}
 
     void draw() {
-        cout << "📐 Drawing legacy rectangle at (" << x << "," << y
-             << ") with width=" << width << " height=" << height << "\n";
+        std::println("📐 Drawing legacy rectangle at ({},{}) with width={} height={}", x, y, width, height);
     }
 
     int getX() const { return x; }
@@ -144,8 +142,7 @@ public:
     Circle(int x, int y, int r) : x(x), y(y), radius(r) {}
 
     void draw() override {
-        cout << "⭕ Drawing circle at (" << x << "," << y
-             << ") with radius=" << radius << "\n";
+        std::println("⭕ Drawing circle at ({},{}) with radius={}", x, y, radius);
     }
 
     double getArea() override {
@@ -159,11 +156,11 @@ public:
  */
 class RectangleAdapter : public Shape {
 private:
-    unique_ptr<LegacyRectangle> legacyRect;
+    std::unique_ptr<LegacyRectangle> legacyRect;
 
 public:
     RectangleAdapter(int x, int y, int w, int h) {
-        legacyRect = make_unique<LegacyRectangle>(x, y, w, h);
+        legacyRect = std::make_unique<LegacyRectangle>(x, y, w, h);
     }
 
     void draw() override {
@@ -191,7 +188,7 @@ public:
         return 98.6;  // Body temperature in Fahrenheit
     }
 
-    string getSensorInfo() {
+    std::string getSensorInfo() {
         return "Legacy Fahrenheit Sensor v1.0";
     }
 };
@@ -204,7 +201,7 @@ class TemperatureSensor {
 public:
     virtual ~TemperatureSensor() {}
     virtual double getTemperature() = 0;  // Returns Celsius
-    virtual string getInfo() = 0;
+    virtual std::string getInfo() = 0;
 };
 
 /**
@@ -213,7 +210,7 @@ public:
  */
 class TemperatureAdapter : public TemperatureSensor {
 private:
-    unique_ptr<FahrenheitSensor> fahrenheitSensor;
+    std::unique_ptr<FahrenheitSensor> fahrenheitSensor;
 
     double fahrenheitToCelsius(double f) {
         return (f - 32.0) * 5.0 / 9.0;
@@ -221,20 +218,19 @@ private:
 
 public:
     TemperatureAdapter() {
-        fahrenheitSensor = make_unique<FahrenheitSensor>();
+        fahrenheitSensor = std::make_unique<FahrenheitSensor>();
     }
 
     double getTemperature() override {
         double fahrenheit = fahrenheitSensor->getTemperatureFahrenheit();
         double celsius = fahrenheitToCelsius(fahrenheit);
 
-        cout << "🌡️  Adapting: " << fahrenheit << "°F → "
-             << celsius << "°C\n";
+        std::println("🌡️  Adapting: {}°F → {}°C", fahrenheit, celsius);
 
         return celsius;
     }
 
-    string getInfo() override {
+    std::string getInfo() override {
         return "Adapted: " + fahrenheitSensor->getSensorInfo();
     }
 };
@@ -250,12 +246,12 @@ public:
  */
 class PayPalAPI {
 public:
-    void sendPayment(const string& email, double amount) {
-        cout << "💳 PayPal: Sending $" << amount << " to " << email << "\n";
+    void sendPayment(const std::string& email, double amount) {
+        std::println("💳 PayPal: Sending ${} to {}", amount, email);
     }
 
-    bool verifyAccount(const string& email) {
-        cout << "✓ PayPal: Verifying account " << email << "\n";
+    bool verifyAccount(const std::string& email) {
+        std::println("✓ PayPal: Verifying account {}", email);
         return true;
     }
 };
@@ -266,12 +262,11 @@ public:
  */
 class StripeAPI {
 public:
-    void makePayment(const string& token, int amountInCents) {
-        cout << "💳 Stripe: Processing payment of " << amountInCents
-             << " cents with token " << token << "\n";
+    void makePayment(const std::string& token, int amountInCents) {
+        std::println("💳 Stripe: Processing payment of {} cents with token {}", amountInCents, token);
     }
 
-    string createToken(const string& cardNumber) {
+    std::string createToken(const std::string& cardNumber) {
         return "tok_" + cardNumber.substr(cardNumber.length() - 4);
     }
 };
@@ -283,8 +278,8 @@ public:
 class PaymentProcessor {
 public:
     virtual ~PaymentProcessor() {}
-    virtual void processPayment(const string& account, double amount) = 0;
-    virtual string getProcessorName() = 0;
+    virtual void processPayment(const std::string& account, double amount) = 0;
+    virtual std::string getProcessorName() = 0;
 };
 
 /**
@@ -292,20 +287,20 @@ public:
  */
 class PayPalAdapter : public PaymentProcessor {
 private:
-    unique_ptr<PayPalAPI> paypal;
+    std::unique_ptr<PayPalAPI> paypal;
 
 public:
     PayPalAdapter() {
-        paypal = make_unique<PayPalAPI>();
+        paypal = std::make_unique<PayPalAPI>();
     }
 
-    void processPayment(const string& account, double amount) override {
+    void processPayment(const std::string& account, double amount) override {
         if (paypal->verifyAccount(account)) {
             paypal->sendPayment(account, amount);
         }
     }
 
-    string getProcessorName() override {
+    std::string getProcessorName() override {
         return "PayPal Adapter";
     }
 };
@@ -315,25 +310,25 @@ public:
  */
 class StripeAdapter : public PaymentProcessor {
 private:
-    unique_ptr<StripeAPI> stripe;
+    std::unique_ptr<StripeAPI> stripe;
 
 public:
     StripeAdapter() {
-        stripe = make_unique<StripeAPI>();
+        stripe = std::make_unique<StripeAPI>();
     }
 
-    void processPayment(const string& account, double amount) override {
+    void processPayment(const std::string& account, double amount) override {
         // Convert dollars to cents
         int amountInCents = static_cast<int>(amount * 100);
 
         // Create token from account (card number)
-        string token = stripe->createToken(account);
+        std::string token = stripe->createToken(account);
 
         // Process payment
         stripe->makePayment(token, amountInCents);
     }
 
-    string getProcessorName() override {
+    std::string getProcessorName() override {
         return "Stripe Adapter";
     }
 };
@@ -348,12 +343,12 @@ public:
  */
 class MySQLDatabase {
 public:
-    void mysqlConnect(const string& host, int port) {
-        cout << "🗄️  MySQL: Connecting to " << host << ":" << port << "\n";
+    void mysqlConnect(const std::string& host, int port) {
+        std::println("🗄️  MySQL: Connecting to {}:{}", host, port);
     }
 
-    void mysqlExecute(const string& query) {
-        cout << "🗄️  MySQL: Executing query: " << query << "\n";
+    void mysqlExecute(const std::string& query) {
+        std::println("🗄️  MySQL: Executing query: {}", query);
     }
 };
 
@@ -362,12 +357,12 @@ public:
  */
 class MongoDB {
 public:
-    void connect(const string& uri) {
-        cout << "🗄️  MongoDB: Connecting to " << uri << "\n";
+    void connect(const std::string& uri) {
+        std::println("🗄️  MongoDB: Connecting to {}", uri);
     }
 
-    void runCommand(const string& command) {
-        cout << "🗄️  MongoDB: Running command: " << command << "\n";
+    void runCommand(const std::string& command) {
+        std::println("🗄️  MongoDB: Running command: {}", command);
     }
 };
 
@@ -378,9 +373,9 @@ public:
 class Database {
 public:
     virtual ~Database() {}
-    virtual void connect(const string& connectionString) = 0;
-    virtual void execute(const string& query) = 0;
-    virtual string getDatabaseType() = 0;
+    virtual void connect(const std::string& connectionString) = 0;
+    virtual void execute(const std::string& query) = 0;
+    virtual std::string getDatabaseType() = 0;
 };
 
 /**
@@ -388,23 +383,23 @@ public:
  */
 class MySQLAdapter : public Database {
 private:
-    unique_ptr<MySQLDatabase> mysql;
+    std::unique_ptr<MySQLDatabase> mysql;
 
 public:
     MySQLAdapter() {
-        mysql = make_unique<MySQLDatabase>();
+        mysql = std::make_unique<MySQLDatabase>();
     }
 
-    void connect(const string& connectionString) override {
+    void connect(const std::string& connectionString) override {
         // Parse connection string (simplified)
         mysql->mysqlConnect("localhost", 3306);
     }
 
-    void execute(const string& query) override {
+    void execute(const std::string& query) override {
         mysql->mysqlExecute(query);
     }
 
-    string getDatabaseType() override {
+    std::string getDatabaseType() override {
         return "MySQL (Adapted)";
     }
 };
@@ -414,24 +409,24 @@ public:
  */
 class MongoDBAdapter : public Database {
 private:
-    unique_ptr<MongoDB> mongo;
+    std::unique_ptr<MongoDB> mongo;
 
 public:
     MongoDBAdapter() {
-        mongo = make_unique<MongoDB>();
+        mongo = std::make_unique<MongoDB>();
     }
 
-    void connect(const string& connectionString) override {
+    void connect(const std::string& connectionString) override {
         mongo->connect(connectionString);
     }
 
-    void execute(const string& query) override {
+    void execute(const std::string& query) override {
         // Convert SQL-like query to MongoDB command (simplified)
-        string command = "{ find: '" + query + "' }";
+        std::string command = "{ find: '" + query + "' }";
         mongo->runCommand(command);
     }
 
-    string getDatabaseType() override {
+    std::string getDatabaseType() override {
         return "MongoDB (Adapted)";
     }
 };
@@ -441,9 +436,11 @@ public:
 // ============================================
 
 void demonstrateMediaPlayer() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: MEDIA PLAYER           ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: MEDIA PLAYER           ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     AudioPlayer player;
 
@@ -454,67 +451,78 @@ void demonstrateMediaPlayer() {
 }
 
 void demonstrateShapes() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: SHAPE ADAPTER          ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: SHAPE ADAPTER          ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     // Modern shapes
     Circle circle(10, 20, 5);
     circle.draw();
-    cout << "Area: " << circle.getArea() << "\n\n";
+    std::println("Area: {}", circle.getArea());
+    std::println("");
 
     // Legacy rectangle adapted to modern interface
     RectangleAdapter rect(0, 0, 10, 5);
     rect.draw();
-    cout << "Area: " << rect.getArea() << "\n";
+    std::println("Area: {}", rect.getArea());
 }
 
 void demonstrateTemperature() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: TEMPERATURE SENSOR     ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: TEMPERATURE SENSOR     ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
     TemperatureAdapter sensor;
 
-    cout << "Sensor: " << sensor.getInfo() << "\n";
+    std::println("Sensor: {}", sensor.getInfo());
     double temp = sensor.getTemperature();
-    cout << "Temperature: " << temp << "°C\n";
+    std::println("Temperature: {}°C", temp);
 
     if (temp > 37.0) {
-        cout << "⚠️  Temperature above normal!\n";
+        std::println("⚠️  Temperature above normal!");
     }
 }
 
 void demonstratePayment() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: PAYMENT GATEWAY        ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: PAYMENT GATEWAY        ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Processing with PayPal ---\n";
+    std::println("--- Processing with PayPal ---");
     PayPalAdapter paypal;
-    cout << "Processor: " << paypal.getProcessorName() << "\n";
+    std::println("Processor: {}", paypal.getProcessorName());
     paypal.processPayment("user@example.com", 99.99);
 
-    cout << "\n--- Processing with Stripe ---\n";
+    std::println("");
+    std::println("--- Processing with Stripe ---");
     StripeAdapter stripe;
-    cout << "Processor: " << stripe.getProcessorName() << "\n";
+    std::println("Processor: {}", stripe.getProcessorName());
     stripe.processPayment("4111111111111111", 149.99);
 }
 
 void demonstrateDatabase() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: DATABASE ADAPTER       ║\n";
-    cout << "╚════════════════════════════════════╝\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: DATABASE ADAPTER       ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("");
 
-    cout << "--- Using MySQL ---\n";
+    std::println("--- Using MySQL ---");
     MySQLAdapter mysql;
-    cout << "Database: " << mysql.getDatabaseType() << "\n";
+    std::println("Database: {}", mysql.getDatabaseType());
     mysql.connect("mysql://localhost:3306");
     mysql.execute("SELECT * FROM users");
 
-    cout << "\n--- Using MongoDB ---\n";
+    std::println("");
+    std::println("--- Using MongoDB ---");
     MongoDBAdapter mongo;
-    cout << "Database: " << mongo.getDatabaseType() << "\n";
+    std::println("Database: {}", mongo.getDatabaseType());
     mongo.connect("mongodb://localhost:27017");
     mongo.execute("users");
 }
@@ -524,63 +532,15 @@ void demonstrateDatabase() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "ADAPTER PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("ADAPTER PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateMediaPlayer();
     demonstrateShapes();
     demonstrateTemperature();
     demonstratePayment();
     demonstrateDatabase();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF ADAPTER PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Single Responsibility: Separates interface conversion\n";
-    cout << "✅ Open/Closed: Add new adapters without changing existing code\n";
-    cout << "✅ Works with legacy code without modification\n";
-    cout << "✅ Integrates third-party libraries easily\n";
-    cout << "✅ Makes incompatible interfaces work together\n";
-    cout << "✅ Promotes code reusability\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE ADAPTER\n";
-    cout << "========================================\n";
-    cout << "1. Use existing class with incompatible interface\n";
-    cout << "2. Create reusable class for unrelated classes\n";
-    cout << "3. Work with legacy code you can't modify\n";
-    cout << "4. Integrate third-party libraries\n";
-    cout << "5. Need uniform interface for similar classes\n";
-
-    cout << "\n========================================\n";
-    cout << "OBJECT ADAPTER vs CLASS ADAPTER\n";
-    cout << "========================================\n";
-    cout << "Object Adapter (Composition):\n";
-    cout << "  • Uses composition\n";
-    cout << "  • More flexible (can adapt multiple classes)\n";
-    cout << "  • Preferred in C++ (no multiple inheritance issues)\n";
-    cout << "  • Example: All examples above\n";
-    cout << "\nClass Adapter (Inheritance):\n";
-    cout << "  • Uses multiple inheritance\n";
-    cout << "  • Less flexible\n";
-    cout << "  • Can override adaptee behavior\n";
-    cout << "  • Not commonly used in C++\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• Power plug adapters (US to EU)\n";
-    cout << "• Card readers (SD card to USB)\n";
-    cout << "• Media players (different formats)\n";
-    cout << "• Database drivers (ODBC, JDBC)\n";
-    cout << "• Payment gateways (PayPal, Stripe)\n";
-    cout << "• Legacy system integration\n";
-    cout << "• Third-party API wrappers\n";
-    cout << "• Temperature converters\n";
 
     return 0;
 }

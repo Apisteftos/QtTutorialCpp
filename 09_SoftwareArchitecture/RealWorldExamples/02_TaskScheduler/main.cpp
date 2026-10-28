@@ -12,7 +12,6 @@
 // Patterns used: Priority Queue, State Machine, Pipe-Filter, Event-Driven
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <queue>
 #include <vector>
@@ -23,6 +22,7 @@
 #include <stdexcept>
 #include <iomanip>
 #include <memory>
+#include <print>
 
 using Clock    = std::chrono::steady_clock;
 using TimePoint = Clock::time_point;
@@ -108,14 +108,14 @@ public:
 
         queue_.push(std::move(t));
         submitted_++;
-        std::cout << "  [Scheduler] submitted #" << id
-                  << " [" << to_string(priority) << "] " << name << '\n';
+        std::println("  [Scheduler] submitted #{} [{}] {}", id, to_string(priority), name);
         return id;
     }
 
     // Run all pending tasks (single-threaded simulation of worker pool)
     void runAll() {
-        std::cout << "\n  [Scheduler] running " << queue_.size() << " tasks\n";
+        std::println("");
+        std::println("  [Scheduler] running {} tasks", queue_.size());
 
         while (!queue_.empty()) {
             // Collect all tasks ready to run now
@@ -153,13 +153,12 @@ public:
 
     void printDLQ() const {
         if (dlq_.empty()) {
-            std::cout << "  [DLQ] empty\n";
+            std::println("  [DLQ] empty");
             return;
         }
-        std::cout << "  [DLQ] " << dlq_.size() << " dead tasks:\n";
+        std::println("  [DLQ] {} dead tasks:", dlq_.size());
         for (const auto& t : dlq_)
-            std::cout << "    #" << t.id << " " << t.name
-                      << " (" << t.attempt << " attempts)\n";
+            std::println("    #{} {} ({} attempts)", t.id, t.name, t.attempt);
     }
 
 private:
@@ -167,33 +166,31 @@ private:
         task.state   = TaskState::Running;
         task.attempt++;
 
-        std::cout << "  [Worker]    #" << task.id
-                  << " attempt " << task.attempt << "/" << task.max_attempts
-                  << " [" << to_string(task.priority) << "] "
-                  << task.name;
+        std::print("  [Worker]    #{} attempt {}/{} [{}] {}",
+            task.id, task.attempt, task.max_attempts, to_string(task.priority), task.name);
 
         bool ok = false;
         try { ok = task.fn(); }
         catch (const std::exception& e) {
-            std::cout << " → EXCEPTION: " << e.what();
+            std::print(" → EXCEPTION: {}", e.what());
         }
 
         if (ok) {
             task.state = TaskState::Done;
             succeeded_++;
-            std::cout << " → ✓ DONE\n";
+            std::println(" → ✓ DONE");
         } else if (task.attempt < task.max_attempts) {
             task.state = TaskState::Retrying;
             // Exponential backoff: 0ms, 0ms, 0ms for demo (no real sleep)
             // In production: Ms(100 * (1 << (task.attempt - 1)))
             task.run_after = Clock::now();  // immediate for demo
             queue_.push(task);
-            std::cout << " → ↩ RETRY (attempt " << task.attempt + 1 << " queued)\n";
+            std::println(" → ↩ RETRY (attempt {} queued)", task.attempt + 1);
         } else {
             task.state = TaskState::Dead;
             failed_++;
             dlq_.push_back(task);
-            std::cout << " → 💀 DEAD (max retries exhausted)\n";
+            std::println(" → 💀 DEAD (max retries exhausted)");
         }
     }
 
@@ -213,7 +210,7 @@ class EmailService {
 public:
     bool send(const std::string& to, const std::string& subject) {
         send_count_++;
-        std::cout << " [email→" << to << "]";
+        std::print(" [email→{}]", to);
         return true;   // always succeeds in demo
     }
     int sendCount() const { return send_count_; }
@@ -225,7 +222,7 @@ class PaymentService {
 public:
     bool process(int amount, int& attempt_tracker) {
         attempt_tracker++;
-        std::cout << " [payment $" << amount << " attempt=" << attempt_tracker << "]";
+        std::print(" [payment ${} attempt={}]", amount, attempt_tracker);
         // Simulates transient failure: fails first 2 attempts, succeeds on 3rd
         return attempt_tracker >= 3;
     }
@@ -235,7 +232,7 @@ class AlertService {
 public:
     bool sendAlert(const std::string& msg) {
         alert_count_++;
-        std::cout << " [ALERT: " << msg << "]";
+        std::print(" [ALERT: {}]", msg);
         return true;
     }
     int alertCount() const { return alert_count_; }
@@ -249,7 +246,8 @@ private:
 
 int main()
 {
-    std::cout << "=== Task Scheduler Demo ===\n\n";
+    std::println("=== Task Scheduler Demo ===");
+    std::println("");
 
     TaskScheduler scheduler;
     EmailService   email;
@@ -258,7 +256,7 @@ int main()
     int payment_attempts = 0;
 
     // ── Submit tasks (mixed priorities) ──────────────────────────────────────
-    std::cout << "--- Submitting tasks ---\n";
+    std::println("--- Submitting tasks ---");
 
     // CRITICAL — alert, deadline in 1s, 1 attempt (no retry for alerts)
     scheduler.submit("Send system alert", Priority::Critical,
@@ -285,25 +283,28 @@ int main()
                      Ms(60000), 2);
 
     // CRITICAL — another alert (tests ordering: should run before HIGH)
-    scheduler.submit("Send PTT group alert", Priority::Critical,
-                     [&]{ return alert.sendAlert("Group ALPHA: channel change"); },
+    scheduler.submit("Send disk-space alert", Priority::Critical,
+                     [&]{ return alert.sendAlert("Disk usage > 90%"); },
                      Ms(500), 1);
 
     // ── Run all tasks ─────────────────────────────────────────────────────────
-    std::cout << "\n--- Running ---\n";
+    std::println("");
+    std::println("--- Running ---");
     scheduler.runAll();
 
     // ── Results ───────────────────────────────────────────────────────────────
-    std::cout << "\n--- Dead Letter Queue ---\n";
+    std::println("");
+    std::println("--- Dead Letter Queue ---");
     scheduler.printDLQ();
 
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "Tasks submitted  : " << scheduler.submitted()  << '\n';
-    std::cout << "Tasks succeeded  : " << scheduler.succeeded()  << '\n';
-    std::cout << "Tasks dead (DLQ) : " << scheduler.deadCount()  << '\n';
-    std::cout << "Emails sent      : " << email.sendCount()      << '\n';
-    std::cout << "Alerts sent      : " << alert.alertCount()     << '\n';
-    std::cout << "Payment attempts : " << payment_attempts       << '\n';
+    std::println("");
+    std::println("=== Summary ===");
+    std::println("Tasks submitted  : {}", scheduler.submitted());
+    std::println("Tasks succeeded  : {}", scheduler.succeeded());
+    std::println("Tasks dead (DLQ) : {}", scheduler.deadCount());
+    std::println("Emails sent      : {}", email.sendCount());
+    std::println("Alerts sent      : {}", alert.alertCount());
+    std::println("Payment attempts : {}", payment_attempts);
 
     assert(scheduler.submitted()  == 6);
     assert(scheduler.succeeded()  == 5);   // all except log cleanup
@@ -312,6 +313,7 @@ int main()
     assert(alert.alertCount()     == 2);
     assert(payment_attempts       == 3);   // failed twice, succeeded third
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

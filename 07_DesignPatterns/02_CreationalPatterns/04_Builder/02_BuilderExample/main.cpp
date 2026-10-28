@@ -1,8 +1,7 @@
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
-using namespace std;
+#include <print>
 
 // ============================================
 // PRODUCT - The complex object being built
@@ -15,17 +14,17 @@ using namespace std;
 class Computer {
 private:
     // Required components
-    string cpu;
-    string ram;
-    string storage;
+    std::string cpu;
+    std::string ram;
+    std::string storage;
 
     // Optional components
-    string gpu;
-    string motherboard;
-    string powerSupply;
-    string coolingSystem;
-    string caseType;
-    vector<string> peripherals;
+    std::string gpu;
+    std::string motherboard;
+    std::string powerSupply;
+    std::string coolingSystem;
+    std::string caseType;
+    std::vector<std::string> peripherals;
     bool hasWifi;
     bool hasBluetooth;
     bool hasRGB;
@@ -34,53 +33,54 @@ public:
     Computer() : hasWifi(false), hasBluetooth(false), hasRGB(false) {}
 
     // Setters for all components
-    void setCPU(const string& c) { cpu = c; }
-    void setRAM(const string& r) { ram = r; }
-    void setStorage(const string& s) { storage = s; }
-    void setGPU(const string& g) { gpu = g; }
-    void setMotherboard(const string& m) { motherboard = m; }
-    void setPowerSupply(const string& p) { powerSupply = p; }
-    void setCoolingSystem(const string& c) { coolingSystem = c; }
-    void setCaseType(const string& c) { caseType = c; }
-    void addPeripheral(const string& p) { peripherals.push_back(p); }
+    void setCPU(const std::string& c) { cpu = c; }
+    void setRAM(const std::string& r) { ram = r; }
+    void setStorage(const std::string& s) { storage = s; }
+    void setGPU(const std::string& g) { gpu = g; }
+    void setMotherboard(const std::string& m) { motherboard = m; }
+    void setPowerSupply(const std::string& p) { powerSupply = p; }
+    void setCoolingSystem(const std::string& c) { coolingSystem = c; }
+    void setCaseType(const std::string& c) { caseType = c; }
+    void addPeripheral(const std::string& p) { peripherals.push_back(p); }
     void setWifi(bool w) { hasWifi = w; }
     void setBluetooth(bool b) { hasBluetooth = b; }
     void setRGB(bool r) { hasRGB = r; }
 
     // Display the computer configuration
     void showSpecs() const {
-        cout << "\n╔════════════════════════════════════╗\n";
-        cout << "║      COMPUTER SPECIFICATIONS       ║\n";
-        cout << "╚════════════════════════════════════╝\n";
+        std::println("");
+        std::println("╔════════════════════════════════════╗");
+        std::println("║      COMPUTER SPECIFICATIONS       ║");
+        std::println("╚════════════════════════════════════╝");
 
-        cout << "CPU:            " << cpu << "\n";
-        cout << "RAM:            " << ram << "\n";
-        cout << "Storage:        " << storage << "\n";
+        std::println("CPU:            {}", cpu);
+        std::println("RAM:            {}", ram);
+        std::println("Storage:        {}", storage);
 
         if (!gpu.empty())
-            cout << "GPU:            " << gpu << "\n";
+            std::println("GPU:            {}", gpu);
         if (!motherboard.empty())
-            cout << "Motherboard:    " << motherboard << "\n";
+            std::println("Motherboard:    {}", motherboard);
         if (!powerSupply.empty())
-            cout << "Power Supply:   " << powerSupply << "\n";
+            std::println("Power Supply:   {}", powerSupply);
         if (!coolingSystem.empty())
-            cout << "Cooling:        " << coolingSystem << "\n";
+            std::println("Cooling:        {}", coolingSystem);
         if (!caseType.empty())
-            cout << "Case:           " << caseType << "\n";
+            std::println("Case:           {}", caseType);
 
-        cout << "WiFi:           " << (hasWifi ? "Yes" : "No") << "\n";
-        cout << "Bluetooth:      " << (hasBluetooth ? "Yes" : "No") << "\n";
-        cout << "RGB Lighting:   " << (hasRGB ? "Yes" : "No") << "\n";
+        std::println("WiFi:           {}", (hasWifi ? "Yes" : "No"));
+        std::println("Bluetooth:      {}", (hasBluetooth ? "Yes" : "No"));
+        std::println("RGB Lighting:   {}", (hasRGB ? "Yes" : "No"));
 
         if (!peripherals.empty()) {
-            cout << "Peripherals:    ";
+            std::print("Peripherals:    ");
             for (size_t i = 0; i < peripherals.size(); i++) {
-                cout << peripherals[i];
-                if (i < peripherals.size() - 1) cout << ", ";
+                std::print("{}", peripherals[i]);
+                if (i < peripherals.size() - 1) std::print(", ");
             }
-            cout << "\n";
+            std::println("");
         }
-        cout << "────────────────────────────────────\n";
+        std::println("────────────────────────────────────");
     }
 };
 
@@ -95,13 +95,13 @@ public:
  */
 class ComputerBuilder {
 protected:
-    unique_ptr<Computer> computer;
+    std::unique_ptr<Computer> computer;
 
 public:
     ComputerBuilder() { reset(); }
     virtual ~ComputerBuilder() {}
 
-    void reset() { computer = make_unique<Computer>(); }
+    void reset() { computer = std::make_unique<Computer>(); }
 
     // Building steps - pure virtual (must be implemented)
     virtual void buildCPU() = 0;
@@ -118,7 +118,7 @@ public:
     virtual void buildPeripherals() = 0;
 
     // Return the final product
-    unique_ptr<Computer> getResult() {
+    std::unique_ptr<Computer> getResult() {
         return move(computer);
     }
 };
@@ -408,34 +408,34 @@ public:
 
 class FluentComputerBuilder {
 private:
-    unique_ptr<Computer> computer;
+    std::unique_ptr<Computer> computer;
 
 public:
     FluentComputerBuilder() {
-        computer = make_unique<Computer>();
+        computer = std::make_unique<Computer>();
     }
 
-    FluentComputerBuilder& setCPU(const string& cpu) {
+    FluentComputerBuilder& setCPU(const std::string& cpu) {
         computer->setCPU(cpu);
         return *this;
     }
 
-    FluentComputerBuilder& setRAM(const string& ram) {
+    FluentComputerBuilder& setRAM(const std::string& ram) {
         computer->setRAM(ram);
         return *this;
     }
 
-    FluentComputerBuilder& setStorage(const string& storage) {
+    FluentComputerBuilder& setStorage(const std::string& storage) {
         computer->setStorage(storage);
         return *this;
     }
 
-    FluentComputerBuilder& setGPU(const string& gpu) {
+    FluentComputerBuilder& setGPU(const std::string& gpu) {
         computer->setGPU(gpu);
         return *this;
     }
 
-    FluentComputerBuilder& addPeripheral(const string& peripheral) {
+    FluentComputerBuilder& addPeripheral(const std::string& peripheral) {
         computer->addPeripheral(peripheral);
         return *this;
     }
@@ -455,7 +455,7 @@ public:
         return *this;
     }
 
-    unique_ptr<Computer> build() {
+    std::unique_ptr<Computer> build() {
         return move(computer);
     }
 };
@@ -465,16 +465,17 @@ public:
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "BUILDER PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("BUILDER PATTERN DEMO");
+    std::println("========================================");
 
     ComputerDirector director;
 
     // ============================================
     // Example 1: Gaming PC
     // ============================================
-    cout << "\n=== EXAMPLE 1: Gaming PC ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 1: Gaming PC ===");
     {
         GamingPCBuilder gamingBuilder;
         director.setBuilder(&gamingBuilder);
@@ -487,7 +488,8 @@ int main() {
     // ============================================
     // Example 2: Office PC
     // ============================================
-    cout << "\n=== EXAMPLE 2: Office PC ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 2: Office PC ===");
     {
         OfficePCBuilder officeBuilder;
         director.setBuilder(&officeBuilder);
@@ -500,7 +502,8 @@ int main() {
     // ============================================
     // Example 3: Budget PC (Minimal Build)
     // ============================================
-    cout << "\n=== EXAMPLE 3: Budget PC (Minimal) ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 3: Budget PC (Minimal) ===");
     {
         BudgetPCBuilder budgetBuilder;
         director.setBuilder(&budgetBuilder);
@@ -513,7 +516,8 @@ int main() {
     // ============================================
     // Example 4: Workstation
     // ============================================
-    cout << "\n=== EXAMPLE 4: Professional Workstation ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 4: Professional Workstation ===");
     {
         WorkstationBuilder workstationBuilder;
         director.setBuilder(&workstationBuilder);
@@ -526,7 +530,8 @@ int main() {
     // ============================================
     // Example 5: Manual Building (Without Director)
     // ============================================
-    cout << "\n=== EXAMPLE 5: Manual Custom Build ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 5: Manual Custom Build ===");
     {
         GamingPCBuilder customBuilder;
 
@@ -545,7 +550,8 @@ int main() {
     // ============================================
     // Example 6: Fluent Builder (Method Chaining)
     // ============================================
-    cout << "\n=== EXAMPLE 6: Fluent Builder (Method Chaining) ===\n";
+    std::println("");
+    std::println("=== EXAMPLE 6: Fluent Builder (Method Chaining) ===");
     {
         auto fluentPC = FluentComputerBuilder()
                             .setCPU("Intel Core i7-13700K")
@@ -560,39 +566,6 @@ int main() {
 
         fluentPC->showSpecs();
     }
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF BUILDER PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Construct objects step-by-step\n";
-    cout << "✅ Use same construction code for different representations\n";
-    cout << "✅ Isolate complex construction code from business logic\n";
-    cout << "✅ Avoid 'telescoping constructor' antipattern\n";
-    cout << "✅ Build objects that require multi-step construction\n";
-    cout << "✅ Create immutable objects with many optional fields\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE BUILDER\n";
-    cout << "========================================\n";
-    cout << "1. Object has many optional parameters\n";
-    cout << "2. Construction process is complex\n";
-    cout << "3. Need different representations of same object\n";
-    cout << "4. Want to avoid telescoping constructors\n";
-    cout << "5. Building immutable objects\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• StringBuilder in Java/C#\n";
-    cout << "• SQL Query builders (SELECT, WHERE, JOIN)\n";
-    cout << "• HTML/XML document builders\n";
-    cout << "• HTTP request builders\n";
-    cout << "• Configuration objects\n";
-    cout << "• Fast food meal builders\n";
-    cout << "• Game character creators\n";
 
     return 0;
 }

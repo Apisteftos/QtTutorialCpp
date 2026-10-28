@@ -1,8 +1,8 @@
-#include <iostream>
 #include <map>
 #include <string>
 #include <memory>
 #include <mutex>
+#include <print>
 
 template <typename T, typename Key = std::string>
 
@@ -21,7 +21,7 @@ class Multiton {
 protected:
     // Protected constructor so only derived classes can instantiate
     Multiton() {
-        std::cout << "Created a new instance" << std::endl;
+        std::println("Created a new instance");
     }
 
     // Delete copy constructor and assignment operator
@@ -29,7 +29,7 @@ protected:
     Multiton& operator=(const Multiton&) = delete;
 
     virtual ~Multiton() {
-        std::cout << "Instance destroyed" << std::endl;
+        std::println("Instance destroyed");
     }
 
 private:
@@ -109,23 +109,23 @@ int main() {
 
     // Getting the same instance again
     auto dbConfigAgain = Configuration::getInstance("database");
-    std::cout << "Database config: " << dbConfigAgain->getData() << std::endl;
-    std::cout << "Network config: " << netConfig->getData() << std::endl;
+    std::println("Database config: {}", dbConfigAgain->getData());
+    std::println("Network config: {}", netConfig->getData());
 
     // Check if both dbConfig and dbConfigAgain point to the same instance
-    std::cout << "Are dbConfig and dbConfigAgain the same instance? "
-              << (dbConfig == dbConfigAgain ? "Yes" : "No") << std::endl;
+    std::println("Are dbConfig and dbConfigAgain the same instance? {}",
+        (dbConfig == dbConfigAgain ? "Yes" : "No"));
 
     // How many instances do we have?
-    std::cout << "Number of instances: " << Configuration::getInstanceCount() << std::endl;
+    std::println("Number of instances: {}", Configuration::getInstanceCount());
 
     // Release one instance
     Configuration::releaseInstance("database");
-    std::cout << "After releasing database, instances: " << Configuration::getInstanceCount() << std::endl;
+    std::println("After releasing database, instances: {}", Configuration::getInstanceCount());
 
     // Release all remaining instances
     Configuration::releaseAllInstances();
-    std::cout << "After releasing all, instances: " << Configuration::getInstanceCount() << std::endl;
+    std::println("After releasing all, instances: {}", Configuration::getInstanceCount());
 
     return 0;
 }

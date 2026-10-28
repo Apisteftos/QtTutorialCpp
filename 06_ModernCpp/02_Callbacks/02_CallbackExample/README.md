@@ -203,25 +203,25 @@ fetchData(url,
 
 ---
 
-## MCX event system pattern
+## Event system pattern
 
 ```cpp
-class McxClient {
-    std::function<void(int, const std::string&)> m_onCallStarted;
-    std::function<void(int, int)>                m_onFloorGranted;
+class EventClient {
+    std::function<void(int, const std::string&)> m_onJobStarted;
+    std::function<void(int, int)>                m_onLockAcquired;
     std::function<void(int, const std::string&)> m_onError;
 public:
-    void onCallStarted (auto cb) { m_onCallStarted  = cb; }
-    void onFloorGranted(auto cb) { m_onFloorGranted = cb; }
+    void onJobStarted (auto cb) { m_onJobStarted  = cb; }
+    void onLockAcquired(auto cb) { m_onLockAcquired = cb; }
     void onError       (auto cb) { m_onError        = cb; }
 };
 
-McxClient client;
-client.onCallStarted([](int id, const std::string& group) {
-    std::println("call {} started in group {}", id, group);
+EventClient client;
+client.onJobStarted([](int id, const std::string& queue) {
+    std::println("job {} started in queue {}", id, queue);
 });
-client.onFloorGranted([](int callId, int userId) {
-    std::println("floor granted to user {} in call {}", userId, callId);
+client.onLockAcquired([](int jobId, int userId) {
+    std::println("lock acquired by user {} in job {}", userId, jobId);
 });
 ```
 
@@ -250,4 +250,32 @@ client.onFloorGranted([](int callId, int userId) {
 | Choose callback at runtime | `std::function` |
 | Performance-critical inner loop | Template |
 | Qt signal/slot equivalent | `std::function` or signals |
-| MCX event handlers | `std::function` (stored callbacks) |
+| Application event handlers | `std::function` (stored callbacks) |
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### Example 7: Template callback — zero overhead
+
+Template callback: inlined by compiler — no virtual call
+
+```cpp
+std::function:     type-erased — small overhead per call
+```
+
+Use template when: performance-critical tight loops
+
+```cpp
+Use std::function: storing, returning, or runtime dispatch
+```
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: the moved lecture text (see *Notes moved from main.cpp*), `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

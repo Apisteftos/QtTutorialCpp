@@ -1,4 +1,3 @@
-#include <iostream>
 #include <functional>
 #include <vector>
 #include <string>
@@ -19,7 +18,7 @@
 //   7.  Template callback (most efficient)
 //   8.  Callback chains / middleware pipeline
 //   9.  Success/Error callback pair pattern
-//  10.  Practical: MCX event system with callbacks
+//  10.  Practical: job event system with callbacks
 // ============================================================
 
 
@@ -32,9 +31,9 @@ void processArray(const int arr[], int size, void (*callback)(int))
         callback(arr[i]);
 }
 
-void printDouble(int x) { std::cout << x * 2 << ' '; }
-void printSquare(int x) { std::cout << x * x << ' '; }
-void printHex(int x)    { std::cout << std::hex << x << std::dec << ' '; }
+void printDouble(int x) { std::print("{} ", x * 2); }
+void printSquare(int x) { std::print("{} ", x * x); }
+void printHex(int x)    { std::print("{:x} ", x); }
 
 
 // ============================================================
@@ -103,7 +102,7 @@ public:
     void click() {
         std::println("[Button '{}'] clicked", m_label);
         if (m_onClick) m_onClick();
-        else           std::cout << "  (no handler registered)\n";
+        else           std::println("  (no handler registered)");
     }
 
     void rightClick(int x, int y) {
@@ -184,38 +183,38 @@ void fetchData(const std::string& url,
 
 
 // ============================================================
-// Example 10 — MCX Event System
+// Example 10 — Job Event System
 // ============================================================
-class McxEventSystem {
+class JobEventSystem {
 public:
-    using CallCallback    = std::function<void(int callId, const std::string& groupId)>;
-    using FloorCallback   = std::function<void(int callId, int userId)>;
+    using JobCallback    = std::function<void(int jobId, const std::string& queueName)>;
+    using LockCallback   = std::function<void(int jobId, int userId)>;
     using ErrorCallback   = std::function<void(int code, const std::string& reason)>;
     using StatusCallback  = std::function<void(bool connected)>;
 
 private:
-    CallCallback   m_onCallStarted;
-    CallCallback   m_onCallEnded;
-    FloorCallback  m_onFloorGranted;
-    FloorCallback  m_onFloorReleased;
+    JobCallback   m_onJobStarted;
+    JobCallback   m_onJobEnded;
+    LockCallback  m_onLockAcquired;
+    LockCallback  m_onLockReleased;
     ErrorCallback  m_onError;
     StatusCallback m_onConnectionStatus;
 
 public:
     // Registration
-    void onCallStarted      (CallCallback   cb) { m_onCallStarted    = cb; }
-    void onCallEnded        (CallCallback   cb) { m_onCallEnded      = cb; }
-    void onFloorGranted     (FloorCallback  cb) { m_onFloorGranted   = cb; }
-    void onFloorReleased    (FloorCallback  cb) { m_onFloorReleased  = cb; }
+    void onJobStarted      (JobCallback   cb) { m_onJobStarted    = cb; }
+    void onJobEnded        (JobCallback   cb) { m_onJobEnded      = cb; }
+    void onLockAcquired     (LockCallback  cb) { m_onLockAcquired   = cb; }
+    void onLockReleased    (LockCallback  cb) { m_onLockReleased  = cb; }
     void onError            (ErrorCallback  cb) { m_onError          = cb; }
     void onConnectionStatus (StatusCallback cb) { m_onConnectionStatus = cb; }
 
     // Simulation — fire events
     void simulateConnect()                            { if (m_onConnectionStatus) m_onConnectionStatus(true);  }
-    void simulateCallStart(int cid, const std::string& gid) { if (m_onCallStarted)  m_onCallStarted(cid, gid);  }
-    void simulateFloorGrant(int cid, int uid)         { if (m_onFloorGranted)  m_onFloorGranted(cid, uid);  }
-    void simulateFloorRelease(int cid, int uid)       { if (m_onFloorReleased) m_onFloorReleased(cid, uid); }
-    void simulateCallEnd(int cid, const std::string& gid)   { if (m_onCallEnded)    m_onCallEnded(cid, gid);    }
+    void simulateJobStart(int cid, const std::string& qname) { if (m_onJobStarted)  m_onJobStarted(cid, qname);  }
+    void simulateLockAcquire(int cid, int uid)         { if (m_onLockAcquired)  m_onLockAcquired(cid, uid);  }
+    void simulateLockRelease(int cid, int uid)       { if (m_onLockReleased) m_onLockReleased(cid, uid); }
+    void simulateJobEnd(int cid, const std::string& qname)   { if (m_onJobEnded)    m_onJobEnded(cid, qname);    }
     void simulateError(int code, const std::string& reason) { if (m_onError)        m_onError(code, reason);    }
 };
 
@@ -226,65 +225,67 @@ public:
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: Function pointer as callback\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: Function pointer as callback");
+    std::println("=====================================================");
 
     int numbers[] = {1, 2, 3, 4, 5};
 
-    std::cout << "printDouble: ";
+    std::print("printDouble: ");
     processArray(numbers, 5, printDouble);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "printSquare: ";
+    std::print("printSquare: ");
     processArray(numbers, 5, printSquare);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "printHex:    ";
+    std::print("printHex:    ");
     processArray(numbers, 5, printHex);
-    std::cout << '\n';
+    std::println("");
 
     // Store function pointer in a variable
     void (*myCallback)(int) = printDouble;
-    std::cout << "via pointer: ";
+    std::print("via pointer: ");
     processArray(numbers, 5, myCallback);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: std::function — flexible callback\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: std::function — flexible callback");
+    std::println("=====================================================");
 
     std::vector<int> v = {1, 2, 3, 4, 5};
 
     // Pass a free function
-    std::cout << "free function: ";
+    std::print("free function: ");
     processVector(v, printSquare);
-    std::cout << '\n';
+    std::println("");
 
     // Pass a lambda
-    std::cout << "lambda:        ";
-    processVector(v, [](int x) { std::cout << x * 3 << ' '; });
-    std::cout << '\n';
+    std::print("lambda:        ");
+    processVector(v, [](int x) { std::print("{} ", x * 3); });
+    std::println("");
 
     // Pass a lambda with capture
     int factor = 7;
-    std::cout << "capture(x7):   ";
-    processVector(v, [factor](int x) { std::cout << x * factor << ' '; });
-    std::cout << '\n';
+    std::print("capture(x7):   ");
+    processVector(v, [factor](int x) { std::print("{} ", x * factor); });
+    std::println("");
 
     // Store std::function in variable
-    std::function<void(int)> fn = [](int x) { std::cout << -x << ' '; };
-    std::cout << "stored fn:     ";
+    std::function<void(int)> fn = [](int x) { std::print("{} ", -x); };
+    std::print("stored fn:     ");
     processVector(v, fn);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Lambda captures\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: Lambda captures");
+    std::println("=====================================================");
 
     int sum = 0;
     int count = 0;
@@ -302,25 +303,26 @@ int main()
     processVector(v, [threshold, &collected](int x) {
         if (x > threshold) collected.push_back(x);
     });
-    std::cout << "collected (>3): ";
-    for (int x : collected) std::cout << x << ' '; std::cout << '\n';
+    std::print("collected (>3): ");
+    for (int x : collected) std::print("{} ", x); std::println("");
 
     // Mutable lambda — modify captured copy
     int counter = 0;
     auto counting = [counter](int) mutable {
         ++counter;
-        std::cout << "call#" << counter << ' ';
+        std::print("call#{} ", counter);
     };
-    std::cout << "mutable lambda: ";
+    std::print("mutable lambda: ");
     processVector(v, counting);
-    std::cout << '\n';
-    std::cout << "outer counter: " << counter << " (unchanged)\n";
+    std::println("");
+    std::println("outer counter: {} (unchanged)", counter);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: Callback with return value\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Callback with return value");
+    std::println("=====================================================");
 
     std::vector<int> data = {1, 2, 3, 4, 5};
 
@@ -341,14 +343,15 @@ int main()
     };
 
     auto squares = transform(data, [](int x) { return x * x; });
-    std::cout << "squares: ";
-    for (int x : squares) std::cout << x << ' '; std::cout << '\n';
+    std::print("squares: ");
+    for (int x : squares) std::print("{} ", x); std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Member function callback\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Member function callback");
+    std::println("=====================================================");
 
     Logger logger("APP");
 
@@ -370,20 +373,21 @@ int main()
     handlers.push_back([&logger](const std::string& m) { logger.log(m); });
     handlers.push_back([](const std::string& m) { std::println("[CONSOLE] {}", m); });
 
-    std::cout << "broadcasting to " << handlers.size() << " handlers:\n";
+    std::println("broadcasting to {} handlers:", handlers.size());
     for (auto& h : handlers) h("broadcast message");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: Stored callback — deferred execution\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Stored callback — deferred execution");
+    std::println("=====================================================");
 
     Button btn("Submit");
 
     // Register callbacks
     btn.setOnClick([]() {
-        std::cout << "  form submitted!\n";
+        std::println("  form submitted!");
     });
     btn.setOnRightClick([](int x, int y) {
         std::println("  context menu at ({},{})", x, y);
@@ -393,7 +397,7 @@ int main()
     btn.rightClick(150, 200);
 
     // Change callback at runtime
-    btn.setOnClick([]() { std::cout << "  new handler!\n"; });
+    btn.setOnClick([]() { std::println("  new handler!"); });
     btn.click();
 
     // Button with no handler
@@ -402,33 +406,29 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Template callback — zero overhead\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Template callback — zero overhead");
+    std::println("=====================================================");
 
     std::vector<int> nums = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    std::cout << "even numbers doubled: ";
+    std::print("even numbers doubled: ");
     forEachIf(nums,
               [](int x) { return x % 2 == 0; },
-              [](int x) { std::cout << x * 2 << ' '; });
-    std::cout << '\n';
+              [](int x) { std::print("{} ", x * 2); });
+    std::println("");
 
     auto tripled = transformAll(nums, [](int x) { return x * 3; });
-    std::cout << "tripled:              ";
-    for (int x : tripled) std::cout << x << ' '; std::cout << '\n';
-
-    // Template vs std::function — template is inlined by compiler
-    std::cout << "\nTemplate callback: inlined by compiler — no virtual call\n";
-    std::cout << "std::function:     type-erased — small overhead per call\n";
-    std::cout << "Use template when: performance-critical tight loops\n";
-    std::cout << "Use std::function: storing, returning, or runtime dispatch\n";
+    std::print("tripled:              ");
+    for (int x : tripled) std::print("{} ", x); std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Callback chain — processing pipeline\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Callback chain — processing pipeline");
+    std::println("=====================================================");
 
     Pipeline pipeline;
     pipeline
@@ -437,15 +437,16 @@ int main()
         .addStage([](int x) { return x * x;    })   // square
         .addStage([](int x) { return x / 4;    });  // divide
 
-    std::cout << "Pipeline result for input=3:\n";
+    std::println("Pipeline result for input=3:");
     int result = pipeline.execute(3);
     std::println("final result: {}", result);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Success/Error callback pair\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Success/Error callback pair");
+    std::println("=====================================================");
 
     fetchData("https://valid.api/data",
               [](const std::string& data)  { std::println("SUCCESS: {}", data); },
@@ -472,46 +473,49 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: MCX Event System\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Job Event System");
+    std::println("=====================================================");
 
-    McxEventSystem mcx;
+    JobEventSystem events;
 
     // Register all event callbacks
-    mcx.onConnectionStatus([](bool connected) {
-        std::println("[MCX] connection: {}", connected ? "ESTABLISHED" : "LOST");
+    events.onConnectionStatus([](bool connected) {
+        std::println("[events] connection: {}", connected ? "ESTABLISHED" : "LOST");
     });
 
-    mcx.onCallStarted([](int callId, const std::string& groupId) {
-        std::println("[MCX] call started — id={} group={}", callId, groupId);
+    events.onJobStarted([](int jobId, const std::string& queueName) {
+        std::println("[events] job started — id={} queue={}", jobId, queueName);
     });
 
-    mcx.onFloorGranted([](int callId, int userId) {
-        std::println("[MCX] floor GRANTED — call={} user={}", callId, userId);
+    events.onLockAcquired([](int jobId, int userId) {
+        std::println("[events] lock ACQUIRED — job={} user={}", jobId, userId);
     });
 
-    mcx.onFloorReleased([](int callId, int userId) {
-        std::println("[MCX] floor RELEASED — call={} user={}", callId, userId);
+    events.onLockReleased([](int jobId, int userId) {
+        std::println("[events] lock RELEASED — job={} user={}", jobId, userId);
     });
 
-    mcx.onCallEnded([](int callId, const std::string& groupId) {
-        std::println("[MCX] call ended — id={} group={}", callId, groupId);
+    events.onJobEnded([](int jobId, const std::string& queueName) {
+        std::println("[events] job ended — id={} queue={}", jobId, queueName);
     });
 
-    mcx.onError([](int code, const std::string& reason) {
-        std::println("[MCX] ERROR {} — {}", code, reason);
+    events.onError([](int code, const std::string& reason) {
+        std::println("[events] ERROR {} — {}", code, reason);
     });
 
-    // Simulate MCX event sequence
-    std::cout << "\nSimulating MCX group call:\n";
-    mcx.simulateConnect();
-    mcx.simulateCallStart(1001, "GRP-42");
-    mcx.simulateFloorGrant(1001, 7);
-    mcx.simulateFloorRelease(1001, 7);
-    mcx.simulateCallEnd(1001, "GRP-42");
-    mcx.simulateError(503, "server unavailable");
+    // Simulate an event sequence
+    std::println("");
+    std::println("Simulating a job run:");
+    events.simulateConnect();
+    events.simulateJobStart(1001, "queue-42");
+    events.simulateLockAcquire(1001, 7);
+    events.simulateLockRelease(1001, 7);
+    events.simulateJobEnd(1001, "queue-42");
+    events.simulateError(503, "server unavailable");
 
-    std::cout << "\n=== Callbacks complete ===\n";
+    std::println("");
+    std::println("=== Callbacks complete ===");
     return 0;
 }

@@ -11,16 +11,15 @@
 // C++20 CONCEPTS
 // ============================================================
 // Topics covered:
-//   1.  What are concepts — type constraints
-//   2.  Built-in concepts — std::integral, std::floating_point etc.
-//   3.  requires clause — ad-hoc constraints
-//   4.  Custom concepts — define your own
-//   5.  Concept with multiple constraints — &&, ||
-//   6.  requires expression — checking expressions
-//   7.  Constrained auto
-//   8.  Concepts vs SFINAE — comparison
-//   9.  Subsumption — concept refinement
-//  10.  Real use case — MCX codec concept
+//   1.  Built-in concepts — std::integral, std::floating_point etc.
+//   2.  requires clause — ad-hoc constraints
+//   3.  Custom concepts — define your own
+//   4.  Concept with multiple constraints — &&, ||
+//   5.  requires expression — checking expressions
+//   6.  Constrained auto
+//   7.  Concepts vs SFINAE — comparison
+//   8.  Subsumption — concept refinement
+//   9.  Real use case — text encoder concept
 // ============================================================
 
 
@@ -106,9 +105,9 @@ T absoluteVal(T x) { return x < 0 ? -x : x; }
 
 template<Container T>
 void printContainer(const T& c) {
-    std::cout << "  [ ";
-    for (const auto& item : c) std::cout << item << ' ';
-    std::cout << "]\n";
+    std::print("  [ ");
+    for (const auto& item : c) std::print("{} ", item);
+    std::println("]");
 }
 
 template<typename T>
@@ -176,43 +175,43 @@ void describe(const T& s) {
 
 
 // ============================================================
-// Example 10 — MCX Codec concept
+// Example 10 — Text encoder concept
 // ============================================================
 
 template<typename T>
-concept McxCodec = requires(T codec, const std::string& data) {
-    { codec.name()    } -> std::convertible_to<std::string>;
-    { codec.bitrate() } -> std::convertible_to<int>;
-    { codec.encode(data) } -> std::convertible_to<std::string>;
-    { codec.decode(data) } -> std::convertible_to<std::string>;
+concept TextEncoder = requires(T encoder, const std::string& data) {
+    { encoder.name()    } -> std::convertible_to<std::string>;
+    { encoder.maxLength() } -> std::convertible_to<int>;
+    { encoder.encode(data) } -> std::convertible_to<std::string>;
+    { encoder.decode(data) } -> std::convertible_to<std::string>;
 };
 
-struct AmrWbCodec {
-    std::string name()    const { return "AMR-WB"; }
-    int         bitrate() const { return 23850; }
+struct BracketEncoder {
+    std::string name()    const { return "BRACKET"; }
+    int         maxLength() const { return 256; }
     std::string encode(const std::string& data) const {
-        return "[AMR-WB encoded: " + data + "]";
+        return "[BRACKET encoded: " + data + "]";
     }
     std::string decode(const std::string& data) const {
         return "[decoded: " + data + "]";
     }
 };
 
-struct OpusCodec {
-    std::string name()    const { return "OPUS"; }
-    int         bitrate() const { return 32000; }
+struct PrefixEncoder {
+    std::string name()    const { return "PREFIX"; }
+    int         maxLength() const { return 1024; }
     std::string encode(const std::string& data) const {
-        return "[OPUS encoded: " + data + "]";
+        return "[PREFIX encoded: " + data + "]";
     }
     std::string decode(const std::string& data) const {
         return "[decoded: " + data + "]";
     }
 };
 
-template<McxCodec T>
-void processAudio(const T& codec, const std::string& audio) {
-    std::println("  codec: {} ({}bps)", codec.name(), codec.bitrate());
-    auto encoded = codec.encode(audio);
+template<TextEncoder T>
+void processText(const T& encoder, const std::string& text) {
+    std::println("  encoder: {} (max length {})", encoder.name(), encoder.maxLength());
+    auto encoded = encoder.encode(text);
     std::println("  encoded: {}", encoded);
 }
 
@@ -223,26 +222,10 @@ void processAudio(const T& codec, const std::string& audio) {
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: What are Concepts?\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "Concepts are COMPILE-TIME constraints on template types.\n\n";
-    std::cout << "Without concepts:\n";
-    std::cout << "  template<typename T>\n";
-    std::cout << "  T add(T a, T b) { return a + b; }\n";
-    std::cout << "  // Works on int, double, string — even if that's wrong!\n\n";
-    std::cout << "With concepts:\n";
-    std::cout << "  template<std::integral T>\n";
-    std::cout << "  T add(T a, T b) { return a + b; }\n";
-    std::cout << "  // ONLY works on int, long, short etc.\n";
-    std::cout << "  // Clear error message if you try double or string\n";
-
-
-    // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: Built-in Concepts (<concepts> header)\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 1: Built-in Concepts (<concepts> header)");
+    std::println("=====================================================");
 
     std::println("is int integral:         {}", std::integral<int>);
     std::println("is double integral:      {}", std::integral<double>);
@@ -262,9 +245,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: Custom concepts\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: Custom concepts");
+    std::println("=====================================================");
 
     std::println("int is Arithmetic:    {}", Arithmetic<int>);
     std::println("double is Arithmetic: {}", Arithmetic<double>);
@@ -277,9 +261,10 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: 4 syntaxes for constrained functions\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: 4 syntaxes for constrained functions");
+    std::println("=====================================================");
 
     std::println("doubled_v1(5) = {}", doubled_v1(5));
     std::println("doubled_v2(5) = {}", doubled_v2(5));
@@ -287,14 +272,15 @@ int main()
     std::println("doubled_v4(5) = {}", doubled_v4(5));
 
     // doubled_v1(3.14);  // ERROR — not integral
-    std::cout << "All 4 give same result — choose the style you prefer\n";
-    std::cout << "Recommended: syntax 2 (template<std::integral T>)\n";
+    std::println("All 4 give same result — choose the style you prefer");
+    std::println("Recommended: syntax 2 (template<std::integral T>)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Multiple constraints && and ||\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: Multiple constraints && and ||");
+    std::println("=====================================================");
 
     std::println("square(5)      = {}", square(5));
     std::println("square(3.14)   = {}", square(3.14));
@@ -303,9 +289,9 @@ int main()
     std::vector<int>         vi = {3,1,4,1,5,9};
     std::list<std::string>   ls = {"alpha","beta","gamma"};
 
-    std::cout << "printContainer(vector): ";
+    std::print("printContainer(vector): ");
     printContainer(vi);
-    std::cout << "printContainer(list):   ";
+    std::print("printContainer(list):   ");
     printContainer(ls);
 
     std::println("findMax vector<int>: {}", findMax(vi));
@@ -314,24 +300,20 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: requires expression — inspect type\n";
-    std::cout << "=====================================================\n";
-
-    std::cout << "requires expressions check:\n";
-    std::cout << "  Simple:     { expr }          — expr must be valid\n";
-    std::cout << "  Type:       typename T::type  — type must exist\n";
-    std::cout << "  Compound:   { expr } -> T     — expr must return T\n";
-    std::cout << "  Nested:     requires(...)     — sub-requires\n\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: requires expression — inspect type");
+    std::println("=====================================================");
 
     std::println("int is Arithmetic:    {}", Arithmetic<int>);
     std::println("string is Arithmetic: {}", Arithmetic<std::string>);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: Constrained auto\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: Constrained auto");
+    std::println("=====================================================");
 
     // auto with concept constraint
     std::integral auto x = 42;          // must be integral
@@ -350,59 +332,59 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Concepts vs SFINAE\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: Concepts vs SFINAE");
+    std::println("=====================================================");
 
     std::println("sfinae_double(5)  = {}", sfinae_double(5));
     std::println("concept_double(5) = {}", concept_double(5));
 
-    std::cout << "\nSFINAE error message (old):\n";
-    std::cout << "  'enable_if' not found, candidate not viable...\n";
-    std::cout << "  substitution failure... template argument deduction...\n\n";
-    std::cout << "Concepts error message (new):\n";
-    std::cout << "  'double' does not satisfy 'std::integral'\n";
-    std::cout << "  Much clearer — exactly what constraint failed\n";
-
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Subsumption — concept refinement\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Subsumption — concept refinement");
+    std::println("=====================================================");
 
     Circle        c  { 5.0 };
     ColoredCircle cc { 5.0, "red" };
 
-    std::cout << "Circle (satisfies Shape):\n";
+    std::println("Circle (satisfies Shape):");
     describe(c);   // calls Shape overload
 
-    std::cout << "ColoredCircle (satisfies ColoredShape):\n";
+    std::println("ColoredCircle (satisfies ColoredShape):");
     describe(cc);  // calls ColoredShape overload — more specific wins
 
-    std::println("\nCircle satisfies Shape:        {}", Shape<Circle>);
+    std::println("");
+    std::println("Circle satisfies Shape:        {}", Shape<Circle>);
     std::println("Circle satisfies ColoredShape: {}", ColoredShape<Circle>);
     std::println("ColoredCircle satisfies Shape: {}", Shape<ColoredCircle>);
     std::println("ColoredCircle satisfies ColoredShape: {}", ColoredShape<ColoredCircle>);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: McxCodec concept\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: TextEncoder concept");
+    std::println("=====================================================");
 
-    std::println("AmrWbCodec satisfies McxCodec: {}", McxCodec<AmrWbCodec>);
-    std::println("OpusCodec satisfies McxCodec:  {}", McxCodec<OpusCodec>);
-    std::println("int satisfies McxCodec:        {}", McxCodec<int>);
+    std::println("BracketEncoder satisfies TextEncoder: {}", TextEncoder<BracketEncoder>);
+    std::println("PrefixEncoder satisfies TextEncoder:  {}", TextEncoder<PrefixEncoder>);
+    std::println("int satisfies TextEncoder:        {}", TextEncoder<int>);
 
-    AmrWbCodec amr;
-    OpusCodec  opus;
+    BracketEncoder bracket;
+    PrefixEncoder  prefix;
 
-    std::cout << "\nAMR-WB:\n";
-    processAudio(amr, "Hello ALPHA");
+    std::println("");
+    std::println("BRACKET:");
+    processText(bracket, "Hello world");
 
-    std::cout << "\nOPUS:\n";
-    processAudio(opus, "Hello ALPHA");
+    std::println("");
+    std::println("PREFIX:");
+    processText(prefix, "Hello world");
 
-    std::cout << "\n=== Concepts complete ===\n";
+    std::println("");
+    std::println("=== Concepts complete ===");
     return 0;
 }

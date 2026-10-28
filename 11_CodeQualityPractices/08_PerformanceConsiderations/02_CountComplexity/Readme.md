@@ -703,3 +703,312 @@ To master complexity counting:
 ---
 
 **Remember: Counting complexity is a skill that improves with practice. Use this methodology consistently, and you'll master it!**
+
+## Notes moved from main.cpp
+
+This text used to be printed by `main()`. It is lecture material, so it lives here and the program only prints the demo output.
+
+### 🎉 CODE COMPLEXITY COMPLETE! 🎉 (closing summary)
+
+Key Takeaway: Choose algorithms wisely! The right  
+complexity can mean the difference between instant  
+and impossibly slow.
+
+### Text printed by the example functions
+
+This text used to be printed between the demo steps. It is lecture material, so it lives here.
+
+### From `example1_constant_time()`
+
+📊 COMPLEXITY: O(1)  
+Time stays constant regardless of input size
+
+- ✅ EXAMPLES:
+  - Array access: arr[i]
+  - Hash table lookup
+  - Push/pop from stack
+  - Arithmetic operations
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example1_constant_time()`
+
+- 💡 OBSERVATION:
+
+Time remains ~constant regardless of size!  
+This is O(1) - the best complexity possible.
+
+### From `example2_logarithmic_time()`
+
+📊 COMPLEXITY: O(log n)  
+Time grows logarithmically with input size  
+Each step cuts problem size in half
+
+- ✅ EXAMPLES:
+  - Binary search
+  - Balanced tree operations
+  - Finding power (x^n with binary exponentiation)
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example2_logarithmic_time()`
+
+- 💡 OBSERVATION:
+
+10x increase in size → only ~3.3x increase in time  
+Even 1,000,000 elements → only ~20 comparisons!
+
+### From `example3_linear_time()`
+
+📊 COMPLEXITY: O(n)  
+Time grows linearly with input size  
+Must visit each element once
+
+- ✅ EXAMPLES:
+  - Finding max/min in unsorted array
+  - Linear search
+  - Summing array elements
+  - Single loop through data
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example3_linear_time()`
+
+- 💡 OBSERVATION:
+
+Time doubles when size doubles (linear relationship)  
+This is acceptable for most operations.
+
+### From `example4_linearithmic_time()`
+
+📊 COMPLEXITY: O(n log n)  
+Combination of linear and logarithmic  
+Best achievable for comparison-based sorting
+
+- ✅ EXAMPLES:
+  - Merge sort
+  - Quick sort (average case)
+  - Heap sort
+  - Efficient sorting algorithms
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example4_linearithmic_time()`
+
+- 💡 OBSERVATION:
+
+Slower than O(n) but much faster than O(n²)  
+This is optimal for comparison-based sorting!
+
+### From `example5_quadratic_time()`
+
+📊 COMPLEXITY: O(n²)  
+Time grows quadratically with input size  
+Usually involves nested loops
+
+- ❌ COMMON CAUSES:
+  - Nested loops over same data
+  - Bubble sort, insertion sort
+  - Naive duplicate detection
+  - Comparing all pairs
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example5_quadratic_time()`
+
+- 💡 OBSERVATION:
+
+O(n²) becomes VERY slow as n grows!  
+4x increase in size → 16x increase in time  
+Avoid nested loops when possible!
+
+### From `example6_exponential_time()`
+
+📊 COMPLEXITY: O(2^n)  
+Time DOUBLES with each additional input!  
+Grows extremely fast - often impractical
+
+- ❌ COMMON CAUSES:
+  - Naive recursive solutions
+  - Generating all subsets
+  - Brute force combinatorial problems
+
+**⏱️  TIMING DEMONSTRATION:**
+
+### From `example6_exponential_time()`
+
+- 💡 OBSERVATION:
+
+O(2^n) is CATASTROPHICALLY slow!  
+n=30 might take seconds, n=40 takes hours!  
+Always look for DP or memoization solutions!
+
+### From `example7_space_complexity()`
+
+**📊 SPACE COMPLEXITY:**
+
+How much memory an algorithm uses
+
+**📋 COMMON SPACE COMPLEXITIES:**
+
+- ✅ O(1) - CONSTANT SPACE:
+  - Only uses fixed amount of memory
+  - No growth with input size
+  - Examples: simple variables, in-place operations
+
+```cpp
+int sum = 0;
+for (int i = 0; i < n; i++) sum += i;  // O(1) space
+```
+
+- ⚠️  O(log n) - LOGARITHMIC SPACE:
+  - Recursive algorithms with halving
+  - Binary search recursion
+  - Balanced tree recursion
+
+- ⚠️  O(n) - LINEAR SPACE:
+  - Creating array/vector of size n
+  - Recursive calls n deep
+  - Hash map with n elements
+
+```cpp
+vector<int> copy = original;  // O(n) space
+```
+
+**🚨 O(n²) - QUADRATIC SPACE:**
+
+  - 2D arrays/matrices
+  - Dynamic programming tables
+
+```cpp
+vector<vector<int>> matrix(n, vector<int>(n));  // O(n²)
+```
+
+- 💡 KEY POINTS:
+  - Time-Space Trade-offs are common
+  - Faster algorithms often use more space
+  - In-place algorithms save memory (O(1) space)
+  - Recursion uses stack space
+
+### From `example8_complexity_comparison()`
+
+**📊 GROWTH COMPARISON:**
+
+How different complexities scale
+
+n     | O(1) | O(log n) | O(n)  | O(n log n) |   O(n²)   |    O(2^n)  
+------+------+----------+-------+------------+-----------+------------
+
+### From `example8_complexity_comparison()`
+
+**📈 VISUAL GROWTH (relative):**
+
+n=1000:  
+O(1):        ▌                              (1)  
+O(log n):    ▌                              (~10)  
+O(n):        ██████████                     (1,000)  
+O(n log n):  ███████████████████████        (~10,000)  
+O(n²):       ████████████████████... (way off screen!) (1,000,000)  
+O(2^n):      [Would fill the universe]
+
+**🎯 PRACTICAL LIMITS:**
+
+n=1,000,000 (1 million):
+
+  - O(1):        Instant ✅
+  - O(log n):    ~20 operations ✅
+  - O(n):        ~1ms ✅
+  - O(n log n):  ~20ms ✅
+  - O(n²):       ~1000s (16 minutes!) 🚨
+  - O(2^n):      Heat death of universe 💀
+
+### From `example9_case_analysis()`
+
+**📊 LINEAR SEARCH:**
+
+Best case:    O(1)   - Element is first  
+Average case: O(n/2) - Element in middle  
+Worst case:   O(n)   - Element is last or not present
+
+**📊 QUICK SORT:**
+
+Best case:    O(n log n) - Perfect pivot selection  
+Average case: O(n log n) - Random pivot  
+Worst case:   O(n²)      - Already sorted, poor pivot
+
+**📊 HASH TABLE LOOKUP:**
+
+Best case:    O(1)   - No collisions  
+Average case: O(1)   - Few collisions  
+Worst case:   O(n)   - All keys collide
+
+**⏱️  DEMONSTRATION - Linear Search:**
+
+### From `example9_case_analysis()`
+
+- 💡 IMPORTANT:
+  - Big O usually refers to WORST CASE
+  - Average case is often most practical
+  - Best case is rarely useful for analysis
+
+### From `example10_practical_guidelines()`
+
+**🎯 HOW TO ANALYZE COMPLEXITY:**
+
+1. COUNT THE LOOPS:
+  - One loop: O(n)
+  - Two nested loops: O(n²)
+  - Three nested loops: O(n³)
+
+2. LOOK FOR DIVISIONS:
+  - Halving problem size: O(log n)
+  - Binary search pattern: O(log n)
+
+3. RECURSIVE PATTERNS:
+  - Single recursive call: Often O(n)
+  - Two recursive calls: Often O(2^n)
+  - Divide and conquer: Often O(n log n)
+
+4. MULTIPLE OPERATIONS:
+  - Sequential: Add them → O(n + m)
+  - Nested: Multiply them → O(n * m)
+  - Take the dominant term → O(n² + n) = O(n²)
+
+- 💡 OPTIMIZATION RULES:
+
+- ✅ DO:
+  - Use appropriate data structures
+  - Avoid unnecessary nested loops
+  - Use hash tables for O(1) lookup
+  - Sort data if you need to search often
+  - Consider space-time tradeoffs
+
+- ❌ DON'T:
+  - Prematurely optimize
+  - Ignore readability for micro-optimizations
+  - Use O(n²) algorithms for large data
+  - Forget about space complexity
+
+**📊 DATA STRUCTURE COMPLEXITIES:**
+
+Array:         Access O(1), Search O(n), Insert O(n)  
+Hash Table:    Access O(1), Search O(1), Insert O(1)  
+Binary Tree:   Access O(log n), Search O(log n), Insert O(log n)  
+Linked List:   Access O(n), Search O(n), Insert O(1)
+
+**🎓 WHEN TO USE WHAT:**
+
+n < 100:       Any algorithm works  
+n < 10,000:    O(n²) acceptable  
+n < 1,000,000: Need O(n log n) or better  
+n > 1,000,000: Need O(n) or O(log n)
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output matches the original `std::cout` version except that the lecture text moved into *Notes moved from main.cpp* is no longer printed (and the remaining example titles were renumbered where an example was removed).
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer. UBSan reports signed `int` overflow in the Fibonacci demo for large `n` (original code, not changed).
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

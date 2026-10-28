@@ -1,113 +1,99 @@
-/**
- * The Product interface declares the operations that all concrete products must
- * implement.
+/*
+ * Factory Method: notifications through different channels
+ *
+ * Intent: the base class defines the workflow and calls a virtual "factory
+ * method" to get the object it needs; subclasses decide which concrete class
+ * is created.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
-class Product {
+#include <memory>
+#include <print>
+#include <string>
+#include <vector>
+
+// Product
+class Channel {
 public:
-    virtual ~Product() {}
-    virtual std::string Operation() const = 0;
+    virtual ~Channel() = default;
+    virtual void deliver(const std::string& text) const = 0;
+    virtual std::string name() const = 0;
 };
 
-/**
- * Concrete Products provide various implementations of the Product interface.
- */
-class ConcreteProduct1 : public Product {
+class EmailChannel : public Channel {
 public:
-    std::string Operation() const override {
-        return "{Result of the ConcreteProduct1}";
+    void deliver(const std::string& text) const override {
+        std::println("  [email] subject line: {}", text);
     }
+    std::string name() const override { return "email"; }
 };
-class ConcreteProduct2 : public Product {
+
+class SmsChannel : public Channel {
 public:
-    std::string Operation() const override {
-        return "{Result of the ConcreteProduct2}";
+    void deliver(const std::string& text) const override {
+        std::println("  [sms] {}", text.substr(0, 20));
     }
+    std::string name() const override { return "sms"; }
 };
 
-/**
- * The Creator class declares the factory method that is supposed to return an
- * object of a Product class. The Creator's subclasses usually provide the
- * implementation of this method.
- */
-
-class Creator {
-    /**
-   * Note that the Creator may also provide some default implementation of the
-   * factory method.
-   */
+class PushChannel : public Channel {
 public:
-    virtual ~Creator(){};
-    virtual Product* FactoryMethod() const = 0;
-    /**
-   * Also note that, despite its name, the Creator's primary responsibility is
-   * not creating products. Usually, it contains some core business logic that
-   * relies on Product objects, returned by the factory method. Subclasses can
-   * indirectly change that business logic by overriding the factory method and
-   * returning a different type of product from it.
-   */
-
-    std::string SomeOperation() const {
-        // Call the factory method to create a Product object.
-        Product* product = this->FactoryMethod();
-        // Now, use the product.
-        std::string result = "Creator: The same creator's code has just worked with " + product->Operation();
-        delete product;
-        return result;
+    void deliver(const std::string& text) const override {
+        std::println("  [push] {}", text);
     }
+    std::string name() const override { return "push"; }
 };
 
-/**
- * Concrete Creators override the factory method in order to change the
- * resulting product's type.
- */
-class ConcreteCreator1 : public Creator {
-    /**
-   * Note that the signature of the method still uses the abstract product type,
-   * even though the concrete product is actually returned from the method. This
-   * way the Creator can stay independent of concrete product classes.
-   */
+// Creator
+class Notifier {
 public:
-    Product* FactoryMethod() const override {
-        return new ConcreteProduct1();
+    virtual ~Notifier() = default;
+
+    void notify(const std::string& text) const {
+        auto channel = createChannel();  // the factory method
+        std::println("sending via {}", channel->name());
+        channel->deliver(text);
+    }
+
+protected:
+    virtual std::unique_ptr<Channel> createChannel() const = 0;
+};
+
+class EmailNotifier : public Notifier {
+protected:
+    std::unique_ptr<Channel> createChannel() const override {
+        return std::make_unique<EmailChannel>();
     }
 };
 
-class ConcreteCreator2 : public Creator {
-public:
-    Product* FactoryMethod() const override {
-        return new ConcreteProduct2();
+class SmsNotifier : public Notifier {
+protected:
+    std::unique_ptr<Channel> createChannel() const override {
+        return std::make_unique<SmsChannel>();
     }
 };
 
-/**
- * The client code works with an instance of a concrete creator, albeit through
- * its base interface. As long as the client keeps working with the creator via
- * the base interface, you can pass it any creator's subclass.
- */
-void ClientCode(const Creator& creator) {
-    // ...
-    std::cout << "Client: I'm not aware of the creator's class, but it still works.\n"
-              << creator.SomeOperation() << std::endl;
-    // ...
+class PushNotifier : public Notifier {
+protected:
+    std::unique_ptr<Channel> createChannel() const override {
+        return std::make_unique<PushChannel>();
+    }
+};
+
+// Client code works with the Notifier interface only.
+void alert(const Notifier& notifier) {
+    notifier.notify("Your parcel arrives tomorrow morning");
 }
 
-/**
- * The Application picks a creator's type depending on the configuration or
- * environment.
- */
-
 int main() {
-    std::cout << "App: Launched with the ConcreteCreator1.\n";
-    Creator* creator = new ConcreteCreator1();
-    ClientCode(*creator);
-    std::cout << std::endl;
-    std::cout << "App: Launched with the ConcreteCreator2.\n";
-    Creator* creator2 = new ConcreteCreator2();
-    ClientCode(*creator2);
+    std::vector<std::unique_ptr<Notifier>> notifiers;
+    notifiers.push_back(std::make_unique<EmailNotifier>());
+    notifiers.push_back(std::make_unique<SmsNotifier>());
+    notifiers.push_back(std::make_unique<PushNotifier>());
 
-    delete creator;
-    delete creator2;
+    for (const auto& notifier : notifiers) {
+        alert(*notifier);
+    }
     return 0;
 }

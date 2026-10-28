@@ -1,8 +1,7 @@
-#include <iostream>
 #include <string>
 #include <memory>
 #include <vector>
-using namespace std;
+#include <print>
 
 // ============================================
 // EXAMPLE 1: HOME THEATER SYSTEM
@@ -15,23 +14,23 @@ using namespace std;
 class DVDPlayer {
 public:
     void on() {
-        cout << "📀 DVD Player: Turning ON\n";
+        std::println("📀 DVD Player: Turning ON");
     }
 
     void off() {
-        cout << "📀 DVD Player: Turning OFF\n";
+        std::println("📀 DVD Player: Turning OFF");
     }
 
-    void play(const string& movie) {
-        cout << "📀 DVD Player: Playing '" << movie << "'\n";
+    void play(const std::string& movie) {
+        std::println("📀 DVD Player: Playing '{}'", movie);
     }
 
     void stop() {
-        cout << "📀 DVD Player: Stopped\n";
+        std::println("📀 DVD Player: Stopped");
     }
 
     void eject() {
-        cout << "📀 DVD Player: Ejecting disc\n";
+        std::println("📀 DVD Player: Ejecting disc");
     }
 };
 
@@ -41,19 +40,19 @@ public:
 class Projector {
 public:
     void on() {
-        cout << "📽️  Projector: Turning ON\n";
+        std::println("📽️  Projector: Turning ON");
     }
 
     void off() {
-        cout << "📽️  Projector: Turning OFF\n";
+        std::println("📽️  Projector: Turning OFF");
     }
 
     void wideScreenMode() {
-        cout << "📽️  Projector: Setting wide screen mode (16:9)\n";
+        std::println("📽️  Projector: Setting wide screen mode (16:9)");
     }
 
     void tvMode() {
-        cout << "📽️  Projector: Setting TV mode (4:3)\n";
+        std::println("📽️  Projector: Setting TV mode (4:3)");
     }
 };
 
@@ -63,23 +62,23 @@ public:
 class Amplifier {
 public:
     void on() {
-        cout << "🔊 Amplifier: Turning ON\n";
+        std::println("🔊 Amplifier: Turning ON");
     }
 
     void off() {
-        cout << "🔊 Amplifier: Turning OFF\n";
+        std::println("🔊 Amplifier: Turning OFF");
     }
 
     void setDVD() {
-        cout << "🔊 Amplifier: Setting DVD as input source\n";
+        std::println("🔊 Amplifier: Setting DVD as input source");
     }
 
     void setSurroundSound() {
-        cout << "🔊 Amplifier: Setting surround sound mode (5.1)\n";
+        std::println("🔊 Amplifier: Setting surround sound mode (5.1)");
     }
 
     void setVolume(int level) {
-        cout << "🔊 Amplifier: Setting volume to " << level << "\n";
+        std::println("🔊 Amplifier: Setting volume to {}", level);
     }
 };
 
@@ -89,11 +88,11 @@ public:
 class TheaterLights {
 public:
     void dim(int level) {
-        cout << "💡 Lights: Dimming to " << level << "%\n";
+        std::println("💡 Lights: Dimming to {}%", level);
     }
 
     void on() {
-        cout << "💡 Lights: Turning ON to 100%\n";
+        std::println("💡 Lights: Turning ON to 100%");
     }
 };
 
@@ -103,11 +102,11 @@ public:
 class Screen {
 public:
     void down() {
-        cout << "🎬 Screen: Going DOWN\n";
+        std::println("🎬 Screen: Going DOWN");
     }
 
     void up() {
-        cout << "🎬 Screen: Going UP\n";
+        std::println("🎬 Screen: Going UP");
     }
 };
 
@@ -117,15 +116,15 @@ public:
 class PopcornPopper {
 public:
     void on() {
-        cout << "🍿 Popcorn Maker: Turning ON\n";
+        std::println("🍿 Popcorn Maker: Turning ON");
     }
 
     void off() {
-        cout << "🍿 Popcorn Maker: Turning OFF\n";
+        std::println("🍿 Popcorn Maker: Turning OFF");
     }
 
     void pop() {
-        cout << "🍿 Popcorn Maker: Popping popcorn!\n";
+        std::println("🍿 Popcorn Maker: Popping popcorn!");
     }
 };
 
@@ -135,26 +134,27 @@ public:
  */
 class HomeTheaterFacade {
 private:
-    shared_ptr<DVDPlayer> dvd;
-    shared_ptr<Projector> projector;
-    shared_ptr<Amplifier> amp;
-    shared_ptr<TheaterLights> lights;
-    shared_ptr<Screen> screen;
-    shared_ptr<PopcornPopper> popper;
+    std::shared_ptr<DVDPlayer> dvd;
+    std::shared_ptr<Projector> projector;
+    std::shared_ptr<Amplifier> amp;
+    std::shared_ptr<TheaterLights> lights;
+    std::shared_ptr<Screen> screen;
+    std::shared_ptr<PopcornPopper> popper;
 
 public:
     HomeTheaterFacade(
-        shared_ptr<DVDPlayer> d,
-        shared_ptr<Projector> p,
-        shared_ptr<Amplifier> a,
-        shared_ptr<TheaterLights> l,
-        shared_ptr<Screen> s,
-        shared_ptr<PopcornPopper> pop
+        std::shared_ptr<DVDPlayer> d,
+        std::shared_ptr<Projector> p,
+        std::shared_ptr<Amplifier> a,
+        std::shared_ptr<TheaterLights> l,
+        std::shared_ptr<Screen> s,
+        std::shared_ptr<PopcornPopper> pop
         ) : dvd(d), projector(p), amp(a), lights(l), screen(s), popper(pop) {}
 
-    void watchMovie(const string& movie) {
-        cout << "\n🎥 Get ready to watch a movie...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    void watchMovie(const std::string& movie) {
+        std::println("");
+        std::println("🎥 Get ready to watch a movie...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         popper->on();
         popper->pop();
@@ -169,13 +169,14 @@ public:
         dvd->on();
         dvd->play(movie);
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "🎬 Movie is now playing! Enjoy!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("🎬 Movie is now playing! Enjoy!");
     }
 
     void endMovie() {
-        cout << "\n🛑 Shutting down home theater...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("🛑 Shutting down home theater...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         popper->off();
         lights->on();
@@ -186,20 +187,21 @@ public:
         dvd->eject();
         dvd->off();
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "✅ Home theater shut down complete!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("✅ Home theater shut down complete!");
     }
 
     void listenToRadio(double frequency) {
-        cout << "\n📻 Preparing to listen to radio...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("📻 Preparing to listen to radio...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         amp->on();
         amp->setVolume(3);
-        cout << "📻 Tuning to " << frequency << " FM\n";
+        std::println("📻 Tuning to {} FM", frequency);
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "🎵 Radio is now playing!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("🎵 Radio is now playing!");
     }
 };
 
@@ -214,15 +216,15 @@ public:
 class CPU {
 public:
     void freeze() {
-        cout << "🔷 CPU: Freezing...\n";
+        std::println("🔷 CPU: Freezing...");
     }
 
     void jump(long position) {
-        cout << "🔷 CPU: Jumping to position " << position << "\n";
+        std::println("🔷 CPU: Jumping to position {}", position);
     }
 
     void execute() {
-        cout << "🔷 CPU: Executing instructions\n";
+        std::println("🔷 CPU: Executing instructions");
     }
 };
 
@@ -231,8 +233,8 @@ public:
  */
 class Memory {
 public:
-    void load(long position, const string& data) {
-        cout << "💾 Memory: Loading '" << data << "' at position " << position << "\n";
+    void load(long position, const std::string& data) {
+        std::println("💾 Memory: Loading '{}' at position {}", data, position);
     }
 };
 
@@ -241,8 +243,8 @@ public:
  */
 class HardDrive {
 public:
-    string read(long lba, int size) {
-        cout << "💿 HardDrive: Reading " << size << " bytes from sector " << lba << "\n";
+    std::string read(long lba, int size) {
+        std::println("💿 HardDrive: Reading {} bytes from sector {}", size, lba);
         return "BOOT_DATA";
     }
 };
@@ -252,9 +254,9 @@ public:
  */
 class ComputerFacade {
 private:
-    shared_ptr<CPU> cpu;
-    shared_ptr<Memory> memory;
-    shared_ptr<HardDrive> hd;
+    std::shared_ptr<CPU> cpu;
+    std::shared_ptr<Memory> memory;
+    std::shared_ptr<HardDrive> hd;
 
     const long BOOT_ADDRESS = 0x0000;
     const long BOOT_SECTOR = 0;
@@ -262,23 +264,24 @@ private:
 
 public:
     ComputerFacade() {
-        cpu = make_shared<CPU>();
-        memory = make_shared<Memory>();
-        hd = make_shared<HardDrive>();
+        cpu = std::make_shared<CPU>();
+        memory = std::make_shared<Memory>();
+        hd = std::make_shared<HardDrive>();
     }
 
     void start() {
-        cout << "\n💻 Starting computer...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("💻 Starting computer...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         cpu->freeze();
-        string bootData = hd->read(BOOT_SECTOR, SECTOR_SIZE);
+        std::string bootData = hd->read(BOOT_SECTOR, SECTOR_SIZE);
         memory->load(BOOT_ADDRESS, bootData);
         cpu->jump(BOOT_ADDRESS);
         cpu->execute();
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "✅ Computer started successfully!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("✅ Computer started successfully!");
     }
 };
 
@@ -292,15 +295,14 @@ public:
  */
 class Inventory {
 public:
-    bool checkStock(const string& product, int quantity) {
-        cout << "📦 Inventory: Checking stock for " << quantity
-             << "x " << product << "\n";
-        cout << "📦 Inventory: Stock available ✓\n";
+    bool checkStock(const std::string& product, int quantity) {
+        std::println("📦 Inventory: Checking stock for {}x {}", quantity, product);
+        std::println("📦 Inventory: Stock available ✓");
         return true;
     }
 
-    void reduceStock(const string& product, int quantity) {
-        cout << "📦 Inventory: Reducing stock by " << quantity << "\n";
+    void reduceStock(const std::string& product, int quantity) {
+        std::println("📦 Inventory: Reducing stock by {}", quantity);
     }
 };
 
@@ -309,10 +311,10 @@ public:
  */
 class PaymentProcessor {
 public:
-    bool processPayment(const string& cardNumber, double amount) {
-        cout << "💳 Payment: Processing $" << amount
-             << " on card ending " << cardNumber.substr(cardNumber.length() - 4) << "\n";
-        cout << "💳 Payment: Transaction approved ✓\n";
+    bool processPayment(const std::string& cardNumber, double amount) {
+        std::println("💳 Payment: Processing ${} on card ending {}",
+            amount, cardNumber.substr(cardNumber.length() - 4));
+        std::println("💳 Payment: Transaction approved ✓");
         return true;
     }
 };
@@ -322,11 +324,11 @@ public:
  */
 class ShippingService {
 public:
-    string scheduleShipping(const string& address, const string& product) {
-        cout << "🚚 Shipping: Scheduling delivery to " << address << "\n";
-        cout << "🚚 Shipping: Package prepared for " << product << "\n";
-        string trackingNumber = "TRACK-" + to_string(rand() % 10000);
-        cout << "🚚 Shipping: Tracking number: " << trackingNumber << "\n";
+    std::string scheduleShipping(const std::string& address, const std::string& product) {
+        std::println("🚚 Shipping: Scheduling delivery to {}", address);
+        std::println("🚚 Shipping: Package prepared for {}", product);
+        std::string trackingNumber = "TRACK-" + std::to_string(rand() % 10000);
+        std::println("🚚 Shipping: Tracking number: {}", trackingNumber);
         return trackingNumber;
     }
 };
@@ -336,14 +338,14 @@ public:
  */
 class NotificationService {
 public:
-    void sendEmail(const string& email, const string& message) {
-        cout << "📧 Notification: Sending email to " << email << "\n";
-        cout << "📧 Message: " << message << "\n";
+    void sendEmail(const std::string& email, const std::string& message) {
+        std::println("📧 Notification: Sending email to {}", email);
+        std::println("📧 Message: {}", message);
     }
 
-    void sendSMS(const string& phone, const string& message) {
-        cout << "📱 Notification: Sending SMS to " << phone << "\n";
-        cout << "📱 Message: " << message << "\n";
+    void sendSMS(const std::string& phone, const std::string& message) {
+        std::println("📱 Notification: Sending SMS to {}", phone);
+        std::println("📱 Message: {}", message);
     }
 };
 
@@ -352,40 +354,41 @@ public:
  */
 class OrderFacade {
 private:
-    shared_ptr<Inventory> inventory;
-    shared_ptr<PaymentProcessor> payment;
-    shared_ptr<ShippingService> shipping;
-    shared_ptr<NotificationService> notification;
+    std::shared_ptr<Inventory> inventory;
+    std::shared_ptr<PaymentProcessor> payment;
+    std::shared_ptr<ShippingService> shipping;
+    std::shared_ptr<NotificationService> notification;
 
 public:
     OrderFacade() {
-        inventory = make_shared<Inventory>();
-        payment = make_shared<PaymentProcessor>();
-        shipping = make_shared<ShippingService>();
-        notification = make_shared<NotificationService>();
+        inventory = std::make_shared<Inventory>();
+        payment = std::make_shared<PaymentProcessor>();
+        shipping = std::make_shared<ShippingService>();
+        notification = std::make_shared<NotificationService>();
     }
 
     bool placeOrder(
-        const string& product,
+        const std::string& product,
         int quantity,
-        const string& cardNumber,
+        const std::string& cardNumber,
         double amount,
-        const string& shippingAddress,
-        const string& email,
-        const string& phone
+        const std::string& shippingAddress,
+        const std::string& email,
+        const std::string& phone
         ) {
-        cout << "\n🛒 Processing order...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("🛒 Processing order...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         // Step 1: Check inventory
         if (!inventory->checkStock(product, quantity)) {
-            cout << "❌ Order failed: Out of stock\n";
+            std::println("❌ Order failed: Out of stock");
             return false;
         }
 
         // Step 2: Process payment
         if (!payment->processPayment(cardNumber, amount)) {
-            cout << "❌ Order failed: Payment declined\n";
+            std::println("❌ Order failed: Payment declined");
             return false;
         }
 
@@ -393,14 +396,14 @@ public:
         inventory->reduceStock(product, quantity);
 
         // Step 4: Schedule shipping
-        string trackingNumber = shipping->scheduleShipping(shippingAddress, product);
+        std::string trackingNumber = shipping->scheduleShipping(shippingAddress, product);
 
         // Step 5: Send notifications
         notification->sendEmail(email, "Order confirmed! Tracking: " + trackingNumber);
         notification->sendSMS(phone, "Your order is on the way!");
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "✅ Order placed successfully!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("✅ Order placed successfully!");
         return true;
     }
 };
@@ -415,22 +418,22 @@ public:
  */
 class AccountManager {
 public:
-    bool verifyAccount(const string& accountNumber) {
-        cout << "🏦 Account: Verifying account " << accountNumber << "\n";
+    bool verifyAccount(const std::string& accountNumber) {
+        std::println("🏦 Account: Verifying account {}", accountNumber);
         return true;
     }
 
-    double getBalance(const string& accountNumber) {
-        cout << "🏦 Account: Fetching balance for " << accountNumber << "\n";
+    double getBalance(const std::string& accountNumber) {
+        std::println("🏦 Account: Fetching balance for {}", accountNumber);
         return 5000.0;
     }
 
-    void debit(const string& accountNumber, double amount) {
-        cout << "🏦 Account: Debiting $" << amount << " from " << accountNumber << "\n";
+    void debit(const std::string& accountNumber, double amount) {
+        std::println("🏦 Account: Debiting ${} from {}", amount, accountNumber);
     }
 
-    void credit(const string& accountNumber, double amount) {
-        cout << "🏦 Account: Crediting $" << amount << " to " << accountNumber << "\n";
+    void credit(const std::string& accountNumber, double amount) {
+        std::println("🏦 Account: Crediting ${} to {}", amount, accountNumber);
     }
 };
 
@@ -439,14 +442,14 @@ public:
  */
 class SecurityManager {
 public:
-    bool authenticateUser(const string& username, const string& password) {
-        cout << "🔒 Security: Authenticating user '" << username << "'\n";
-        cout << "🔒 Security: Authentication successful ✓\n";
+    bool authenticateUser(const std::string& username, const std::string& password) {
+        std::println("🔒 Security: Authenticating user '{}'", username);
+        std::println("🔒 Security: Authentication successful ✓");
         return true;
     }
 
-    bool authorize(const string& username, const string& operation) {
-        cout << "🔒 Security: Authorizing '" << operation << "' for " << username << "\n";
+    bool authorize(const std::string& username, const std::string& operation) {
+        std::println("🔒 Security: Authorizing '{}' for {}", operation, username);
         return true;
     }
 };
@@ -456,9 +459,8 @@ public:
  */
 class TransactionLogger {
 public:
-    void logTransaction(const string& type, double amount, const string& account) {
-        cout << "📝 Logger: Recording " << type << " of $" << amount
-             << " for account " << account << "\n";
+    void logTransaction(const std::string& type, double amount, const std::string& account) {
+        std::println("📝 Logger: Recording {} of ${} for account {}", type, amount, account);
     }
 };
 
@@ -467,50 +469,51 @@ public:
  */
 class BankingFacade {
 private:
-    shared_ptr<AccountManager> accountMgr;
-    shared_ptr<SecurityManager> securityMgr;
-    shared_ptr<TransactionLogger> logger;
+    std::shared_ptr<AccountManager> accountMgr;
+    std::shared_ptr<SecurityManager> securityMgr;
+    std::shared_ptr<TransactionLogger> logger;
 
 public:
     BankingFacade() {
-        accountMgr = make_shared<AccountManager>();
-        securityMgr = make_shared<SecurityManager>();
-        logger = make_shared<TransactionLogger>();
+        accountMgr = std::make_shared<AccountManager>();
+        securityMgr = std::make_shared<SecurityManager>();
+        logger = std::make_shared<TransactionLogger>();
     }
 
     bool transfer(
-        const string& username,
-        const string& password,
-        const string& fromAccount,
-        const string& toAccount,
+        const std::string& username,
+        const std::string& password,
+        const std::string& fromAccount,
+        const std::string& toAccount,
         double amount
         ) {
-        cout << "\n💸 Processing transfer...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("💸 Processing transfer...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         // Step 1: Authenticate
         if (!securityMgr->authenticateUser(username, password)) {
-            cout << "❌ Authentication failed\n";
+            std::println("❌ Authentication failed");
             return false;
         }
 
         // Step 2: Authorize
         if (!securityMgr->authorize(username, "TRANSFER")) {
-            cout << "❌ Not authorized for transfers\n";
+            std::println("❌ Not authorized for transfers");
             return false;
         }
 
         // Step 3: Verify accounts
         if (!accountMgr->verifyAccount(fromAccount) ||
             !accountMgr->verifyAccount(toAccount)) {
-            cout << "❌ Invalid account\n";
+            std::println("❌ Invalid account");
             return false;
         }
 
         // Step 4: Check balance
         double balance = accountMgr->getBalance(fromAccount);
         if (balance < amount) {
-            cout << "❌ Insufficient funds\n";
+            std::println("❌ Insufficient funds");
             return false;
         }
 
@@ -521,8 +524,8 @@ public:
         // Step 6: Log transaction
         logger->logTransaction("TRANSFER", amount, fromAccount);
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "✅ Transfer completed successfully!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("✅ Transfer completed successfully!");
         return true;
     }
 };
@@ -537,14 +540,14 @@ public:
  */
 class RoomService {
 public:
-    bool checkAvailability(const string& roomType, const string& date) {
-        cout << "🏨 Room: Checking " << roomType << " availability for " << date << "\n";
-        cout << "🏨 Room: Available ✓\n";
+    bool checkAvailability(const std::string& roomType, const std::string& date) {
+        std::println("🏨 Room: Checking {} availability for {}", roomType, date);
+        std::println("🏨 Room: Available ✓");
         return true;
     }
 
-    void reserveRoom(const string& roomType, const string& date) {
-        cout << "🏨 Room: Reserving " << roomType << " for " << date << "\n";
+    void reserveRoom(const std::string& roomType, const std::string& date) {
+        std::println("🏨 Room: Reserving {} for {}", roomType, date);
     }
 };
 
@@ -553,9 +556,8 @@ public:
  */
 class RestaurantService {
 public:
-    void bookTable(int guests, const string& time) {
-        cout << "🍽️  Restaurant: Booking table for " << guests
-             << " guests at " << time << "\n";
+    void bookTable(int guests, const std::string& time) {
+        std::println("🍽️  Restaurant: Booking table for {} guests at {}", guests, time);
     }
 };
 
@@ -564,9 +566,8 @@ public:
  */
 class EventManager {
 public:
-    void bookConferenceRoom(const string& date, int hours) {
-        cout << "📊 Events: Booking conference room for " << hours
-             << " hours on " << date << "\n";
+    void bookConferenceRoom(const std::string& date, int hours) {
+        std::println("📊 Events: Booking conference room for {} hours on {}", hours, date);
     }
 };
 
@@ -575,26 +576,27 @@ public:
  */
 class HotelFacade {
 private:
-    shared_ptr<RoomService> rooms;
-    shared_ptr<RestaurantService> restaurant;
-    shared_ptr<EventManager> events;
+    std::shared_ptr<RoomService> rooms;
+    std::shared_ptr<RestaurantService> restaurant;
+    std::shared_ptr<EventManager> events;
 
 public:
     HotelFacade() {
-        rooms = make_shared<RoomService>();
-        restaurant = make_shared<RestaurantService>();
-        events = make_shared<EventManager>();
+        rooms = std::make_shared<RoomService>();
+        restaurant = std::make_shared<RestaurantService>();
+        events = std::make_shared<EventManager>();
     }
 
     bool bookBusinessPackage(
-        const string& date,
-        const string& roomType,
+        const std::string& date,
+        const std::string& roomType,
         int dinnerGuests,
-        const string& dinnerTime,
+        const std::string& dinnerTime,
         int conferenceHours
         ) {
-        cout << "\n🏢 Booking Business Package...\n";
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        std::println("");
+        std::println("🏢 Booking Business Package...");
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         if (!rooms->checkAvailability(roomType, date)) {
             return false;
@@ -604,8 +606,8 @@ public:
         restaurant->bookTable(dinnerGuests, dinnerTime);
         events->bookConferenceRoom(date, conferenceHours);
 
-        cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        cout << "✅ Business package booked successfully!\n";
+        std::println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        std::println("✅ Business package booked successfully!");
         return true;
     }
 };
@@ -615,17 +617,18 @@ public:
 // ============================================
 
 void demonstrateHomeTheater() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 1: HOME THEATER           ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 1: HOME THEATER           ║");
+    std::println("╚════════════════════════════════════╝");
 
     // Create subsystem components
-    auto dvd = make_shared<DVDPlayer>();
-    auto projector = make_shared<Projector>();
-    auto amp = make_shared<Amplifier>();
-    auto lights = make_shared<TheaterLights>();
-    auto screen = make_shared<Screen>();
-    auto popper = make_shared<PopcornPopper>();
+    auto dvd = std::make_shared<DVDPlayer>();
+    auto projector = std::make_shared<Projector>();
+    auto amp = std::make_shared<Amplifier>();
+    auto lights = std::make_shared<TheaterLights>();
+    auto screen = std::make_shared<Screen>();
+    auto popper = std::make_shared<PopcornPopper>();
 
     // Create facade
     HomeTheaterFacade homeTheater(dvd, projector, amp, lights, screen, popper);
@@ -633,28 +636,33 @@ void demonstrateHomeTheater() {
     // Simple interface - complex operations hidden!
     homeTheater.watchMovie("Inception");
 
-    cout << "\n⏸️  ... Movie is playing ...\n";
+    std::println("");
+    std::println("⏸️  ... Movie is playing ...");
 
     homeTheater.endMovie();
 
-    cout << "\n💡 Notice: Client uses simple interface, complexity hidden!\n";
+    std::println("");
+    std::println("💡 Notice: Client uses simple interface, complexity hidden!");
 }
 
 void demonstrateComputer() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 2: COMPUTER SYSTEM        ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 2: COMPUTER SYSTEM        ║");
+    std::println("╚════════════════════════════════════╝");
 
     ComputerFacade computer;
     computer.start();
 
-    cout << "\n💡 Notice: Complex boot sequence simplified to one method!\n";
+    std::println("");
+    std::println("💡 Notice: Complex boot sequence simplified to one method!");
 }
 
 void demonstrateOnlineShopping() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 3: ONLINE SHOPPING        ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 3: ONLINE SHOPPING        ║");
+    std::println("╚════════════════════════════════════╝");
 
     OrderFacade orderSystem;
 
@@ -668,13 +676,15 @@ void demonstrateOnlineShopping() {
         "+1234567890"               // phone
         );
 
-    cout << "\n💡 Notice: Multiple subsystems coordinated through one call!\n";
+    std::println("");
+    std::println("💡 Notice: Multiple subsystems coordinated through one call!");
 }
 
 void demonstrateBanking() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 4: BANKING SYSTEM         ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 4: BANKING SYSTEM         ║");
+    std::println("╚════════════════════════════════════╝");
 
     BankingFacade bank;
 
@@ -686,13 +696,15 @@ void demonstrateBanking() {
         500.0                   // amount
         );
 
-    cout << "\n💡 Notice: Complex banking operations simplified!\n";
+    std::println("");
+    std::println("💡 Notice: Complex banking operations simplified!");
 }
 
 void demonstrateHotel() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  EXAMPLE 5: HOTEL BOOKING          ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  EXAMPLE 5: HOTEL BOOKING          ║");
+    std::println("╚════════════════════════════════════╝");
 
     HotelFacade hotel;
 
@@ -704,7 +716,8 @@ void demonstrateHotel() {
         3                       // conference hours
         );
 
-    cout << "\n💡 Notice: Package booking simplified into one call!\n";
+    std::println("");
+    std::println("💡 Notice: Package booking simplified into one call!");
 }
 
 // ============================================
@@ -712,119 +725,15 @@ void demonstrateHotel() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "FACADE PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("FACADE PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateHomeTheater();
     demonstrateComputer();
     demonstrateOnlineShopping();
     demonstrateBanking();
     demonstrateHotel();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF FACADE PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Simplifies complex subsystem\n";
-    cout << "✅ Reduces dependencies on subsystem\n";
-    cout << "✅ Provides single entry point\n";
-    cout << "✅ Decouples client from subsystem\n";
-    cout << "✅ Promotes loose coupling\n";
-    cout << "✅ Makes subsystem easier to use\n";
-    cout << "✅ Layers the system architecture\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE FACADE\n";
-    cout << "========================================\n";
-    cout << "1. Provide simple interface to complex subsystem\n";
-    cout << "2. Many dependencies between clients and subsystem\n";
-    cout << "3. Want to layer subsystems\n";
-    cout << "4. Decouple subsystem from clients\n";
-    cout << "5. Wrap poorly designed APIs\n";
-    cout << "6. Reduce complexity for clients\n";
-
-    cout << "\n========================================\n";
-    cout << "STRUCTURE\n";
-    cout << "========================================\n";
-    cout << "Client\n";
-    cout << "  ↓ (uses simple interface)\n";
-    cout << "Facade\n";
-    cout << "  ↓ (delegates to)\n";
-    cout << "Subsystem Classes\n";
-    cout << "  • Component1\n";
-    cout << "  • Component2\n";
-    cout << "  • Component3\n";
-    cout << "  • ...\n";
-
-    cout << "\n========================================\n";
-    cout << "FACADE vs OTHER PATTERNS\n";
-    cout << "========================================\n";
-    cout << "Facade:\n";
-    cout << "  • Simplifies interface\n";
-    cout << "  • Single entry point\n";
-    cout << "  • Hides complexity\n";
-    cout << "\nAdapter:\n";
-    cout << "  • Converts interface\n";
-    cout << "  • Makes compatible\n";
-    cout << "  • Usually one-to-one\n";
-    cout << "\nDecorator:\n";
-    cout << "  • Adds responsibilities\n";
-    cout << "  • Wraps objects\n";
-    cout << "  • Same interface\n";
-    cout << "\nProxy:\n";
-    cout << "  • Controls access\n";
-    cout << "  • Same interface\n";
-    cout << "  • Adds control layer\n";
-
-    cout << "\n========================================\n";
-    cout << "WITHOUT FACADE (Complex)\n";
-    cout << "========================================\n";
-    cout << "// Client code without facade:\n";
-    cout << "popper->on();\n";
-    cout << "popper->pop();\n";
-    cout << "lights->dim(10);\n";
-    cout << "screen->down();\n";
-    cout << "projector->on();\n";
-    cout << "projector->wideScreenMode();\n";
-    cout << "amp->on();\n";
-    cout << "amp->setDVD();\n";
-    cout << "amp->setSurroundSound();\n";
-    cout << "amp->setVolume(5);\n";
-    cout << "dvd->on();\n";
-    cout << "dvd->play(movie);\n";
-    cout << "// 12 lines of complex code!\n";
-
-    cout << "\n========================================\n";
-    cout << "WITH FACADE (Simple)\n";
-    cout << "========================================\n";
-    cout << "// Client code with facade:\n";
-    cout << "homeTheater.watchMovie(\"Inception\");\n";
-    cout << "// 1 line - simple!\n";
-
-    cout << "\n========================================\n";
-    cout << "KEY POINTS\n";
-    cout << "========================================\n";
-    cout << "• Facade doesn't prevent access to subsystem\n";
-    cout << "• Clients can still use subsystem directly if needed\n";
-    cout << "• Facade adds no new functionality\n";
-    cout << "• Facade only provides convenient interface\n";
-    cout << "• Can have multiple facades for same subsystem\n";
-    cout << "• Facade can be coupled to multiple subsystems\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• Home theater systems (watchMovie)\n";
-    cout << "• Computer startup (complex boot sequence)\n";
-    cout << "• Online shopping (order processing)\n";
-    cout << "• Banking operations (money transfer)\n";
-    cout << "• Compiler facade (compile, link, execute)\n";
-    cout << "• Database access (connection pooling)\n";
-    cout << "• Web frameworks (routing, middleware)\n";
-    cout << "• Library APIs (simplified interfaces)\n";
 
     return 0;
 }

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <ranges>
 #include <vector>
 #include <list>
@@ -20,7 +19,7 @@
 //   7.  views::reverse / sort / zip (C++23)
 //   8.  Range algorithms — std::ranges::sort, find etc.
 //   9.  Lazy evaluation — views don't copy data
-//  10.  Real use case — MCX session filtering
+//  10.  Real use case — task filtering
 // ============================================================
 
 namespace views = std::views;
@@ -30,75 +29,80 @@ namespace ranges = std::ranges;
 int main()
 {
     // -------------------------------------------------------
-    std::cout << "=====================================================\n";
-    std::cout << "Example 1: What are Ranges?\n";
-    std::cout << "=====================================================\n";
+    std::println("=====================================================");
+    std::println("Example 1: What are Ranges?");
+    std::println("=====================================================");
 
-    std::cout << "Ranges = begin + end iterator pair (any iterable)\n\n";
+    std::println("Ranges = begin + end iterator pair (any iterable)");
+    std::println("");
 
-    std::cout << "OLD WAY — manual loops:\n";
+    std::println("OLD WAY — manual loops:");
     std::vector<int> nums = {1,2,3,4,5,6,7,8,9,10};
     std::vector<int> result;
     for (int n : nums)
         if (n % 2 == 0)
             result.push_back(n * n);
-    std::cout << "  even squares: ";
+    std::print("  even squares: ");
     for (int n : result) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "\nNEW WAY — ranges pipeline:\n";
+    std::println("");
+    std::println("NEW WAY — ranges pipeline:");
     auto pipeline = nums
                     | views::filter([](int n){ return n % 2 == 0; })
                     | views::transform([](int n){ return n * n; });
 
-    std::cout << "  even squares: ";
+    std::print("  even squares: ");
     for (int n : pipeline) std::print("{} ", n);
-    std::cout << "\n  (lazy — no intermediate vector created!)\n";
+    std::println("");
+    std::println("  (lazy — no intermediate vector created!)");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 2: views::filter\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 2: views::filter");
+    std::println("=====================================================");
 
     std::vector<int> v = {1,2,3,4,5,6,7,8,9,10};
 
     // Filter even numbers
-    std::cout << "even:    ";
+    std::print("even:    ");
     for (int n : v | views::filter([](int n){ return n % 2 == 0; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // Filter > 5
-    std::cout << "> 5:     ";
+    std::print("> 5:     ");
     for (int n : v | views::filter([](int n){ return n > 5; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // Filter strings by length
     std::vector<std::string> words = {"hi","hello","hey","howdy","h","happy"};
-    std::cout << "len > 3: ";
+    std::print("len > 3: ");
     for (const auto& w : words | views::filter([](const std::string& s){ return s.size() > 3; }))
         std::print("{} ", w);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 3: views::transform\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 3: views::transform");
+    std::println("=====================================================");
 
     std::vector<int> nums2 = {1,2,3,4,5};
 
-    std::cout << "squared:  ";
+    std::print("squared:  ");
     for (int n : nums2 | views::transform([](int n){ return n * n; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "doubled:  ";
+    std::print("doubled:  ");
     for (int n : nums2 | views::transform([](int n){ return n * 2; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // Transform strings to uppercase
     std::vector<std::string> names = {"kostas","alice","bob"};
@@ -106,47 +110,49 @@ int main()
         for (char& c : s) c = std::toupper(c);
         return s;
     };
-    std::cout << "uppercase:";
+    std::print("uppercase:");
     for (const auto& n : names | views::transform(toUpper))
         std::print(" {}", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 4: views::take and views::drop\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 4: views::take and views::drop");
+    std::println("=====================================================");
 
     std::vector<int> data = {10,20,30,40,50,60,70,80,90,100};
 
-    std::cout << "take(3):    ";
+    std::print("take(3):    ");
     for (int n : data | views::take(3)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "drop(7):    ";
+    std::print("drop(7):    ");
     for (int n : data | views::drop(7)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "take(3)+drop(2): ";
+    std::print("take(3)+drop(2): ");
     for (int n : data | views::drop(2) | views::take(3)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // take_while / drop_while
-    std::cout << "take_while(<50): ";
+    std::print("take_while(<50): ");
     for (int n : data | views::take_while([](int n){ return n < 50; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "drop_while(<50): ";
+    std::print("drop_while(<50): ");
     for (int n : data | views::drop_while([](int n){ return n < 50; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 5: Chaining views — the pipe operator |\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 5: Chaining views — the pipe operator |");
+    std::println("=====================================================");
 
     std::vector<int> numbers = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
@@ -156,9 +162,9 @@ int main()
                  | views::transform([](int n){ return n * 3; })
                  | views::take(4);
 
-    std::cout << "even → *3 → take(4): ";
+    std::print("even → *3 → take(4): ");
     for (int n : chain) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // More complex chain
     auto complex = numbers
@@ -167,80 +173,83 @@ int main()
                    | views::drop(2)
                    | views::take(3);
 
-    std::cout << ">5 → squared → drop(2) → take(3): ";
+    std::print(">5 → squared → drop(2) → take(3): ");
     for (int n : complex) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 6: views::iota — generate sequences\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 6: views::iota — generate sequences");
+    std::println("=====================================================");
 
     // Infinite range — must use take
-    std::cout << "iota(1) take(10):    ";
+    std::print("iota(1) take(10):    ");
     for (int n : views::iota(1) | views::take(10)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // Bounded range
-    std::cout << "iota(1, 11):         ";
+    std::print("iota(1, 11):         ");
     for (int n : views::iota(1, 11)) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // Even numbers 1-20
-    std::cout << "even 1-20:           ";
+    std::print("even 1-20:           ");
     for (int n : views::iota(1, 21) | views::filter([](int n){ return n%2==0; }))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // First 5 squares
-    std::cout << "first 5 squares:     ";
+    std::print("first 5 squares:     ");
     for (int n : views::iota(1) | views::transform([](int n){ return n*n; }) | views::take(5))
         std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 7: views::reverse and views::keys/values\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 7: views::reverse and views::keys/values");
+    std::println("=====================================================");
 
     std::vector<int> rev = {1,2,3,4,5};
-    std::cout << "reverse:  ";
+    std::print("reverse:  ");
     for (int n : rev | views::reverse) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // keys and values from map-like pairs
     std::vector<std::pair<std::string,int>> pairs = {
         {"alpha",1}, {"beta",2}, {"gamma",3}
     };
-    std::cout << "keys:   ";
+    std::print("keys:   ");
     for (const auto& k : pairs | views::keys)   std::print("{} ", k);
-    std::cout << '\n';
-    std::cout << "values: ";
+    std::println("");
+    std::print("values: ");
     for (const auto& v : pairs | views::values) std::print("{} ", v);
-    std::cout << '\n';
+    std::println("");
 
     // enumerate (C++23)
     std::vector<std::string> fruits = {"apple","banana","cherry"};
-    std::cout << "enumerate:\n";
+    std::println("enumerate:");
     for (const auto& [i, f] : fruits | views::enumerate)
         std::println("  [{}] {}", i, f);
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 8: Range algorithms — std::ranges::\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 8: Range algorithms — std::ranges::");
+    std::println("=====================================================");
 
     std::vector<int> alg = {5,2,8,1,9,3,7,4,6};
 
     // sort — works directly on range
     std::vector<int> sorted = alg;
     ranges::sort(sorted);
-    std::cout << "sorted:  ";
+    std::print("sorted:  ");
     for (int n : sorted) std::print("{} ", n);
-    std::cout << '\n';
+    std::println("");
 
     // find
     auto it = ranges::find(alg, 8);
@@ -266,86 +275,93 @@ int main()
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 9: Lazy evaluation\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 9: Lazy evaluation");
+    std::println("=====================================================");
 
-    std::cout << "Views are LAZY — they don't process data until iterated:\n\n";
+    std::println("Views are LAZY — they don't process data until iterated:");
+    std::println("");
 
     std::vector<int> big = {1,2,3,4,5,6,7,8,9,10};
 
     // This creates NO intermediate vector — purely lazy
     auto lazy = big
                 | views::filter([](int n){
-                      std::cout << "  filter(" << n << ")\n";
+                      std::println("  filter({})", n);
                       return n % 2 == 0;
                   })
                 | views::transform([](int n){
-                      std::cout << "  transform(" << n << ")\n";
+                      std::println("  transform({})", n);
                       return n * 10;
                   })
                 | views::take(2);
 
-    std::cout << "View created — nothing computed yet!\n";
-    std::cout << "Now iterating:\n";
-    for (int n : lazy) std::print("  result: {}\n", n);
+    std::println("View created — nothing computed yet!");
+    std::println("Now iterating:");
+    for (int n : lazy) std::println("  result: {}", n);
 
-    std::cout << "\nOnly processed elements until take(2) was satisfied\n";
-    std::cout << "No copy of filtered data — elements processed one by one\n";
+    std::println("");
+    std::println("Only processed elements until take(2) was satisfied");
+    std::println("No copy of filtered data — elements processed one by one");
 
 
     // -------------------------------------------------------
-    std::cout << "\n=====================================================\n";
-    std::cout << "Example 10: Real use case — MCX session filtering\n";
-    std::cout << "=====================================================\n";
+    std::println("");
+    std::println("=====================================================");
+    std::println("Example 10: Real use case — task filtering");
+    std::println("=====================================================");
 
-    struct McxSession {
+    struct Task {
         std::string id;
-        std::string group;
+        std::string team;
         int         priority;
         bool        active;
-        int         participants;
+        int         estimate;
     };
 
-    std::vector<McxSession> sessions = {
-                                        {"SES-001", "GRP-ALPHA", 1, true,  5},
-                                        {"SES-002", "GRP-BETA",  2, false, 3},
-                                        {"SES-003", "GRP-ALPHA", 2, true,  8},
-                                        {"SES-004", "GRP-GAMMA", 1, true,  2},
-                                        {"SES-005", "GRP-BETA",  3, false, 6},
-                                        {"SES-006", "GRP-ALPHA", 1, true,  4},
+    std::vector<Task> tasks = {
+                                        {"T-001", "backend", 1, true,  5},
+                                        {"T-002", "frontend",  2, false, 3},
+                                        {"T-003", "backend", 2, true,  8},
+                                        {"T-004", "ops", 1, true,  2},
+                                        {"T-005", "frontend",  3, false, 6},
+                                        {"T-006", "backend", 1, true,  4},
                                         };
 
-    // Active sessions only
-    std::cout << "Active sessions:\n";
-    for (const auto& s : sessions
-                             | views::filter([](const McxSession& s){ return s.active; }))
-        std::println("  {} ({}) priority={}", s.id, s.group, s.priority);
+    // Active tasks only
+    std::println("Active tasks:");
+    for (const auto& s : tasks
+                             | views::filter([](const Task& s){ return s.active; }))
+        std::println("  {} ({}) priority={}", s.id, s.team, s.priority);
 
-    // GRP-ALPHA active sessions sorted by priority
-    std::cout << "\nGRP-ALPHA active sessions:\n";
-    std::vector<McxSession> alpha;
-    for (const auto& s : sessions
-                             | views::filter([](const McxSession& s){ return s.active && s.group == "GRP-ALPHA"; }))
+    // backend active tasks sorted by priority
+    std::println("");
+    std::println("backend active tasks:");
+    std::vector<Task> alpha;
+    for (const auto& s : tasks
+                             | views::filter([](const Task& s){ return s.active && s.team == "backend"; }))
         alpha.push_back(s);
-    ranges::sort(alpha, {}, &McxSession::priority);
+    ranges::sort(alpha, {}, &Task::priority);
     for (const auto& s : alpha)
-        std::println("  {} priority={} participants={}", s.id, s.priority, s.participants);
+        std::println("  {} priority={} estimate={}", s.id, s.priority, s.estimate);
 
-    // Total participants in active sessions
+    // Total participants in active tasks
     int total = 0;
-    for (const auto& s : sessions | views::filter([](const McxSession& s){ return s.active; }))
-        total += s.participants;
-    std::println("\nTotal participants (active): {}", total);
+    for (const auto& s : tasks | views::filter([](const Task& s){ return s.active; }))
+        total += s.estimate;
+    std::println("");
+    std::println("Total estimate (active): {}", total);
 
-    // Session IDs only
-    std::cout << "Active session IDs: ";
-    for (const auto& id : sessions
-                              | views::filter([](const McxSession& s){ return s.active; })
-                              | views::transform([](const McxSession& s){ return s.id; }))
+    // Task IDs only
+    std::print("Active task IDs: ");
+    for (const auto& id : tasks
+                              | views::filter([](const Task& s){ return s.active; })
+                              | views::transform([](const Task& s){ return s.id; }))
         std::print("{} ", id);
-    std::cout << '\n';
+    std::println("");
 
-    std::cout << "\n=== Ranges complete ===\n";
+    std::println("");
+    std::println("=== Ranges complete ===");
     return 0;
 }

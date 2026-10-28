@@ -236,12 +236,12 @@ for (auto& f : futures) total += f.get();
 // Fire all at once — run concurrently
 auto f1 = std::async(std::launch::async, fetchUser,   userId);
 auto f2 = std::async(std::launch::async, fetchConfig, "server");
-auto f3 = std::async(std::launch::async, fetchGroups, userId);
+auto f3 = std::async(std::launch::async, fetchProjects, userId);
 
 // Total time ≈ max(f1,f2,f3) — not sum
 auto user   = f1.get();
 auto config = f2.get();
-auto groups = f3.get();
+auto projects = f3.get();
 ```
 
 ---
@@ -291,10 +291,20 @@ std::future<int> fut = ...;
 ✅ Background computation while UI stays responsive
 ✅ Fetching multiple resources concurrently
 ✅ Parallel data processing (split workload across cores)
-✅ MCX call setup pipeline (auth + group resolve + floor config in parallel)
+✅ Job-setup pipeline (auth + project lookup + config fetch in parallel)
 ✅ Any task where you want a result later without managing threads manually
 
 ❌ Fire-and-forget with no result → `std::thread` + detach
 ❌ Long-running background service → dedicated thread
 ❌ Many short tasks → thread pool (`QThreadPool` or custom)
 ❌ Qt signal/slot across threads → `QThread` + `moveToThread`
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run and compared with the original `std::cout` output line by line. Differences: `bool` values print as `true`/`false` instead of `1`/`0`, floating-point numbers print in their shortest exact form instead of 6 significant digits, and values that change on every run (thread ids, timings, random data). I sampled the differing lines; I did not review every one.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

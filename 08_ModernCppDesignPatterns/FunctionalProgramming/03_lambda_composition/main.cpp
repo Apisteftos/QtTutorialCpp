@@ -14,15 +14,15 @@
  * - Mutable lambdas
  * - Immediately invoked lambdas (IIFE)
  *
- * Compile: g++ -std=c++20 -Wall -Wextra lambda_composition.cpp -o lambda_composition
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
  */
 
-#include <iostream>
 #include <vector>
 #include <functional>
 #include <algorithm>
 #include <string>
 #include <memory>
+#include <print>
 
 // ============================================================================
 // PART 1: Lambda Basics and Capture Modes
@@ -31,44 +31,39 @@
 namespace LambdaBasics {
 
 void demonstrate() {
-    std::cout << "\n=== Lambda Basics & Captures ===\n";
+    std::println("");
+    std::println("=== Lambda Basics & Captures ===");
 
     int x = 10;
     int y = 20;
 
     // 1. No capture
     auto noCapture = []() { return 42; };
-    std::cout << "No capture: " << noCapture() << "\n";
+    std::println("No capture: {}", noCapture());
 
     // 2. Capture by value [=]
     auto captureByValue = [=]() { return x + y; };
-    std::cout << "Capture by value [=]: " << captureByValue() << "\n";
+    std::println("Capture by value [=]: {}", captureByValue());
     x = 100;  // Doesn't affect lambda
-    std::cout << "After x=100: " << captureByValue() << " (still 30)\n";
+    std::println("After x=100: {} (still 30)", captureByValue());
 
     // 3. Capture by reference [&]
     x = 10;
     auto captureByRef = [&]() { return x + y; };
-    std::cout << "Capture by reference [&]: " << captureByRef() << "\n";
+    std::println("Capture by reference [&]: {}", captureByRef());
     x = 100;  // Affects lambda
-    std::cout << "After x=100: " << captureByRef() << " (now 120)\n";
+    std::println("After x=100: {} (now 120)", captureByRef());
 
     // 4. Capture specific variables
     x = 10;
     auto captureSpecific = [x, &y]() { return x + y; };
-    std::cout << "Capture [x, &y]: " << captureSpecific() << "\n";
+    std::println("Capture [x, &y]: {}", captureSpecific());
 
     // 5. Init capture (C++14)
     auto initCapture = [z = x + y]() { return z; };
-    std::cout << "Init capture [z = x+y]: " << initCapture() << "\n";
+    std::println("Init capture [z = x+y]: {}", initCapture());
 
     // 6. Capture this (in class methods)
-    std::cout << "\n✅ Capture modes:\n";
-    std::cout << "   []       - No capture\n";
-    std::cout << "   [=]      - Capture all by value\n";
-    std::cout << "   [&]      - Capture all by reference\n";
-    std::cout << "   [x, &y]  - Capture x by value, y by ref\n";
-    std::cout << "   [z = expr] - Init capture (C++14)\n";
 }
 }
 
@@ -79,14 +74,15 @@ void demonstrate() {
 namespace GenericLambdas {
 
 void demonstrate() {
-    std::cout << "\n=== Generic Lambdas (C++14) ===\n";
+    std::println("");
+    std::println("=== Generic Lambdas (C++14) ===");
 
     // Generic lambda with auto
     auto print = [](auto value) {
-        std::cout << "  Value: " << value << "\n";
+        std::println("  Value: {}", value);
     };
 
-    std::cout << "Generic lambda works with any type:\n";
+    std::println("Generic lambda works with any type:");
     print(42);
     print(3.14);
     print("Hello");
@@ -97,10 +93,11 @@ void demonstrate() {
         return a + b;
     };
 
-    std::cout << "\nGeneric add:\n";
-    std::cout << "  int + int: " << add(5, 3) << "\n";
-    std::cout << "  double + double: " << add(5.5, 3.2) << "\n";
-    std::cout << "  string + string: " << add(std::string("Hello"), std::string(" World")) << "\n";
+    std::println("");
+    std::println("Generic add:");
+    std::println("  int + int: {}", add(5, 3));
+    std::println("  double + double: {}", add(5.5, 3.2));
+    std::println("  string + string: {}", add(std::string("Hello"), std::string(" World")));
 
     // Generic lambda with type constraints (C++20 concepts)
     auto squareIfNumber = [](auto x) {
@@ -111,14 +108,11 @@ void demonstrate() {
         }
     };
 
-    std::cout << "\nConditional generic lambda:\n";
-    std::cout << "  squareIfNumber(5): " << squareIfNumber(5) << "\n";
-    std::cout << "  squareIfNumber(3.0): " << squareIfNumber(3.0) << "\n";
+    std::println("");
+    std::println("Conditional generic lambda:");
+    std::println("  squareIfNumber(5): {}", squareIfNumber(5));
+    std::println("  squareIfNumber(3.0): {}", squareIfNumber(3.0));
 
-    std::cout << "\n✅ Generic lambdas enable:\n";
-    std::cout << "   - Type-generic algorithms\n";
-    std::cout << "   - Less template boilerplate\n";
-    std::cout << "   - Compile-time polymorphism\n";
 }
 }
 
@@ -129,7 +123,8 @@ void demonstrate() {
 namespace MutableLambdas {
 
 void demonstrate() {
-    std::cout << "\n=== Mutable Lambdas ===\n";
+    std::println("");
+    std::println("=== Mutable Lambdas ===");
 
     int x = 0;
 
@@ -138,18 +133,18 @@ void demonstrate() {
         // x++;  // ❌ ERROR: Cannot modify captured variable
         return x + 1;
     };
-    std::cout << "Non-mutable lambda: " << nonMutable() << "\n";
+    std::println("Non-mutable lambda: {}", nonMutable());
 
     // Mutable lambda - can modify captured values
     auto counter = [x]() mutable {
         return ++x;  // ✅ OK: Can modify because of 'mutable'
     };
 
-    std::cout << "Mutable lambda calls:\n";
-    std::cout << "  Call 1: " << counter() << "\n";
-    std::cout << "  Call 2: " << counter() << "\n";
-    std::cout << "  Call 3: " << counter() << "\n";
-    std::cout << "Original x: " << x << " (unchanged)\n";
+    std::println("Mutable lambda calls:");
+    std::println("  Call 1: {}", counter());
+    std::println("  Call 2: {}", counter());
+    std::println("  Call 3: {}", counter());
+    std::println("Original x: {} (unchanged)", x);
 
     // Practical example: Stateful filter
     auto takeFirst3 = [count = 0]() mutable {
@@ -157,18 +152,15 @@ void demonstrate() {
     };
 
     std::vector<int> numbers = {1, 2, 3, 4, 5, 6, 7};
-    std::cout << "\nTake first 3 using mutable lambda: ";
+    std::println("");
+    std::print("Take first 3 using mutable lambda: ");
     for (const auto& n : numbers) {
         if (takeFirst3()) {
-            std::cout << n << " ";
+            std::print("{} ", n);
         }
     }
-    std::cout << "\n";
+    std::println("");
 
-    std::cout << "\n✅ Mutable lambdas:\n";
-    std::cout << "   - Can modify captured values\n";
-    std::cout << "   - Useful for stateful operations\n";
-    std::cout << "   - Don't affect original variables\n";
 }
 }
 
@@ -179,16 +171,17 @@ void demonstrate() {
 namespace RecursiveLambdas {
 
 void demonstrate() {
-    std::cout << "\n=== Recursive Lambdas ===\n";
+    std::println("");
+    std::println("=== Recursive Lambdas ===");
 
     // Using std::function for recursion
     std::function<int(int)> factorial = [&factorial](int n) {
         return (n <= 1) ? 1 : n * factorial(n - 1);
     };
 
-    std::cout << "Factorial using recursive lambda:\n";
+    std::println("Factorial using recursive lambda:");
     for (int i = 1; i <= 6; ++i) {
-        std::cout << "  " << i << "! = " << factorial(i) << "\n";
+        std::println("  {}! = {}", i, factorial(i));
     }
 
     // Fibonacci
@@ -196,12 +189,13 @@ void demonstrate() {
         return (n <= 1) ? n : fibonacci(n - 1) + fibonacci(n - 2);
     };
 
-    std::cout << "\nFibonacci using recursive lambda:\n";
-    std::cout << "  ";
+    std::println("");
+    std::println("Fibonacci using recursive lambda:");
+    std::print("  ");
     for (int i = 0; i < 10; ++i) {
-        std::cout << fibonacci(i) << " ";
+        std::print("{} ", fibonacci(i));
     }
-    std::cout << "\n";
+    std::println("");
 
     // Tree traversal (practical example)
     struct Node {
@@ -212,7 +206,7 @@ void demonstrate() {
     std::function<void(const std::shared_ptr<Node>&, int)> printTree =
         [&printTree](const std::shared_ptr<Node>& node, int depth) {
             if (!node) return;
-            std::cout << std::string(depth * 2, ' ') << node->value << "\n";
+            std::println("{}{}", std::string(depth * 2, ' '), node->value);
             for (const auto& child : node->children) {
                 printTree(child, depth + 1);
             }
@@ -224,13 +218,10 @@ void demonstrate() {
     root->children.push_back(std::make_shared<Node>(Node{3, {}}));
     root->children[0]->children.push_back(std::make_shared<Node>(Node{4, {}}));
 
-    std::cout << "\nTree traversal with recursive lambda:\n";
+    std::println("");
+    std::println("Tree traversal with recursive lambda:");
     printTree(root, 0);
 
-    std::cout << "\n✅ Recursive lambdas:\n";
-    std::cout << "   - Need std::function for self-reference\n";
-    std::cout << "   - Useful for tree/graph algorithms\n";
-    std::cout << "   - Can replace small recursive functions\n";
 }
 }
 
@@ -253,7 +244,8 @@ auto operator|(T&& value, F func) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Lambda Composition ===\n";
+    std::println("");
+    std::println("=== Lambda Composition ===");
 
     // Define simple transformations
     auto add10 = [](int x) { return x + 10; };
@@ -265,34 +257,28 @@ void demonstrate() {
     auto add10ThenMultiply = compose(multiplyBy2, add10);
     auto multiplyThenAdd = compose(add10, multiplyBy2);
 
-    std::cout << "Composition examples with input 5:\n";
-    std::cout << "  add10 then multiply: " << add10ThenMultiply(5)
-              << " ((5+10)*2 = 30)\n";
-    std::cout << "  multiply then add10: " << multiplyThenAdd(5)
-              << " ((5*2)+10 = 20)\n";
+    std::println("Composition examples with input 5:");
+    std::println("  add10 then multiply: {} ((5+10)*2 = 30)", add10ThenMultiply(5));
+    std::println("  multiply then add10: {} ((5*2)+10 = 20)", multiplyThenAdd(5));
 
     // Triple composition
     auto complex = compose(square, compose(add10, multiplyBy2));
-    std::cout << "  Triple: multiply→add10→square: " << complex(5)
-              << " (((5*2)+10)² = 400)\n";
+    std::println("  Triple: multiply→add10→square: {} (((5*2)+10)² = 400)", complex(5));
 
     // Using pipe operator
-    std::cout << "\nUsing pipe operator:\n";
+    std::println("");
+    std::println("Using pipe operator:");
     auto result = 5
                   | multiplyBy2
                   | add10
                   | square;
-    std::cout << "  5 | multiply2 | add10 | square: " << result << "\n";
+    std::println("  5 | multiply2 | add10 | square: {}", result);
 
     // Compose with different types
     auto numericPipeline = compose(toString, compose(square, add10));
     std::string strResult = numericPipeline(5);
-    std::cout << "  Mixed types: " << strResult << " (string)\n";
+    std::println("  Mixed types: {} (string)", strResult);
 
-    std::cout << "\n✅ Lambda composition:\n";
-    std::cout << "   - Build complex from simple\n";
-    std::cout << "   - Readable data flow\n";
-    std::cout << "   - Reusable transformations\n";
 }
 }
 
@@ -303,7 +289,8 @@ void demonstrate() {
 namespace ImmediatelyInvokedLambdas {
 
 void demonstrate() {
-    std::cout << "\n=== Immediately Invoked Lambda Expressions ===\n";
+    std::println("");
+    std::println("=== Immediately Invoked Lambda Expressions ===");
 
     // Use case 1: Complex initialization
     const int complexValue = [](){
@@ -314,7 +301,7 @@ void demonstrate() {
         return result;
     }();  // <-- Immediately invoked!
 
-    std::cout << "Complex initialization: " << complexValue << "\n";
+    std::println("Complex initialization: {}", complexValue);
 
     // Use case 2: Conditional const initialization
     const std::string message = [](int hour) {
@@ -323,30 +310,21 @@ void demonstrate() {
         else return "Good evening";
     }(14);  // <-- Pass argument and invoke
 
-    std::cout << "Conditional init: " << message << "\n";
+    std::println("Conditional init: {}", message);
 
     // Use case 3: RAII pattern
-    std::cout << "\nRAII with IIFE:\n";
+    std::println("");
+    std::println("RAII with IIFE:");
     [&]() {
-        std::cout << "  Setup resources...\n";
-        // Do work
-        std::cout << "  Process data...\n";
-        // Cleanup happens automatically
-        std::cout << "  Cleanup resources...\n";
     }();
 
     // Use case 4: One-time initialization
     static bool initialized = []() {
-        std::cout << "One-time initialization\n";
+        std::println("One-time initialization");
         return true;
     }();
     (void)initialized;  // Suppress unused warning
 
-    std::cout << "\n✅ IIFE useful for:\n";
-    std::cout << "   - Complex const initialization\n";
-    std::cout << "   - Scoped temporary variables\n";
-    std::cout << "   - RAII patterns\n";
-    std::cout << "   - One-time setup code\n";
 }
 }
 
@@ -388,34 +366,32 @@ auto Y(F f) {
 }
 
 void demonstrate() {
-    std::cout << "\n=== Advanced Lambda Patterns ===\n";
+    std::println("");
+    std::println("=== Advanced Lambda Patterns ===");
 
     // Currying
-    std::cout << "Curried add(2)(3)(4): " << curry_add(2)(3)(4) << "\n";
+    std::println("Curried add(2)(3)(4): {}", curry_add(2)(3)(4));
     auto add2 = curry_add(2);
     auto add2and3 = add2(3);
-    std::cout << "Partial application: " << add2and3(4) << "\n";
+    std::println("Partial application: {}", add2and3(4));
 
     // Partial application
     auto multiply = [](int a, int b, int c) { return a * b * c; };
     auto multiplyBy2 = partial(multiply, 2);
-    std::cout << "\nPartial application multiplyBy2(3, 4): "
-              << multiplyBy2(3, 4) << "\n";
+    std::println("");
+    std::println("Partial application multiplyBy2(3, 4): {}", multiplyBy2(3, 4));
 
     // Lambda as strategy pattern
-    std::cout << "\nStrategy pattern with lambdas:\n";
+    std::println("");
+    std::println("Strategy pattern with lambdas:");
     auto calculate = [](int a, int b, auto operation) {
         return operation(a, b);
     };
 
-    std::cout << "  10 + 5 = " << calculate(10, 5, std::plus<>()) << "\n";
-    std::cout << "  10 - 5 = " << calculate(10, 5, std::minus<>()) << "\n";
-    std::cout << "  10 * 5 = " << calculate(10, 5, std::multiplies<>()) << "\n";
+    std::println("  10 + 5 = {}", calculate(10, 5, std::plus<>()));
+    std::println("  10 - 5 = {}", calculate(10, 5, std::minus<>()));
+    std::println("  10 * 5 = {}", calculate(10, 5, std::multiplies<>()));
 
-    std::cout << "\n✅ Advanced patterns:\n";
-    std::cout << "   - Currying for flexible application\n";
-    std::cout << "   - Partial application for specialization\n";
-    std::cout << "   - Strategy pattern with lambdas\n";
 }
 }
 
@@ -433,7 +409,8 @@ struct Transaction {
 };
 
 void demonstrate() {
-    std::cout << "\n=== Real-World: Transaction Pipeline ===\n";
+    std::println("");
+    std::println("=== Real-World: Transaction Pipeline ===");
 
     std::vector<Transaction> transactions = {
                                              {"T1", 150.0, "food", true},
@@ -460,7 +437,8 @@ void demonstrate() {
                       }
                   }
                   );
-    std::cout << "\nSum of approved large transactions: $" << sum << "\n";
+    std::println("");
+    std::println("Sum of approved large transactions: ${}", sum);
 
     // Pipeline 2: Count electronics
     auto count = std::count_if(transactions.begin(), transactions.end(),
@@ -468,7 +446,7 @@ void demonstrate() {
                                    return isApproved(t) && isElectronics(t);
                                }
                                );
-    std::cout << "Approved electronics count: " << count << "\n";
+    std::println("Approved electronics count: {}", count);
 
     // Pipeline 3: Apply discount with lambda composition
     auto applyDiscount = [](double rate) {
@@ -480,15 +458,11 @@ void demonstrate() {
     auto discount10 = applyDiscount(0.10);
     auto discount20 = applyDiscount(0.20);
 
-    std::cout << "\nApply discounts:\n";
-    std::cout << "  $100 with 10% off: $" << discount10(100) << "\n";
-    std::cout << "  $100 with 20% off: $" << discount20(100) << "\n";
+    std::println("");
+    std::println("Apply discounts:");
+    std::println("  $100 with 10% off: ${}", discount10(100));
+    std::println("  $100 with 20% off: ${}", discount20(100));
 
-    std::cout << "\n✅ Lambda patterns in production:\n";
-    std::cout << "   - Reusable predicates\n";
-    std::cout << "   - Composable transformations\n";
-    std::cout << "   - Parameterized operations\n";
-    std::cout << "   - Type-safe callbacks\n";
 }
 }
 
@@ -497,9 +471,9 @@ void demonstrate() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║          ADVANCED LAMBDA COMPOSITION IN C++         ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::println("╔═══════════════════════════════════════════════════════╗");
+    std::println("║          ADVANCED LAMBDA COMPOSITION IN C++         ║");
+    std::println("╚═══════════════════════════════════════════════════════╝");
 
     LambdaBasics::demonstrate();
     GenericLambdas::demonstrate();
@@ -510,20 +484,12 @@ int main() {
     AdvancedPatterns::demonstrate();
     RealWorldPipeline::demonstrate();
 
-    std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "🎓 LAMBDA MASTERY CHECKLIST:\n";
-    std::cout << std::string(60, '=') << "\n";
-    std::cout << "✅ Understand all capture modes [=], [&], [x], [&y]\n";
-    std::cout << "✅ Use generic lambdas with auto parameters\n";
-    std::cout << "✅ Know when to use mutable lambdas\n";
-    std::cout << "✅ Implement recursive algorithms with lambdas\n";
-    std::cout << "✅ Compose lambdas to build complex operations\n";
-    std::cout << "✅ Use IIFE for complex initialization\n";
-    std::cout << "✅ Apply currying and partial application\n";
-    std::cout << "✅ Build production-ready pipelines\n";
-    std::cout << "\n💡 think-cell heavily relies on lambda composition\n";
-    std::cout << "   for building elegant, reusable algorithms!\n";
-    std::cout << std::string(60, '=') << "\n\n";
+    std::println("");
+    std::println("{}", std::string(60, '='));
+    std::println("🎓 LAMBDA MASTERY CHECKLIST:");
+    std::println("{}", std::string(60, '='));
+    std::println("{}", std::string(60, '='));
+    std::println("");
 
     return 0;
 }
@@ -548,5 +514,5 @@ int main() {
  * ===========
  * - Practice building your own composable lambdas
  * - Move to ranges_introduction.cpp for C++20 ranges
- * - Study ThinkCellPhilosophy/ for real-world patterns
+ * - Study ../../RangesAndGenericStyle/ for real-world patterns
  */

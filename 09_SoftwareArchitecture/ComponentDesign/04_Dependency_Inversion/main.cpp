@@ -15,13 +15,13 @@
 //   - The Open/Closed result: open for extension, closed for modification
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
 #include <sstream>
 #include <cassert>
 #include <algorithm>
+#include <print>
 
 // =============================================================================
 // ❌ BEFORE DIP — ReportGenerator hardcodes every renderer
@@ -180,9 +180,8 @@ public:
         auto sorted = report.rows;
         std::sort(sorted.begin(), sorted.end());
 
-        std::cout << "  Generating " << renderer_.formatName()
-                  << " report: \"" << report.title << "\""
-                  << " (" << sorted.size() << " rows)\n";
+        std::println("  Generating {} report: \"{}\" ({} rows)",
+            renderer_.formatName(), report.title, sorted.size());
 
         return renderer_.render(report.title, sorted);
     }
@@ -212,22 +211,24 @@ private:
 
 int main()
 {
-    std::cout << "=== Dependency Inversion Principle Demo ===\n\n";
+    std::println("=== Dependency Inversion Principle Demo ===");
+    std::println("");
 
     // ── BEFORE ───────────────────────────────────────────────────────────────
-    std::cout << "--- BEFORE DIP ---\n";
+    std::println("--- BEFORE DIP ---");
     {
         before_dip::ReportGenerator gen;
         std::vector<std::string> data = {"Bellman-Ford", "Dijkstra", "BFS"};
         auto pdf  = gen.generate("Algorithms", data, before_dip::ReportGenerator::Format::PDF);
         auto html = gen.generate("Algorithms", data, before_dip::ReportGenerator::Format::HTML);
-        std::cout << "  PDF  output: " << pdf.substr(0, 30)  << "...\n";
-        std::cout << "  HTML output: " << html.substr(0, 30) << "...\n";
-        std::cout << "  ⚠️  Adding CSV requires editing ReportGenerator\n\n";
+        std::println("  PDF  output: {}...", pdf.substr(0, 30));
+        std::println("  HTML output: {}...", html.substr(0, 30));
+        std::println("  ⚠️  Adding CSV requires editing ReportGenerator");
+        std::println("");
     }
 
     // ── AFTER ────────────────────────────────────────────────────────────────
-    std::cout << "--- AFTER DIP ---\n";
+    std::println("--- AFTER DIP ---");
 
     after_dip::Report report {
         "Algorithm Performance Report",
@@ -236,7 +237,8 @@ int main()
     };
 
     // Each renderer injected independently
-    std::cout << "\nScenario 1: Individual renders\n";
+    std::println("");
+    std::println("Scenario 1: Individual renders");
     {
         after_dip::PdfRenderer  pdf;
         after_dip::HtmlRenderer html;
@@ -255,11 +257,12 @@ int main()
         auto md_out = gen3.generate(report);
         assert(md_out.find("# Algorithm") != std::string::npos);
 
-        std::cout << "  ✓ PDF, HTML, Markdown renders passed\n";
+        std::println("  ✓ PDF, HTML, Markdown renders passed");
     }
 
     // Batch: generate same report in all formats at once
-    std::cout << "\nScenario 2: Batch generation\n";
+    std::println("");
+    std::println("Scenario 2: Batch generation");
     {
         after_dip::PdfRenderer      pdf;
         after_dip::HtmlRenderer     html;
@@ -270,11 +273,12 @@ int main()
         std::vector<after_dip::IRenderer*> all = {&pdf, &html, &csv, &md};
         auto outputs = gen.generateAll(report, all);
         assert(outputs.size() == 4);
-        std::cout << "  ✓ Batch generation: " << outputs.size() << " formats\n";
+        std::println("  ✓ Batch generation: {} formats", outputs.size());
     }
 
     // Unit test: MockRenderer verifies generator logic without real format
-    std::cout << "\nScenario 3: Unit Test with Mock\n";
+    std::println("");
+    std::println("Scenario 3: Unit Test with Mock");
     {
         after_dip::MockRenderer    mock;
         after_dip::ReportGenerator gen(mock);
@@ -285,12 +289,7 @@ int main()
         assert(mock.renderCalls()  == 2);
         assert(mock.lastTitle()    == "Empty");
         assert(mock.lastRowCount() == 0);
-        std::cout << "  ✓ Mock test: renderCalls=" << mock.renderCalls() << "\n";
+        std::println("  ✓ Mock test: renderCalls={}", mock.renderCalls());
     }
-
-    std::cout << "\nKey difference:\n";
-    std::cout << "  BEFORE — add CSV → edit ReportGenerator + enum + switch\n";
-    std::cout << "  AFTER  — add Markdown → new file only, zero edits to generator\n";
-    std::cout << "\nAll assertions passed.\n";
     return 0;
 }

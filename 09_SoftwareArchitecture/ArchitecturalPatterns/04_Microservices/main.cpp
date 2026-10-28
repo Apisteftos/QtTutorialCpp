@@ -22,6 +22,7 @@
 #include <functional>
 #include <stdexcept>
 #include <cassert>
+#include <print>
 
 // =============================================================================
 // Message Broker — async communication between services
@@ -72,8 +73,7 @@ public:
     bool authenticate(const std::string& user, const std::string& token) const {
         // Simplified: any token "valid-*" is accepted
         bool ok = token.substr(0, 6) == "valid-";
-        std::cout << "  [UserService]   auth(" << user << ") → "
-                  << (ok ? "✓" : "✗") << '\n';
+        std::println("  [UserService]   auth({}) → {}", user, (ok ? "✓" : "✗"));
         return ok;
     }
 };
@@ -103,8 +103,7 @@ public:
 
 private:
     void onOrderPlaced(const Message& m) {
-        std::cout << "  [InventoryService] reserving stock for: "
-                  << m.payload << '\n';
+        std::println("  [InventoryService] reserving stock for: {}", m.payload);
         reserved_++;
         // Parse item from payload (simplified)
         auto pos = m.payload.find("item=");
@@ -137,11 +136,11 @@ public:
 private:
     void onOrderPlaced(const Message& m) {
         sent_++;
-        std::cout << "  [NotifyService] 📧 Confirmation sent — " << m.payload << '\n';
+        std::println("  [NotifyService] 📧 Confirmation sent — {}", m.payload);
     }
     void onOrderFailed(const Message& m) {
         sent_++;
-        std::cout << "  [NotifyService] ⚠️  Failure notice sent — " << m.payload << '\n';
+        std::println("  [NotifyService] ⚠️  Failure notice sent — {}", m.payload);
     }
 
     int sent_{0};
@@ -162,9 +161,7 @@ public:
             throw std::invalid_argument("Quantity must be positive");
 
         int id = next_id_++;
-        std::cout << "  [OrderService]  order #" << id
-                  << " created: " << qty << "x " << item
-                  << " for " << user << '\n';
+        std::println("  [OrderService]  order #{} created: {}x {} for {}", id, qty, item, user);
 
         // Publish async event — no direct call to Inventory or Notify
         broker_.publish("ORDER_PLACED",
@@ -176,7 +173,7 @@ public:
     }
 
     void cancelOrder(int id) {
-        std::cout << "  [OrderService]  order #" << id << " cancelled\n";
+        std::println("  [OrderService]  order #{} cancelled", id);
         broker_.publish("ORDER_FAILED",
                         "id=" + std::to_string(id) + " reason=cancelled");
     }
@@ -201,30 +198,32 @@ public:
 
     void handleCreateOrder(const std::string& user, const std::string& token,
                            const std::string& item, int qty) {
-        std::cout << "\n→ Gateway: POST /order\n";
+        std::println("");
+        std::println("→ Gateway: POST /order");
         if (!users_.authenticate(user, token)) {
-            std::cout << "  [Gateway] 401 Unauthorized\n";
+            std::println("  [Gateway] 401 Unauthorized");
             return;
         }
         try {
             int id = orders_.createOrder(user, item, qty);
             broker_.flush();  // dispatch async messages
-            std::cout << "  [Gateway] 201 Created — order #" << id << '\n';
+            std::println("  [Gateway] 201 Created — order #{}", id);
         } catch (const std::exception& e) {
-            std::cout << "  [Gateway] 400 Bad Request: " << e.what() << '\n';
+            std::println("  [Gateway] 400 Bad Request: {}", e.what());
         }
     }
 
     void handleCancelOrder(const std::string& user, const std::string& token,
                            int id) {
-        std::cout << "\n→ Gateway: DELETE /order/" << id << '\n';
+        std::println("");
+        std::println("→ Gateway: DELETE /order/{}", id);
         if (!users_.authenticate(user, token)) {
-            std::cout << "  [Gateway] 401 Unauthorized\n";
+            std::println("  [Gateway] 401 Unauthorized");
             return;
         }
         orders_.cancelOrder(id);
         broker_.flush();
-        std::cout << "  [Gateway] 200 OK\n";
+        std::println("  [Gateway] 200 OK");
     }
 
 private:
@@ -239,7 +238,7 @@ private:
 
 int main()
 {
-    std::cout << "=== Microservices Architecture Demo ===\n";
+    std::println("=== Microservices Architecture Demo ===");
 
     // Infrastructure
     MessageBroker broker;
@@ -271,16 +270,17 @@ int main()
     gateway.handleCreateOrder("kostas", "valid-abc123", "widget", -1);
 
     // Verify
-    std::cout << "\n=== Summary ===\n";
-    std::cout << "Orders created     : " << orders.orderCount()   << '\n';
-    std::cout << "Notifications sent : " << notify.sentCount()    << '\n';
-    std::cout << "Reservations made  : " << inventory.reservedCount() << '\n';
-    std::cout << "widget stock left  : " << inventory.stock("widget") << '\n';
+    std::println("");
+    std::println("=== Summary ===");
+    std::println("Orders created     : {}", orders.orderCount());
+    std::println("Notifications sent : {}", notify.sentCount());
+    std::println("Reservations made  : {}", inventory.reservedCount());
+    std::println("widget stock left  : {}", inventory.stock("widget"));
 
     assert(orders.orderCount()       == 2);  // 2 valid orders (bad-token + bad-qty rejected)
     assert(notify.sentCount()        == 3);  // 2 placed + 1 cancel
     assert(inventory.reservedCount() == 2);  // 2 reservations for the 2 valid orders
-    std::cout << "All assertions passed.\n";
+    std::println("All assertions passed.");
 
     return 0;
 }

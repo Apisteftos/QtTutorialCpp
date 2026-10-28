@@ -1,9 +1,8 @@
-#include <iostream>
 #include <string>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-using namespace std;
+#include <print>
 
 // ============================================
 // PROTOTYPE INTERFACE
@@ -17,7 +16,7 @@ using namespace std;
 class Prototype {
 public:
     virtual ~Prototype() {}
-    virtual unique_ptr<Prototype> clone() const = 0;
+    virtual std::unique_ptr<Prototype> clone() const = 0;
     virtual void print() const = 0;
 };
 
@@ -31,29 +30,25 @@ public:
  */
 class GameCharacter : public Prototype {
 protected:
-    string name;
-    string characterClass;
+    std::string name;
+    std::string characterClass;
     int level;
     int health;
     int mana;
     int strength;
     int intelligence;
     int agility;
-    vector<string> inventory;
-    vector<string> skills;
-    string weapon;
-    string armor;
+    std::vector<std::string> inventory;
+    std::vector<std::string> skills;
+    std::string weapon;
+    std::string armor;
 
 public:
-    GameCharacter(string n, string c, int lvl)
+    GameCharacter(std::string n, std::string c, int lvl)
         : name(n), characterClass(c), level(lvl),
         health(100), mana(50), strength(10),
         intelligence(10), agility(10) {
-        cout << "⚙️  [EXPENSIVE] Creating new character from scratch: " << name << "\n";
-        cout << "   Loading character model...\n";
-        cout << "   Initializing stats...\n";
-        cout << "   Loading textures...\n";
-        cout << "   Setting up animations...\n";
+        std::println("⚙️  [EXPENSIVE] Creating new character from scratch: {}", name);
     }
 
     // Copy constructor for cloning
@@ -63,61 +58,62 @@ public:
         strength(other.strength), intelligence(other.intelligence),
         agility(other.agility), inventory(other.inventory),
         skills(other.skills), weapon(other.weapon), armor(other.armor) {
-        cout << "📋 [FAST] Cloning character: " << name << "\n";
+        std::println("📋 [FAST] Cloning character: {}", name);
     }
 
-    unique_ptr<Prototype> clone() const override {
-        return make_unique<GameCharacter>(*this);
+    std::unique_ptr<Prototype> clone() const override {
+        return std::make_unique<GameCharacter>(*this);
     }
 
     // Setters for customization after cloning
-    void setName(const string& n) { name = n; }
+    void setName(const std::string& n) { name = n; }
     void setLevel(int lvl) { level = lvl; }
     void setHealth(int h) { health = h; }
-    void addItem(const string& item) { inventory.push_back(item); }
-    void addSkill(const string& skill) { skills.push_back(skill); }
-    void setWeapon(const string& w) { weapon = w; }
-    void setArmor(const string& a) { armor = a; }
+    void addItem(const std::string& item) { inventory.push_back(item); }
+    void addSkill(const std::string& skill) { skills.push_back(skill); }
+    void setWeapon(const std::string& w) { weapon = w; }
+    void setArmor(const std::string& a) { armor = a; }
     void setStrength(int s) { strength = s; }
     void setIntelligence(int i) { intelligence = i; }
     void setAgility(int a) { agility = a; }
 
     void print() const override {
-        cout << "\n╔════════════════════════════════════╗\n";
-        cout << "║      CHARACTER SHEET               ║\n";
-        cout << "╚════════════════════════════════════╝\n";
-        cout << "Name:         " << name << "\n";
-        cout << "Class:        " << characterClass << "\n";
-        cout << "Level:        " << level << "\n";
-        cout << "Health:       " << health << " HP\n";
-        cout << "Mana:         " << mana << " MP\n";
-        cout << "Strength:     " << strength << "\n";
-        cout << "Intelligence: " << intelligence << "\n";
-        cout << "Agility:      " << agility << "\n";
+        std::println("");
+        std::println("╔════════════════════════════════════╗");
+        std::println("║      CHARACTER SHEET               ║");
+        std::println("╚════════════════════════════════════╝");
+        std::println("Name:         {}", name);
+        std::println("Class:        {}", characterClass);
+        std::println("Level:        {}", level);
+        std::println("Health:       {} HP", health);
+        std::println("Mana:         {} MP", mana);
+        std::println("Strength:     {}", strength);
+        std::println("Intelligence: {}", intelligence);
+        std::println("Agility:      {}", agility);
 
         if (!weapon.empty())
-            cout << "Weapon:       " << weapon << "\n";
+            std::println("Weapon:       {}", weapon);
         if (!armor.empty())
-            cout << "Armor:        " << armor << "\n";
+            std::println("Armor:        {}", armor);
 
         if (!skills.empty()) {
-            cout << "Skills:       ";
+            std::print("Skills:       ");
             for (size_t i = 0; i < skills.size(); i++) {
-                cout << skills[i];
-                if (i < skills.size() - 1) cout << ", ";
+                std::print("{}", skills[i]);
+                if (i < skills.size() - 1) std::print(", ");
             }
-            cout << "\n";
+            std::println("");
         }
 
         if (!inventory.empty()) {
-            cout << "Inventory:    ";
+            std::print("Inventory:    ");
             for (size_t i = 0; i < inventory.size(); i++) {
-                cout << inventory[i];
-                if (i < inventory.size() - 1) cout << ", ";
+                std::print("{}", inventory[i]);
+                if (i < inventory.size() - 1) std::print(", ");
             }
-            cout << "\n";
+            std::println("");
         }
-        cout << "────────────────────────────────────\n";
+        std::println("────────────────────────────────────");
     }
 };
 
@@ -178,60 +174,58 @@ public:
 
 class Document : public Prototype {
 protected:
-    string title;
-    string author;
-    string content;
-    string template_type;
-    vector<string> sections;
-    string formatting;
+    std::string title;
+    std::string author;
+    std::string content;
+    std::string template_type;
+    std::vector<std::string> sections;
+    std::string formatting;
 
 public:
-    Document(string t, string tmpl)
+    Document(std::string t, std::string tmpl)
         : title(t), template_type(tmpl), author("Unknown") {
-        cout << "⚙️  [EXPENSIVE] Creating document from template: " << template_type << "\n";
-        cout << "   Loading template...\n";
-        cout << "   Applying formatting...\n";
-        cout << "   Setting up sections...\n";
+        std::println("⚙️  [EXPENSIVE] Creating document from template: {}", template_type);
     }
 
     Document(const Document& other)
         : title(other.title), author(other.author), content(other.content),
         template_type(other.template_type), sections(other.sections),
         formatting(other.formatting) {
-        cout << "📋 [FAST] Cloning document: " << title << "\n";
+        std::println("📋 [FAST] Cloning document: {}", title);
     }
 
-    unique_ptr<Prototype> clone() const override {
-        return make_unique<Document>(*this);
+    std::unique_ptr<Prototype> clone() const override {
+        return std::make_unique<Document>(*this);
     }
 
-    void setTitle(const string& t) { title = t; }
-    void setAuthor(const string& a) { author = a; }
-    void setContent(const string& c) { content = c; }
-    void addSection(const string& s) { sections.push_back(s); }
+    void setTitle(const std::string& t) { title = t; }
+    void setAuthor(const std::string& a) { author = a; }
+    void setContent(const std::string& c) { content = c; }
+    void addSection(const std::string& s) { sections.push_back(s); }
 
     void print() const override {
-        cout << "\n╔════════════════════════════════════╗\n";
-        cout << "║          DOCUMENT                  ║\n";
-        cout << "╚════════════════════════════════════╝\n";
-        cout << "Title:    " << title << "\n";
-        cout << "Author:   " << author << "\n";
-        cout << "Template: " << template_type << "\n";
-        cout << "Formatting: " << formatting << "\n";
+        std::println("");
+        std::println("╔════════════════════════════════════╗");
+        std::println("║          DOCUMENT                  ║");
+        std::println("╚════════════════════════════════════╝");
+        std::println("Title:    {}", title);
+        std::println("Author:   {}", author);
+        std::println("Template: {}", template_type);
+        std::println("Formatting: {}", formatting);
 
         if (!sections.empty()) {
-            cout << "Sections:\n";
+            std::println("Sections:");
             for (size_t i = 0; i < sections.size(); i++) {
-                cout << "  " << (i + 1) << ". " << sections[i] << "\n";
+                std::println("  {}. {}", (i + 1), sections[i]);
             }
         }
 
         if (!content.empty()) {
-            cout << "Content: " << content.substr(0, 50);
-            if (content.length() > 50) cout << "...";
-            cout << "\n";
+            std::print("Content: {}", content.substr(0, 50));
+            if (content.length() > 50) std::print("...");
+            std::println("");
         }
-        cout << "────────────────────────────────────\n";
+        std::println("────────────────────────────────────");
     }
 };
 
@@ -269,28 +263,29 @@ public:
 
 class PrototypeRegistry {
 private:
-    unordered_map<string, unique_ptr<Prototype>> prototypes;
+    std::unordered_map<std::string, std::unique_ptr<Prototype>> prototypes;
 
 public:
-    void registerPrototype(const string& key, unique_ptr<Prototype> prototype) {
-        cout << "📝 Registering prototype: " << key << "\n";
+    void registerPrototype(const std::string& key, std::unique_ptr<Prototype> prototype) {
+        std::println("📝 Registering prototype: {}", key);
         prototypes[key] = move(prototype);
     }
 
-    unique_ptr<Prototype> createClone(const string& key) {
+    std::unique_ptr<Prototype> createClone(const std::string& key) {
         auto it = prototypes.find(key);
         if (it != prototypes.end()) {
-            cout << "🔍 Found prototype '" << key << "' - creating clone\n";
+            std::println("🔍 Found prototype '{}' - creating clone", key);
             return it->second->clone();
         }
-        cout << "❌ Prototype '" << key << "' not found\n";
+        std::println("❌ Prototype '{}' not found", key);
         return nullptr;
     }
 
     void listPrototypes() const {
-        cout << "\n📚 Available Prototypes:\n";
+        std::println("");
+        std::println("📚 Available Prototypes:");
         for (const auto& pair : prototypes) {
-            cout << "  • " << pair.first << "\n";
+            std::println("  • {}", pair.first);
         }
     }
 };
@@ -304,21 +299,21 @@ public:
     int x, y;
     Point(int x = 0, int y = 0) : x(x), y(y) {}
     void print() const {
-        cout << "(" << x << ", " << y << ")";
+        std::print("({}, {})", x, y);
     }
 };
 
 class Shape : public Prototype {
 protected:
-    string color;
+    std::string color;
     Point* position;  // Pointer to demonstrate deep copy
 
 public:
-    Shape(string c, int x, int y) : color(c) {
+    Shape(std::string c, int x, int y) : color(c) {
         position = new Point(x, y);
-        cout << "⚙️  Creating shape at position ";
+        std::print("⚙️  Creating shape at position ");
         position->print();
-        cout << "\n";
+        std::println("");
     }
 
     // Destructor
@@ -329,11 +324,11 @@ public:
     // Copy constructor for deep copy
     Shape(const Shape& other) : color(other.color) {
         position = new Point(*other.position);  // Deep copy!
-        cout << "📋 Cloning shape (deep copy)\n";
+        std::println("📋 Cloning shape (deep copy)");
     }
 
-    unique_ptr<Prototype> clone() const override {
-        return make_unique<Shape>(*this);
+    std::unique_ptr<Prototype> clone() const override {
+        return std::make_unique<Shape>(*this);
     }
 
     void setPosition(int x, int y) {
@@ -342,9 +337,9 @@ public:
     }
 
     void print() const override {
-        cout << "Shape: color=" << color << ", position=";
+        std::print("Shape: color={}, position=", color);
         position->print();
-        cout << ", address=" << position << "\n";
+        std::println(", address={}", static_cast<const void*>(position));
     }
 };
 
@@ -353,21 +348,24 @@ public:
 // ============================================
 
 void demonstrateGameCharacters() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  GAME CHARACTER PROTOTYPES         ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  GAME CHARACTER PROTOTYPES         ║");
+    std::println("╚════════════════════════════════════╝");
 
     // Create prototype registry
     PrototypeRegistry characterRegistry;
 
     // Register character prototypes (expensive creation happens once)
-    cout << "\n--- Registering Character Prototypes ---\n";
-    characterRegistry.registerPrototype("warrior", make_unique<Warrior>());
-    characterRegistry.registerPrototype("mage", make_unique<Mage>());
-    characterRegistry.registerPrototype("archer", make_unique<Archer>());
+    std::println("");
+    std::println("--- Registering Character Prototypes ---");
+    characterRegistry.registerPrototype("warrior", std::make_unique<Warrior>());
+    characterRegistry.registerPrototype("mage", std::make_unique<Mage>());
+    characterRegistry.registerPrototype("archer", std::make_unique<Archer>());
 
     // Now create multiple characters by cloning (fast!)
-    cout << "\n--- Creating Characters via Cloning ---\n";
+    std::println("");
+    std::println("--- Creating Characters via Cloning ---");
 
     auto warrior1 = characterRegistry.createClone("warrior");
     if (auto* w = dynamic_cast<GameCharacter*>(warrior1.get())) {
@@ -393,21 +391,25 @@ void demonstrateGameCharacters() {
         m->print();
     }
 
-    cout << "\n💡 Notice: Character creation is MUCH faster after the first one!\n";
+    std::println("");
+    std::println("💡 Notice: Character creation is MUCH faster after the first one!");
 }
 
 void demonstrateDocuments() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  DOCUMENT PROTOTYPES               ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  DOCUMENT PROTOTYPES               ║");
+    std::println("╚════════════════════════════════════╝");
 
     PrototypeRegistry docRegistry;
 
-    cout << "\n--- Registering Document Templates ---\n";
-    docRegistry.registerPrototype("report", make_unique<BusinessReport>());
-    docRegistry.registerPrototype("paper", make_unique<ResearchPaper>());
+    std::println("");
+    std::println("--- Registering Document Templates ---");
+    docRegistry.registerPrototype("report", std::make_unique<BusinessReport>());
+    docRegistry.registerPrototype("paper", std::make_unique<ResearchPaper>());
 
-    cout << "\n--- Creating Documents via Cloning ---\n";
+    std::println("");
+    std::println("--- Creating Documents via Cloning ---");
 
     auto report1 = docRegistry.createClone("report");
     if (auto* doc = dynamic_cast<Document*>(report1.get())) {
@@ -433,29 +435,34 @@ void demonstrateDocuments() {
 }
 
 void demonstrateDeepCopy() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║  DEEP COPY vs SHALLOW COPY         ║\n";
-    cout << "╚════════════════════════════════════╝\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║  DEEP COPY vs SHALLOW COPY         ║");
+    std::println("╚════════════════════════════════════╝");
 
-    cout << "\n--- Creating original shape ---\n";
+    std::println("");
+    std::println("--- Creating original shape ---");
     Shape original("Red", 10, 20);
     original.print();
 
-    cout << "\n--- Cloning shape (deep copy) ---\n";
+    std::println("");
+    std::println("--- Cloning shape (deep copy) ---");
     auto cloned = original.clone();
     Shape* clonedShape = dynamic_cast<Shape*>(cloned.get());
     clonedShape->print();
 
-    cout << "\n--- Modifying cloned shape ---\n";
+    std::println("");
+    std::println("--- Modifying cloned shape ---");
     clonedShape->setPosition(100, 200);
 
-    cout << "Original: ";
+    std::print("Original: ");
     original.print();
-    cout << "Cloned:   ";
+    std::print("Cloned:   ");
     clonedShape->print();
 
-    cout << "\n💡 Notice: Different memory addresses = Deep copy!\n";
-    cout << "   Original shape position unchanged after modifying clone.\n";
+    std::println("");
+    std::println("💡 Notice: Different memory addresses = Deep copy!");
+    std::println("   Original shape position unchanged after modifying clone.");
 }
 
 // ============================================
@@ -463,66 +470,13 @@ void demonstrateDeepCopy() {
 // ============================================
 
 int main() {
-    cout << "========================================\n";
-    cout << "PROTOTYPE PATTERN DEMO\n";
-    cout << "========================================\n";
+    std::println("========================================");
+    std::println("PROTOTYPE PATTERN DEMO");
+    std::println("========================================");
 
     demonstrateGameCharacters();
     demonstrateDocuments();
     demonstrateDeepCopy();
-
-    // ============================================
-    // Benefits Summary
-    // ============================================
-    cout << "\n========================================\n";
-    cout << "BENEFITS OF PROTOTYPE PATTERN\n";
-    cout << "========================================\n";
-    cout << "✅ Avoids expensive object creation\n";
-    cout << "✅ Reduces subclassing (no need for Factory hierarchy)\n";
-    cout << "✅ Add/remove products at runtime\n";
-    cout << "✅ Clone complex objects easily\n";
-    cout << "✅ Alternative to inheritance for configuration\n";
-    cout << "✅ Hide complexity of object creation\n";
-
-    cout << "\n========================================\n";
-    cout << "WHEN TO USE PROTOTYPE\n";
-    cout << "========================================\n";
-    cout << "1. Object creation is expensive (DB queries, network)\n";
-    cout << "2. Want to avoid factory/builder hierarchy\n";
-    cout << "3. Few state combinations (reuse configured objects)\n";
-    cout << "4. Need to create objects at runtime\n";
-    cout << "5. Want to reduce number of classes\n";
-
-    cout << "\n========================================\n";
-    cout << "SHALLOW vs DEEP COPY\n";
-    cout << "========================================\n";
-    cout << "Shallow Copy:\n";
-    cout << "  • Copies object fields\n";
-    cout << "  • Pointers still point to same memory\n";
-    cout << "  • Changes affect both objects\n";
-    cout << "\nDeep Copy:\n";
-    cout << "  • Copies object AND pointed-to objects\n";
-    cout << "  • Completely independent copies\n";
-    cout << "  • Changes don't affect original\n";
-
-    cout << "\n========================================\n";
-    cout << "IMPLEMENTATION APPROACHES\n";
-    cout << "========================================\n";
-    cout << "1. Clone method in base class\n";
-    cout << "2. Copy constructor\n";
-    cout << "3. Prototype registry/manager\n";
-    cout << "4. Prototype factory\n";
-
-    cout << "\n========================================\n";
-    cout << "REAL-WORLD EXAMPLES\n";
-    cout << "========================================\n";
-    cout << "• Game character templates (spawn enemies)\n";
-    cout << "• Document templates (Word, Photoshop)\n";
-    cout << "• Database record caching\n";
-    cout << "• UI widget templates\n";
-    cout << "• Configuration presets\n";
-    cout << "• Cell division in biology\n";
-    cout << "• Object pooling systems\n";
 
     return 0;
 }

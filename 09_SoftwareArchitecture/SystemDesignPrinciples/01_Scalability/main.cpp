@@ -10,7 +10,6 @@
 // Each is benchmarked to show the improvement quantitatively.
 // =============================================================================
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <queue>
@@ -25,6 +24,7 @@
 #include <chrono>
 #include <atomic>
 #include <memory>
+#include <print>
 
 using Clock = std::chrono::steady_clock;
 using Ms    = std::chrono::milliseconds;
@@ -213,13 +213,14 @@ private:
 
 int main()
 {
-    std::cout << "=== Scalability Patterns Demo ===\n\n";
+    std::println("=== Scalability Patterns Demo ===");
+    std::println("");
 
     // ── 1. Thread Pool ────────────────────────────────────────────────────────
-    std::cout << "--- 1. Thread Pool ---\n";
+    std::println("--- 1. Thread Pool ---");
     {
         ThreadPool pool(4);
-        std::cout << "  Workers: " << pool.threadCount() << '\n';
+        std::println("  Workers: {}", pool.threadCount());
 
         std::atomic<int> completed{0};
 
@@ -240,11 +241,12 @@ int main()
         assert(completed == 20);
         // sum of squares 0..19 = 2470
         assert(sum == 2470);
-        std::cout << "  ✓ 20 tasks completed, sum of squares = " << sum << '\n';
+        std::println("  ✓ 20 tasks completed, sum of squares = {}", sum);
     }
 
     // ── 2. LRU Cache ─────────────────────────────────────────────────────────
-    std::cout << "\n--- 2. LRU Cache (capacity=3) ---\n";
+    std::println("");
+    std::println("--- 2. LRU Cache (capacity=3) ---");
     {
         LRUCache<std::string, int> cache(3);
 
@@ -263,22 +265,23 @@ int main()
             expensiveCompute(k);
         }
 
-        std::cout << "  Cache hits:      " << cache.hits()      << '\n';
-        std::cout << "  Cache misses:    " << cache.misses()    << '\n';
-        std::cout << "  Cache evictions: " << cache.evictions() << '\n';
-        std::cout << "  Hit rate:        " << cache.hitRate()   << "%\n";
+        std::println("  Cache hits:      {}", cache.hits());
+        std::println("  Cache misses:    {}", cache.misses());
+        std::println("  Cache evictions: {}", cache.evictions());
+        std::println("  Hit rate:        {}%", cache.hitRate());
 
         assert(cache.hits()   > cache.misses());
         assert(cache.size()   <= 3);
         assert(cache.hitRate() > 50.0);
-        std::cout << "  ✓ Cache working, hit rate > 50%\n";
+        std::println("  ✓ Cache working, hit rate > 50%");
     }
 
     // ── 3. Connection Pool ────────────────────────────────────────────────────
-    std::cout << "\n--- 3. Connection Pool (size=3) ---\n";
+    std::println("");
+    std::println("--- 3. Connection Pool (size=3) ---");
     {
         ConnectionPool pool(3);
-        std::cout << "  Pool size: " << pool.poolSize() << '\n';
+        std::println("  Pool size: {}", pool.poolSize());
 
         // 8 concurrent queries sharing 3 connections
         ThreadPool workers(4);
@@ -299,11 +302,12 @@ int main()
 
         assert(ok == 8);
         assert(pool.acquisitions() == 8);
-        std::cout << "  Queries executed:    " << ok << '\n';
-        std::cout << "  Pool acquisitions:   " << pool.acquisitions() << '\n';
-        std::cout << "  ✓ 8 queries via 3 connections (pooled, not 8 new connections)\n";
+        std::println("  Queries executed:    {}", ok);
+        std::println("  Pool acquisitions:   {}", pool.acquisitions());
+        std::println("  ✓ 8 queries via 3 connections (pooled, not 8 new connections)");
     }
 
-    std::cout << "\nAll assertions passed.\n";
+    std::println("");
+    std::println("All assertions passed.");
     return 0;
 }

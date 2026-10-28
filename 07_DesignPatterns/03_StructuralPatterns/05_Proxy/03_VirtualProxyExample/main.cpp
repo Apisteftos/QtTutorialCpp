@@ -1,12 +1,12 @@
 // virtual_proxy_example.cpp
 // Virtual Proxy Pattern - Lazy Loading of Large Images
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
 #include <chrono>
 #include <vector>
+#include <print>
 
 // ===== SUBJECT INTERFACE =====
 class IImage {
@@ -25,8 +25,8 @@ private:
     int height;
 
     void loadFromDisk() {
-        std::cout << "Loading image from disk: " << filename << std::endl;
-        std::cout << "  [Simulating expensive operation...]" << std::endl;
+        std::println("Loading image from disk: {}", filename);
+        std::println("  [Simulating expensive operation...]");
 
         // Simulate expensive loading operation
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -36,7 +36,7 @@ private:
         width = 1920;
         height = 1080;
 
-        std::cout << "  [Image loaded! Size: " << width << "x" << height << "]" << std::endl;
+        std::println("  [Image loaded! Size: {}x{}]", width, height);
     }
 
 public:
@@ -45,9 +45,9 @@ public:
     }
 
     void display() override {
-        std::cout << "Displaying: " << filename << std::endl;
-        std::cout << "  Resolution: " << width << "x" << height << std::endl;
-        std::cout << "  [Rendering image on screen...]" << std::endl;
+        std::println("Displaying: {}", filename);
+        std::println("  Resolution: {}x{}", width, height);
+        std::println("  [Rendering image on screen...]");
     }
 
     std::string getInfo() override {
@@ -66,7 +66,8 @@ private:
     // Lazy loading helper
     void ensureLoaded() const {
         if (!isLoaded) {
-            std::cout << "\n[Proxy: First access detected, loading real image...]" << std::endl;
+            std::println("");
+            std::println("[Proxy: First access detected, loading real image...]");
             realImage = std::make_unique<RealImage>(filename);
             isLoaded = true;
         }
@@ -74,7 +75,7 @@ private:
 
 public:
     explicit ImageProxy(const std::string& fname) : filename(fname) {
-        std::cout << "ImageProxy created for: " << filename << " (not loaded yet)" << std::endl;
+        std::println("ImageProxy created for: {} (not loaded yet)", filename);
     }
 
     void display() override {
@@ -109,29 +110,32 @@ public:
 
     void showImage(size_t index) {
         if (index < images.size()) {
-            std::cout << "\n--- Showing image #" << index + 1 << " ---" << std::endl;
+            std::println("");
+            std::println("--- Showing image #{} ---", index + 1);
             images[index]->display();
         }
     }
 
     void listImages() {
-        std::cout << "\n--- Gallery Contents ---" << std::endl;
+        std::println("");
+        std::println("--- Gallery Contents ---");
         for (size_t i = 0; i < images.size(); ++i) {
-            std::cout << i + 1 << ". " << images[i]->getInfo() << std::endl;
+            std::println("{}. {}", i + 1, images[i]->getInfo());
         }
     }
 };
 
 // ===== DEMONSTRATION =====
 int main() {
-    std::cout << "===== Virtual Proxy Pattern Demo =====" << std::endl;
-    std::cout << "Loading an image gallery...\n" << std::endl;
+    std::println("===== Virtual Proxy Pattern Demo =====");
+    std::println("Loading an image gallery...");
+    std::println("");
 
     // Create gallery
     ImageGallery gallery;
 
     // Add images (fast - just creates proxies)
-    std::cout << "Adding images to gallery:" << std::endl;
+    std::println("Adding images to gallery:");
     auto start = std::chrono::high_resolution_clock::now();
 
     gallery.addImage("vacation_photo_1.jpg");
@@ -143,34 +147,34 @@ int main() {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    std::cout << "\nTime to add 5 images: " << duration.count() << "ms" << std::endl;
-    std::cout << "(Fast because images aren't actually loaded yet!)\n" << std::endl;
+    std::println("");
+    std::println("Time to add 5 images: {}ms", duration.count());
+    std::println("(Fast because images aren't actually loaded yet!)");
+    std::println("");
 
     // List images (still fast - no loading)
     gallery.listImages();
 
     // User interaction simulation
-    std::cout << "\n===== User Interaction =====" << std::endl;
+    std::println("");
+    std::println("===== User Interaction =====");
 
-    std::cout << "\nUser clicks on image #1:" << std::endl;
+    std::println("");
+    std::println("User clicks on image #1:");
     gallery.showImage(0);  // First access - loads the image
 
-    std::cout << "\nUser clicks on image #1 again:" << std::endl;
+    std::println("");
+    std::println("User clicks on image #1 again:");
     gallery.showImage(0);  // Already loaded - displays immediately
 
-    std::cout << "\nUser clicks on image #3:" << std::endl;
+    std::println("");
+    std::println("User clicks on image #3:");
     gallery.showImage(2);  // First access - loads the image
 
     // Show final status
-    std::cout << "\n===== Final Status =====" << std::endl;
+    std::println("");
+    std::println("===== Final Status =====");
     gallery.listImages();
-
-    std::cout << "\n===== Key Benefits =====" << std::endl;
-    std::cout << "✓ Gallery opens instantly (no waiting for all images)" << std::endl;
-    std::cout << "✓ Images load only when actually viewed" << std::endl;
-    std::cout << "✓ Subsequent views are instant (already loaded)" << std::endl;
-    std::cout << "✓ Memory saved for unviewed images" << std::endl;
-    std::cout << "✓ Client code doesn't know about lazy loading" << std::endl;
 
     return 0;
 }

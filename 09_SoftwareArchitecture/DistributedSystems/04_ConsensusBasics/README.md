@@ -97,7 +97,17 @@ If you need a majority to elect a leader:
 
 ✅ Distributed databases — who accepts writes?  
 ✅ Service registries — which node is the primary?  
-✅ MCX MCPTT — which dispatch server is active in an HA cluster?  
+✅ High-availability clusters — which server is the active one?  
 ✅ Any system where exactly one node must be authoritative  
 ❌ Single-node systems — no consensus needed  
 ❌ When eventual consistency is acceptable — use simpler gossip protocol
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.

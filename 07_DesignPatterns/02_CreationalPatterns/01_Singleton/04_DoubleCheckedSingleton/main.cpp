@@ -1,11 +1,10 @@
-#include <iostream>
 #include <mutex>
 #include <atomic>
 #include <thread>
 #include <memory>
 #include <vector>
+#include <print>
 
-using namespace std;
 // ============================================
 // DOUBLE-CHECKED LOCKING
 // Optimized thread-safe singleton
@@ -22,14 +21,14 @@ using namespace std;
 class DoubleCheckedSingleton {
 private:
     static DoubleCheckedSingleton* instance;
-    static mutex mtx;
-    static atomic<bool> initialized;  // ✅ Use bool instead of pointer
+    static std::mutex mtx;
+    static std::atomic<bool> initialized;  // ✅ Use bool instead of pointer
     int value;
 
     DoubleCheckedSingleton() : value(0) {
-        cout << "🏗️  DoubleCheckedSingleton: Constructor called\n";
-        cout << "   Instance created with double-checked locking\n";
-        this_thread::sleep_for(chrono::milliseconds(100));
+        std::println("🏗️  DoubleCheckedSingleton: Constructor called");
+        std::println("   Instance created with double-checked locking");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     DoubleCheckedSingleton(const DoubleCheckedSingleton&) = delete;
@@ -37,18 +36,17 @@ private:
 
 public:
     static DoubleCheckedSingleton* getInstance() {
-        cout << "📞 DoubleCheckedSingleton: getInstance() called by thread "
-             << this_thread::get_id() << "\n";
+        std::println("📞 DoubleCheckedSingleton: getInstance() called by thread {}", std::this_thread::get_id());
 
         // First check (without lock)
-        if (!initialized.load(memory_order_acquire)) {
-            lock_guard<mutex> lock(mtx);
+        if (!initialized.load(std::memory_order_acquire)) {
+            std::lock_guard<std::mutex> lock(mtx);
 
             // Second check (with lock)
-            if (!initialized.load(memory_order_relaxed)) {
-                cout << "⚠️  Creating instance with double-checked locking...\n";
+            if (!initialized.load(std::memory_order_relaxed)) {
+                std::println("⚠️  Creating instance with double-checked locking...");
                 instance = new DoubleCheckedSingleton();
-                initialized.store(true, memory_order_release);
+                initialized.store(true, std::memory_order_release);
             }
         }
         return instance;
@@ -58,23 +56,25 @@ public:
     int getValue() const { return value; }
 
     void doSomething() {
-        cout << "✨ DoubleCheckedSingleton: Doing something with value = " << value << "\n";
+        std::println("✨ DoubleCheckedSingleton: Doing something with value = {}", value);
     }
 };
 
 DoubleCheckedSingleton* DoubleCheckedSingleton::instance = nullptr;
-mutex DoubleCheckedSingleton::mtx;
-atomic<bool> DoubleCheckedSingleton::initialized{false};  // ✅ Define the atomic bool
+std::mutex DoubleCheckedSingleton::mtx;
+std::atomic<bool> DoubleCheckedSingleton::initialized{false};  // ✅ Define the atomic bool
 
 
 
 void demonstrateDoubleCheckedSingleton() {
-    cout << "\n╔════════════════════════════════════╗\n";
-    cout << "║     DOUBLE-CHECKED LOCKING         ║\n";
-    cout << "╚════════════════════════════════════╝\n";
-    cout << "Optimized: Only locks during creation\n\n";
+    std::println("");
+    std::println("╔════════════════════════════════════╗");
+    std::println("║     DOUBLE-CHECKED LOCKING         ║");
+    std::println("╚════════════════════════════════════╝");
+    std::println("Optimized: Only locks during creation");
+    std::println("");
 
-    vector<thread> threads;
+    std::vector<std::thread> threads;
     for (int i = 0; i < 3; i++) {
         threads.emplace_back([]() {
             auto s = DoubleCheckedSingleton::getInstance();
@@ -86,7 +86,8 @@ void demonstrateDoubleCheckedSingleton() {
         t.join();
     }
 
-    cout << "\n✅ Thread-safe and efficient (only locks during creation)\n";
+    std::println("");
+    std::println("✅ Thread-safe and efficient (only locks during creation)");
 }
 
 
