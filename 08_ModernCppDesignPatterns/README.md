@@ -130,11 +130,12 @@ for (size_t i = 0; i < vec.size(); ++i) {
 
 ## 🏢 Real-World Applications
 
-Companies using these patterns:
-- **Bloomberg** - Financial software
-- **Google** - Chrome, TensorFlow
-- **Facebook/Meta** - Infrastructure
-- **Microsoft** - Windows, Office
+Where these patterns are typically used:
+- **Financial software** - low-latency calculation and data pipelines
+- **Browsers and graphics** - rendering and layout engines
+- **Machine-learning frameworks** - numerical kernels with generic containers
+- **Operating systems and desktop applications** - large long-lived code bases
+- **Game engines and embedded systems** - performance and memory limits
 
 ## 🎯 Why Learn This?
 
