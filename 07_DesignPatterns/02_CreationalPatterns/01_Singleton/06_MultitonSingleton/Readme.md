@@ -20,6 +20,27 @@ Types defined in `main.cpp`:
 
 **Watch out:** It is global state: it hides dependencies and makes unit testing harder. Initialisation strategy matters for thread safety.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Multiton {
+        -map~Key~ instances$
+        -mutex instanceLock$
+        +getInstance(Key)$
+        +releaseInstance(Key)$
+        +releaseAllInstances()$
+        +getInstanceCount()$
+    }
+    class Configuration {
+        -string data
+        +setData(string)
+        +getData()
+    }
+```
+
 ## Sample output (first lines)
 
 ```text

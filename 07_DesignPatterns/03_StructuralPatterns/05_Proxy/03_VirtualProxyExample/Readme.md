@@ -23,6 +23,47 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adds indirection and can hide expensive operations behind a cheap-looking call.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class IImage {
+        <<interface>>
+        +display()*
+        +getInfo()*
+    }
+    class RealImage {
+        -string filename
+        -string imageData
+        -int width
+        -int height
+        -loadFromDisk()
+        +display()
+        +getInfo()
+    }
+    class ImageProxy {
+        -string filename
+        -RealImage realImage
+        -bool isLoaded
+        -ensureLoaded()
+        +display()
+        +getInfo()
+        +isImageLoaded()
+    }
+    class ImageGallery {
+        -vector~IImage~ images
+        +addImage(string)
+        +showImage(size_t)
+        +listImages()
+    }
+    IImage <|-- RealImage
+    IImage <|-- ImageProxy
+    ImageProxy *-- RealImage : realImage
+    ImageGallery *-- IImage : images
+```
+
 ## Sample output (first lines)
 
 ```text

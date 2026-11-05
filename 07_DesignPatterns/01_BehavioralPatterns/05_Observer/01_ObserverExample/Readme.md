@@ -39,6 +39,34 @@ thermometer: 3 C
   display [hall]: 3 C
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class TemperatureListener {
+        <<interface>>
+        +onTemperature(double)*
+    }
+    class Thermometer {
+        -vector~TemperatureListener~ listeners_
+        +attach(TemperatureListener)
+        +detach(TemperatureListener)
+        +measure(double)
+    }
+    class DisplayPanel {
+        -string room_
+        +onTemperature(double)
+    }
+    class FrostAlarm {
+        +onTemperature(double)
+    }
+    TemperatureListener <|-- DisplayPanel
+    TemperatureListener <|-- FrostAlarm
+    Thermometer o-- TemperatureListener : listeners_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

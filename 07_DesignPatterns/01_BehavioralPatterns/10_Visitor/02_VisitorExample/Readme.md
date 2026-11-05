@@ -63,6 +63,248 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adding a new element type forces a change in every visitor. In C++17 and later std::variant with std::visit is often a lighter alternative.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Shapes And Operations
+
+```mermaid
+classDiagram
+    class ShapeVisitor {
+        <<interface>>
+        +visitCircle(Circle)*
+        +visitRectangle(Rectangle)*
+        +visitTriangle(Triangle)*
+    }
+    class Shape {
+        <<interface>>
+        +accept(ShapeVisitor)*
+        +getName()*
+    }
+    class Circle {
+        -double radius
+        +getRadius()
+        +accept(ShapeVisitor)
+        +getName()
+    }
+    class Rectangle {
+        -double width
+        -double height
+        +getWidth()
+        +getHeight()
+        +accept(ShapeVisitor)
+        +getName()
+    }
+    class Triangle {
+        -double base
+        -double height
+        +getBase()
+        +getHeight()
+        +accept(ShapeVisitor)
+        +getName()
+    }
+    class AreaCalculator {
+        -double totalArea
+        +visitCircle(Circle)
+        +visitRectangle(Rectangle)
+        +visitTriangle(Triangle)
+        +getTotalArea()
+    }
+    class PerimeterCalculator {
+        -double totalPerimeter
+        +visitCircle(Circle)
+        +visitRectangle(Rectangle)
+        +visitTriangle(Triangle)
+        +getTotalPerimeter()
+    }
+    class XMLExporter {
+        -string xml
+        +visitCircle(Circle)
+        +visitRectangle(Rectangle)
+        +visitTriangle(Triangle)
+        +getXML()
+    }
+    Shape <|-- Circle
+    Shape <|-- Rectangle
+    Shape <|-- Triangle
+    ShapeVisitor <|-- AreaCalculator
+    ShapeVisitor <|-- PerimeterCalculator
+    ShapeVisitor <|-- XMLExporter
+```
+
+### Example 2: Employee Hierarchy
+
+```mermaid
+classDiagram
+    class EmployeeVisitor {
+        <<interface>>
+        +visitManager(Manager)*
+        +visitDeveloper(Developer)*
+        +visitDesigner(Designer)*
+    }
+    class Employee {
+        <<abstract>>
+        #string name
+        #double baseSalary
+        +getName()
+        +getBaseSalary()
+        +accept(EmployeeVisitor)*
+        +getRole()*
+    }
+    class Manager {
+        -int teamSize
+        +getTeamSize()
+        +accept(EmployeeVisitor)
+        +getRole()
+    }
+    class Developer {
+        -string programmingLanguage
+        +getProgrammingLanguage()
+        +accept(EmployeeVisitor)
+        +getRole()
+    }
+    class Designer {
+        -string designTool
+        +getDesignTool()
+        +accept(EmployeeVisitor)
+        +getRole()
+    }
+    class SalaryCalculator {
+        -double totalSalary
+        +visitManager(Manager)
+        +visitDeveloper(Developer)
+        +visitDesigner(Designer)
+        +getTotalSalary()
+    }
+    class PerformanceEvaluator {
+        +visitManager(Manager)
+        +visitDeveloper(Developer)
+        +visitDesigner(Designer)
+    }
+    Employee <|-- Manager
+    Employee <|-- Developer
+    Employee <|-- Designer
+    EmployeeVisitor <|-- SalaryCalculator
+    EmployeeVisitor <|-- PerformanceEvaluator
+```
+
+### Example 3: Document Structure
+
+```mermaid
+classDiagram
+    class DocumentVisitor {
+        <<interface>>
+        +visitParagraph(Paragraph)*
+        +visitHeading(Heading)*
+        +visitImage(Image)*
+    }
+    class DocumentElement {
+        <<interface>>
+        +accept(DocumentVisitor)*
+    }
+    class Paragraph {
+        -string text
+        +getText()
+        +accept(DocumentVisitor)
+    }
+    class Heading {
+        -string text
+        -int level
+        +getText()
+        +getLevel()
+        +accept(DocumentVisitor)
+    }
+    class Image {
+        -string url
+        -string altText
+        +getUrl()
+        +getAltText()
+        +accept(DocumentVisitor)
+    }
+    class HTMLExporter {
+        -string html
+        +visitParagraph(Paragraph)
+        +visitHeading(Heading)
+        +visitImage(Image)
+        +getHTML()
+    }
+    class MarkdownExporter {
+        -string markdown
+        +visitParagraph(Paragraph)
+        +visitHeading(Heading)
+        +visitImage(Image)
+        +getMarkdown()
+    }
+    class PlainTextExporter {
+        -string text
+        +visitParagraph(Paragraph)
+        +visitHeading(Heading)
+        +visitImage(Image)
+        +getText()
+    }
+    DocumentElement <|-- Paragraph
+    DocumentElement <|-- Heading
+    DocumentElement <|-- Image
+    DocumentVisitor <|-- HTMLExporter
+    DocumentVisitor <|-- MarkdownExporter
+    DocumentVisitor <|-- PlainTextExporter
+```
+
+### Example 4: Shopping Cart
+
+```mermaid
+classDiagram
+    class ProductVisitor {
+        <<interface>>
+        +visitBook(Book)*
+        +visitElectronics(Electronics)*
+        +visitClothing(Clothing)*
+    }
+    class Product {
+        <<abstract>>
+        #string name
+        #double price
+        +getName()
+        +getPrice()
+        +accept(ProductVisitor)*
+    }
+    class Book {
+        -string author
+        +getAuthor()
+        +accept(ProductVisitor)
+    }
+    class Electronics {
+        -int warrantyYears
+        +getWarrantyYears()
+        +accept(ProductVisitor)
+    }
+    class Clothing {
+        -string size
+        +getSize()
+        +accept(ProductVisitor)
+    }
+    class TaxCalculator {
+        -double totalTax
+        +visitBook(Book)
+        +visitElectronics(Electronics)
+        +visitClothing(Clothing)
+        +getTotalTax()
+    }
+    class DiscountCalculator {
+        -double totalDiscount
+        +visitBook(Book)
+        +visitElectronics(Electronics)
+        +visitClothing(Clothing)
+        +getTotalDiscount()
+    }
+    Product <|-- Book
+    Product <|-- Electronics
+    Product <|-- Clothing
+    ProductVisitor <|-- TaxCalculator
+    ProductVisitor <|-- DiscountCalculator
+```
+
 ## Sample output (first lines)
 
 ```text

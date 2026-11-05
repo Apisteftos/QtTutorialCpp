@@ -52,6 +52,164 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adds a layer of indirection; keep adapters thin.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Media Player Adapter
+
+```mermaid
+classDiagram
+    class MediaPlayer {
+        <<interface>>
+        +play(string, string)*
+    }
+    class MP4Player {
+        +playMP4(string)
+    }
+    class VLCPlayer {
+        +playVLC(string)
+    }
+    class MediaAdapter {
+        -MP4Player mp4Player
+        -VLCPlayer vlcPlayer
+        +play(string, string)
+    }
+    class AudioPlayer {
+        -MediaAdapter mediaAdapter
+        +play(string, string)
+    }
+    MediaPlayer <|-- MediaAdapter
+    MediaPlayer <|-- AudioPlayer
+    MediaAdapter *-- MP4Player : mp4Player
+    MediaAdapter *-- VLCPlayer : vlcPlayer
+    AudioPlayer *-- MediaAdapter : mediaAdapter
+```
+
+### Example 2: Shape Adapter (Geometric)
+
+```mermaid
+classDiagram
+    class LegacyRectangle {
+        -int~x~ height
+        +draw()
+        +getX()
+        +getY()
+        +getWidth()
+        +getHeight()
+    }
+    class Shape {
+        <<interface>>
+        +draw()*
+        +getArea()*
+    }
+    class Circle {
+        -int~x~ radius
+        +draw()
+        +getArea()
+    }
+    class RectangleAdapter {
+        -LegacyRectangle legacyRect
+        +draw()
+        +getArea()
+    }
+    Shape <|-- Circle
+    Shape <|-- RectangleAdapter
+    RectangleAdapter *-- LegacyRectangle : legacyRect
+```
+
+### Example 3: Temperature Sensor Adapter
+
+```mermaid
+classDiagram
+    class FahrenheitSensor {
+        +getTemperatureFahrenheit()
+        +getSensorInfo()
+    }
+    class TemperatureSensor {
+        <<interface>>
+        +getTemperature()*
+        +getInfo()*
+    }
+    class TemperatureAdapter {
+        -FahrenheitSensor fahrenheitSensor
+        -fahrenheitToCelsius(double)
+        +getTemperature()
+        +getInfo()
+    }
+    TemperatureSensor <|-- TemperatureAdapter
+    TemperatureAdapter *-- FahrenheitSensor : fahrenheitSensor
+```
+
+### Example 4: Payment Gateway Adapter
+
+```mermaid
+classDiagram
+    class PayPalAPI {
+        +sendPayment(string, double)
+        +verifyAccount(string)
+    }
+    class StripeAPI {
+        +makePayment(string, int)
+        +createToken(string)
+    }
+    class PaymentProcessor {
+        <<interface>>
+        +processPayment(string, double)*
+        +getProcessorName()*
+    }
+    class PayPalAdapter {
+        -PayPalAPI paypal
+        +processPayment(string, double)
+        +getProcessorName()
+    }
+    class StripeAdapter {
+        -StripeAPI stripe
+        +processPayment(string, double)
+        +getProcessorName()
+    }
+    PaymentProcessor <|-- PayPalAdapter
+    PaymentProcessor <|-- StripeAdapter
+    PayPalAdapter *-- PayPalAPI : paypal
+    StripeAdapter *-- StripeAPI : stripe
+```
+
+### Example 5: Database Adapter
+
+```mermaid
+classDiagram
+    class MySQLDatabase {
+        +mysqlConnect(string, int)
+        +mysqlExecute(string)
+    }
+    class MongoDB {
+        +connect(string)
+        +runCommand(string)
+    }
+    class Database {
+        <<interface>>
+        +connect(string)*
+        +execute(string)*
+        +getDatabaseType()*
+    }
+    class MySQLAdapter {
+        -MySQLDatabase mysql
+        +connect(string)
+        +execute(string)
+        +getDatabaseType()
+    }
+    class MongoDBAdapter {
+        -MongoDB mongo
+        +connect(string)
+        +execute(string)
+        +getDatabaseType()
+    }
+    Database <|-- MySQLAdapter
+    Database <|-- MongoDBAdapter
+    MySQLAdapter *-- MySQLDatabase : mysql
+    MongoDBAdapter *-- MongoDB : mongo
+```
+
 ## Sample output (first lines)
 
 ```text

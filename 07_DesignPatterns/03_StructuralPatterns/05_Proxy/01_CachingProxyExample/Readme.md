@@ -24,6 +24,53 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adds indirection and can hide expensive operations behind a cheap-looking call.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class IDatabase {
+        <<interface>>
+        +query(string)*
+        +clearCache()*
+    }
+    class RealDatabase {
+        -string dbName
+        -executeQuery(string)
+        +query(string)
+        +clearCache()
+    }
+    class CacheEntry {
+        +string result
+        +time_point timestamp
+        +int hitCount
+    }
+    class CachingDatabaseProxy {
+        -RealDatabase database
+        -unordered_map~string~ cache
+        -int cacheHits
+        -int cacheMisses
+        -seconds cacheTimeout
+        -size_t maxCacheSize
+        -isCacheValid(CacheEntry)
+        -evictOldestEntry()
+        +query(string)
+        +clearCache()
+        +showStatistics()
+    }
+    class Application {
+        -IDatabase database
+        +runQueries()
+        +demonstrateCacheExpiry()
+    }
+    IDatabase <|-- RealDatabase
+    IDatabase <|-- CachingDatabaseProxy
+    CachingDatabaseProxy *-- RealDatabase : database
+    CachingDatabaseProxy o-- CacheEntry : cache
+    Application *-- IDatabase : database
+```
+
 ## Sample output (first lines)
 
 ```text

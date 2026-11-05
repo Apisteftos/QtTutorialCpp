@@ -45,6 +45,34 @@ Body: Your appointment is tomorrow.
 Attachments: 0
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Email {
+        +string to
+        +string subject
+        +string body
+        +vector~string~ attachments
+        +print()
+    }
+    class EmailBuilder {
+        -Email email_
+        +to(string)
+        +subject(string)
+        +body(string)
+        +attach(string)
+        +build()
+    }
+    class EmailDirector {
+        +welcome(EmailBuilder, string, string)$
+        +reminder(EmailBuilder, string)$
+    }
+    EmailBuilder *-- Email : email_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

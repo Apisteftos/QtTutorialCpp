@@ -134,3 +134,58 @@ After new command:     undo stack: [ins1, ins2, del]     redo: []  ← redo clea
 ✅ Database transactions (rollback)
 ✅ Configuration changes with rollback support
 ✅ Any system where operations must be reversible
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.
+
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Document {
+        -string text
+        +insertText(string)
+        +deleteText(int)
+        +getText()
+    }
+    class EditorCommand {
+        <<interface>>
+        +execute()*
+        +undo()*
+    }
+    class InsertCommand {
+        -Document doc
+        -string textToInsert
+        +execute()
+        +undo()
+    }
+    class DeleteCommand {
+        -Document doc
+        -int length
+        -string deletedText
+        +execute()
+        +undo()
+    }
+    class TextEditor {
+        -stack~EditorCommand~ undoStack
+        -stack~EditorCommand~ redoStack
+        +executeCommand(EditorCommand)
+        +undo()
+        +redo()
+    }
+    EditorCommand <|-- InsertCommand
+    EditorCommand <|-- DeleteCommand
+    InsertCommand o-- Document : doc
+    DeleteCommand o-- Document : doc
+    TextEditor o-- EditorCommand : undoStack
+    TextEditor o-- EditorCommand : redoStack
+```

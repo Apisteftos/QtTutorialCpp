@@ -32,6 +32,42 @@ items: 100  rule: 15 off  to pay: 85
 items: 100  rule: 500 off  to pay: 0
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class DiscountStrategy {
+        <<interface>>
+        +apply(double)*
+        +label()*
+    }
+    class NoDiscount {
+        +apply(double)
+        +label()
+    }
+    class PercentDiscount {
+        -double percent_
+        +apply(double)
+        +label()
+    }
+    class FixedDiscount {
+        -double amount_
+        +apply(double)
+        +label()
+    }
+    class Checkout {
+        -DiscountStrategy strategy_
+        +setStrategy(DiscountStrategy)
+        +pay(vector~double~)
+    }
+    DiscountStrategy <|-- NoDiscount
+    DiscountStrategy <|-- PercentDiscount
+    DiscountStrategy <|-- FixedDiscount
+    Checkout *-- DiscountStrategy : strategy_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

@@ -45,6 +45,43 @@ rows: 3
 3. coffee
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class ReportGenerator {
+        <<abstract>>
+        +generate(vector~string~)
+        #name()*
+        #writeHeader()*
+        #writeRow(size_t, string)*
+        #wantsFooter()
+        #writeFooter(size_t)
+    }
+    class CsvReport {
+        #name()
+        #writeHeader()
+        #writeRow(size_t, string)
+    }
+    class HtmlReport {
+        #name()
+        #writeHeader()
+        #writeRow(size_t, string)
+        #writeFooter(size_t)
+    }
+    class PlainReport {
+        #name()
+        #writeHeader()
+        #writeRow(size_t, string)
+        #wantsFooter()
+    }
+    ReportGenerator <|-- CsvReport
+    ReportGenerator <|-- HtmlReport
+    ReportGenerator <|-- PlainReport
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

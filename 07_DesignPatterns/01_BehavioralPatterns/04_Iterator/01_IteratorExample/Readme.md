@@ -35,6 +35,30 @@ words (2 stored):
   beta
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class RingBuffer {
+        -array~T~ data_
+        -size_t head_
+        -size_t size_
+        +push(T)
+        +size()
+        +begin()
+        +end()
+    }
+    class Iterator {
+        -RingBuffer buffer_
+        -size_t position_
+        +operator_deref()
+        +operator_increment()
+    }
+    Iterator o-- RingBuffer : buffer_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

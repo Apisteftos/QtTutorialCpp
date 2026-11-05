@@ -48,6 +48,88 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adding a new product type means changing the abstract factory and every concrete factory.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Shared types
+
+```mermaid
+classDiagram
+    class AbstractButton {
+        <<interface>>
+        +paint()*
+        +click()*
+    }
+    class AbstractCheckbox {
+        <<interface>>
+        +paint()*
+        +toggle()*
+        +interactWith(AbstractButton)*
+    }
+    class WindowsButton {
+        +paint()
+        +click()
+    }
+    class WindowsCheckbox {
+        +paint()
+        +toggle()
+        +interactWith(AbstractButton)
+    }
+    class MacButton {
+        +paint()
+        +click()
+    }
+    class MacCheckbox {
+        +paint()
+        +toggle()
+        +interactWith(AbstractButton)
+    }
+    class LinuxButton {
+        +paint()
+        +click()
+    }
+    class LinuxCheckbox {
+        +paint()
+        +toggle()
+        +interactWith(AbstractButton)
+    }
+    class GUIFactory {
+        <<interface>>
+        +createButton()*
+        +createCheckbox()*
+    }
+    class WindowsFactory {
+        +createButton()
+        +createCheckbox()
+    }
+    class MacFactory {
+        +createButton()
+        +createCheckbox()
+    }
+    class LinuxFactory {
+        +createButton()
+        +createCheckbox()
+    }
+    class Application {
+        -AbstractButton button
+        -AbstractCheckbox checkbox
+        +paint()
+        +handleUserInput()
+    }
+    AbstractButton <|-- WindowsButton
+    AbstractCheckbox <|-- WindowsCheckbox
+    AbstractButton <|-- MacButton
+    AbstractCheckbox <|-- MacCheckbox
+    AbstractButton <|-- LinuxButton
+    AbstractCheckbox <|-- LinuxCheckbox
+    GUIFactory <|-- WindowsFactory
+    GUIFactory <|-- MacFactory
+    GUIFactory <|-- LinuxFactory
+    Application *-- AbstractButton : button
+    Application *-- AbstractCheckbox : checkbox
+```
+
 ## Sample output (first lines)
 
 ```text

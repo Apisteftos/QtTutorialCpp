@@ -40,6 +40,132 @@ Types defined in `main.cpp`:
 
 **Watch out:** Snapshots can be expensive if the state is large; storing deltas or limiting the history helps.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Text Editor With Undo/Redo
+
+```mermaid
+classDiagram
+    class TextMemento {
+        -string text
+        -int cursorPos
+        +getText()
+        +getCursorPos()
+    }
+    class TextEditor {
+        -string text
+        -int cursorPosition
+        +write(string)
+        +deleteText(int)
+        +setCursor(int)
+        +save()
+        +restore(TextMemento)
+        +display()
+    }
+    class History {
+        -stack~TextMemento~ undoStack
+        -stack~TextMemento~ redoStack
+        -TextEditor editor
+        +backup()
+        +undo()
+        +redo()
+        +showHistory()
+    }
+    History o-- TextMemento : undoStack
+    History o-- TextMemento : redoStack
+    History o-- TextEditor : editor
+```
+
+### Example 2: Game Character Checkpoint
+
+```mermaid
+classDiagram
+    class GameMemento {
+        -int health
+        -int mana
+        -int level
+        -string location
+        +getHealth()
+        +getMana()
+        +getLevel()
+        +getLocation()
+    }
+    class GameCharacter {
+        -string name
+        -int health
+        -int maxHealth
+        -int mana
+        -int maxMana
+        -int level
+        -string currentLocation
+        +takeDamage(int)
+        +useMana(int)
+        +levelUp()
+        +moveTo(string)
+        +createCheckpoint()
+        +loadCheckpoint(GameMemento)
+        +displayStatus()
+    }
+    class SaveManager {
+        -vector~GameMemento~ saveSlots
+        +saveGame(GameMemento, int)
+        +loadGame(int)
+        +listSaves()
+    }
+    SaveManager o-- GameMemento : saveSlots
+```
+
+### Example 3: Drawing Canvas With Snapshots
+
+```mermaid
+classDiagram
+    class CanvasMemento {
+        -vector~string~ shapes
+        -string backgroundColor
+    }
+    class Canvas {
+        -vector~string~ shapes
+        -string backgroundColor
+        +addShape(string)
+        +removeLastShape()
+        +setBackgroundColor(string)
+        +createSnapshot()
+        +restoreSnapshot(CanvasMemento)
+        +display()
+    }
+    class SnapshotManager {
+        -vector~CanvasMemento~ snapshots
+        -Canvas canvas
+        +takeSnapshot()
+        +restoreSnapshot(int)
+        +listSnapshots()
+    }
+    SnapshotManager o-- CanvasMemento : snapshots
+    SnapshotManager o-- Canvas : canvas
+```
+
+### Example 4: Transaction Manager
+
+```mermaid
+classDiagram
+    class AccountMemento {
+        -double balance
+        -vector~string~ transactionLog
+    }
+    class BankAccount {
+        -string accountNumber
+        -double balance
+        -vector~string~ transactionLog
+        +deposit(double)
+        +withdraw(double)
+        +beginTransaction()
+        +rollback(AccountMemento)
+        +displayAccount()
+    }
+```
+
 ## Sample output (first lines)
 
 ```text

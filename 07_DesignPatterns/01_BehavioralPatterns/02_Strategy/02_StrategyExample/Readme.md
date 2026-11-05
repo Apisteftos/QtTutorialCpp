@@ -50,6 +50,164 @@ Types defined in `main.cpp`:
 
 **Watch out:** The caller must know the strategies to choose one. In C++ a std::function or a template parameter can replace the interface when the strategy is a single callable.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Payment Processing
+
+```mermaid
+classDiagram
+    class PaymentStrategy {
+        <<interface>>
+        +pay(double)*
+        +getPaymentType()*
+    }
+    class CreditCardPayment {
+        -string cardNumber
+        -string cardHolder
+        -string cvv
+        -string expiryDate
+        +pay(double)
+        +getPaymentType()
+    }
+    class PayPalPayment {
+        -string email
+        -string password
+        +pay(double)
+        +getPaymentType()
+    }
+    class CryptoPayment {
+        -string walletAddress
+        -string cryptoType
+        +pay(double)
+        +getPaymentType()
+    }
+    class ShoppingCart {
+        -PaymentStrategy paymentStrategy
+        -vector~pair~ items
+        +addItem(string, double)
+        +calculateTotal()
+        +setPaymentStrategy(PaymentStrategy)
+        +checkout()
+    }
+    PaymentStrategy <|-- CreditCardPayment
+    PaymentStrategy <|-- PayPalPayment
+    PaymentStrategy <|-- CryptoPayment
+    ShoppingCart o-- PaymentStrategy : paymentStrategy
+```
+
+### Example 2: Sorting Strategies
+
+```mermaid
+classDiagram
+    class SortStrategy {
+        <<interface>>
+        +sort(vector~int~)*
+        +getAlgorithmName()*
+    }
+    class BubbleSort {
+        +sort(vector~int~)
+        +getAlgorithmName()
+    }
+    class QuickSort {
+        -quickSortHelper(vector~int~, int, int)
+        -partition(vector~int~, int, int)
+        +sort(vector~int~)
+        +getAlgorithmName()
+    }
+    class MergeSort {
+        -merge(vector~int~, int, int, int)
+        -mergeSortHelper(vector~int~, int, int)
+        +sort(vector~int~)
+        +getAlgorithmName()
+    }
+    class DataSorter {
+        -SortStrategy strategy
+        +setSortStrategy(SortStrategy)
+        +sortData(vector~int~)
+        -printData(vector~int~)
+    }
+    SortStrategy <|-- BubbleSort
+    SortStrategy <|-- QuickSort
+    SortStrategy <|-- MergeSort
+    DataSorter o-- SortStrategy : strategy
+```
+
+### Example 3: Compression Strategies
+
+```mermaid
+classDiagram
+    class CompressionStrategy {
+        <<interface>>
+        +compress(string)*
+        +decompress(string)*
+        +getCompressionType()*
+    }
+    class ZipCompression {
+        +compress(string)
+        +decompress(string)
+        +getCompressionType()
+    }
+    class RarCompression {
+        +compress(string)
+        +decompress(string)
+        +getCompressionType()
+    }
+    class SevenZipCompression {
+        +compress(string)
+        +decompress(string)
+        +getCompressionType()
+    }
+    class FileCompressor {
+        -CompressionStrategy strategy
+        +setCompressionStrategy(CompressionStrategy)
+        +compressFile(string, string)
+        +decompressFile(string, string)
+    }
+    CompressionStrategy <|-- ZipCompression
+    CompressionStrategy <|-- RarCompression
+    CompressionStrategy <|-- SevenZipCompression
+    FileCompressor o-- CompressionStrategy : strategy
+```
+
+### Example 4: Navigation Strategies
+
+```mermaid
+classDiagram
+    class NavigationStrategy {
+        <<interface>>
+        +buildRoute(string, string)*
+        +getRouteType()*
+    }
+    class CarNavigation {
+        +buildRoute(string, string)
+        +getRouteType()
+    }
+    class WalkingNavigation {
+        +buildRoute(string, string)
+        +getRouteType()
+    }
+    class PublicTransportNavigation {
+        +buildRoute(string, string)
+        +getRouteType()
+    }
+    class BicycleNavigation {
+        +buildRoute(string, string)
+        +getRouteType()
+    }
+    class Navigator {
+        -NavigationStrategy strategy
+        +setNavigationStrategy(NavigationStrategy)
+        +navigate(string, string)
+    }
+    NavigationStrategy <|-- CarNavigation
+    NavigationStrategy <|-- WalkingNavigation
+    NavigationStrategy <|-- PublicTransportNavigation
+    NavigationStrategy <|-- BicycleNavigation
+    Navigator o-- NavigationStrategy : strategy
+```
+
 ## Sample output (first lines)
 
 ```text

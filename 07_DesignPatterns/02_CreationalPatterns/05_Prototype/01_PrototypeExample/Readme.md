@@ -32,6 +32,41 @@ image star.png x1.5 at (5, 5)
 no template called 'unknown'
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Sticker {
+        <<abstract>>
+        #int x_
+        #int y_
+        +clone()*
+        +show()*
+        +moveTo(int, int)
+    }
+    class TextSticker {
+        -string text_
+        +clone()
+        +show()
+    }
+    class ImageSticker {
+        -string file_
+        -double scale_
+        +clone()
+        +show()
+    }
+    class StickerBook {
+        -map~string~ templates_
+        +add(string, Sticker)
+        +create(string)
+    }
+    Sticker <|-- TextSticker
+    Sticker <|-- ImageSticker
+    StickerBook *-- Sticker : templates_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

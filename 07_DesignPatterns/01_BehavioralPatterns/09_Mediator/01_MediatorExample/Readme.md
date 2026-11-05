@@ -38,6 +38,53 @@ submit: disabled
 submit: click ignored (disabled)
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Mediator {
+        <<interface>>
+        +changed(Widget)*
+    }
+    class Widget {
+        -Mediator mediator_
+        -string name_
+        +name()
+        #notifyMediator()
+    }
+    class TextField {
+        -string text_
+        +type(string)
+        +text()
+    }
+    class CheckBox {
+        -bool checked_
+        +toggle()
+        +checked()
+    }
+    class SubmitButton {
+        -bool enabled_
+        +setEnabled(bool)
+        +click()
+    }
+    class SignupForm {
+        +TextField userName_
+        +CheckBox terms_
+        +SubmitButton submit_
+        +changed()
+    }
+    Widget <|-- TextField
+    Widget <|-- CheckBox
+    Widget <|-- SubmitButton
+    Mediator <|-- SignupForm
+    Widget o-- Mediator : mediator_
+    SignupForm *-- TextField : userName_
+    SignupForm *-- CheckBox : terms_
+    SignupForm *-- SubmitButton : submit_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

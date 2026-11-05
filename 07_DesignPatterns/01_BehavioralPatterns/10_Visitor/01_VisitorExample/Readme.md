@@ -35,6 +35,53 @@ project/
 total size: 2150 bytes
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class EntryVisitor {
+        <<interface>>
+        +visit(FileEntry)*
+        +visit(FolderEntry)*
+    }
+    class Entry {
+        <<abstract>>
+        -string name_
+        +accept(EntryVisitor)*
+        +name()
+    }
+    class FileEntry {
+        -size_t bytes_
+        +accept(EntryVisitor)
+        +bytes()
+    }
+    class FolderEntry {
+        -vector~Entry~ children_
+        +add(Entry)
+        +accept(EntryVisitor)
+        +children()
+    }
+    class SizeVisitor {
+        -size_t total_
+        +visit(FileEntry)
+        +visit(FolderEntry)
+        +total()
+    }
+    class PrintVisitor {
+        -size_t depth_
+        +visit(FileEntry)
+        +visit(FolderEntry)
+        -indent()
+    }
+    Entry <|-- FileEntry
+    Entry <|-- FolderEntry
+    EntryVisitor <|-- SizeVisitor
+    EntryVisitor <|-- PrintVisitor
+    FolderEntry *-- Entry : children_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

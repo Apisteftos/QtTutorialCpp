@@ -53,6 +53,179 @@ Types defined in `main.cpp`:
 
 **Watch out:** The facade can turn into a god class; the subsystem classes should stay usable directly.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Home Theater System
+
+```mermaid
+classDiagram
+    class DVDPlayer {
+        +on()
+        +off()
+        +play(string)
+        +stop()
+        +eject()
+    }
+    class Projector {
+        +on()
+        +off()
+        +wideScreenMode()
+        +tvMode()
+    }
+    class Amplifier {
+        +on()
+        +off()
+        +setDVD()
+        +setSurroundSound()
+        +setVolume(int)
+    }
+    class TheaterLights {
+        +dim(int)
+        +on()
+    }
+    class Screen {
+        +down()
+        +up()
+    }
+    class PopcornPopper {
+        +on()
+        +off()
+        +pop()
+    }
+    class HomeTheaterFacade {
+        -DVDPlayer dvd
+        -Projector projector
+        -Amplifier amp
+        -TheaterLights lights
+        -Screen screen
+        -PopcornPopper popper
+        +watchMovie(string)
+        +endMovie()
+        +listenToRadio(double)
+    }
+    HomeTheaterFacade o-- DVDPlayer : dvd
+    HomeTheaterFacade o-- Projector : projector
+    HomeTheaterFacade o-- Amplifier : amp
+    HomeTheaterFacade o-- TheaterLights : lights
+    HomeTheaterFacade o-- Screen : screen
+    HomeTheaterFacade o-- PopcornPopper : popper
+```
+
+### Example 2: Computer System
+
+```mermaid
+classDiagram
+    class CPU {
+        +freeze()
+        +jump(long)
+        +execute()
+    }
+    class Memory {
+        +load(long, string)
+    }
+    class HardDrive {
+        +read(long, int)
+    }
+    class ComputerFacade {
+        -CPU cpu
+        -Memory memory
+        -HardDrive hd
+        -long BOOT_ADDRESS
+        -long BOOT_SECTOR
+        -int SECTOR_SIZE
+        +start()
+    }
+    ComputerFacade o-- CPU : cpu
+    ComputerFacade o-- Memory : memory
+    ComputerFacade o-- HardDrive : hd
+```
+
+### Example 3: Online Shopping
+
+```mermaid
+classDiagram
+    class Inventory {
+        +checkStock(string, int)
+        +reduceStock(string, int)
+    }
+    class PaymentProcessor {
+        +processPayment(string, double)
+    }
+    class ShippingService {
+        +scheduleShipping(string, string)
+    }
+    class NotificationService {
+        +sendEmail(string, string)
+        +sendSMS(string, string)
+    }
+    class OrderFacade {
+        -Inventory inventory
+        -PaymentProcessor payment
+        -ShippingService shipping
+        -NotificationService notification
+        +placeOrder(string, int, string, double, string, string, string)
+    }
+    OrderFacade o-- Inventory : inventory
+    OrderFacade o-- PaymentProcessor : payment
+    OrderFacade o-- ShippingService : shipping
+    OrderFacade o-- NotificationService : notification
+```
+
+### Example 4: Bank Operations
+
+```mermaid
+classDiagram
+    class AccountManager {
+        +verifyAccount(string)
+        +getBalance(string)
+        +debit(string, double)
+        +credit(string, double)
+    }
+    class SecurityManager {
+        +authenticateUser(string, string)
+        +authorize(string, string)
+    }
+    class TransactionLogger {
+        +logTransaction(string, double, string)
+    }
+    class BankingFacade {
+        -AccountManager accountMgr
+        -SecurityManager securityMgr
+        -TransactionLogger logger
+        +transfer(string, string, string, string, double)
+    }
+    BankingFacade o-- AccountManager : accountMgr
+    BankingFacade o-- SecurityManager : securityMgr
+    BankingFacade o-- TransactionLogger : logger
+```
+
+### Example 5: Hotel Booking
+
+```mermaid
+classDiagram
+    class RoomService {
+        +checkAvailability(string, string)
+        +reserveRoom(string, string)
+    }
+    class RestaurantService {
+        +bookTable(int, string)
+    }
+    class EventManager {
+        +bookConferenceRoom(string, int)
+    }
+    class HotelFacade {
+        -RoomService rooms
+        -RestaurantService restaurant
+        -EventManager events
+        +bookBusinessPackage(string, string, int, string, int)
+    }
+    HotelFacade o-- RoomService : rooms
+    HotelFacade o-- RestaurantService : restaurant
+    HotelFacade o-- EventManager : events
+```
+
 ## Sample output (first lines)
 
 ```text

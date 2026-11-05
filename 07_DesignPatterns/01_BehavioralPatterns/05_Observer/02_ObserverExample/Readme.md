@@ -44,6 +44,130 @@ Types defined in `main.cpp`:
 
 **Watch out:** Lifetime is the classic trap: a subject that stores raw pointers to observers dangles if an observer is destroyed without detaching. Notification order is usually unspecified, and an observer that modifies the subject list during a notification needs care.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Weather Station
+
+```mermaid
+classDiagram
+    class Subject {
+        -vector~Observer~ observers
+        +attach(Observer)
+        +detach(Observer)
+        +notify()
+    }
+    class Observer {
+        <<interface>>
+        +update(Subject)*
+    }
+    class WeatherStation {
+        -float temperature
+        -float humidity
+        -float pressure
+        +setMeasurements(float, float, float)
+        +getTemperature()
+        +getHumidity()
+        +getPressure()
+    }
+    class CurrentConditionsDisplay {
+        -float temperature
+        -float humidity
+        -string name
+        +update(Subject)
+        +display()
+    }
+    class StatisticsDisplay {
+        -vector~float~ temperatureHistory
+        -string name
+        +update(Subject)
+        +display()
+    }
+    class ForecastDisplay {
+        -float lastPressure
+        -float currentPressure
+        -string name
+        +update(Subject)
+        +display()
+    }
+    Subject <|-- WeatherStation
+    Observer <|-- CurrentConditionsDisplay
+    Observer <|-- StatisticsDisplay
+    Observer <|-- ForecastDisplay
+    Subject o-- Observer : observers
+```
+
+### Example 2: Stock Market
+
+```mermaid
+classDiagram
+    class Stock {
+        -string symbol
+        -double price
+        +setPrice(double)
+        +getSymbol()
+        +getPrice()
+    }
+    class Investor {
+        -string name
+        -double buyThreshold
+        -double sellThreshold
+        +update(Subject)
+    }
+    class StockDisplayBoard {
+        -string location
+        +update(Subject)
+    }
+```
+
+### Example 3: News Agency & Subscribers
+
+```mermaid
+classDiagram
+    class NewsAgency {
+        -string latestNews
+        -string category
+        +publishNews(string)
+        +getLatestNews()
+        +getCategory()
+    }
+    class NewsSubscriber {
+        -string name
+        -vector~string~ newsHistory
+        +update(Subject)
+        +showHistory()
+    }
+    class MobileNewsApp {
+        -string deviceId
+        -int unreadCount
+        +update(Subject)
+        +readNews()
+    }
+```
+
+### Example 4: Event System / Button Clicks
+
+```mermaid
+classDiagram
+    class EventData {
+        +string eventType
+        +string message
+        +int value
+    }
+    class EventPublisher {
+        -void()
+        +subscribe(function~void~)
+        +publish(EventData)
+    }
+    class Button {
+        -string label
+        -EventPublisher eventPublisher
+        +click()
+    }
+    Button o-- EventPublisher : eventPublisher
+```
+
 ## Sample output (first lines)
 
 ```text

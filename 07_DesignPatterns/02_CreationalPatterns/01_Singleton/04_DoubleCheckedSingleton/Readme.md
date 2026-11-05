@@ -23,6 +23,24 @@ Types defined in `main.cpp`:
 
 **Watch out:** It is global state: it hides dependencies and makes unit testing harder. Initialisation strategy matters for thread safety.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class DoubleCheckedSingleton {
+        -DoubleCheckedSingleton instance$
+        -mutex mtx$
+        -atomic~bool~ initialized$
+        -int value
+        +getInstance()$
+        +setValue(int)
+        +getValue()
+        +doSomething()
+    }
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`), so you need GCC 14+ or a recent Clang/MSVC with a standard library that ships `<print>`.

@@ -46,6 +46,143 @@ Types defined in `main.cpp`:
 
 **Watch out:** More code than a constructor; validate in build() so incomplete objects cannot escape.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Shared types
+
+```mermaid
+classDiagram
+    class Computer {
+        -string cpu
+        -string ram
+        -string storage
+        -string gpu
+        -string motherboard
+        -string powerSupply
+        -string coolingSystem
+        -string caseType
+        -vector~string~ peripherals
+        -bool hasWifi
+        -bool hasBluetooth
+        -bool hasRGB
+        +setCPU(string)
+        +setRAM(string)
+        +setStorage(string)
+        +setGPU(string)
+        +setMotherboard(string)
+        +setPowerSupply(string)
+        +setCoolingSystem(string)
+        +setCaseType(string)
+        +addPeripheral(string)
+        +setWifi(bool)
+        +setBluetooth(bool)
+        +setRGB(bool)
+        +showSpecs()
+    }
+    class ComputerBuilder {
+        <<abstract>>
+        #Computer computer
+        +reset()
+        +buildCPU()*
+        +buildRAM()*
+        +buildStorage()*
+        +buildGPU()*
+        +buildMotherboard()*
+        +buildPowerSupply()*
+        +buildCooling()*
+        +buildCase()*
+        +buildWifi()*
+        +buildBluetooth()*
+        +buildRGB()*
+        +buildPeripherals()*
+        +getResult()
+    }
+    class GamingPCBuilder {
+        +buildCPU()
+        +buildRAM()
+        +buildStorage()
+        +buildGPU()
+        +buildMotherboard()
+        +buildPowerSupply()
+        +buildCooling()
+        +buildCase()
+        +buildWifi()
+        +buildBluetooth()
+        +buildRGB()
+        +buildPeripherals()
+    }
+    class OfficePCBuilder {
+        +buildCPU()
+        +buildRAM()
+        +buildStorage()
+        +buildGPU()
+        +buildMotherboard()
+        +buildPowerSupply()
+        +buildCooling()
+        +buildCase()
+        +buildWifi()
+        +buildBluetooth()
+        +buildRGB()
+        +buildPeripherals()
+    }
+    class BudgetPCBuilder {
+        +buildCPU()
+        +buildRAM()
+        +buildStorage()
+        +buildGPU()
+        +buildMotherboard()
+        +buildPowerSupply()
+        +buildCooling()
+        +buildCase()
+        +buildWifi()
+        +buildBluetooth()
+        +buildRGB()
+        +buildPeripherals()
+    }
+    class WorkstationBuilder {
+        +buildCPU()
+        +buildRAM()
+        +buildStorage()
+        +buildGPU()
+        +buildMotherboard()
+        +buildPowerSupply()
+        +buildCooling()
+        +buildCase()
+        +buildWifi()
+        +buildBluetooth()
+        +buildRGB()
+        +buildPeripherals()
+    }
+    class ComputerDirector {
+        -ComputerBuilder builder
+        +setBuilder(ComputerBuilder)
+        +buildMinimalComputer()
+        +buildFullComputer()
+        +buildCustomComputer()
+    }
+    class FluentComputerBuilder {
+        -Computer computer
+        +setCPU(string)
+        +setRAM(string)
+        +setStorage(string)
+        +setGPU(string)
+        +addPeripheral(string)
+        +enableWifi()
+        +enableBluetooth()
+        +enableRGB()
+        +build()
+    }
+    ComputerBuilder <|-- GamingPCBuilder
+    ComputerBuilder <|-- OfficePCBuilder
+    ComputerBuilder <|-- BudgetPCBuilder
+    ComputerBuilder <|-- WorkstationBuilder
+    ComputerBuilder *-- Computer : computer
+    ComputerDirector o-- ComputerBuilder : builder
+    FluentComputerBuilder *-- Computer : computer
+```
+
 ## Sample output (first lines)
 
 ```text

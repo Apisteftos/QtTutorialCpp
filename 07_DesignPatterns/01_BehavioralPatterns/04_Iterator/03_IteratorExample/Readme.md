@@ -34,6 +34,69 @@ Types defined in `main.cpp`:
 
 **Watch out:** To work with the standard algorithms an iterator must provide the iterator_traits typedefs (or satisfy the C++20 iterator concepts).
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class MenuItem {
+        -string name
+        -string description
+        -bool vegetarian
+        -double price
+        +getName()
+        +getDescription()
+        +isVegetarian()
+        +getPrice()
+        +display()
+    }
+    class MenuIterator {
+        <<interface>>
+        +hasNext()*
+        +next()*
+    }
+    class PancakeHouseMenu {
+        -vector~MenuItem~ menuItems
+        +addItem(string, string, bool, double)
+        +createIterator()
+    }
+    class PancakeIterator {
+        -PancakeHouseMenu menu
+        -size_t position
+        +hasNext()
+        +next()
+    }
+    class DinerMenu {
+        -array~MenuItem~ menuItems
+        -int numberOfItems
+        +addItem(string, string, bool, double)
+        +createIterator()
+    }
+    class DinerIterator {
+        -DinerMenu menu
+        -int position
+        +hasNext()
+        +next()
+    }
+    class Waitress {
+        -PancakeHouseMenu pancakeMenu
+        -DinerMenu dinerMenu
+        +printMenu()
+        +printVegetarianMenu()
+        -printMenu(MenuIterator)
+        -printVegetarianMenu(MenuIterator)
+    }
+    MenuIterator <|-- PancakeIterator
+    MenuIterator <|-- DinerIterator
+    PancakeHouseMenu o-- MenuItem : menuItems
+    PancakeIterator o-- PancakeHouseMenu : menu
+    DinerMenu o-- MenuItem : menuItems
+    DinerIterator o-- DinerMenu : menu
+    Waitress o-- PancakeHouseMenu : pancakeMenu
+    Waitress o-- DinerMenu : dinerMenu
+```
+
 ## Sample output (first lines)
 
 ```text

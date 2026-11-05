@@ -38,6 +38,51 @@ state: Paused
 state: Stopped
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class PlayerState {
+        <<interface>>
+        +play(MediaPlayer)*
+        +pause(MediaPlayer)*
+        +stop(MediaPlayer)*
+        +name()*
+    }
+    class MediaPlayer {
+        -PlayerState state_
+        +setState(PlayerState)
+        +stateName()
+        +play()
+        +pause()
+        +stop()
+    }
+    class StoppedState {
+        +play(MediaPlayer)
+        +pause(MediaPlayer)
+        +stop(MediaPlayer)
+        +name()
+    }
+    class PlayingState {
+        +play(MediaPlayer)
+        +pause(MediaPlayer)
+        +stop(MediaPlayer)
+        +name()
+    }
+    class PausedState {
+        +play(MediaPlayer)
+        +pause(MediaPlayer)
+        +stop(MediaPlayer)
+        +name()
+    }
+    PlayerState <|-- StoppedState
+    PlayerState <|-- PlayingState
+    PlayerState <|-- PausedState
+    MediaPlayer *-- PlayerState : state_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

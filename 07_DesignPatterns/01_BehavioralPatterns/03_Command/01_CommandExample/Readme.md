@@ -37,6 +37,43 @@ button: pressed
   speaker: queued 'Dance floor'
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Speaker {
+        +mute()
+        +setVolume(int)
+        +enqueue(string)
+    }
+    class Command {
+        <<interface>>
+        +execute()*
+    }
+    class MuteCommand {
+        -Speaker speaker_
+        +execute()
+    }
+    class PartyModeCommand {
+        -Speaker speaker_
+        -int volume_
+        -vector~string~ tracks_
+        +execute()
+    }
+    class RemoteButton {
+        -Command command_
+        +assign(Command)
+        +press()
+    }
+    Command <|-- MuteCommand
+    Command <|-- PartyModeCommand
+    MuteCommand o-- Speaker : speaker_
+    PartyModeCommand o-- Speaker : speaker_
+    RemoteButton *-- Command : command_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

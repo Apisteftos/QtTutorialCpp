@@ -50,6 +50,183 @@ Types defined in `main.cpp`:
 
 **Watch out:** Needs the split to be designed up front; for one dimension plain inheritance is enough.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Device & Remote Control
+
+```mermaid
+classDiagram
+    class Device {
+        <<interface>>
+        +isEnabled()*
+        +enable()*
+        +disable()*
+        +getVolume()*
+        +setVolume(int)*
+        +getChannel()*
+        +setChannel(int)*
+        +getDeviceName()*
+    }
+    class TV {
+        -bool on
+        -int volume
+        -int channel
+        +isEnabled()
+        +enable()
+        +disable()
+        +getVolume()
+        +setVolume(int)
+        +getChannel()
+        +setChannel(int)
+        +getDeviceName()
+    }
+    class Radio {
+        -bool on
+        -int volume
+        -int channel
+        +isEnabled()
+        +enable()
+        +disable()
+        +getVolume()
+        +setVolume(int)
+        +getChannel()
+        +setChannel(int)
+        +getDeviceName()
+    }
+    class Projector {
+        -bool on
+        -int brightness
+        -int input
+        +isEnabled()
+        +enable()
+        +disable()
+        +getVolume()
+        +setVolume(int)
+        +getChannel()
+        +setChannel(int)
+        +getDeviceName()
+    }
+    class RemoteControl {
+        #Device device
+        +togglePower()
+        +volumeDown()
+        +volumeUp()
+        +channelDown()
+        +channelUp()
+    }
+    class AdvancedRemote {
+        +mute()
+        +setChannel(int)
+    }
+    class VoiceRemote {
+        +voiceCommand(string)
+    }
+    Device <|-- TV
+    Device <|-- Radio
+    Device <|-- Projector
+    RemoteControl <|-- AdvancedRemote
+    RemoteControl <|-- VoiceRemote
+    RemoteControl o-- Device : device
+```
+
+### Example 2: Shape & Rendering
+
+```mermaid
+classDiagram
+    class Renderer {
+        <<interface>>
+        +renderCircle(float, float, float)*
+        +renderSquare(float, float, float)*
+        +getRendererName()*
+    }
+    class VectorRenderer {
+        +renderCircle(float, float, float)
+        +renderSquare(float, float, float)
+        +getRendererName()
+    }
+    class RasterRenderer {
+        +renderCircle(float, float, float)
+        +renderSquare(float, float, float)
+        +getRendererName()
+    }
+    class OpenGLRenderer {
+        +renderCircle(float, float, float)
+        +renderSquare(float, float, float)
+        +getRendererName()
+    }
+    class Shape {
+        <<abstract>>
+        #Renderer renderer
+        #float~x~ y
+        +draw()*
+        +move(float, float)
+    }
+    class Circle {
+        -float radius
+        +draw()
+        +resize(float)
+    }
+    class Square {
+        -float side
+        +draw()
+        +resize(float)
+    }
+    Renderer <|-- VectorRenderer
+    Renderer <|-- RasterRenderer
+    Renderer <|-- OpenGLRenderer
+    Shape <|-- Circle
+    Shape <|-- Square
+    Shape o-- Renderer : renderer
+```
+
+### Example 3: Message Sender
+
+```mermaid
+classDiagram
+    class MessageSender {
+        <<interface>>
+        +sendMessage(string, string)*
+        +getPlatformName()*
+    }
+    class EmailSender {
+        +sendMessage(string, string)
+        +getPlatformName()
+    }
+    class SMSSender {
+        +sendMessage(string, string)
+        +getPlatformName()
+    }
+    class SlackSender {
+        +sendMessage(string, string)
+        +getPlatformName()
+    }
+    class Message {
+        <<abstract>>
+        #MessageSender sender
+        #string recipient
+        #string content
+        +send()*
+    }
+    class TextMessage {
+        +send()
+    }
+    class EncryptedMessage {
+        +send()
+    }
+    class UrgentMessage {
+        +send()
+    }
+    MessageSender <|-- EmailSender
+    MessageSender <|-- SMSSender
+    MessageSender <|-- SlackSender
+    Message <|-- TextMessage
+    Message <|-- EncryptedMessage
+    Message <|-- UrgentMessage
+    Message o-- MessageSender : sender
+```
+
 ## Sample output (first lines)
 
 ```text

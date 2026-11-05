@@ -144,3 +144,97 @@ remote.undoButtonPressed();   // undo entire party macro in reverse
 ✅ When undo/redo is required
 ✅ When multiple operations must execute as one unit (macro)
 ✅ GUI toolbars where buttons trigger different actions
+
+## What was tested
+
+- Compiled with GCC 13.3 (`-std=c++23`) using a stand-in `<print>` header, because `std::println` needs GCC 14 and it was not available here. The source files were compiled directly, not through CMake.
+- Run, and the output is identical to the original `std::cout` version.
+- Run once with AddressSanitizer + UndefinedBehaviorSanitizer: no findings.
+
+## Not tested
+
+- The real `<print>` header (GCC 14+, recent Clang or MSVC) and platforms other than Linux x86-64.
+
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Light {
+        -string location
+        -int brightness
+        +on()
+        +off()
+        +dim(int)
+    }
+    class Fan {
+        -string location
+        -int speed
+        +high()
+        +medium()
+        +low()
+        +off()
+    }
+    class Command {
+        <<interface>>
+        +execute()*
+        +undo()*
+    }
+    class LightOnCommand {
+        -Light light
+        +execute()
+        +undo()
+    }
+    class LightOffCommand {
+        -Light light
+        +execute()
+        +undo()
+    }
+    class LightDimCommand {
+        -Light light
+        -int prevLevel
+        -int newLevel
+        +execute()
+        +undo()
+    }
+    class FanHighCommand {
+        -Fan fan
+        +execute()
+        +undo()
+    }
+    class FanOffCommand {
+        -Fan fan
+        +execute()
+        +undo()
+    }
+    class MacroCommand {
+        -vector~Command~ commands
+        +execute()
+        +undo()
+    }
+    class RemoteControl {
+        -vector~Command~ onCommands
+        -vector~Command~ offCommands
+        -Command undoCommand
+        +setCommand(int, Command, Command)
+        +onButtonPressed(int)
+        +offButtonPressed(int)
+        +undoButtonPressed()
+    }
+    Command <|-- LightOnCommand
+    Command <|-- LightOffCommand
+    Command <|-- LightDimCommand
+    Command <|-- FanHighCommand
+    Command <|-- FanOffCommand
+    Command <|-- MacroCommand
+    LightOnCommand o-- Light : light
+    LightOffCommand o-- Light : light
+    LightDimCommand o-- Light : light
+    FanHighCommand o-- Fan : fan
+    FanOffCommand o-- Fan : fan
+    MacroCommand o-- Command : commands
+    RemoteControl o-- Command : onCommands
+    RemoteControl o-- Command : offCommands
+    RemoteControl o-- Command : undoCommand
+```

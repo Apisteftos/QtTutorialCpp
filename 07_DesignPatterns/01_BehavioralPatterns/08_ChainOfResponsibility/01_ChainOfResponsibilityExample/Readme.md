@@ -40,6 +40,41 @@ director passes 'office renovation' on
 'office renovation' (25000) was rejected: nobody may approve it
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Expense {
+        +string description
+        +double amount
+    }
+    class Approver {
+        <<abstract>>
+        -Approver next_
+        +setNext(Approver)
+        +handle(Expense)
+        #canApprove(Expense)*
+        #title()*
+    }
+    class TeamLead {
+        #canApprove(Expense)
+        #title()
+    }
+    class Director {
+        #canApprove(Expense)
+        #title()
+    }
+    class FinanceBoard {
+        #canApprove(Expense)
+        #title()
+    }
+    Approver <|-- TeamLead
+    Approver <|-- Director
+    Approver <|-- FinanceBoard
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

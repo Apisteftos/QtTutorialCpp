@@ -297,7 +297,7 @@ flowchart TD
     end
 
     subgraph Ex2 ["StatePatternExample2 — GoF State Pattern\n(single file, basic)"]
-        SP2["State abstract class\nConcreteStateA / ConcreteStateB\nContext\nRaw pointer transitions"]
+        SP2["PlayerState interface\nStopped / Playing / Paused\nMediaPlayer context\nunique_ptr transitions"]
     end
 
     subgraph Ex3 ["SwitchCaseBasedExample — this file\n(switch/case)"]

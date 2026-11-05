@@ -24,6 +24,70 @@ Types defined in `main.cpp`:
 
 **Watch out:** Adds indirection and can hide expensive operations behind a cheap-looking call.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class UserRole {
+    }
+    class User {
+        -string name
+        -UserRole role
+        -string department
+        +getName()
+        +getRole()
+        +getDepartment()
+        +getRoleString()
+    }
+    class IDocument {
+        <<interface>>
+        +displayContent()*
+        +editContent(string)*
+        +deleteDocument()*
+        +getTitle()*
+    }
+    class SensitiveDocument {
+        -string title
+        -string content
+        -string classification
+        +displayContent()
+        +editContent(string)
+        +deleteDocument()
+        +getTitle()
+    }
+    class DocumentProxy {
+        -SensitiveDocument document
+        -User currentUser
+        -string requiredDepartment
+        -canRead()
+        -canEdit()
+        -canDelete()
+        -logAccess(string)
+        +setUser(User)
+        +displayContent()
+        +editContent(string)
+        +deleteDocument()
+        +getTitle()
+    }
+    class DocumentSystem {
+        -vector~DocumentProxy~ documents
+        -User currentUser
+        +addDocument(string, string, string, string)
+        +loginUser(User)
+        +accessDocument(size_t, string)
+        +listDocuments()
+    }
+    IDocument <|-- SensitiveDocument
+    IDocument <|-- DocumentProxy
+    User *-- UserRole : role
+    DocumentProxy *-- SensitiveDocument : document
+    DocumentProxy o-- User : currentUser
+    DocumentSystem *-- DocumentProxy : documents
+    DocumentSystem o-- User : currentUser
+```
+
 ## Sample output (first lines)
 
 ```text

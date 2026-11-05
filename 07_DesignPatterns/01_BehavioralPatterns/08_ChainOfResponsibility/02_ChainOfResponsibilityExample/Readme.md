@@ -22,6 +22,32 @@ Types defined in `main.cpp`:
 
 **Watch out:** A request can fall off the end of the chain unhandled, so decide what should happen then.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class SupportHandler {
+        <<abstract>>
+        #SupportHandler nextHandler
+        +setNext(SupportHandler)
+        +handleRequest(string, int)*
+    }
+    class Level1Support {
+        +handleRequest(string, int)
+    }
+    class Level2Support {
+        +handleRequest(string, int)
+    }
+    class ManagerSupport {
+        +handleRequest(string, int)
+    }
+    SupportHandler <|-- Level1Support
+    SupportHandler <|-- Level2Support
+    SupportHandler <|-- ManagerSupport
+```
+
 ## Sample output (first lines)
 
 ```text

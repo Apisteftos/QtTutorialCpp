@@ -64,6 +64,222 @@ Types defined in `main.cpp`:
 
 **Watch out:** Many small wrapper objects; identity checks and debugging are harder because the object you hold is the outermost wrapper.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Coffee Shop (Beverages)
+
+```mermaid
+classDiagram
+    class Beverage {
+        <<interface>>
+        +getDescription()*
+        +cost()*
+    }
+    class Espresso {
+        +getDescription()
+        +cost()
+    }
+    class HouseBlend {
+        +getDescription()
+        +cost()
+    }
+    class DarkRoast {
+        +getDescription()
+        +cost()
+    }
+    class Decaf {
+        +getDescription()
+        +cost()
+    }
+    class CondimentDecorator {
+        #Beverage beverage
+    }
+    class Milk {
+        +getDescription()
+        +cost()
+    }
+    class Mocha {
+        +getDescription()
+        +cost()
+    }
+    class Soy {
+        +getDescription()
+        +cost()
+    }
+    class Whip {
+        +getDescription()
+        +cost()
+    }
+    Beverage <|-- Espresso
+    Beverage <|-- HouseBlend
+    Beverage <|-- DarkRoast
+    Beverage <|-- Decaf
+    Beverage <|-- CondimentDecorator
+    CondimentDecorator <|-- Milk
+    CondimentDecorator <|-- Mocha
+    CondimentDecorator <|-- Soy
+    CondimentDecorator <|-- Whip
+    CondimentDecorator o-- Beverage : beverage
+```
+
+### Example 2: Text Formatting
+
+```mermaid
+classDiagram
+    class Text {
+        <<interface>>
+        +getContent()*
+        +display()*
+    }
+    class PlainText {
+        -string content
+        +getContent()
+        +display()
+    }
+    class TextDecorator {
+        #Text text
+    }
+    class BoldText {
+        +getContent()
+        +display()
+    }
+    class ItalicText {
+        +getContent()
+        +display()
+    }
+    class UnderlineText {
+        +getContent()
+        +display()
+    }
+    class ColorText {
+        -string color
+        +getContent()
+        +display()
+    }
+    Text <|-- PlainText
+    Text <|-- TextDecorator
+    TextDecorator <|-- BoldText
+    TextDecorator <|-- ItalicText
+    TextDecorator <|-- UnderlineText
+    TextDecorator <|-- ColorText
+    TextDecorator o-- Text : text
+```
+
+### Example 3: Data Streams
+
+```mermaid
+classDiagram
+    class DataSource {
+        <<interface>>
+        +writeData(string)*
+        +readData()*
+    }
+    class FileDataSource {
+        -string filename
+        -string content
+        +writeData(string)
+        +readData()
+    }
+    class DataSourceDecorator {
+        #DataSource wrappee
+        +writeData(string)
+        +readData()
+    }
+    class EncryptionDecorator {
+        +writeData(string)
+        +readData()
+        -encode(string)
+        -decode(string)
+    }
+    class CompressionDecorator {
+        +writeData(string)
+        +readData()
+        -compress(string)
+        -decompress(string)
+        -getCompressionRatio(string)
+    }
+    class LoggingDecorator {
+        +writeData(string)
+        +readData()
+    }
+    DataSource <|-- FileDataSource
+    DataSource <|-- DataSourceDecorator
+    DataSourceDecorator <|-- EncryptionDecorator
+    DataSourceDecorator <|-- CompressionDecorator
+    DataSourceDecorator <|-- LoggingDecorator
+    DataSourceDecorator o-- DataSource : wrappee
+```
+
+### Example 4: Notification System
+
+```mermaid
+classDiagram
+    class Notifier {
+        <<interface>>
+        +send(string)*
+    }
+    class BasicNotifier {
+        +send(string)
+    }
+    class NotifierDecorator {
+        #Notifier notifier
+        +send(string)
+    }
+    class SMSDecorator {
+        +send(string)
+        -sendSMS(string)
+    }
+    class SlackDecorator {
+        +send(string)
+        -sendSlack(string)
+    }
+    class FacebookDecorator {
+        +send(string)
+        -sendFacebook(string)
+    }
+    Notifier <|-- BasicNotifier
+    Notifier <|-- NotifierDecorator
+    NotifierDecorator <|-- SMSDecorator
+    NotifierDecorator <|-- SlackDecorator
+    NotifierDecorator <|-- FacebookDecorator
+    NotifierDecorator o-- Notifier : notifier
+```
+
+### Example 5: Window With Features
+
+```mermaid
+classDiagram
+    class Window {
+        <<interface>>
+        +draw()*
+        +getDescription()*
+    }
+    class SimpleWindow {
+        +draw()
+        +getDescription()
+    }
+    class WindowDecorator {
+        #Window window
+    }
+    class ScrollbarDecorator {
+        +draw()
+        +getDescription()
+        -drawScrollbar()
+    }
+    class BorderDecorator {
+        +draw()
+        +getDescription()
+        -drawBorder()
+    }
+    Window <|-- SimpleWindow
+    Window <|-- WindowDecorator
+    WindowDecorator <|-- ScrollbarDecorator
+    WindowDecorator <|-- BorderDecorator
+    WindowDecorator o-- Window : window
+```
+
 ## Sample output (first lines)
 
 ```text

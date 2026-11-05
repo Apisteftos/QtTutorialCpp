@@ -35,6 +35,51 @@ sending via push
   [push] Your parcel arrives tomorrow morning
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Channel {
+        <<interface>>
+        +deliver(string)*
+        +name()*
+    }
+    class EmailChannel {
+        +deliver(string)
+        +name()
+    }
+    class SmsChannel {
+        +deliver(string)
+        +name()
+    }
+    class PushChannel {
+        +deliver(string)
+        +name()
+    }
+    class Notifier {
+        <<abstract>>
+        +notify(string)
+        #createChannel()*
+    }
+    class EmailNotifier {
+        #createChannel()
+    }
+    class SmsNotifier {
+        #createChannel()
+    }
+    class PushNotifier {
+        #createChannel()
+    }
+    Channel <|-- EmailChannel
+    Channel <|-- SmsChannel
+    Channel <|-- PushChannel
+    Notifier <|-- EmailNotifier
+    Notifier <|-- SmsNotifier
+    Notifier <|-- PushNotifier
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

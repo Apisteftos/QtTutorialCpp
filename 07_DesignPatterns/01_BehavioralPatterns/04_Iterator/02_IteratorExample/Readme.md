@@ -37,6 +37,116 @@ Types defined in `main.cpp`:
 
 **Watch out:** To work with the standard algorithms an iterator must provide the iterator_traits typedefs (or satisfy the C++20 iterator concepts).
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Book Collection Iterator
+
+```mermaid
+classDiagram
+    class Book {
+        +string title
+        +string author
+        +int year
+        +display()
+    }
+    class Iterator {
+        <<interface>>
+        +hasNext()*
+        +next()*
+        +current()*
+        +reset()*
+    }
+    class Aggregate {
+        <<interface>>
+        +createIterator()*
+    }
+    class BookCollection {
+        -vector~Book~ books
+        +addBook(Book)
+        +size()
+        +createIterator()
+        +createReverseIterator()
+        +createFilteredIterator(int)
+    }
+    class BookIterator {
+        -BookCollection collection
+        -size_t currentIndex
+        +hasNext()
+        +next()
+        +current()
+        +reset()
+    }
+    class ReverseBookIterator {
+        -BookCollection collection
+        -int currentIndex
+        +hasNext()
+        +next()
+        +current()
+        +reset()
+    }
+    class FilteredBookIterator {
+        -BookCollection collection
+        -size_t currentIndex
+        -int minYear
+        -findNext()
+        +hasNext()
+        +next()
+        +current()
+        +reset()
+    }
+    Aggregate <|-- BookCollection
+    Iterator <|-- BookIterator
+    Iterator <|-- ReverseBookIterator
+    Iterator <|-- FilteredBookIterator
+    BookCollection o-- Book : books
+    BookIterator o-- BookCollection : collection
+    ReverseBookIterator o-- BookCollection : collection
+    FilteredBookIterator o-- BookCollection : collection
+```
+
+### Example 2: Playlist Iterator
+
+```mermaid
+classDiagram
+    class Song {
+        +string title
+        +string artist
+        +int duration
+        +play()
+    }
+    class Playlist {
+        -vector~Song~ songs
+        -string name
+        +addSong(Song)
+        +getName()
+        +size()
+        +getSong(size_t)
+    }
+    class SequentialIterator {
+        -Playlist playlist
+        -size_t currentIndex
+        +hasNext()
+        +next()
+        +current()
+        +reset()
+    }
+    class ShuffleIterator {
+        -Playlist playlist
+        -vector~size_t~ shuffledIndices
+        -size_t currentPosition
+        -shuffle()
+        +hasNext()
+        +next()
+        +current()
+        +reset()
+    }
+    Playlist o-- Song : songs
+    SequentialIterator o-- Playlist : playlist
+    ShuffleIterator o-- Playlist : playlist
+```
+
 ## Sample output (first lines)
 
 ```text

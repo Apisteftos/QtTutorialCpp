@@ -1,75 +1,112 @@
 # Abstract Factory — `02_AbstractFactoryExample`
 
-> **Intent:** Creates families of related objects without naming their concrete classes.
+> **Intent:** Creates families of related objects without naming their concrete classes in the client code.
 
-## What this example contains
+## Scenario
 
-Each distinct product of a product family should have a base interface. All variants of the product must implement this interface.
+Electric and petrol cars each need a matching engine and dashboard. A factory creates the whole matching family.
 
-Types defined in `main.cpp`:
+## Types in `main.cpp`
 
-| Type | Derives from |
+| Type | Role |
 |---|---|
-| `AbstractProductA` | — |
-| `ConcreteProductA1` | `AbstractProductA` |
-| `ConcreteProductA2` | `AbstractProductA` |
-| `AbstractProductB` | — |
-| `ConcreteProductB1` | `AbstractProductB` |
-| `ConcreteProductB2` | `AbstractProductB` |
-| `AbstractFactory` | — |
-| `ConcreteFactory1` | `AbstractFactory` |
-| `ConcreteFactory2` | `AbstractFactory` |
+| `Engine` / `Dashboard` | abstract products |
+| `ElectricEngine` / `BatteryDashboard` / `PetrolEngine` / `FuelDashboard` | concrete products of the two families |
+| `VehicleFactory` | abstract factory |
+| `ElectricFactory` / `PetrolFactory` | concrete factories |
 
 ## The pattern in short
 
-- An abstract factory with one creation method per product type.
-- Concrete factories, one per family.
-- Abstract product interfaces and their concrete variants.
+- The client function `assemble()` gets a factory and can never mix products of different families.
+- Adding a third family means one new factory plus its products.
 
-**Use it when:** Products must be used together and you need to switch the whole family at once (for example a UI theme).
+**Use it when:** The code must work with several families of products that belong together.
 
-**Watch out:** Adding a new product type means changing the abstract factory and every concrete factory.
+**Watch out:** Adding a new kind of product (for example a gearbox) means changing the factory interface and every factory.
 
-## Sample output (first lines)
+## Output
 
 ```text
-Client: Testing client code with the first factory type:
-The result of the product B1.
-The result of the B1 collaborating with ( The result of the product A1. )
+electric car:
+  engine:    silent start, battery at 100%
+  dashboard: range in km, charging state
+petrol car:
+  engine:    starter turns, engine rumbles
+  dashboard: fuel level, revolutions per minute
+```
 
-Client: Testing the same client code with the second factory type:
-The result of the product B2.
-The result of the B2 collaborating with ( The result of the product A2. )
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Engine {
+        <<interface>>
+        +start()*
+    }
+    class Dashboard {
+        <<interface>>
+        +show()*
+    }
+    class ElectricEngine {
+        +start()
+    }
+    class PetrolEngine {
+        +start()
+    }
+    class BatteryDashboard {
+        +show()
+    }
+    class FuelDashboard {
+        +show()
+    }
+    class VehicleFactory {
+        <<interface>>
+        +createEngine()*
+        +createDashboard()*
+    }
+    class ElectricFactory {
+        +createEngine()
+        +createDashboard()
+    }
+    class PetrolFactory {
+        +createEngine()
+        +createDashboard()
+    }
+    Engine <|-- ElectricEngine
+    Engine <|-- PetrolEngine
+    Dashboard <|-- BatteryDashboard
+    Dashboard <|-- FuelDashboard
+    VehicleFactory <|-- ElectricFactory
+    VehicleFactory <|-- PetrolFactory
 ```
 
 ## Build and run
 
-`main.cpp` uses `std::println` (C++23, `<print>`), so you need GCC 14+ or a recent Clang/MSVC with a standard library that ships `<print>`.
+`main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.
 
 ```bash
 g++ -std=c++23 -Wall -Wextra main.cpp -o 02_AbstractFactoryExample
 ./02_AbstractFactoryExample
 ```
 
-The included `CMakeLists.txt` sets C++23 but also asks CMake to find Qt Core. `main.cpp` itself does not use Qt, so the plain `g++` command above is enough.
+The included `CMakeLists.txt` also asks CMake to find Qt Core; `main.cpp` does not use Qt, so the plain `g++` command is enough.
 
 ## What was tested
 
-Checked with GCC 13.3 using a small `<print>` stand-in header (GCC 13 has no `<print>`), so `std::println` itself was not compiled with a real GCC 14 library:
+Checked with GCC 13.3 and a small `<print>` stand-in header (GCC 13 has no `<print>`), so `std::println` itself was not compiled with a real GCC 14 library:
 
 - Builds with `-std=c++23 -Wall -Wextra` without warnings.
-- Runs to completion (exit code 0) and prints 7 lines.
+- Runs to completion (exit code 0) and prints 6 lines.
 - Clean under AddressSanitizer + UBSan (no errors, no leaks reported).
-- Output is identical between two consecutive runs.
-- Output of the converted program is byte-identical to the original `std::cout` version.
+- Output identical between two runs.
 
 ## Not tested
 
-- Behaviour on Windows/macOS or with MSVC/Apple Clang.
-- The CMake build (Qt is not installed in the sandbox).
+- GCC 14 / the real `<print>`; MSVC; Apple Clang; Windows/macOS.
+- The CMake build.
 
-## Changes made to `main.cpp`
+## Notes
 
-- `std::cout` replaced by `std::println` / `std::print`; no `"\n"` at line ends, `std::println("")` for blank lines.
-- `using namespace std;` removed; standard names are written with `std::`.
-
+This example was rewritten with its own scenario, class names and output. It follows the usual structure of the abstract factory pattern.

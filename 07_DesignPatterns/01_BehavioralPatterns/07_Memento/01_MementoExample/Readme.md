@@ -38,6 +38,32 @@ whiteboard (0 lines):
 history: nothing to undo
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class Whiteboard {
+        -vector~string~ lines_
+        +write(string)
+        +save()
+        +restore(Snapshot)
+        +show()
+    }
+    class Snapshot {
+        -vector~string~ lines_
+        +lineCount()
+    }
+    class History {
+        -vector~Snapshot~ stack_
+        +remember(Snapshot)
+        +undo(Whiteboard)
+    }
+    History o-- Snapshot : stack_
+    History o-- Whiteboard : stack_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

@@ -41,6 +41,112 @@ Types defined in `main.cpp`:
 
 **Watch out:** Decide between shallow and deep copy; a clone() that returns a raw pointer must be owned by someone (prefer std::unique_ptr).
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Shared types
+
+```mermaid
+classDiagram
+    class Prototype {
+        <<interface>>
+        +clone()*
+        +print()*
+    }
+```
+
+### Example 1: Game Characters
+
+```mermaid
+classDiagram
+    class GameCharacter {
+        #string name
+        #string characterClass
+        #int level
+        #int health
+        #int mana
+        #int strength
+        #int intelligence
+        #int agility
+        #vector~string~ inventory
+        #vector~string~ skills
+        #string weapon
+        #string armor
+        +clone()
+        +setName(string)
+        +setLevel(int)
+        +setHealth(int)
+        +addItem(string)
+        +addSkill(string)
+        +setWeapon(string)
+        +setArmor(string)
+        +setStrength(int)
+        +setIntelligence(int)
+        +setAgility(int)
+        +print()
+    }
+    class Warrior {
+    }
+    class Mage {
+    }
+    class Archer {
+    }
+    GameCharacter <|-- Warrior
+    GameCharacter <|-- Mage
+    GameCharacter <|-- Archer
+```
+
+### Example 2: Document System
+
+```mermaid
+classDiagram
+    class Document {
+        #string title
+        #string author
+        #string content
+        #string template_type
+        #vector~string~ sections
+        #string formatting
+        +clone()
+        +setTitle(string)
+        +setAuthor(string)
+        +setContent(string)
+        +addSection(string)
+        +print()
+    }
+    class BusinessReport {
+    }
+    class ResearchPaper {
+    }
+    class PrototypeRegistry {
+        -unordered_map~string~ prototypes
+        +registerPrototype(string, Prototype)
+        +createClone(string)
+        +listPrototypes()
+    }
+    Document <|-- BusinessReport
+    Document <|-- ResearchPaper
+```
+
+### EXAMPLE 3: SHAPE CLONING (DEEP vs SHALLOW COPY)
+
+```mermaid
+classDiagram
+    class Point {
+        +int~x~ y
+        +print()
+    }
+    class Shape {
+        #string color
+        #Point position
+        +clone()
+        +setPosition(int, int)
+        +print()
+    }
+    Shape o-- Point : position
+```
+
 ## Sample output (first lines)
 
 ```text

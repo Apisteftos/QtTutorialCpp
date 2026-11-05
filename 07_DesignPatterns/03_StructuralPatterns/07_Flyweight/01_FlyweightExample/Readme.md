@@ -39,6 +39,40 @@ forest has 6 trees but only 3 tree types:
   oak (autumn, rough) at (7, 7)
 ```
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class TreeType {
+        +string name
+        +string color
+        +string texture
+    }
+    class TreeTypeFactory {
+        -map~string~ cache_
+        +get(string, string, string)
+        +typeCount()
+    }
+    class Tree {
+        -int x_
+        -int y_
+        -TreeType type_
+        +draw()
+    }
+    class Forest {
+        -TreeTypeFactory factory_
+        -vector~Tree~ trees_
+        +plant(int, int, string, string, string)
+        +draw()
+    }
+    TreeTypeFactory o-- TreeType : cache_
+    Tree o-- TreeType : type_
+    Forest *-- TreeTypeFactory : factory_
+    Forest o-- Tree : trees_
+```
+
 ## Build and run
 
 `main.cpp` uses `std::println` (C++23, `<print>`): GCC 14+ or a recent Clang/MSVC with `<print>` in the standard library.

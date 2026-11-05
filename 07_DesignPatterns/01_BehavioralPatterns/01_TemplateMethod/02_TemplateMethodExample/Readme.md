@@ -46,6 +46,169 @@ Types defined in `main.cpp`:
 
 **Watch out:** Inheritance-based: the order of steps is fixed at compile time and a subclass cannot easily change it. If the steps vary a lot, Strategy (composition) is usually more flexible.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Beverage Preparation
+
+```mermaid
+classDiagram
+    class Beverage {
+        <<abstract>>
+        +prepareBeverage()
+        #boilWater()
+        #pourInCup()
+        #brew()*
+        #addCondiments()*
+        #getBeverageName()*
+        #customerWantsCondiments()
+    }
+    class Coffee {
+        #brew()
+        #addCondiments()
+        #getBeverageName()
+    }
+    class Tea {
+        #brew()
+        #addCondiments()
+        #getBeverageName()
+    }
+    class HotChocolate {
+        #brew()
+        #addCondiments()
+        #getBeverageName()
+        #customerWantsCondiments()
+    }
+    class BlackCoffee {
+        #getBeverageName()
+        #customerWantsCondiments()
+    }
+    Beverage <|-- Coffee
+    Beverage <|-- Tea
+    Beverage <|-- HotChocolate
+    Coffee <|-- BlackCoffee
+```
+
+### Example 2: Data Mining
+
+```mermaid
+classDiagram
+    class DataMiner {
+        <<abstract>>
+        +mine(string)
+        #openFile(string)
+        #closeFile(string)
+        #extractData(string)*
+        #parseData(string)*
+        #analyzeData(string)*
+        #sendReport(string)*
+    }
+    class PDFDataMiner {
+        #extractData(string)
+        #parseData(string)
+        #analyzeData(string)
+        #sendReport(string)
+    }
+    class CSVDataMiner {
+        #extractData(string)
+        #parseData(string)
+        #analyzeData(string)
+        #sendReport(string)
+    }
+    class WordDataMiner {
+        #extractData(string)
+        #parseData(string)
+        #analyzeData(string)
+        #sendReport(string)
+    }
+    DataMiner <|-- PDFDataMiner
+    DataMiner <|-- CSVDataMiner
+    DataMiner <|-- WordDataMiner
+```
+
+### Example 3: Game Ai
+
+```mermaid
+classDiagram
+    class GameAI {
+        <<abstract>>
+        +takeTurn()
+        #collectResources()
+        #buildStructures()*
+        #buildUnits()*
+        #attackEnemy()*
+        #getAIName()*
+        #canUseSpecialAbility()
+        #useSpecialAbility()
+    }
+    class AggressiveAI {
+        #buildStructures()
+        #buildUnits()
+        #attackEnemy()
+        #getAIName()
+    }
+    class DefensiveAI {
+        #buildStructures()
+        #buildUnits()
+        #attackEnemy()
+        #getAIName()
+    }
+    class BalancedAI {
+        #buildStructures()
+        #buildUnits()
+        #attackEnemy()
+        #getAIName()
+        #canUseSpecialAbility()
+        #useSpecialAbility()
+    }
+    GameAI <|-- AggressiveAI
+    GameAI <|-- DefensiveAI
+    GameAI <|-- BalancedAI
+```
+
+### Example 4: House Building
+
+```mermaid
+classDiagram
+    class HouseBuilder {
+        <<abstract>>
+        +buildHouse()
+        #layFoundation()
+        #installWindows()
+        #installDoors()
+        #buildWalls()*
+        #buildRoof()*
+        #paintHouse()*
+        #getHouseType()*
+        #hasAdditionalFeatures()
+        #addFeatures()
+    }
+    class WoodenHouse {
+        #buildWalls()
+        #buildRoof()
+        #paintHouse()
+        #getHouseType()
+    }
+    class BrickHouse {
+        #buildWalls()
+        #buildRoof()
+        #paintHouse()
+        #getHouseType()
+    }
+    class LuxuryVilla {
+        #buildWalls()
+        #buildRoof()
+        #paintHouse()
+        #getHouseType()
+        #hasAdditionalFeatures()
+        #addFeatures()
+    }
+    HouseBuilder <|-- WoodenHouse
+    HouseBuilder <|-- BrickHouse
+    HouseBuilder <|-- LuxuryVilla
+```
+
 ## Sample output (first lines)
 
 ```text

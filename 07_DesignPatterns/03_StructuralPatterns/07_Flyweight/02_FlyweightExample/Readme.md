@@ -23,6 +23,48 @@ Types defined in `main.cpp`:
 
 **Watch out:** Shared state must be immutable; the factory lookup costs time, so measure before using it.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+```mermaid
+classDiagram
+    class CharacterStyle {
+        -string fontFamily
+        -int fontSize
+        -string color
+        -bool isBold
+        -bool isItalic
+        +render(char, int, int)
+        +getDescription()
+        +getKey()
+    }
+    class StyleFactory {
+        -unordered_map~string~ styles
+        +getStyle(string, int, string, bool, bool)
+        +getStyleCount()
+        +printStatistics()
+    }
+    class Character {
+        -char symbol
+        -int~x~ y
+        -CharacterStyle style
+        +render()
+        +move(int, int)
+    }
+    class Document {
+        -vector~Character~ characters
+        -StyleFactory styleFactory
+        +addCharacter(char, int, int, string, int, string, bool, bool)
+        +render()
+        +printMemoryStats()
+    }
+    StyleFactory o-- CharacterStyle : styles
+    Character o-- CharacterStyle : style
+    Document o-- Character : characters
+    Document *-- StyleFactory : styleFactory
+```
+
 ## Sample output (first lines)
 
 ```text

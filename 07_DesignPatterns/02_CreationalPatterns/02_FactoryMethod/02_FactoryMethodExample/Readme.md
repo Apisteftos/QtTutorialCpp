@@ -58,6 +58,127 @@ Types defined in `main.cpp`:
 
 **Watch out:** Returning std::unique_ptr makes ownership explicit.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Shared types
+
+```mermaid
+classDiagram
+    class Transport {
+        <<interface>>
+        +deliver()*
+        +loadCargo(int)*
+        +getType()*
+        +getCapacity()*
+    }
+    class Truck {
+        +deliver()
+        +loadCargo(int)
+        +getType()
+        +getCapacity()
+    }
+    class Ship {
+        +deliver()
+        +loadCargo(int)
+        +getType()
+        +getCapacity()
+    }
+    class Plane {
+        +deliver()
+        +loadCargo(int)
+        +getType()
+        +getCapacity()
+    }
+    class Train {
+        +deliver()
+        +loadCargo(int)
+        +getType()
+        +getCapacity()
+    }
+    class Drone {
+        +deliver()
+        +loadCargo(int)
+        +getType()
+        +getCapacity()
+    }
+    class Logistics {
+        <<abstract>>
+        +createTransport()*
+        +planDelivery(int)
+        +estimateCost(int)
+    }
+    class RoadLogistics {
+        +createTransport()
+    }
+    class SeaLogistics {
+        +createTransport()
+    }
+    class AirLogistics {
+        +createTransport()
+    }
+    class RailLogistics {
+        +createTransport()
+    }
+    class DroneLogistics {
+        +createTransport()
+    }
+    class Document {
+        <<interface>>
+        +open()*
+        +save()*
+        +getFormat()*
+    }
+    class PDFDocument {
+        +open()
+        +save()
+        +getFormat()
+    }
+    class WordDocument {
+        +open()
+        +save()
+        +getFormat()
+    }
+    class Application {
+        <<abstract>>
+        +createDocument()*
+        +newDocument()
+        +saveDocument()
+    }
+    class PDFApplication {
+        +createDocument()
+    }
+    class WordApplication {
+        +createDocument()
+    }
+    Transport <|-- Truck
+    Transport <|-- Ship
+    Transport <|-- Plane
+    Transport <|-- Train
+    Transport <|-- Drone
+    Logistics <|-- RoadLogistics
+    Logistics <|-- SeaLogistics
+    Logistics <|-- AirLogistics
+    Logistics <|-- RailLogistics
+    Logistics <|-- DroneLogistics
+    Document <|-- PDFDocument
+    Document <|-- WordDocument
+    Application <|-- PDFApplication
+    Application <|-- WordApplication
+```
+
+### Example 6: Dynamic Selection
+
+```mermaid
+classDiagram
+    class DeliveryScenario {
+        +int distance
+        +int weight
+        +bool urgent
+    }
+```
+
 ## Sample output (first lines)
 
 ```text

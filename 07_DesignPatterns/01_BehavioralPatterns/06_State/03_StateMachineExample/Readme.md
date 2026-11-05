@@ -51,6 +51,227 @@ Types defined in `main.cpp`:
 
 **Watch out:** More classes than a switch. For small machines an enum plus switch is simpler; for large ones the transition table is easier to review than scattered code.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Vending Machine
+
+```mermaid
+classDiagram
+    class VendingMachineState {
+        <<interface>>
+        +insertCoin(VendingMachine)*
+        +ejectCoin(VendingMachine)*
+        +selectProduct(VendingMachine)*
+        +dispense(VendingMachine)*
+        +getStateName()*
+    }
+    class VendingMachine {
+        -VendingMachineState currentState
+        -int productCount
+        -bool hasCoin
+        +setState(VendingMachineState)
+        +getState()
+        +insertCoin()
+        +ejectCoin()
+        +selectProduct()
+        +dispense()
+        +addCoin()
+        +removeCoin()
+        +hasCoins()
+        +getProductCount()
+        +releaseProduct()
+        +refill(int)
+    }
+    class NoCoinState {
+        +insertCoin(VendingMachine)
+        +ejectCoin(VendingMachine)
+        +selectProduct(VendingMachine)
+        +dispense(VendingMachine)
+        +getStateName()
+    }
+    class HasCoinState {
+        +insertCoin(VendingMachine)
+        +ejectCoin(VendingMachine)
+        +selectProduct(VendingMachine)
+        +dispense(VendingMachine)
+        +getStateName()
+    }
+    class DispensingState {
+        +insertCoin(VendingMachine)
+        +ejectCoin(VendingMachine)
+        +selectProduct(VendingMachine)
+        +dispense(VendingMachine)
+        +getStateName()
+    }
+    class SoldOutState {
+        +insertCoin(VendingMachine)
+        +ejectCoin(VendingMachine)
+        +selectProduct(VendingMachine)
+        +dispense(VendingMachine)
+        +getStateName()
+    }
+    VendingMachineState <|-- NoCoinState
+    VendingMachineState <|-- HasCoinState
+    VendingMachineState <|-- DispensingState
+    VendingMachineState <|-- SoldOutState
+    VendingMachine o-- VendingMachineState : currentState
+```
+
+### Example 2: Tcp Connection
+
+```mermaid
+classDiagram
+    class TCPState {
+        <<interface>>
+        +open(TCPConnection)*
+        +close(TCPConnection)*
+        +send(TCPConnection, string)*
+        +receive(TCPConnection)*
+        +getStateName()*
+    }
+    class TCPConnection {
+        -TCPState currentState
+        -string connectionId
+        +setState(TCPState)
+        +getId()
+        +open()
+        +close()
+        +send(string)
+        +receive()
+    }
+    class TCPClosed {
+        +open(TCPConnection)
+        +close(TCPConnection)
+        +send(TCPConnection, string)
+        +receive(TCPConnection)
+        +getStateName()
+    }
+    class TCPListen {
+        +open(TCPConnection)
+        +close(TCPConnection)
+        +send(TCPConnection, string)
+        +receive(TCPConnection)
+        +getStateName()
+    }
+    class TCPEstablished {
+        +open(TCPConnection)
+        +close(TCPConnection)
+        +send(TCPConnection, string)
+        +receive(TCPConnection)
+        +getStateName()
+    }
+    TCPState <|-- TCPClosed
+    TCPState <|-- TCPListen
+    TCPState <|-- TCPEstablished
+    TCPConnection o-- TCPState : currentState
+```
+
+### Example 3: Document Workflow
+
+```mermaid
+classDiagram
+    class DocumentState {
+        <<interface>>
+        +edit(Document)*
+        +submit(Document)*
+        +approve(Document)*
+        +reject(Document)*
+        +publish(Document)*
+        +getStateName()*
+    }
+    class Document {
+        -DocumentState currentState
+        -string title
+        -string content
+        +setState(DocumentState)
+        +getTitle()
+        +setContent(string)
+        +getContent()
+        +edit()
+        +submit()
+        +approve()
+        +reject()
+        +publish()
+    }
+    class DraftState {
+        +edit(Document)
+        +submit(Document)
+        +approve(Document)
+        +reject(Document)
+        +publish(Document)
+        +getStateName()
+    }
+    class ModerationState {
+        +edit(Document)
+        +submit(Document)
+        +approve(Document)
+        +reject(Document)
+        +publish(Document)
+        +getStateName()
+    }
+    class ApprovedState {
+        +edit(Document)
+        +submit(Document)
+        +approve(Document)
+        +reject(Document)
+        +publish(Document)
+        +getStateName()
+    }
+    class PublishedState {
+        +edit(Document)
+        +submit(Document)
+        +approve(Document)
+        +reject(Document)
+        +publish(Document)
+        +getStateName()
+    }
+    DocumentState <|-- DraftState
+    DocumentState <|-- ModerationState
+    DocumentState <|-- ApprovedState
+    DocumentState <|-- PublishedState
+    Document o-- DocumentState : currentState
+```
+
+### Example 4: Traffic Light
+
+```mermaid
+classDiagram
+    class LightState {
+        <<interface>>
+        +next(TrafficLight)*
+        +getColor()*
+        +getDuration()*
+    }
+    class TrafficLight {
+        -LightState currentState
+        -string location
+        +setState(LightState)
+        +change()
+        +getLocation()
+    }
+    class RedLight {
+        +next(TrafficLight)
+        +getColor()
+        +getDuration()
+    }
+    class YellowLight {
+        +next(TrafficLight)
+        +getColor()
+        +getDuration()
+    }
+    class GreenLight {
+        +next(TrafficLight)
+        +getColor()
+        +getDuration()
+    }
+    LightState <|-- RedLight
+    LightState <|-- YellowLight
+    LightState <|-- GreenLight
+    TrafficLight o-- LightState : currentState
+```
+
 ## Sample output (first lines)
 
 ```text

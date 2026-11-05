@@ -48,6 +48,150 @@ Types defined in `main.cpp`:
 
 **Watch out:** The mediator can grow into a large class that knows everything.
 
+## Structure
+
+Class diagram generated from the types in `main.cpp`. Arrows: `<|--` inheritance, `o--` the class holds a pointer, reference or container of the other, `*--` the class owns the other by value. `*` after a method = pure virtual, `$` = static.
+
+### Example 1: Chat Room Mediator
+
+```mermaid
+classDiagram
+    class ChatMediator {
+        <<interface>>
+        +sendMessage(string, User)*
+        +addUser(User)*
+    }
+    class User {
+        #ChatMediator mediator
+        #string name
+        +getName()
+        +send(string)
+        +receive(string, string)
+    }
+    class ChatRoom {
+        -vector~User~ users
+        +addUser(User)
+        +sendMessage(string, User)
+    }
+    ChatMediator <|-- ChatRoom
+    User o-- ChatMediator : mediator
+    ChatRoom o-- User : users
+```
+
+### Example 2: Air Traffic Control
+
+```mermaid
+classDiagram
+    class ATCMediator {
+        <<interface>>
+        +registerAircraft(Aircraft)*
+        +requestLanding(Aircraft)*
+        +requestTakeoff(Aircraft)*
+        +notifyLanded(Aircraft)*
+        +notifyTakenOff(Aircraft)*
+    }
+    class Aircraft {
+        #string flightNumber
+        #ATCMediator atc
+        +getFlightNumber()
+        +requestLanding()
+        +requestTakeoff()
+        -land()
+        -takeoff()
+    }
+    class ControlTower {
+        -vector~Aircraft~ aircrafts
+        -bool runwayAvailable
+        +registerAircraft(Aircraft)
+        +requestLanding(Aircraft)
+        +requestTakeoff(Aircraft)
+        +notifyLanded(Aircraft)
+        +notifyTakenOff(Aircraft)
+    }
+    ATCMediator <|-- ControlTower
+    Aircraft o-- ATCMediator : atc
+    ControlTower o-- Aircraft : aircrafts
+```
+
+### Example 3: Smart Home Mediator
+
+```mermaid
+classDiagram
+    class SmartHomeMediator {
+        <<interface>>
+        +registerDevice(SmartDevice)*
+        +notify(SmartDevice, string)*
+    }
+    class SmartDevice {
+        <<abstract>>
+        #string name
+        #SmartHomeMediator hub
+        +getName()
+        +performAction(string)*
+    }
+    class MotionSensor {
+        +detectMotion()
+        +performAction(string)
+    }
+    class Light {
+        -bool isOn
+        +performAction(string)
+    }
+    class Thermostat {
+        -int temperature
+        +performAction(string)
+    }
+    class SecurityCamera {
+        -bool recording
+        +performAction(string)
+    }
+    class SmartHomeHub {
+        -map~string~ devices
+        +registerDevice(SmartDevice)
+        +notify(SmartDevice, string)
+        +controlDevice(string, string)
+    }
+    SmartDevice <|-- MotionSensor
+    SmartDevice <|-- Light
+    SmartDevice <|-- Thermostat
+    SmartDevice <|-- SecurityCamera
+    SmartHomeMediator <|-- SmartHomeHub
+    SmartDevice o-- SmartHomeMediator : hub
+    SmartHomeHub o-- SmartDevice : devices
+```
+
+### Example 4: Online Auction Mediator
+
+```mermaid
+classDiagram
+    class AuctionMediator {
+        <<interface>>
+        +registerBidder(Bidder)*
+        +placeBid(Bidder, int)*
+    }
+    class Bidder {
+        #string name
+        #AuctionMediator auction
+        +getName()
+        +bid(int)
+        +notifyOutbid(string, int)
+        +notifyWinner()
+    }
+    class AuctionHouse {
+        -vector~Bidder~ bidders
+        -Bidder highestBidder
+        -int highestBid
+        -string itemName
+        +registerBidder(Bidder)
+        +placeBid(Bidder, int)
+        +closeAuction()
+    }
+    AuctionMediator <|-- AuctionHouse
+    Bidder o-- AuctionMediator : auction
+    AuctionHouse o-- Bidder : bidders
+    AuctionHouse o-- Bidder : highestBidder
+```
+
 ## Sample output (first lines)
 
 ```text

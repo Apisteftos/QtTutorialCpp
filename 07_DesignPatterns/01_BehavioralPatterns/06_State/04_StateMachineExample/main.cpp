@@ -1,119 +1,80 @@
-#include <typeinfo>
+/*
+ * State machine: a turnstile described by a transition table
+ *
+ * Intent: instead of one class per state, keep the allowed transitions as data
+ * (state, event -> next state, action). Adding a rule means adding one table
+ * row.
+ *
+ * Compile: g++ -std=c++23 -Wall -Wextra main.cpp -o example
+ */
+
+#include <array>
 #include <print>
-/**
- * The base State class declares methods that all Concrete State should
- * implement and also provides a backreference to the Context object, associated
- * with the State. This backreference can be used by States to transition the
- * Context to another State.
- */
+#include <string_view>
 
-class Context;
+enum class State { Locked, Unlocked };
+enum class Event { Coin, Push };
 
-class State {
-    /**
-   * @var Context
-   */
-protected:
-    Context *context_;
-
-public:
-    virtual ~State() {
+constexpr std::string_view toString(State state) {
+    switch (state) {
+    case State::Locked:
+        return "Locked";
+    case State::Unlocked:
+        return "Unlocked";
     }
+    return "?";
+}
 
-    void set_context(Context *context) {
-        this->context_ = context;
+constexpr std::string_view toString(Event event) {
+    switch (event) {
+    case Event::Coin:
+        return "Coin";
+    case Event::Push:
+        return "Push";
     }
+    return "?";
+}
 
-    virtual void Handle1() = 0;
-    virtual void Handle2() = 0;
+struct Transition {
+    State from;
+    Event event;
+    State to;
+    std::string_view action;
 };
 
-/**
- * The Context defines the interface of interest to clients. It also maintains a
- * reference to an instance of a State subclass, which represents the current
- * state of the Context.
- */
-class Context {
-    /**
-   * @var State A reference to the current state of the Context.
-   */
+constexpr std::array<Transition, 4> kTable = {{
+                                               {State::Locked, Event::Coin, State::Unlocked, "unlock the arm"},
+                                               {State::Locked, Event::Push, State::Locked, "stay locked"},
+                                               {State::Unlocked, Event::Coin, State::Unlocked, "keep the coin"},
+                                               {State::Unlocked, Event::Push, State::Locked, "let one person pass, lock again"},
+                                               }};
+
+class Turnstile {
+public:
+    void handle(Event event) {
+        for (const auto& row : kTable) {
+            if (row.from == state_ && row.event == event) {
+                std::println("{} + {} -> {}: {}", toString(state_), toString(event),
+                             toString(row.to), row.action);
+                state_ = row.to;
+                return;
+            }
+        }
+        std::println("{} + {}: no rule", toString(state_), toString(event));
+    }
+
+    State state() const { return state_; }
+
 private:
-    State *state_;
-
-public:
-    Context(State *state) : state_(nullptr) {
-        this->TransitionTo(state);
-    }
-    ~Context() {
-        delete state_;
-    }
-    /**
-   * The Context allows changing the State object at runtime.
-   */
-    void TransitionTo(State *state) {
-        std::println("Context: Transition to {}.", typeid(*state).name());
-        if (this->state_ != nullptr)
-            delete this->state_;
-        this->state_ = state;
-        this->state_->set_context(this);
-    }
-    /**
-   * The Context delegates part of its behavior to the current State object.
-   */
-    void Request1() {
-        this->state_->Handle1();
-    }
-    void Request2() {
-        this->state_->Handle2();
-    }
+    State state_ = State::Locked;
 };
-
-/**
- * Concrete States implement various behaviors, associated with a state of the
- * Context.
- */
-
-class ConcreteStateA : public State {
-public:
-    void Handle1() override;
-
-    void Handle2() override {
-        std::println("ConcreteStateA handles request2.");
-    }
-};
-
-class ConcreteStateB : public State {
-public:
-    void Handle1() override {
-        std::println("ConcreteStateB handles request1.");
-    }
-    void Handle2() override {
-        std::println("ConcreteStateB handles request2.");
-        std::println("ConcreteStateB wants to change the state of the context.");
-        this->context_->TransitionTo(new ConcreteStateA);
-    }
-};
-
-void ConcreteStateA::Handle1() {
-    {
-        std::println("ConcreteStateA handles request1.");
-        std::println("ConcreteStateA wants to change the state of the context.");
-
-        this->context_->TransitionTo(new ConcreteStateB);
-    }
-}
-
-/**
- * The client code.
- */
-void ClientCode() {
-    Context *context = new Context(new ConcreteStateA);
-    context->Request1();
-    context->Request2();
-    delete context;
-}
 
 int main() {
-    ClientCode();
+    Turnstile turnstile;
+    turnstile.handle(Event::Push);
+    turnstile.handle(Event::Coin);
+    turnstile.handle(Event::Coin);
+    turnstile.handle(Event::Push);
+    std::println("final state: {}", toString(turnstile.state()));
     return 0;
 }
