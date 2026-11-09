@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.20)
+project(01_parallel_algorithms LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_executable(${PROJECT_NAME} main.cpp)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
+
+# GCC uses Intel TBB for parallel algorithms (package libtbb-dev)
+find_package(TBB QUIET)
+if(TBB_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
+else()
+    find_library(TBB_LIB tbb)
+    if(TBB_LIB)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${TBB_LIB})
+    endif()
+endif()
